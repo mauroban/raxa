@@ -235,6 +235,44 @@ body.painting{touch-action:none;overflow:hidden}
 .promo{border:1px solid var(--pc);border-radius:13px;padding:12px;margin-bottom:8px;background:rgba(255,255,255,.03)}
 .promo .t{font-family:var(--disp);font-size:16px;color:var(--pc)}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+/* ficha do jogador */
+.ps-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ps-hd .avatar{width:48px;height:48px;font-size:17px;flex:0 0 auto}
+.ps-hd h2{margin:0;font-size:22px;line-height:1.1;display:flex;align-items:center;gap:8px;min-width:0}
+.ps-hd h2 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-hd .sub{font-size:12px;color:var(--mute);margin-top:3px}
+.ico{border:1px solid var(--line);background:transparent;color:var(--mute);border-radius:8px;width:28px;height:28px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex:0 0 auto}
+.lv2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.lv2 button{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--chalk);cursor:pointer;position:relative}
+.lv2 button .k{margin-bottom:6px;display:block}
+.lv2 button.on{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime) inset}
+.lv2 button .best{font-size:11px;color:var(--mute);margin-top:6px}
+.lv2 .none{font-size:13px;color:var(--mute)}
+.ps-panel{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
+.ps-panel .k{margin-bottom:8px}
+.ladder4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ladder4 button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 4px 8px;color:var(--chalk);
+  font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.ladder4 button i{display:block;width:100%;height:4px;border-radius:2px;background:var(--pc)}
+.ladder4 button.on{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}
+.step{display:flex;align-items:center;gap:8px;margin-top:10px}
+.step .cur{flex:1;text-align:center;font-family:var(--disp);font-size:18px}
+.step .btn{flex:0 0 52px;padding:9px 0;font-size:18px;line-height:1}
+.trow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.trow:first-of-type{border-top:0}
+.trow .lbl{font-size:14px}
+.trow .lbl small{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+.sw{width:42px;height:24px;border-radius:12px;border:1px solid var(--line2);background:var(--panel2);position:relative;cursor:pointer;flex:0 0 auto}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--mute);transition:.15s}
+.sw.on{background:var(--lime);border-color:var(--lime)}
+.sw.on::after{left:21px;background:#08110A}
+.seg{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--mute);border-radius:8px;padding:8px 4px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--chalk);color:#0B0F0D}
+.ps-foot{display:flex;gap:8px;margin-top:14px}
+.ps-foot .btn{flex:1}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .tp[data-drag]{touch-action:manipulation}
 /* Celular na quadra: segurar um nome para arrastar não pode abrir o menu de
@@ -1346,6 +1384,7 @@ function viewRacha(liga){
   return viewJogo(liga,lv);
 }
 const MEDALHA=['🥇','🥈','🥉'];
+const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 /* Uma linha do pódio: quem é, o nível (quando tem) e, em baixo, o que cada
    número significa escrito por extenso — rachas, partidas e vitórias.      */
 function linhaDestaque(liga,x,i,badge){
@@ -1912,7 +1951,6 @@ function viewStats(liga){
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
   const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0};
-  const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const av=pid=>`<span class="av">${esc(iniciais(nameOf(liga,pid)))}</span>`;
 
   /* --- a liga no período --- */
@@ -2985,50 +3023,57 @@ const A={
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
     const role=el.dataset.r==='G'?'G':el.dataset.r==='L'?'L':(S.ui.rankRole==='G'?'G':'L');
-    const tr=rt(p,role),ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w;
-    openSheet(`<h2>${esc(p.name)}</h2>
-      ${ver?`<div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <span>${temPatente(p,'L')?patBadge(l,p.L.rank,'big solid')+'<span class="tiny muted"> linha</span>'
-          :'<span class="tiny muted">sem nível na linha</span>'}</span>
-        <span>${temPatente(p,'G')?patBadge(l,p.G.rank,'big')+'<span class="tiny muted"> 🧤 gol</span>'
-          :'<span class="tiny muted">🧤 sem nível no gol</span>'}</span>
-      </div>`:''}
-      ${calibrando(l,p,tr)?`<div class="tiny" style="margin-bottom:10px"><span class="prov">CALIBRANDO ${role==='G'?'no gol':'na linha'} · ${tr.sessions||0}/${l.cfg.calRachas} rachas · ${tr.games}/${l.cfg.calGames} partidas</span></div>`:''}
-      <div class="stat" style="margin-bottom:8px">
+    const tr=rt(p,role),ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,adm=souAdmin(l),edt=souEditor(l);
+    const corAv=ver&&temPatente(p,'L')?patColor(p.L.rank):ver&&temPatente(p,'G')?patColor(p.G.rank):'var(--mute)';
+    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=temPatente(p,r);
+      return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
+        <span class="k">${rotulo}</span>
+        ${tem?patBadge(l,t.rank,'big'+(r==='L'?' solid':'')):'<span class="none">sem nível</span>'}
+        ${tem?`<div class="best">${calibrando(l,p,t)?`calibrando · ${t.sessions||0}/${l.cfg.calRachas} rachas`
+          :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
+      </button>`};
+    openSheet(`
+      <div class="ps-hd">
+        <div class="avatar" style="--pc:${corAv}">${esc(iniciais(p.name))}</div>
+        <div style="min-width:0;flex:1">
+          <h2><span>${esc(p.name)}</span>${edt?`<button class="ico" data-a="renamePlayer" data-id="${p.id}" title="renomear" aria-label="renomear">✎</button>`:''}</h2>
+          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}${p.gk?' · 🧤':''}</div>
+        </div>
+      </div>
+      ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
+      <div class="stat">
         <div><b class="num">${tot}</b><span>partidas</span></div>
         <div><b class="num">${tot?Math.round(vit/tot*100):0}%</b><span>vitórias</span></div>
         <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
       </div>
-      <div class="tiny muted" style="margin-bottom:14px">Linha: ${p.L.w}V · ${p.L.d}E · ${p.L.l}D em ${p.L.games} · Gol: ${p.G.w}V · ${p.G.d}E · ${p.G.l}D em ${p.G.games}
-        · ${p.sessions||0} racha(s)${ver?' · melhor: '+esc(rankLabel(l,Math.max(p.L.peak||0,p.L.rank)))+' na linha':''}</div>
-      ${ver&&souAdmin(l)?`<div class="k" style="margin-bottom:8px">Corrigir nível (admin)</div>
-      <div class="row" style="gap:6px;margin-bottom:8px">
-        <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="pSheet" data-id="${p.id}" data-r="L" style="flex:1">Linha</button>
-        <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="pSheet" data-id="${p.id}" data-r="G" style="flex:1">🧤 Goleiro</button>
+      ${ver&&adm?`<div class="ps-panel">
+        <div class="row"><div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div><div class="sp tiny muted">toque no cartão acima para trocar</div></div>
+        <div class="ladder4">
+          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(tr.rank)===k?'on':''}" style="--pc:${PATC[k]}" data-a="setRank" data-id="${p.id}" data-r="${role}" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
+        </div>
+        <div class="step">
+          <button class="btn ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="-1" aria-label="uma divisão abaixo">−</button>
+          <div class="cur">${esc(rankLabel(l,tr.rank))}</div>
+          <button class="btn ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="1" aria-label="uma divisão acima">+</button>
+        </div>
+      </div>`:''}
+      <div style="height:6px"></div>
+      <div class="trow">
+        <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
+        <button class="sw ${p.gk?'on':''}" data-a="togGkP" data-id="${p.id}" role="switch" aria-checked="${p.gk?'true':'false'}" aria-label="costuma ir ao gol"></button>
       </div>
-      <div class="ladder">
-        ${l.cfg.patNames.map((n,i)=>`<button class="btn sm ${patOf(tr.rank)===i?'pri':'ghost'}" data-a="setRank" data-id="${p.id}" data-r="${role}" data-s="${i*3+1}"
-          style="flex-direction:column;line-height:1.2;padding:9px 5px;font-size:11px">${esc(n)}</button>`).join('')}
+      <div class="trow">
+        <div class="lbl">Conta<small>${p.owner?'vinculada a <b>@'+esc(p.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
+        ${p.owner?(p.owner===S.me.name||adm?`<button class="btn sm ghost" data-a="unclaim" data-id="${p.id}">desvincular</button>`:'')
+          :`<button class="btn sm pri" data-a="claim" data-id="${p.id}">Sou eu</button>`}
       </div>
-      <div class="row" style="gap:6px;margin:10px 0 4px">
-        <button class="btn sm ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="-1">− divisão</button>
-        <button class="btn sm ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="1">+ divisão</button>
-        <button class="btn sm ghost sp" data-a="togGkP" data-id="${p.id}">${p.gk?'Não costuma ir ao gol':'Costuma ir ao gol'}</button>
-      </div>`:`<div class="row" style="gap:6px;margin:10px 0 4px">
-        <button class="btn sm ghost sp" data-a="togGkP" data-id="${p.id}">${p.gk?'Não costuma ir ao gol':'Costuma ir ao gol'}</button></div>`}
-      <div class="hr"></div>
-      <div class="k" style="margin-bottom:8px">Conta</div>
-      ${p.owner?`<div class="tiny" style="margin-bottom:10px">Perfil de <b>${esc(p.owner)}</b>
-          ${p.owner===S.me.name||souAdmin(l)?`<button class="btn sm ghost" style="margin-left:8px" data-a="unclaim" data-id="${p.id}">desvincular</button>`:''}</div>`
-        :`<button class="btn sm wide ghost" data-a="claim" data-id="${p.id}" style="margin-bottom:10px">Este perfil sou eu</button>`}
-      <div class="k" style="margin:12px 0 8px">Permissão</div>
-      ${souAdmin(l)?`<div class="row" style="gap:5px;flex-wrap:wrap">
-        ${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
-          .map(x=>`<button class="btn sm ${p.role===x[0]?'pri':'ghost'}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
-      </div>`:`<div class="tiny muted">${{admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'}[p.role]||'Jogador'} — só o admin muda permissões.</div>`}
-      <div class="hr"></div>
-      ${souEditor(l)?`<button class="btn wide ghost" data-a="renamePlayer" data-id="${p.id}" style="margin-bottom:8px">Renomear</button>`:''}
-      <button class="btn wide danger" data-a="delPlayer" data-id="${p.id}">Remover jogador</button>`);
+      <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="lbl">Permissão${adm?'':'<small>só o admin muda</small>'}</div>
+        ${adm?`<div class="seg">${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
+            .map(x=>`<button class="${p.role===x[0]?'on':''}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>`
+          :`<div class="tiny">${PAPEL[p.role]||'Jogador'}</div>`}
+      </div>
+      ${edt?`<div class="ps-foot"><button class="btn danger ghost" data-a="delPlayer" data-id="${p.id}">Remover jogador</button></div>`:''}`);
   },
   renamePlayer(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
