@@ -227,7 +227,7 @@ vive no topo da aba **Jogadores** (ex-Patentes), acima da escada — é a mesma 
 
 ### D-24 · Os níveis são metais, e na interface "patente" se chama "nível"
 **28/08/2026.** Escada padrão: **Ferro · Bronze · Prata · Ouro · Diamante** — quem entra nasce
-**Prata 2**, no meio. As cores acompanham os metais. Liga com qualquer escada antiga de fábrica
+**Prata 2**, no meio (revisto em D-25: Prata 1). As cores acompanham os metais. Liga com qualquer escada antiga de fábrica
 (Iniciante…, Raiz…, Bronze…Platina) migra sozinha; nome editado à mão fica.
 **Por quê:** "Iniciante" e "Promessa" descrevem quem está começando — e a base da escada é cheia de
 gente que joga há vinte anos. Metal é um *rank*, não um adjetivo: Ferro não diz nada sobre idade,
@@ -238,6 +238,21 @@ sendo o termo interno (código e documentação), porque é o nome do conceito, 
 **Descartado:** Raiz · Boleiro · Titular · Destaque · Craque; Bronze · Prata · Ouro · Platina · Diamante
 (entrada em Ouro 2, alto demais); "Lata" na base (é o único metal que diz "ruim").
 **Onde:** `defCfg().patNames`, `PATSHORT`, `PATC_*`, `normalize` · Ajustes → Nomes dos níveis.
+
+### D-25 · Quatro níveis: sai o Diamante
+**28/08/2026.** Escada padrão: **Ferro · Bronze · Prata · Ouro** — 4 níveis × 3 divisões = 12 degraus,
+**1100–1899, centrada em 1500**. Quem entra (1500) nasce **Prata 1**; Ouro 3 é o topo e segura tudo acima de 1900.
+**Por quê:** num racha de 15–20 pessoas o quinto nível ficava vazio ou com uma pessoa só — o Diamante
+virava um troféu isolado em vez de uma faixa. Com quatro, cada nível tem gente e a escada inteira se
+lê num relance. O passo de 200 pontos (75% de vitória esperada) fica. A base subiu de 1000 para 1100
+porque o Elo é soma zero: a média da liga fica cravada perto da entrada (1500), e a escada antiga
+tinha 500 pontos abaixo e 300 acima — Ouro encheria e Ferro ficaria vazio. Centrada, cada nível
+significa uma distância da média: Bronze/Prata = um pouco abaixo/acima, Ferro/Ouro = muito.
+Entrar em Prata 1 (a fronteira) em vez de Prata 2 é consequência, e até ajuda: a primeira noite já
+diz de que lado da média a pessoa está.
+**Migração:** liga com 5 nomes perde o quinto; rank/peak acima de 11 são reclampados no `fixTrack`, e o
+recálculo do zero reposiciona todo mundo. Nome editado à mão nos quatro primeiros fica.
+**Onde:** `BASE=1100`, `TOP=11`, `PATC_*`, `PATSHORT`, `defCfg().patNames`, `normalize`, `fixTrack`.
 
 ## Como registrar uma decisão nova
 

@@ -115,14 +115,14 @@ time ou da fila. **Racha real não obedece fila; obedece o que a galera combinou
 ## 5. Patente: uma por valência, e só se jogou
 
 - Cada pessoa tem **duas patentes independentes**: uma de **linha** e uma de **goleiro**.
-- **Quem nunca jogou numa das duas simplesmente não tem patente ali.** O cara é Diamante na linha e nunca
+- **Quem nunca jogou numa das duas simplesmente não tem patente ali.** O cara é Ouro na linha e nunca
   pegou no gol? Ele não tem patente de goleiro — não aparece na escada de goleiro, e a ficha dele diz
   *"sem patente no gol"*.
 - **Se ele for para o gol no meio do jogo sem ter patente**, entra valendo o **nível de entrada padrão**
   (o mesmo de quem acabou de ser cadastrado) e começa a construir a patente de goleiro dali em diante,
   em calibração. O contrário vale igual: goleiro que resolve jogar na linha.
-- O palpite do cadastro vale **só para a valência em que a pessoa vai jogar**. Cadastrar um Diamante de linha
-  não faz dele um Diamante no gol.
+- O palpite do cadastro vale **só para a valência em que a pessoa vai jogar**. Cadastrar um Ouro de linha
+  não faz dele um Ouro no gol.
 
 ---
 

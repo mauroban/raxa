@@ -194,3 +194,53 @@ grant execute on function public.create_league(text, jsonb)       to authenticat
 grant execute on function public.join_league(text)                to authenticated;
 grant execute on function public.save_league(uuid, jsonb, bigint) to authenticated;
 grant execute on function public.leave_league(uuid)               to authenticated;
+
+-- ------------------------------------------------ contas da liga (admin) ---
+-- A policy members_read só mostra o próprio vínculo. O admin precisa ver
+-- TODAS as contas que entraram — inclusive as que ainda não vincularam um
+-- jogador — para vincular, criar jogador ou remover. Quem é admin vem do
+-- documento da liga (mesma regra do cliente: dono, ou jogador vinculado com
+-- role=admin; enquanto ninguém vinculou, todo membro é admin).
+create or replace function public.is_league_admin(lid uuid)
+returns boolean language plpgsql security definer stable set search_path = public as $fn$
+declare l public.leagues; me text;
+begin
+  if auth.uid() is null then return false; end if;
+  if not public.is_member(lid) then return false; end if;
+  select * into l from public.leagues where id = lid;
+  if not found then return false; end if;
+  if l.owner_id = auth.uid() then return true; end if;
+  select username into me from public.profiles where id = auth.uid();
+  if not exists (select 1 from jsonb_array_elements(coalesce(l.data->'players','[]'::jsonb)) p
+                 where coalesce(p->>'owner','') <> '') then
+    return true;
+  end if;
+  return exists (select 1 from jsonb_array_elements(coalesce(l.data->'players','[]'::jsonb)) p
+                 where p->>'owner' = me and p->>'role' = 'admin');
+end $fn$;
+
+create or replace function public.league_accounts(p_id uuid)
+returns table(user_id uuid, username text, joined_at timestamptz, is_owner boolean)
+language sql security definer stable set search_path = public as $fn$
+  select m.user_id, coalesce(pr.username, '?'), m.joined_at, (l.owner_id = m.user_id)
+  from public.league_members m
+  join public.leagues l on l.id = m.league_id
+  left join public.profiles pr on pr.id = m.user_id
+  where m.league_id = p_id and public.is_league_admin(p_id)
+  order by m.joined_at;
+$fn$;
+
+-- Tira uma conta da liga. O jogador (e o histórico) fica; só o acesso sai.
+create or replace function public.remove_member(p_id uuid, p_user uuid)
+returns void language plpgsql security definer set search_path = public as $fn$
+declare l public.leagues;
+begin
+  if not public.is_league_admin(p_id) then raise exception 'so o admin remove contas'; end if;
+  select * into l from public.leagues where id = p_id;
+  if l.owner_id = p_user then raise exception 'o dono da liga nao pode ser removido'; end if;
+  delete from public.league_members where league_id = p_id and user_id = p_user;
+end $fn$;
+
+grant execute on function public.is_league_admin(uuid)        to authenticated;
+grant execute on function public.league_accounts(uuid)        to authenticated;
+grant execute on function public.remove_member(uuid, uuid)    to authenticated;

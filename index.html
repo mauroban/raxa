@@ -477,18 +477,20 @@ const RANK_MARGIN=13, PROTECT=3, CAL_GAMES=25, CAL_RACHAS=5;
 const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.cfg.matchMode:'curtas');
 
 /* ---------- escada de níveis ----------
-   5 níveis × 3 divisões = 15 degraus. Cada nível ocupa 200 pontos de
+   4 níveis × 3 divisões = 12 degraus. Cada nível ocupa 200 pontos de
    rating — o "intervalo de classe" clássico do Elo, em que o mais forte
-   vence ~75% dos confrontos. Base 1000, então Prata cobre 1400–1599 e
-   quem entra no padrão (1500) nasce Prata 2. Dentro do nível, número
-   maior é melhor: Diamante 3 é o topo da escada, Diamante 1 é o primeiro degrau.  */
-/* ferro · bronze · prata · ouro · diamante */
-const PATC_ESCURO=['#8C98A4','#D08A55','#D6DEE4','#FFC53D','#8DB8FF'];
-const PATC_CLARO =['#4F5B66','#9A5626','#66747E','#8A5B00','#2B5FCC'];
+   vence ~75% dos confrontos. Base 1100, então a escada cobre 1100–1899,
+   centrada em 1500 — a média que o Elo (soma zero) mantém para a liga.
+   Prata é 1500–1699 e quem entra no padrão (1500) nasce Prata 1: na média,
+   com 400 pontos para cada lado. Dentro do nível, número maior é melhor:
+   Ouro 3 é o topo, Ouro 1 o primeiro degrau.                              */
+/* ferro · bronze · prata · ouro */
+const PATC_ESCURO=['#8C98A4','#D08A55','#D6DEE4','#FFC53D'];
+const PATC_CLARO =['#4F5B66','#9A5626','#66747E','#8A5B00'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
-const PATSHORT=['FER','BRO','PRA','OUR','DIA'];
+const PATSHORT=['FER','BRO','PRA','OUR'];
 const DIVS=['1','2','3'];
-const BASE=1000, STEP=200/3, TOP=14;
+const BASE=1100, STEP=200/3, TOP=11;
 const stepOf=e=>clamp(Math.floor((e-BASE)/STEP),0,TOP);
 const stepMin=s=>BASE+s*STEP;
 const stepMid=s=>Math.round(BASE+(s+.5)*STEP);
@@ -504,7 +506,7 @@ function defCfg(){return{
   startElo:1500, calGames:CAL_GAMES, calRachas:CAL_RACHAS,
   /* nomes que falam do papel no time, não de tempo de casa: quem joga há 20
      anos e é fraco não é "iniciante" nem "promessa" — é raiz. Editáveis por liga. */
-  patNames:['Ferro','Bronze','Prata','Ouro','Diamante'],
+  patNames:['Ferro','Bronze','Prata','Ouro'],
   rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
   stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
@@ -532,7 +534,9 @@ function fixTrack(t,e){
   if(typeof t.elo!=='number')t.elo=e;
   if(typeof t.base!=='number')t.base=t.elo;
   if(typeof t.rank!=='number')t.rank=stepOf(t.elo);
+  t.rank=clamp(t.rank,0,TOP);          // escada pode ter encolhido desde a gravação
   if(typeof t.peak!=='number')t.peak=t.rank;
+  t.peak=clamp(t.peak,0,TOP);
   if(!Array.isArray(t.form))t.form=[];
   ['protect','games','w','l','d','sessions'].forEach(k=>{if(typeof t[k]!=='number')t[k]=0});
   return t;
@@ -572,9 +576,11 @@ function normalize(st){
   st.ligas.forEach(l=>{
     const d=defCfg();
     l.cfg=Object.assign({},d,l.cfg||{});
-    if(!Array.isArray(l.cfg.patNames)||l.cfg.patNames.length!==5)l.cfg.patNames=d.patNames.slice();
+    if(!Array.isArray(l.cfg.patNames))l.cfg.patNames=d.patNames.slice();
     /* liga que ainda usa os nomes antigos de fábrica ganha os novos; nome editado à mão fica */
-    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
+    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante','Ferro|Bronze|Prata|Ouro|Diamante'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
+    /* escada encolheu de 5 para 4 níveis: o quinto nome some, quem estava lá vira o topo (rank é reclampado no fixTrack) */
+    if(l.cfg.patNames.length!==4)l.cfg.patNames=l.cfg.patNames.slice(0,4).concat(d.patNames.slice(l.cfg.patNames.length)).slice(0,4);
     /* a variação de nível é a mesma em toda liga: liga antiga com "estabilidade"
        ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */
     l.cfg.rankMargin=RANK_MARGIN;l.cfg.protectMatches=PROTECT;
@@ -1268,6 +1274,8 @@ function meuPapel(liga){
   return liga.players.some(p=>p.owner)?'lancador':'admin';
 }
 const souAdmin=liga=>meuPapel(liga)==='admin';
+/* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
+const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${PATC[patOf(step)]}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -1778,7 +1786,7 @@ function todayBlock(liga,lv){
 /* ---------- níveis ---------- */
 function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
-  return membrosCard(liga)+viewEscada(liga);
+  return membrosCard(liga)+contasCard(liga)+viewEscada(liga);
 }
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
@@ -2123,6 +2131,7 @@ function viewHist(liga){
    só um nome no cadastro — alguém lança por ele. Tocar abre a ficha, onde o
    admin muda o papel.                                                        */
 const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
+let contasCard=liga=>'';   // o backend sobrepõe (contas da liga, só para o admin)
 const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
 function membrosCard(liga){
   const eu=euId(liga),meu=meuPapel(liga),adm=souAdmin(liga);
@@ -2844,7 +2853,7 @@ const A={
   },
   fixResult(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
-    if(!souAdmin(l))return toast('Só o admin corrige resultado');
+    if(!souEditor(l))return toast('Só admin ou editor corrige resultado');
     m.result=el.dataset.r==='draw'?'draw':+el.dataset.r;
     /* a correcao vale para o trecho que fechou a partida — os trechos anteriores
        ja tinham vencedor proprio, cada um com o seu placar                     */
@@ -3619,6 +3628,100 @@ Object.assign(A,{
       const nome=(o.name||'Liga')+' (importada)';
       closeSheet();createLeague(nome,o).then(()=>toast('Liga importada'));
     }catch(e){toast('JSON inválido')}
+  }
+});
+
+/* ---------- contas da liga (só o admin) ----------
+   league_members só mostra o próprio vínculo pela RLS; o admin lista todas as
+   contas via RPC (league_accounts). Conta sem jogador é o caso que ficava
+   invisível: aqui o admin vincula a um perfil sem dono, cria um jogador com
+   o nome da conta ou tira a conta da liga.                                  */
+const ACC={};                      // por liga: {at, lista:[{user_id,username,joined_at,is_owner}]}
+const ACC_TTL=30000;
+async function loadAccounts(id){
+  if(!sb||!ME)return;
+  const c=ACC[id];
+  if(c&&c.carregando)return;
+  ACC[id]=Object.assign({},c||{lista:null},{carregando:true});
+  const {data,error}=await sb.rpc('league_accounts',{p_id:id});
+  ACC[id]={at:Date.now(),lista:error?((c&&c.lista)||[]):(data||[]),erro:error?traduz(error):null};
+  if(!ocupado())render();
+}
+contasCard=function(liga){
+  if(!sb||!ME||!souAdmin(liga))return '';
+  const c=ACC[liga.id];
+  if(!c||(!c.carregando&&Date.now()-c.at>ACC_TTL))setTimeout(()=>loadAccounts(liga.id),0);
+  if(!c||!c.lista)return `<div class="card"><div class="k">Contas na liga</div><div class="tiny muted">Buscando…</div></div>`;
+  const semJog=c.lista.filter(a=>!liga.players.some(p=>p.owner===a.username));
+  const comJog=c.lista.filter(a=>liga.players.some(p=>p.owner===a.username));
+  const linha=a=>{const p=liga.players.find(x=>x.owner===a.username);
+    return `<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
+      <div style="min-width:0;flex:1"><div class="nm">@${esc(a.username)}${a.user_id===ME.id?' <span class="tiny muted">(você)</span>':''}</div>
+        <div class="meta"><span class="tiny ${p?'muted':''}" ${p?'':'style="color:var(--gold)"'}>${p?'jogador: '+esc(p.name):'sem jogador vinculado'}</span></div></div>
+      ${a.is_owner?'<span class="pat" style="--pc:var(--gold)">Dono</span>':''}
+      <div style="color:var(--mute);font-size:18px">›</div></div>`};
+  return `<div class="card">
+    <div class="row" style="margin-bottom:6px"><div class="k">Contas na liga</div>
+      <div class="sp tiny muted num">${c.lista.length} conta${c.lista.length===1?'':'s'}${semJog.length?' · '+semJog.length+' sem jogador':''}</div></div>
+    <div class="tiny muted" style="margin-bottom:10px">Só você (admin) vê esta lista. Toque numa conta para vincular a um jogador, criar o jogador dela ou tirá-la da liga.</div>
+    ${c.erro?`<div class="tiny" style="color:var(--red);margin-bottom:8px">${esc(c.erro)}</div>`:''}
+    ${semJog.length||comJog.length?`<div class="card" style="padding:0;margin:0">${semJog.map(linha).join('')}${comJog.map(linha).join('')}</div>`
+      :'<div class="tiny muted">Só você está na liga por enquanto.</div>'}
+  </div>`;
+};
+
+Object.assign(A,{
+  accSheet(el){
+    const l=L(),c=ACC[l.id];if(!c||!c.lista)return;
+    const a=c.lista.find(x=>x.user_id===el.dataset.u);if(!a)return;
+    if(!souAdmin(l))return toast('Só o admin gerencia contas');
+    const p=l.players.find(x=>x.owner===a.username);
+    const livres=l.players.filter(x=>!x.owner).sort((x,y)=>x.name.localeCompare(y.name));
+    openSheet(`<h2>@${esc(a.username)}</h2>
+      <div class="tiny muted" style="margin-bottom:12px">${a.is_owner?'Dono da liga · ':''}entrou em ${new Date(a.joined_at).toLocaleDateString('pt-BR')}</div>
+      <div class="k" style="margin-bottom:8px">Jogador</div>
+      ${p?`<div class="tiny" style="margin-bottom:10px">Vinculada a <b>${esc(p.name)}</b> (${PAPEL[p.role]||'Lançador'})
+          <button class="btn sm ghost" style="margin-left:8px" data-a="pSheet" data-id="${p.id}">abrir ficha</button>
+          <button class="btn sm ghost" style="margin-left:4px" data-a="accUnlink" data-id="${p.id}">desvincular</button></div>`
+        :`<div class="tiny muted" style="margin-bottom:10px">Essa conta ainda não é nenhum jogador. Escolha o perfil dela na lista, ou crie um novo com o nome da conta.</div>
+          ${livres.length?`<div class="card" style="padding:0;margin:0 0 10px;max-height:40vh;overflow:auto">${livres.map(x=>`<div class="rank" data-a="accLink" data-u="${esc(a.user_id)}" data-id="${x.id}">
+              <div style="min-width:0;flex:1"><div class="nm">${esc(x.name)}</div><div class="meta"><span class="tiny muted">${x.L.games+x.G.games} partidas · sem dono</span></div></div>
+              <span class="tiny" style="color:var(--cyan)">vincular</span></div>`).join('')}</div>`
+            :'<div class="tiny muted" style="margin-bottom:10px">Nenhum jogador sem dono no cadastro.</div>'}
+          <button class="btn wide ghost" data-a="accCreate" data-u="${esc(a.user_id)}" style="margin-bottom:10px">+ Criar jogador “${esc(a.username)}”</button>`}
+      <div class="hr"></div>
+      ${a.is_owner?'<div class="tiny muted">O dono da liga não pode ser removido.</div>'
+        :`<button class="btn wide danger" data-a="accRemove" data-u="${esc(a.user_id)}">Tirar da liga</button>
+          <div class="tiny muted" style="margin-top:6px">O jogador e o histórico ficam; só o acesso sai.</div>`}`);
+  },
+  accLink(el){
+    const l=L(),a=(ACC[l.id].lista||[]).find(x=>x.user_id===el.dataset.u),p=P(l,el.dataset.id);
+    if(!a||!p)return;
+    if(!souAdmin(l))return toast('Só o admin vincula contas');
+    l.players.forEach(x=>{if(x.owner===a.username)x.owner=null});   // uma conta, um jogador
+    p.owner=a.username;
+    closeSheet();save();render();toast(p.name+' agora é @'+a.username);
+  },
+  accUnlink(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souAdmin(l))return toast('Só o admin desvincula');
+    if(p.owner===S.me.name)return toast('Para o seu próprio perfil, use "desvincular" na ficha');
+    p.owner=null;closeSheet();save();render();toast('Conta desvinculada');
+  },
+  accCreate(el){
+    const l=L(),a=(ACC[l.id].lista||[]).find(x=>x.user_id===el.dataset.u);if(!a)return;
+    if(!souAdmin(l))return toast('Só o admin cria jogador para conta');
+    const p=mkPlayer(l,a.username,l.cfg.startElo,false);
+    p.owner=a.username;l.players.push(p);
+    closeSheet();save();render();A.pSheet({dataset:{id:p.id}});toast('Jogador criado — ajuste o nível na ficha');
+  },
+  async accRemove(el){
+    const l=L(),a=(ACC[l.id].lista||[]).find(x=>x.user_id===el.dataset.u);if(!a)return;
+    if(!confirm('Tirar @'+a.username+' da liga? O jogador e o histórico ficam.'))return;
+    const {error}=await sb.rpc('remove_member',{p_id:l.id,p_user:a.user_id});
+    if(error)return toast('Não deu: '+traduz(error));
+    ACC[l.id].lista=ACC[l.id].lista.filter(x=>x.user_id!==a.user_id);
+    closeSheet();render();toast('@'+a.username+' saiu da liga');
   }
 });
 

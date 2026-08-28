@@ -34,7 +34,7 @@ A regra de ouro do produto:
 | Pessoa dentro da liga | **Jogador** | Perfil com patente, estatísticas e histórico. |
 | Conta de verdade | **Usuário** | Login que pode *assumir* perfis de Jogador em Ligas diferentes. |
 
-**Por que "Liga" e não "racha"?** Porque o nível não pertence ao evento, pertence ao grupo de pessoas. Se você joga terça no society e quinta no futsal com **as mesmas pessoas**, é a mesma Liga com dois rachas por semana. Se a galera de quinta é outra, é **outra Liga** — e o mesmo jogador terá patentes independentes nas duas. Isso é proposital: Diamante na pelada do trabalho não é Diamante no fut7 competitivo de domingo.
+**Por que "Liga" e não "racha"?** Porque o nível não pertence ao evento, pertence ao grupo de pessoas. Se você joga terça no society e quinta no futsal com **as mesmas pessoas**, é a mesma Liga com dois rachas por semana. Se a galera de quinta é outra, é **outra Liga** — e o mesmo jogador terá patentes independentes nas duas. Isso é proposital: Ouro na pelada do trabalho não é Ouro no fut7 competitivo de domingo.
 
 *Alternativas descartadas: Panela, Circuito, Roda, Comunidade, Grupo.*
 
@@ -56,19 +56,18 @@ O que o app mostra é sempre: **patente + divisão**, forma recente (V/D/E), vit
 
 ### 3.2 A escada
 
-**5 patentes × 3 divisões = 15 degraus.** Dentro de cada patente, **número maior é melhor**: a divisão 1 é a entrada e a 3 é o topo. Diamante 3 é o degrau mais alto da escada; Ferro 1, o mais baixo.
+**4 patentes × 3 divisões = 12 degraus.** Dentro de cada patente, **número maior é melhor**: a divisão 1 é a entrada e a 3 é o topo. Ouro 3 é o degrau mais alto da escada; Ferro 1, o mais baixo.
 
 | Patente | Divisões | Cor |
 |---|---|---|
-| **Diamante** | 1 · 2 · 3 | diamante (azul-gelo) |
 | **Ouro** | 1 · 2 · 3 | ouro |
 | **Prata** | 1 · 2 · 3 | prata |
 | **Bronze** | 1 · 2 · 3 | bronze |
 | **Ferro** | 1 · 2 · 3 | ferro (cinza-escuro) |
 
-Os nomes seguem uma progressão que qualquer um entende sem explicação — *iniciante → promessa → titular → destaque → craque* — e as cores seguem a escada que todo mundo já conhece de jogo: cinza, verde, azul, roxo, ouro. Ninguém precisa decorar qual patente é maior.
+Os nomes seguem os metais — *ferro → bronze → prata → ouro* — e as cores acompanham. Ninguém precisa decorar qual patente é maior.
 
-Os nomes são **editáveis por Liga** — cada galera batiza a sua escada. As cores e a estrutura de 15 degraus são fixas.
+Os nomes são **editáveis por Liga** — cada galera batiza a sua escada. As cores e a estrutura de 12 degraus são fixas.
 
 ### 3.3 Onde ficam os cortes (e por quê)
 
@@ -78,17 +77,16 @@ Então:
 
 - **Cada patente = 200 pontos de rating.** Diferença de uma patente ≈ 75% de vitória esperada. Diferença de duas ≈ 91%.
 - **Cada divisão = ~67 pontos.** Diferença de uma divisão ≈ 60% de vitória esperada — perceptível, mas não gritante.
-- A escada cobre 1000–2000, com **Titular ocupando 1400–1599** e o valor de entrada padrão (1500) caindo em **Prata 2**, bem no meio.
+- A escada cobre 1100–1899, **centrada em 1500**. Como o Elo é soma zero, a média da liga fica sempre perto do valor de entrada — então o meio da escada precisa ser a média, ou um nível enche e o outro fica vazio. O valor de entrada padrão (1500) cai em **Prata 1**: na média, com 400 pontos (dois níveis) para cada lado; a primeira derrota já o coloca abaixo dela, a primeira vitória acima.
 
 | Patente | Faixa interna de rating |
 |---|---|
-| Diamante | ≥ 1800 |
-| Ouro | 1600 – 1799 |
-| Prata | 1400 – 1599 |
-| Bronze | 1200 – 1399 |
-| Ferro | < 1200 |
+| Ouro | ≥ 1700 |
+| Prata | 1500 – 1699 |
+| Bronze | 1300 – 1499 |
+| Ferro | < 1300 |
 
-Fora dessa faixa o jogador fica preso na ponta: rating muito baixo é Ferro 1, muito alto é Diamante 3.
+Fora dessa faixa o jogador fica preso na ponta: rating muito baixo é Ferro 1, muito alto é Ouro 3.
 
 Essa tabela é documentação de engenharia. **Ela não é exposta no app.**
 
@@ -149,7 +147,7 @@ Ordem de grandeza no padrão de racha curto (K=22, times parelhos): mover uma **
 
 ### 3.6 Entrada de um jogador novo
 
-Quem cadastra escolhe **a patente percebida** (um toque: Bronze … Diamante, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
+Quem cadastra escolhe **a patente percebida** (um toque: Ferro … Ouro, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
 
 O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é quase o triplo (60 no lugar de 22 no racha curto, 70 no lugar de 30 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
 
@@ -163,8 +161,8 @@ O palpite inicial de quem conhece o jogador **já é melhor que sorteio no olho*
 
 O caso real: **2 ou 3 goleiros para 12 a 16 jogadores de linha**. Eles não pertencem a um time — trocam de lado o tempo todo. E dá para ser excelente em um papel e ruim no outro.
 
-- **Todo jogador tem duas patentes: uma de linha e uma de goleiro.** São independentes: Diamante 2 na linha e Bronze 1 no gol é um resultado normal, não um bug. A aba Jogadores tem um botão para alternar entre as duas escadas.
-- **Quem nunca jogou numa das duas não tem patente ali.** Diamante de linha que nunca pegou no gol não aparece na escada de goleiro, e a ficha dele diz *sem patente no gol*. Se ele for para o gol no meio do jogo, entra valendo o **nível de entrada padrão** e começa a construir a patente de goleiro dali — em calibração, como todo mundo. O palpite do cadastro vale só para a valência em que a pessoa vai jogar.
+- **Todo jogador tem duas patentes: uma de linha e uma de goleiro.** São independentes: Ouro 2 na linha e Bronze 1 no gol é um resultado normal, não um bug. A aba Jogadores tem um botão para alternar entre as duas escadas.
+- **Quem nunca jogou numa das duas não tem patente ali.** Ouro de linha que nunca pegou no gol não aparece na escada de goleiro, e a ficha dele diz *sem patente no gol*. Se ele for para o gol no meio do jogo, entra valendo o **nível de entrada padrão** e começa a construir a patente de goleiro dali — em calibração, como todo mundo. O palpite do cadastro vale só para a valência em que a pessoa vai jogar.
 - **A patente que anda é a do papel que a pessoa fez naquele trecho.** Quem defendeu move a de goleiro; quem estava na linha move a de linha. Quem foi improvisado no gol por 4 minutos move a de goleiro nesses 4 minutos, e a de linha no resto.
 - **O cadastro não define goleiro — o racha define.** Na tela de presença, além de tocar em quem chegou, você toca no 🧤 de quem **veio para ser goleiro hoje**. Isso muda de racha para racha, e muda no meio do racha: o slot 🧤 da tela da partida aceita qualquer um da escalação.
 - O que existe no cadastro (`costuma ir ao gol`) é só uma **sugestão**: ao marcar presença, essa pessoa já entra com o 🧤 aceso, e você desmarca se hoje ela veio para a linha.
@@ -456,13 +454,15 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 | Papel | Pode |
 |---|---|
 | **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, corrigir patente, dar papéis |
-| **Editor** | Cadastrar jogadores, montar times, corrigir o resultado de partidas (anular e apagar são só do admin) |
+| **Editor** | Cadastrar jogadores, montar times e corrigir o resultado de partidas (corrigir nível, anular, revisar contestação e apagar são só do admin) |
 | **Lançador** | Criar rachas e lançar resultados (padrão de todo mundo) |
 | **Jogador** | Visualiza ranking, histórico e as próprias estatísticas; pode contestar |
 
 O padrão de uma Liga nova é **todo mundo Lançador** — na prática quem está com o celular na mão é quem lança. O admin restringe só se der problema.
 
-**Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. Os papéis já são atribuíveis, mas **em v1 a visibilidade das patentes é a única regra de papel realmente aplicada**; o resto só vira regra de verdade com o backend.
+**Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin). Lançador e Jogador são, por enquanto, só rótulos — todo mundo lança.
+
+**Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Só o admin vê a lista de contas (card "Contas na liga", aba Jogadores), e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
 
 ---
 
@@ -542,7 +542,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 4. **A unidade de medida é o trecho, não a partida.** Substituição muda o nível dos dois lados, então cada formação em campo conta como uma partida própria — como o +/- da NBA. O que o seu time fez enquanto você estava no banco não é problema seu. Trecho de menos de 4 minutos cortado por troca é descartado em vez de virar ruído.
 5. **Uma partida vale uma partida.** O peso de cada trecho é a fatia da partida que ele ocupou, então quebrar uma partida em cinco trechos não multiplica o efeito dela na patente por cinco.
 6. **Gol não move patente.** Só vitória, empate e derrota — é o que reflete o racha. Gol é estatística de vitrine.
-7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Diamante na linha e Prata no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
+7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Ouro na linha e Prata no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
 8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
 9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **5 rachas ou 25 partidas**, o que vier primeiro, e vale separado para cada uma das duas patentes.
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
@@ -551,7 +551,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 13. **O modo é do racha, não da liga.** Uma liga mistura rachas curtos e longos no mesmo histórico; cada partida carrega o próprio peso. Mudar o padrão nunca reescreve o passado. (O *formato* — 5v5, 6v6, 7v7, 11v11 — é outra coisa, e essa é da liga.)
 14. **Equilíbrio primeiro, panelinha depois.** O app tenta separar quem sempre joga junto — mas só quando isso não custa equilíbrio. Times equilibrados são o produto; misturar as duplas é o que faz a patente convergir para a pessoa em vez de para o time.
 15. **A fila é sugestão, não regra.** O app propõe o próximo confronto pelo "vencedor fica", mas trocar qualquer um dos dois times custa 2 toques. Racha real não obedece fila.
-16. **Número maior é melhor dentro da patente.** Diamante 3 é o topo, Diamante 1 é o primeiro degrau — e os nomes (Ferro → Bronze → Prata → Ouro → Diamante) se leem sem ninguém explicar.
+16. **Número maior é melhor dentro da patente.** Ouro 3 é o topo, Ouro 1 é o primeiro degrau — e os nomes (Ferro → Bronze → Prata → Ouro) se leem sem ninguém explicar.
 17. **Estatística é derivada, nunca guardada.** Duelo, parceria, presença e aproveitamento saem dos trechos na hora. Contador gravado é contador que um dia desencontra do histórico — e aí ninguém sabe qual dos dois está certo.
 18. **Ranking de aproveitamento tem piso de partidas.** Sem piso, o topo é sempre de quem jogou três vezes, e a lista inteira perde a graça.
 19. **Time é sempre cheio; quem sobra é a fila.** No 5v5 se joga 5 contra 5 — quadra no Brasil não tem jogo menor que isso. O app monta quantos times inteiros couberem e o resto espera de fora; time de 3 "esperando a vez" não existe. E quando um time fica curto, ele é **completado** com quem está de fora, nunca compensado sentando alguém do outro lado. O app sugere quem completa; quem escolhe é quem está com o celular.
