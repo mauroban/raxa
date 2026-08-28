@@ -456,6 +456,20 @@ os cartões e parecia defeito.
 **Onde:** `index.html` (`<style>`, `NAV_TABS`, `setNav`, `drawApp`) · DOCUMENTACAO §9 (decisão 24)
 · `scripts/visual.py` ignora `.nav` na checagem de sobreposição · RNF-08.
 
+### D-41 · Menos contorno, menos texto
+**28/08/2026.** Passada de limpeza depois do D-40. Chips, botões secundários, campos e blocos
+internos deixam de ter contorno escuro e viram preenchimento suave (`--fill`); cartões perdem a
+borda (sombra de 1 px). Os textos de instrução repetidos em cada tela (como arrastar, como a fila
+gira, o que conta como partida, quem vê o quê) saem das telas de uso — presença, times, próxima
+partida, partida ao vivo, Stats, Jogadores — e fica só uma linha curta quando ela orienta uma
+ação ("Toque em quem chegou · 🧤 marca goleiro"). A explicação completa continua em Ajustes e
+na DOCUMENTACAO.
+**Por quê:** o usuário sentiu a tela poluída, e o motivo era texto demais: parágrafo explicativo
+embaixo de cada bloco, lido uma vez e ignorado para sempre.
+**Descartado:** esconder as instruções atrás de um "?" por bloco — mais um alvo em cada tela.
+**Onde:** `index.html` (`<style>`, `viewPresenca`, `viewTimes`, `viewProxima`, `viewJogo`,
+`statsBlock`, `viewStats`, `viewRanking`) · smoke continua cobrindo os textos que importam.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

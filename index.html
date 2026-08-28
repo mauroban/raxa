@@ -24,7 +24,7 @@
      papel esverdeado de quadra descoberta, tinta quase preta, giz branco.
      As cores fortes são só dos coletes: verde, vermelho, azul e amarelo.   */
   --bg:#E3E9D9; --bg2:#FFFFFF; --panel:#FFFFFF; --panel2:#EEF2E5;
-  --line:rgba(15,31,22,.13); --line2:rgba(15,31,22,.26);
+  --line:rgba(15,31,22,.10); --line2:rgba(15,31,22,.18); --fill:#F1F4EC;
   --chalk:#0F1F16; --mute:#5A6A5F; --mute2:#8E9A92;
   --onink:#F3F7EE;                 /* texto em cima da tinta (botão principal) */
   /* coletes: A verde · B vermelho · C azul · D amarelo (nomes antigos mantidos) */
@@ -42,7 +42,7 @@
 :root[data-theme="escuro"]{
   /* ---- QUADRA À NOITE: refletor, tinta vira giz ---- */
   --bg:#0B1410; --bg2:#101A15; --panel:#13201A; --panel2:#1A2820;
-  --line:rgba(230,242,232,.10); --line2:rgba(230,242,232,.20);
+  --line:rgba(230,242,232,.08); --line2:rgba(230,242,232,.16); --fill:#1A2620;
   --chalk:#ECF3EC; --mute:#93A398; --mute2:#66756C;
   --onink:#0B1410;
   --lime:#4ADE80; --lime2:#22C55E; --coral:#FF6B4A; --cyan:#6AB0FF; --white:#FFD23F;
@@ -59,10 +59,10 @@ body{background:var(--bg);color:var(--chalk);font-family:var(--body);font-size:1
 body.hasbar #app{padding-bottom:calc(var(--navh) + 92px)}
 
 h1,h2,h3{margin:0;font-family:var(--disp);font-weight:800;letter-spacing:.005em;text-transform:uppercase;line-height:1}
-.k{font-family:var(--body);text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:11px;color:var(--mute)}
+.k{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute)}
 .num{font-variant-numeric:tabular-nums}
-.muted{color:var(--mute)} .tiny{font-size:12.5px;line-height:1.45}
-.hr{height:1px;background:var(--line);margin:12px 0}
+.muted{color:var(--mute)} .tiny{font-size:12.5px;line-height:1.5}
+.hr{height:1px;background:var(--line);margin:14px 0}
 .row{display:flex;align-items:center;gap:10px}
 .sp{margin-left:auto}
 .hide{display:none!important}
@@ -77,7 +77,7 @@ button{font-family:inherit;color:inherit}
 .hdr .sub{font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brandmark{width:32px;height:32px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
   background:var(--chalk);color:var(--onink);font-family:var(--disp);font-weight:900;font-size:20px;line-height:1}
-.iconbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line2);color:var(--chalk);
+.iconbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--chalk);
   width:40px;height:40px;border-radius:11px;font-size:17px;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
 .iconbtn:active{transform:scale(.94)}
 
@@ -96,37 +96,39 @@ button{font-family:inherit;color:inherit}
 .nav button:active{opacity:.6}
 
 /* ---------- cartão ---------- */
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;
-  box-shadow:0 1px 0 rgba(15,31,22,.04)}
+.card{background:var(--panel);border:0;border-radius:var(--r);padding:14px;
+  box-shadow:0 1px 2px rgba(15,31,22,.05)}
 .card+.card{margin-top:10px}
 .empty{text-align:center;padding:34px 16px;color:var(--mute)}
 .empty .big{font-family:var(--disp);font-weight:800;font-size:26px;color:var(--chalk);margin-bottom:6px;text-transform:uppercase}
 
 /* ---------- botões ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line2);
-  background:var(--panel);color:var(--chalk);padding:0 16px;min-height:48px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid transparent;
+  background:var(--fill);color:var(--chalk);padding:0 16px;min-height:48px;
   font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;line-height:1.1;
   cursor:pointer;transition:transform .08s,filter .15s}
 .btn:active{transform:scale(.97)}
 .btn.pri{background:var(--chalk);border-color:var(--chalk);color:var(--onink)}
-.btn.ghost{background:transparent}
+.btn.ghost{background:var(--fill)}
+.card .btn.ghost,.sheet .btn.ghost{background:var(--fill)}
+.bar .btn.ghost{background:var(--panel);border-color:var(--line2)}
 .btn.wide{width:100%}
-.btn.sm{min-height:38px;padding:0 12px;font-size:13.5px;border-radius:10px}
+.btn.sm{min-height:38px;padding:0 12px;font-size:13.5px;border-radius:10px;letter-spacing:.04em}
 .btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
 .btn[disabled]{opacity:.35;pointer-events:none}
-input,textarea,select{font-family:var(--body);font-size:16px;background:var(--bg2);border:1px solid var(--line2);color:var(--chalk);
+input,textarea,select{font-family:var(--body);font-size:16px;background:var(--fill);border:1px solid transparent;color:var(--chalk);
   border-radius:11px;padding:12px 13px;width:100%;outline:none;min-height:48px}
 input:focus,textarea:focus{border-color:var(--chalk);box-shadow:0 0 0 1px var(--chalk) inset}
 label.f{display:block;margin-bottom:12px}
 label.f .k{display:block;margin-bottom:6px}
 
 /* abas dentro de conteúdo (login) e segmentos */
-.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--panel2);border:1px solid var(--line);
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--fill);border:0;
   padding:4px;border-radius:12px;margin-bottom:12px}
 .tabs button{background:transparent;border:0;color:var(--mute);font-family:var(--disp);font-weight:700;font-size:14px;
   text-transform:uppercase;letter-spacing:.05em;padding:11px 4px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .tabs button.on{background:var(--chalk);color:var(--onink)}
-.seg{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:3px}
+.seg{display:flex;gap:4px;background:var(--fill);border:0;border-radius:11px;padding:3px}
 .seg button{flex:1;border:0;background:transparent;color:var(--mute);border-radius:8px;padding:9px 4px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
 .seg button.on{background:var(--chalk);color:var(--onink)}
 
@@ -169,27 +171,27 @@ label.f .k{display:block;margin-bottom:6px}
 @media(max-width:400px){.grid{grid-template-columns:1fr}}
 .pcw{display:flex;gap:6px;min-width:0}
 .pcw .pchip{flex:1;min-width:0}
-.pchip{display:flex;align-items:center;gap:6px;padding:0 10px;min-height:50px;border-radius:12px;border:1px solid var(--line2);
-  background:var(--panel);cursor:pointer;text-align:left;color:var(--chalk);transition:background .12s,border-color .12s}
+.pchip{display:flex;align-items:center;gap:6px;padding:0 10px;min-height:50px;border-radius:12px;border:1px solid transparent;
+  background:var(--fill);cursor:pointer;text-align:left;color:var(--chalk);transition:background .12s,border-color .12s}
 .pchip:active{transform:scale(.97)}
 .pchip,.gktog{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 body.painting{touch-action:none;overflow:hidden}
 .pchip .nm{font-weight:600;font-size:15px;letter-spacing:-.01em;line-height:1.15;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pchip .pat{font-size:11px;padding:2px 5px;gap:3px}
 .pchip .tiny{font-size:11px}
-.pchip.on{background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
-.gktog{flex:0 0 auto;width:46px;min-height:50px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);
+.pchip.on{background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-color:var(--ok)}
+.gktog{flex:0 0 auto;width:46px;min-height:50px;border-radius:12px;border:1px solid transparent;background:var(--fill);
   color:var(--mute2);font-size:18px;cursor:pointer;filter:grayscale(1) opacity(.5)}
 .gktog.on{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,var(--panel));filter:none}
 .gktog:active{transform:scale(.94)}
 
 /* ---------- times como coletes ---------- */
 .teamwrap{display:grid;gap:10px}
-.team{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.team{border:0;border-radius:var(--r);overflow:hidden;background:var(--panel);box-shadow:0 1px 2px rgba(15,31,22,.05)}
 .team .hd{display:flex;align-items:center;gap:8px;padding:10px 14px;font-family:var(--disp);font-weight:800;
   text-transform:uppercase;letter-spacing:.06em;font-size:17px;color:#fff}
 .team .bd{padding:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:52px}
-.tp{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;
+.tp{display:inline-flex;align-items:center;gap:6px;background:var(--fill);border:1px solid transparent;border-radius:10px;
   padding:0 10px;min-height:38px;font-size:14px;font-weight:500;cursor:pointer;color:var(--chalk)}
 .tp small{font-size:10px;opacity:.6;font-family:var(--body);letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .tp.big{font-size:15px;padding:0 13px;min-height:46px}
@@ -197,8 +199,8 @@ body.painting{touch-action:none;overflow:hidden}
 .tp.lv.d1{background:color-mix(in srgb,var(--pc) 9%,var(--panel));border-color:color-mix(in srgb,var(--pc) 32%,var(--line))}
 .tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 55%,var(--line));background:color-mix(in srgb,var(--pc) 18%,var(--panel))}
 .tp.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
-.tp.vaga{border-style:dashed;color:var(--mute);background:transparent}
-.tp.emp{border-style:dashed}
+.tp.vaga{border-style:dashed;border-color:var(--line2);color:var(--mute);background:transparent}
+.tp.emp{border-style:dashed;border-color:var(--line2)}
 .cA{background:var(--bibA)} .cB{background:var(--bibB)} .cC{background:var(--bibC)} .cD{background:var(--bibD);color:#0F1F16!important}
 .teamtag{display:inline-block;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.06em;
   font-size:12px;padding:4px 9px;border-radius:7px;color:#fff;margin-bottom:7px}
@@ -210,8 +212,8 @@ body.painting{touch-action:none;overflow:hidden}
 .filapos{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--mute2);align-self:center;margin-right:-2px}
 .balbar{height:6px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:8px}
 .balbar i{display:block;height:100%;background:var(--ok)}
-.gkcard{border-color:color-mix(in srgb,var(--cyan) 40%,transparent)!important}
-.benchcard{border-style:dashed!important}
+.gkcard{box-shadow:inset 3px 0 0 var(--cyan)}
+.benchcard{box-shadow:none;border:1px dashed var(--line2)!important;background:transparent}
 .selbar{position:sticky;top:calc(var(--toph) + 6px);z-index:36;background:var(--chalk);color:var(--onink);border-radius:12px;
   padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-size:14px;
   box-shadow:0 8px 24px rgba(0,0,0,.25)}
@@ -227,11 +229,11 @@ body.painting{touch-action:none;overflow:hidden}
 
 /* ---------- próxima partida / escalação ---------- */
 .esc2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.esc2 .pl{display:flex;align-items:center;gap:6px;padding:0 9px;border:1px solid var(--line2);border-radius:10px;margin-top:5px;
-  font-size:14px;font-weight:500;background:var(--panel);color:var(--chalk);width:100%;text-align:left;cursor:pointer;min-height:42px;font-family:inherit}
+.esc2 .pl{display:flex;align-items:center;gap:6px;padding:0 9px;border:1px solid transparent;border-radius:10px;margin-top:5px;
+  font-size:14px;font-weight:500;background:var(--fill);color:var(--chalk);width:100%;text-align:left;cursor:pointer;min-height:42px;font-family:inherit}
 .esc2 .pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .esc2 .pl.gk{border-color:color-mix(in srgb,var(--cyan) 45%,var(--line));background:color-mix(in srgb,var(--cyan) 8%,var(--panel));margin-top:0}
-.esc2 .pl.empty{border-style:dashed;color:var(--mute);background:transparent;font-weight:400}
+.esc2 .pl.empty{border-style:dashed;border-color:var(--line2);color:var(--mute);background:transparent;font-weight:400}
 .esc2 .pl .ic{font-size:11px;color:var(--mute);flex:0 0 auto}
 .esc2 .pl .ic.sub{opacity:.7}
 .esc2 .pl.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
@@ -242,8 +244,8 @@ body.painting{touch-action:none;overflow:hidden}
 .esc2 .col>.slot{display:block;width:100%;margin-bottom:6px}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
-.slot{border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;border:1px solid var(--line2);
-  background:var(--panel);color:var(--chalk);border-top-width:5px}
+.slot{border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;border:1px solid transparent;
+  background:var(--fill);color:var(--chalk);border-top-width:5px}
 .slot .nm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:18px}
 .slot .sub{font-size:11.5px;color:var(--mute);margin-top:3px}
 .slot.a{border-top-color:var(--bibA)} .slot.b{border-top-color:var(--bibB)}
@@ -292,7 +294,7 @@ body.painting{touch-action:none;overflow:hidden}
 .goalrow .who{flex:1;text-align:left;background:transparent;border:0;color:var(--chalk);font-family:inherit;
   font-size:14.5px;padding:10px 0;min-height:44px;cursor:pointer}
 .goalrow .who.none{color:var(--mute);font-style:italic}
-.goalrow .x{width:40px;height:40px;border-radius:9px;border:1px solid var(--line2);background:transparent;
+.goalrow .x{width:40px;height:40px;border-radius:9px;border:0;background:var(--fill);
   color:var(--mute);font-size:15px;cursor:pointer;flex:0 0 auto}
 .goalrow .x:active{transform:scale(.92)}
 
@@ -332,7 +334,7 @@ body.painting{touch-action:none;overflow:hidden}
 .rachaRow .meta{font-size:12px;color:var(--mute);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap}
 
 /* ---------- destaques e números ---------- */
-.k2{font-family:var(--body);text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:11px;color:var(--mute);margin:14px 0 2px}
+.k2{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute);margin:14px 0 2px}
 .dest{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
 .dest:last-of-type{border-bottom:0}
 .dest .pos{font-size:18px;line-height:1;flex:0 0 auto}
@@ -340,7 +342,7 @@ body.painting{touch-action:none;overflow:hidden}
 .dest .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
 @media(max-width:380px){.duo{grid-template-columns:1fr}}
-.hl{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+.hl{background:var(--fill);border:1px solid transparent;border-radius:12px;padding:10px 11px}
 .hl.bad{border-color:color-mix(in srgb,var(--bad) 40%,transparent)} .hl.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
 .hl .t{font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
 .hl .n{font-family:var(--disp);font-weight:800;font-size:20px;margin:3px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
@@ -348,7 +350,7 @@ body.painting{touch-action:none;overflow:hidden}
 .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .stat.four{grid-template-columns:repeat(4,1fr)}
 .stat.four b{font-size:20px}
-.stat div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 6px}
+.stat div{background:var(--fill);border:0;border-radius:12px;padding:11px 6px}
 .stat b{font-family:var(--disp);font-weight:800;font-size:24px;display:block;line-height:1.1}
 .stat span{font-family:var(--body);font-weight:700;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
 .up{color:var(--ok)} .dn{color:var(--bad)}
@@ -386,12 +388,12 @@ body.painting{touch-action:none;overflow:hidden}
 .ved .prog i{display:block;height:100%}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tiles.four{grid-template-columns:repeat(4,1fr)}
-.tile{position:relative;overflow:hidden;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 4px 9px;text-align:center}
+.tile{position:relative;overflow:hidden;background:var(--fill);border:0;border-radius:12px;padding:13px 4px 9px;text-align:center}
 .tile::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc,var(--chalk))}
 .tile b{display:block;font-family:var(--disp);font-weight:900;font-size:26px;line-height:1;margin-bottom:5px}
 .tiles.four .tile b{font-size:22px}
 .tile span{font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);line-height:1.2;display:block}
-.mini{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+.mini{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:var(--fill);border:0;border-radius:12px;padding:10px 12px;margin-top:10px}
 .mini .tm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini .tm.r{text-align:right}
 .mini .sc{font-family:var(--disp);font-weight:900;font-size:28px;letter-spacing:.03em}
@@ -429,12 +431,12 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .ico{border:1px solid var(--line2);background:transparent;color:var(--mute);border-radius:8px;width:30px;height:30px;
   display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex:0 0 auto}
 .lv2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.lv2 button{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--chalk);cursor:pointer;position:relative}
+.lv2 button{text-align:left;background:var(--fill);border:1px solid transparent;border-radius:12px;padding:10px 12px;color:var(--chalk);cursor:pointer;position:relative}
 .lv2 button .k{margin-bottom:6px;display:block}
 .lv2 button.on{border-color:var(--chalk);box-shadow:0 0 0 1px var(--chalk) inset}
 .lv2 button .best{font-size:11px;color:var(--mute);margin-top:6px}
 .lv2 .none{font-size:13px;color:var(--mute)}
-.ps-panel{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+.ps-panel{background:var(--fill);border:0;border-radius:12px;padding:12px;margin-top:12px}
 .ps-panel .k{margin-bottom:8px}
 .ladder4{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}
 .ladder4 button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 4px 8px;color:var(--chalk);
@@ -1584,14 +1586,11 @@ function statsBlock(liga){
       <div class="sp tiny muted num">${d.nR} racha${d.nR===1?'':'s'} · ${d.partidas} partidas</div></div>
 
     ${ver?`<div class="k2" style="margin-top:0">Os melhores do racha</div>
-    <div class="tiny muted" style="margin-bottom:6px">Maior nível entre quem apareceu no período.</div>
     ${d.melhores.length?d.melhores.map((x,i)=>linhaDestaque(liga,x,i,true)).join('')
       :'<div class="tiny muted">Ninguém com nível no período ainda.</div>'}`:''}
 
     <div class="k2">Quem mais rendeu além do esperado</div>
-    <div class="tiny muted" style="margin-bottom:6px">${ver
-      ?'Vitórias acima do que o confronto pedia, já contando a dificuldade dos jogos. Mínimo de '+d.piso.rachas+' rachas e '+d.piso.jogos+' partidas.'
-      :'Quem mais venceu no período. Mínimo de '+d.piso.rachas+' rachas e '+d.piso.jogos+' partidas.'}</div>
+    <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas e ${d.piso.jogos} partidas.</div>
     ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false)).join('')
       :`<div class="tiny muted">Ainda sem gente suficiente no período.</div>`}
     <div class="hr"></div>
@@ -1636,7 +1635,7 @@ function viewPresenca(liga,lv){
   <div class="card">
     <div class="row"><div class="k">Quem chegou</div>
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
-    <div class="tiny muted" style="margin-top:2px">Toque no nome de quem chegou e no <b>🧤</b> de quem veio para ser goleiro hoje<span id="gkcount">${gks?' — '+gks+' no gol':''}</span>. <b>Segure e arraste</b> para marcar vários de uma vez. Dá para mudar durante o racha.</div>
+    <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span></div>
     <div style="height:10px"></div>
     <input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
     <div style="height:10px"></div>
@@ -1686,9 +1685,8 @@ function viewTimes(liga,lv){
       <button class="btn sm ghost" data-a="shuffle">🎲</button>
     </div>
     <div class="tiny muted" style="margin-top:10px">${unica
-      ?`Partida única: <b>${per} em quadra</b> por time, o resto entra como reserva.`
-      :`Cada time joga com <b>${per}</b>${rod?' de linha + goleiro do rodízio':''}. Quem sobra forma o time menor, que espera a vez.`}
-      ${liga.cfg.avoidRepeat?'<br>Entre dois arranjos igualmente equilibrados, o app separa quem já jogou junto em outros rachas.':''}</div>
+      ?`<b>${per} em quadra</b> por time, o resto é reserva.`
+      :`<b>${per}</b>${rod?' de linha + goleiro do rodízio':''} por time.`}</div>
   </div>
   ${faltando.length?`<div class="card" style="margin-top:10px;border-color:rgba(245,197,66,.45)">
     <div class="row"><div>⚠️ ${faltando.length===1?'Um time está incompleto':'Times incompletos'}</div>
@@ -1702,9 +1700,7 @@ function viewTimes(liga,lv){
       ${rod?pool.map(id=>`<button class="tp big ${lv.sel===id?'sel':''}" data-a="sel" data-id="${id}">🧤 ${esc(nameOf(liga,id))}</button>`).join('')
         :'<span class="tiny muted">Cada goleiro está escalado dentro de um time.</span>'}
     </div>
-    <div class="tiny muted" style="margin-top:8px">${rod
-      ?'Trocam de lado a cada partida e pontuam no <b>nível de goleiro</b>, pelo lado que defenderem. Toque num goleiro e depois num time para fixá-lo.'
-      :'Um toque no botão devolve todos os goleiros para o rodízio.'}</div>
+    ${rod?'<div class="tiny muted" style="margin-top:8px">Trocam de lado a cada partida. Toque num goleiro e depois num time para fixá-lo.</div>':''}
   </div>`:''}
   <div class="teamwrap" style="margin-top:10px">
     ${lv.teams.map((t,i)=>timeCard(liga,lv,i,per)).join('')}
@@ -1717,10 +1713,7 @@ function viewTimes(liga,lv){
         :'<span class="tiny muted">Todo mundo escalado.</span>'}
     </div>
   </div>
-  <div class="tiny muted" style="text-align:center;padding:12px 20px;line-height:1.5">
-    <b>Arraste</b> um nome sobre o outro para trocar de lugar, ou solte dentro de um time, em “fora” ou no card de goleiros.
-    No celular, segure um instante antes de arrastar. Prefere tocar? Toque em um e depois no outro.
-    Dentro do time, os primeiros são os titulares.</div>`;
+  <div class="tiny muted" style="text-align:center;padding:12px 20px">Arraste, ou toque em um nome e depois no outro, para trocar.</div>`;
 }
 function selBar(liga,lv){
   if(!lv.sel)return '';
@@ -1929,12 +1922,10 @@ function viewProxima(liga,lv){
       <div class="row" style="margin-bottom:6px"><div class="k">Fila — os próximos a entrar</div>
         <div class="sp tiny muted">entram no lugar de quem sair</div></div>
       <div class="chips">${soltos.map((id,i)=>`<span class="filapos">${i+1}</span>${tpChip(liga,lv,id,true)}`).join('')}</div>
-      <div class="tiny muted" style="margin-top:7px">A fila gira sozinha: quem perde sai e a fila entra no lugar. Para trocar alguém na mão, toque num nome e depois no outro — ou arraste.</div></div>`:''}
+      </div>`:''}
     ${!outros.length&&!soltos.length?'<div class="tiny muted" style="margin-top:8px">Todo mundo entra nesta partida.</div>':''}
   </div>
-  <div class="tiny muted" style="text-align:center;padding:10px 20px;line-height:1.5">
-    Toque num nome e depois no outro para trocar de lugar — ou arraste. Dentro do time, os primeiros são os titulares.</div>
-  <div class="row" style="gap:6px;margin-top:2px;flex-wrap:wrap">
+  <div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
     <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
     <button class="btn sm ghost" data-a="balance">⚖ Reequilibrar</button>
@@ -2004,7 +1995,7 @@ function viewJogo(liga,lv){
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
         <div class="chips">${res.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}" style="opacity:.85">${esc(nameOf(liga,o.id))}</button>`).join('')}</div>
       </div>`:''}).join('')}
-    <div class="row"><div class="k">Fora / outros times — toque para colocar em quadra</div>
+    <div class="row"><div class="k">Fora — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
     <div class="chips" style="margin-top:8px">
       ${fora.length?fora.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}">${esc(nameOf(liga,o.id))}${o.from?' <small>'+esc(o.from)+'</small>':''}</button>`).join('')
@@ -2013,9 +2004,7 @@ function viewJogo(liga,lv){
     ${(()=>{const descansa=(lv.gkPool||[]).filter(id=>id!==c.gks[0]&&id!==c.gks[1]);
       return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
     <div class="hr"></div>
-    <div class="tiny muted" style="margin-top:8px">Arraste um nome sobre o outro para trocar — ou toque, se preferir.
-      Toda troca fecha um trecho; trecho curto sem gol não conta para ninguém.</div>
-    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">
+    <div class="row" style="gap:6px;flex-wrap:wrap">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
       <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
       <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
@@ -2250,7 +2239,6 @@ function viewStats(liga){
       <span>⚽ <b class="num">${por10(me.gols,me.min)}</b> <span class="muted">gols a cada 10 min</span></span>
       ${me.gk?`<span>🧤 <b class="num">${por10(me.sofridos,me.minGk)}</b> <span class="muted">sofridos a cada 10 min · ${fmtMin(me.minGk)} no gol</span></span>`:''}
     </div>
-    <div class="tiny muted" style="margin-top:8px">Vitória e derrota são da partida inteira; quem entrou ou saiu no meio leva o resultado se esteve em quadra num trecho que conta. Minutos são tempo de jogo, sem as pausas.</div>
     ${anos.length>1||per==='sempre'?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">Ano a ano</div>
       ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
@@ -2270,7 +2258,7 @@ function viewStats(liga){
     </div>`:''}
     ${duelos.length?listaDuelo(duelos,0):'<div class="tiny muted">Ainda não enfrentou ninguém neste período.</div>'}
     ${duelos.length>5?`<button class="more" data-a="statsSec" data-k="duel">${aberto.duel?'▴ menos':'▾ todos os '+duelos.length}</button>`:''}
-    ${duelos.length?'<div class="tiny muted" style="margin-top:8px">▲ leva vantagem · ▼ leva desvantagem · toque para ver o histórico</div>':''}
+    ${duelos.length?'<div class="tiny muted" style="margin-top:8px">▲ vantagem · ▼ desvantagem</div>':''}
   </div>
 
   <div class="card">
@@ -2368,7 +2356,6 @@ function viewStats(liga){
 
 ${cardJuntos}  <div class="card">
     <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
-    <div class="tiny muted" style="margin-bottom:6px">Só histórico: nada aqui usa nível.</div>
     <div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>
     <div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>
     <div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>pctDe(x.v,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>
@@ -2497,7 +2484,7 @@ let membrosCard=function(liga){
     <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
       <div class="sp tiny muted num">${comConta.length} com conta · ${semConta.length} só no cadastro</div></div>
     <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Jogador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
-      ${adm?'Toque num membro para mudar a permissão dele. Quem entra é Jogador (só olha); dê Lançador a quem conduz o racha.':'Só o admin muda permissões e revisa partidas.'}
+      ${adm?'Toque num membro para mudar a permissão.':''}
       ${liga.players.some(p=>p.owner)?'':'<br>Enquanto ninguém vincular um perfil, todo mundo é admin.'}</div>
     ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'8px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
@@ -2505,7 +2492,6 @@ let membrosCard=function(liga){
       <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Jogador'}</span>
       <div style="color:var(--mute);font-size:18px">›</div></div>`).join('')}</div>`
       :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Aqui embaixo, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
-    ${semConta.length?`<div class="tiny muted">${semConta.length} jogador${semConta.length===1?'':'es'} sem conta — alguém lança por ele${semConta.length===1?'':'s'}. Estão na escada abaixo; a ficha diz quem é.</div>`:''}
   </div>`;
 };
 
