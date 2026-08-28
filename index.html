@@ -212,6 +212,13 @@ label.f .k{display:block;margin-bottom:6px}
   font-size:13px;z-index:200;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .empty{text-align:center;padding:34px 16px;color:var(--mute)}
+/* "como funciona" da home: três passos numerados, sem virar tutorial */
+.steps{display:grid;gap:10px;margin:4px 0 6px}
+.steps .st{display:flex;gap:12px;align-items:flex-start}
+.steps .n{flex:0 0 30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-size:16px;
+  background:linear-gradient(150deg,var(--lime),var(--lime2));color:#08110A;transform:rotate(-3deg)}
+.steps .t{font-weight:600;font-size:15px;color:var(--chalk);line-height:1.2}
+.steps .d{font-size:12.5px;color:var(--mute);line-height:1.45;margin-top:2px}
 .empty .big{font-family:var(--disp);font-size:22px;color:var(--chalk);margin-bottom:6px}
 .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .stat div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 6px}
@@ -1157,8 +1164,14 @@ function renderHome(){
         <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}${l.live?' · <span class="win">racha rolando</span>':''}</div>
       </div><div style="color:var(--mute);font-size:20px">›</div>
     </button>`).join(''):`
-    <div class="empty"><div class="big">Nenhuma liga ainda</div>
-      Uma <b>liga</b> é o grupo que compartilha as mesmas patentes.<br>Todo racha da mesma galera vive na mesma liga.</div>`}
+    <div class="empty" style="padding-bottom:18px"><div class="big">Nenhuma liga ainda</div>
+      Uma <b>liga</b> é o grupo que compartilha as mesmas patentes.<br>Todo racha da mesma galera vive na mesma liga.</div>
+    <div class="card"><div class="k" style="margin-bottom:10px">Como funciona</div>
+      <div class="steps">
+        <div class="st"><div class="n">1</div><div><div class="t">Marque quem chegou</div><div class="d">Toque no nome, e no 🧤 de quem veio para o gol hoje.</div></div></div>
+        <div class="st"><div class="n">2</div><div><div class="t">Os times saem sozinhos</div><div class="d">Cheios e equilibrados pela patente de cada um. Quem sobra vira fila.</div></div></div>
+        <div class="st"><div class="n">3</div><div><div class="t">Gol e fim em um toque</div><div class="d">Vencedor fica, a fila entra, e a patente se ajusta no fim da noite.</div></div></div>
+      </div></div>`}
   <div style="height:10px"></div>
   <button class="btn wide pri" data-a="newLiga">+ Nova liga</button>
   ${S.ligas.length?'':'<div style="height:8px"></div><button class="btn wide ghost" data-a="demo">Carregar o racha de sábado</button>'}
@@ -1723,7 +1736,7 @@ function viewRanking(liga){
         <div class="meta">
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${role==='L'&&p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}
-          ${calibrando(liga,p,tr)?'<span class="prov">CALIBRANDO</span>':''}
+          ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${tr.games}/${liga.cfg.calGames} partidas">⏳ ${tr.games}/${liga.cfg.calGames}</span>`:''}
           <span class="form">${tr.form.slice(0,6).map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>
         </div>
       </div>
@@ -1887,7 +1900,7 @@ function mrow(liga,m,compact,eu){
       ${m.voided?'<span class="flag" style="color:var(--bad);border:1px solid rgba(255,93,93,.4)">ANULADA</span>'
         :d?`<span class="flag" style="color:var(--gold);border:1px solid rgba(245,197,66,.45)">⚑ ${d}</span>`:''}</div>
     <div class="l2">${new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
-      · ${w==='draw'?'empate':'vitória'}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nas patentes':''}
+      · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nas patentes':''}
       ${!compact&&(m.moves||[]).length?' · '+m.moves.length+' mudança(s) de patente':''}</div>
     ${compact?'':`<div class="row" style="gap:6px;margin-top:7px">
       <button class="btn sm ghost" data-a="contest" data-id="${m.id}">⚑ Contestar</button>
