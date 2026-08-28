@@ -121,6 +121,7 @@ Cada requisito traz uma **meta verificável**. Onde a meta não é atingível na
 | RNF-08.3 | A informação nunca depende só da cor | patente sempre com nome e divisão escritos |
 | RNF-08.4 | Retorno tátil nas ações de placar | vibração curta quando disponível |
 | RNF-08.5 | Legível no pior caso: celular no sol, quadra descoberta | **tema claro é o padrão**; escuro e automático (pelo sistema) nos ajustes, por aparelho — verificado por teste visual nos dois temas |
+| RNF-08.6 | Navegação e ações principais ao alcance do polegar | abas em barra fixa embaixo; barra de ação logo acima; alvos de toque ≥ 44 px |
 
 ---
 

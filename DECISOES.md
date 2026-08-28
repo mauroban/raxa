@@ -436,6 +436,26 @@ os dois. `planGks` segura o goleiro do rodízio para todo time em `lastStay` —
 único time da fila.
 **Onde:** `finish` (rotação), `planGks`, `suggestPair` (via `lastWinner`).
 
+### D-40 · Visual da quadra: tinta, coletes e navegação embaixo
+**28/08/2026.** Redesenho visual com foco em celular. Tema claro vira "quadra ao sol": fundo
+`#E3E9D9`, tinta `#0F1F16`, botão principal em tinta (sem cor de destaque); escuro é o mesmo
+sistema invertido. Times ganham cor de **colete** sólida (verde, vermelho, azul, amarelo) no
+cabeçalho, no slot da próxima partida e no placar — o placar da partida ao vivo são dois coletes
+com numeral de até 120 px. Fontes: Big Shoulders Display (display, botões, rótulos) e Archivo
+(texto). As cinco abas saem do topo e viram **barra de navegação fixa embaixo** (`#nav`, ícones +
+rótulo, 60 px + safe-area); a barra de ação (`#bar`) fica logo acima dela e `body.hasbar` abre
+espaço no fim da página. O topo encolhe para 56 px, sticky. Alvos de toque mínimos de 44 px
+(chips de presença 50 px, botões 48 px, barra 54 px). Sai a textura de ruído e a grade de giz do
+fundo (custavam no celular e apareciam por entre os cartões).
+**Por quê:** abas no topo ficavam fora do alcance do polegar; o lime brilhante sobre claro perdia
+contraste no sol; os tons pastel dos times não se distinguiam a um braço de distância. Colete é o
+que a pessoa já usa para saber o time dela.
+**Descartado:** manter as abas no topo com ícones (polegar não chega); fundo escuro por padrão
+(D-17 continua); desenho da quadra (linha do meio e círculo) atrás do conteúdo — vazava entre
+os cartões e parecia defeito.
+**Onde:** `index.html` (`<style>`, `NAV_TABS`, `setNav`, `drawApp`) · DOCUMENTACAO §9 (decisão 24)
+· `scripts/visual.py` ignora `.nav` na checagem de sobreposição · RNF-08.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

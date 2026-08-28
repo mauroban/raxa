@@ -116,7 +116,7 @@ DRIVER = r"""
     const cx=r.left+r.width/2,cy=r.top+r.height/2;
     if(cy<0||cy>innerHeight)continue;
     const topo=document.elementFromPoint(cx,cy);
-    if(topo&&topo!==b&&!b.contains(topo)&&!topo.contains(b)&&!topo.closest('.bar,.toast,.sheet,.scrim'))
+    if(topo&&topo!==b&&!b.contains(topo)&&!topo.contains(b)&&!topo.closest('.bar,.nav,.toast,.sheet,.scrim'))
       problemas.push('coberto por outro elemento: "'+b.textContent.trim().slice(0,24)+'" atras de '+nome(topo));
   }
   document.title='RESULTADO:'+JSON.stringify(problemas.slice(0,8));
