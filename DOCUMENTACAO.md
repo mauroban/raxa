@@ -1,0 +1,559 @@
+# Raxa — patentes e times para futsal / fut7 / pelada
+
+> Documento de funcionamento do produto. Protótipo funcional em `index.html`.
+> Requisitos detalhados em [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md) e [REQUISITOS-NAO-FUNCIONAIS.md](REQUISITOS-NAO-FUNCIONAIS.md).
+> Regras de quadra (fila, vencedor fica, quem completa) em [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md).
+> O porquê de cada decisão, com o que foi descartado, em [DECISOES.md](DECISOES.md).
+> Modelo de dados da v2 em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
+
+---
+
+## 1. O problema
+
+Todo racha tem os mesmos três atritos:
+
+1. **Dividir os times leva 10 minutos** e sempre gera discussão ("esse time tá muito forte").
+2. **Ninguém registra nada.** No fim do ano ninguém sabe quem ganhou mais, quem fez mais gol, quem evoluiu.
+3. **Registrar dá trabalho.** Um racha que troca a cada 2 gols ou 7 minutos tem **10 a 15 partidas por noite**. Qualquer app que peça mais de 2 toques por partida morre no primeiro dia.
+
+A regra de ouro do produto:
+
+> **Ninguém precisa dizer quem ganhou.**
+> Você marca os gols enquanto eles acontecem (1 toque cada) e toca em **Fim**. O placar decide o resultado — inclusive o 0-0, que é empate. Autor do gol, substituições, nomes de time, goleiro: tudo opcional, nada bloqueia o fluxo.
+
+---
+
+## 2. Conceitos e nomenclatura
+
+| Conceito | Nome adotado | O que é |
+|---|---|---|
+| Contexto de racha | **Liga** | O universo isolado de patentes. Todo jogador, ranking e histórico vive dentro de uma Liga. |
+| O evento do dia | **Racha** (sessão) | "Quinta 20h, quadra do Zé". Agrupa as partidas daquela noite. |
+| Confronto | **Partida** | Time A x Time B, do apito ao apito, com um placar. |
+| Formação em campo | **Trecho** | O pedaço da partida em que os 10 (ou 8, ou 14) em quadra são exatamente os mesmos. Toda substituição fecha um trecho e abre outro. **É o trecho que move patente**, não a partida. |
+| Pessoa dentro da liga | **Jogador** | Perfil com patente, estatísticas e histórico. |
+| Conta de verdade | **Usuário** | Login que pode *assumir* perfis de Jogador em Ligas diferentes. |
+
+**Por que "Liga" e não "racha"?** Porque o nível não pertence ao evento, pertence ao grupo de pessoas. Se você joga terça no society e quinta no futsal com **as mesmas pessoas**, é a mesma Liga com dois rachas por semana. Se a galera de quinta é outra, é **outra Liga** — e o mesmo jogador terá patentes independentes nas duas. Isso é proposital: Craque na pelada do trabalho não é Craque no fut7 competitivo de domingo.
+
+*Alternativas descartadas: Panela, Circuito, Roda, Comunidade, Grupo.*
+
+---
+
+## 3. Patentes — o coração do produto
+
+### 3.1 O princípio inegociável: o número não existe para o usuário
+
+Por baixo há um rating numérico (Elo). **Ele nunca aparece em nenhuma tela do app — nem para o admin.** Não aparece o valor, não aparece a distância para o próximo corte, não aparece quantos pontos a partida rendeu. Fora das telas ele existe em um lugar só: o export em JSON, que é backup técnico.
+
+Por quê:
+
+- **Número vira fofoca e briga.** "Você tem 1487" é discussão; "você é Titular 2" é identidade.
+- **O corte exposto vira jogo.** Se as pessoas sabem que faltam 12 pontos, elas passam a escolher partida em vez de jogar.
+- **Patente é aspiracional, ponto é contábil.** O que faz alguém querer voltar na quinta é subir de patente, não somar pontos.
+
+O que o app mostra é sempre: **patente + divisão**, forma recente (V/D/E), vitórias, gols, e o momento em que alguém sobe ou cai. O rating só existe no backup/servidor, como dado técnico.
+
+### 3.2 A escada
+
+**5 patentes × 3 divisões = 15 degraus.** Dentro de cada patente, **número maior é melhor**: a divisão 1 é a entrada e a 3 é o topo. Craque 3 é o degrau mais alto da escada; Iniciante 1, o mais baixo.
+
+| Patente | Divisões | Cor |
+|---|---|---|
+| **Craque** | 1 · 2 · 3 | ouro |
+| **Destaque** | 1 · 2 · 3 | roxo |
+| **Titular** | 1 · 2 · 3 | azul |
+| **Promessa** | 1 · 2 · 3 | verde |
+| **Iniciante** | 1 · 2 · 3 | cinza |
+
+Os nomes seguem uma progressão que qualquer um entende sem explicação — *iniciante → promessa → titular → destaque → craque* — e as cores seguem a escada que todo mundo já conhece de jogo: cinza, verde, azul, roxo, ouro. Ninguém precisa decorar qual patente é maior.
+
+Os nomes são **editáveis por Liga** — cada galera batiza a sua escada. As cores e a estrutura de 15 degraus são fixas.
+
+### 3.3 Onde ficam os cortes (e por quê)
+
+A referência é o próprio Arpad Elo: ele desenhou o sistema com **intervalo de classe de 200 pontos**, a distância em que o jogador mais forte vence cerca de **75%** dos confrontos. É a mesma largura usada pelas classes do xadrez (A, B, C…) há décadas, e é a granularidade em que a diferença é perceptível a olho nu numa quadra.
+
+Então:
+
+- **Cada patente = 200 pontos de rating.** Diferença de uma patente ≈ 75% de vitória esperada. Diferença de duas ≈ 91%.
+- **Cada divisão = ~67 pontos.** Diferença de uma divisão ≈ 60% de vitória esperada — perceptível, mas não gritante.
+- A escada cobre 1000–2000, com **Titular ocupando 1400–1599** e o valor de entrada padrão (1500) caindo em **Titular 2**, bem no meio.
+
+| Patente | Faixa interna de rating |
+|---|---|
+| Craque | ≥ 1800 |
+| Destaque | 1600 – 1799 |
+| Titular | 1400 – 1599 |
+| Promessa | 1200 – 1399 |
+| Iniciante | < 1200 |
+
+Fora dessa faixa o jogador fica preso na ponta: rating muito baixo é Iniciante 1, muito alto é Craque 3.
+
+Essa tabela é documentação de engenharia. **Ela não é exposta no app.**
+
+### 3.4 Como o rating se move (motor interno)
+
+**A unidade não é a partida: é o trecho.** Uma substituição pode mudar bastante o nível dos dois lados — quem entrou não jogou o que quem saiu jogou. Então o motor quebra a partida em **trechos**: cada formação em campo é uma partida própria, com placar contado a partir da troca e com o set novo de jogadores. É o mesmo espírito do **+/- da NBA**: importa o que você faz enquanto está em quadra e contra quem. *Se o seu time foi mal enquanto você estava no banco, isso não te afeta.*
+
+Regras do trecho:
+
+- **Fecha trecho:** qualquer substituição (inclusive a do atrasado que entra no meio) e qualquer troca de goleiro — quem está no gol muda o nível dos dois lados.
+- **Trecho cortado por uma troca só conta se durou pelo menos 4 minutos — ou um terço da partida, o que for menor.** O limite é relativo de propósito: num racha de 7 minutos, 4 minutos fixos fariam quase toda troca descartar meia partida. Menos que isso, o trecho é descartado e ninguém ganha nem perde nada por ele. (Os 4 min são configuráveis nos ajustes da liga.)
+- **O trecho que termina no apito conta sempre**, dure o que durar.
+- **O peso do trecho é a fatia da partida que ele ocupou.** Os trechos que contam somam **exatamente uma partida**: dois de metade não valem em dobro, e quando um trecho é descartado por ser curto o peso dele é **redistribuído entre os que ficaram** — uma troca no começo não encolhe a partida.
+- Vale igual para a partida longa: 50 minutos com muitas substituições viram muitos trechos, cada um com o seu peso e o seu placar.
+
+Dentro de cada trecho, Elo por time:
+
+```
+Ra = média do rating dos que estão em quadra pelo time A
+Rb = média do time B
+Ea = 1 / (1 + 10^((Rb − Ra)/400))          ← chance esperada de A vencer
+S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
+Δ  = round( K × (S − E_do_seu_time) × peso_do_trecho )
+```
+
+- **Só resultado move a patente.** Gol, assistência e defesa são estatística de vitrine — nunca entram na conta. Artilheiro de time que perde não sobe; zagueiro que só ganha, sobe.
+- **Ganhar de quem é mais forte rende muito; de quem é mais fraco, quase nada.** É o mesmo espírito do rating do CS2.
+- **Cada um pontua na patente do papel que fez naquele trecho** — quem estava no gol move a patente de goleiro, o resto move a de linha (seção 3.7).
+
+**K pelo modo do racha.** Não existe controle separado de "ritmo": o peso de cada partida sai direto do modo escolhido na abertura daquele racha, porque é ele que determina quantas partidas cabem numa noite. (**Formato** é sempre 5v5/6v6/7v7/11v11; **modo** é várias curtas ou partida única.)
+
+| Modo do racha | K calibrando | K normal | Por quê |
+|---|---|---|---|
+| **Várias curtas** *(padrão)* | 34 | 16 | 10–15 partidas por noite — é o número real de um racha de 2 gols ou 7 min |
+| **Partida única** | 44 | 24 | uma partida por noite — ela precisa valer alguma coisa |
+
+> **Por que 16 e não 12.** A calibragem antiga supunha 20 a 30 partidas por noite. Um racha de 2 gols ou 7 minutos, com troca de time, fila e conversa no meio, entrega **10 a 15**. Com metade das partidas, cada uma tem que pesar cerca do dobro para que uma noite continue significando a mesma coisa.
+
+> **O modo é do racha, não da liga.** A mesma liga pode ter quinta de partida única e sábado de várias curtas, e as duas coisas convivem no mesmo histórico e no mesmo ranking. Cada partida **guarda o modo do racha em que foi jogada**, e o recálculo usa esse valor gravado. Consequência prática: mudar o padrão da liga nos ajustes **não mexe em nenhuma patente já conquistada** — só vale para o próximo racha.
+
+**Em lançamento retroativo** (partida digitada depois, sem cronômetro) não há trechos: a partida entra inteira, com peso 1. Na prática é o que acontece com qualquer partida encerrada com menos de **45 segundos** de relógio — o app entende que o cronômetro não foi usado.
+
+> **A unidade é sempre o trecho.** Calibração (3.6), proteção pós-promoção (3.5) e os contadores de partidas jogadas (seção 5) contam **trechos**, não partidas de relógio: numa partida com duas substituições válidas, eles andam 3. É coerente com o resto — cada formação em campo é uma partida para o motor.
+
+### 3.5 Anti-ioiô: como a patente sobe e desce sem oscilar
+
+Alternar entre duas patentes toda semana destrói a graça do sistema. Três mecanismos, todos testados:
+
+1. **Margem de promoção/rebaixamento (histerese).** Passar do corte não basta: é preciso passar **do corte + margem** para subir, e cair **abaixo do corte − margem** para descer. A margem vale em **todo degrau**, e o degrau que importa é a divisão: ~67 pontos. Por isso ela é calibrada contra esse número, e não contra os 200 da patente — margem grande demais não estabiliza, trava. Com a margem padrão de **13 pontos**, quem fica oscilando ±12 pontos em volta de um corte **não muda de degrau**, e a banda efetiva fica em ~93 no lugar de 67 (40% mais larga).
+2. **Proteção pós-promoção.** Quem acabou de subir não pode cair nos **3 trechos seguintes** (a unidade do motor, seção 3.4). Noite ruim logo depois de subir não desfaz a conquista.
+3. **A patente é um estado, não um cálculo.** Ela fica guardada no jogador e só muda quando as condições acima são satisfeitas — não é recalculada do rating a cada tela.
+
+Isso é configurável em um único controle, **Estabilidade**: Baixa (margem 7, proteção 2) · Média (13 / 3) · Alta (20 / 5). Mesmo na Alta a banda fica em ~107 — abaixo de dois degraus, que é onde a escada deixaria de se mexer.
+
+Ordem de grandeza no padrão de racha curto (K=16, times parelhos): mover uma **divisão** exige cerca de **10 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — uma noite muito boa em um racha de 12 partidas; uma **patente** inteira, cerca de 25 — três noites dessas. No modo de partida única (K=24) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
+
+### 3.6 Entrada de um jogador novo
+
+Quem cadastra escolhe **a patente percebida** (um toque: Iniciante … Craque, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
+
+O jogador fica **calibrando** até completar **4 rachas ou 15 partidas — o que vier primeiro**. Nesse período o K é cerca do dobro (34 no lugar de 16 no racha curto, 44 no lugar de 24 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
+
+A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
+
+A regra tem duas pontas de propósito: num racha de **partida única** ele levaria 15 semanas para calibrar se dependesse só de partidas — então 4 rachas resolvem; num racha de **várias curtas** ele joga de 10 a 15 partidas na primeira noite — então 15 partidas resolvem em uma noite, antes que uma sequência atípica defina a patente dele para sempre.
+
+O palpite inicial de quem conhece o jogador **já é melhor que sorteio no olho** e a calibração corrige o palpite em poucas partidas. Esperar "dados suficientes" para ser útil é o mesmo que não ter app.
+
+### 3.7 Goleiro — duas patentes, não um interruptor
+
+O caso real: **2 ou 3 goleiros para 12 a 16 jogadores de linha**. Eles não pertencem a um time — trocam de lado o tempo todo. E dá para ser excelente em um papel e ruim no outro.
+
+- **Todo jogador tem duas patentes: uma de linha e uma de goleiro.** São independentes: Craque 2 na linha e Promessa 1 no gol é um resultado normal, não um bug. A aba Patentes tem um botão para alternar entre as duas escadas.
+- **Quem nunca jogou numa das duas não tem patente ali.** Craque de linha que nunca pegou no gol não aparece na escada de goleiro, e a ficha dele diz *sem patente no gol*. Se ele for para o gol no meio do jogo, entra valendo o **nível de entrada padrão** e começa a construir a patente de goleiro dali — em calibração, como todo mundo. O palpite do cadastro vale só para a valência em que a pessoa vai jogar.
+- **A patente que anda é a do papel que a pessoa fez naquele trecho.** Quem defendeu move a de goleiro; quem estava na linha move a de linha. Quem foi improvisado no gol por 4 minutos move a de goleiro nesses 4 minutos, e a de linha no resto.
+- **O cadastro não define goleiro — o racha define.** Na tela de presença, além de tocar em quem chegou, você toca no 🧤 de quem **veio para ser goleiro hoje**. Isso muda de racha para racha, e muda no meio do racha: o slot 🧤 da tela da partida aceita qualquer um da escalação.
+- O que existe no cadastro (`costuma ir ao gol`) é só uma **sugestão**: ao marcar presença, essa pessoa já entra com o 🧤 aceso, e você desmarca se hoje ela veio para a linha.
+- **Um goleiro por time ou mais** → cada um fica fixo em um time e assume o gol automaticamente quando o time entra.
+- **Menos goleiros que times** (o caso comum) → eles entram no **rodízio**: ficam fora dos times, e a cada partida o app escala um para cada lado, **alternando os lados**. Com 3 ou mais, há revezamento justo por fila.
+- **O goleiro ganha e perde patente como todo mundo**, na escada dele. No rodízio isso é justo justamente porque ele alterna de lado: ao longo da noite a patente reflete o desempenho *dele*, não o de um time específico — se ele defende bem, o lado dele vence mais, independente de quem está na frente.
+- **Não existe mais o interruptor "goleiro fora do ranking".** Ele existia para resolver um problema que a patente separada resolve melhor: o goleiro convidado não estragava nada, ele só não tinha onde ser medido. Agora tem.
+- **Voltar ao rodízio é um toque.** O card de goleiros fica sempre visível na tela de times, alternando **Rodízio ⇄ Fixos nos times** nos dois sentidos.
+- Racha em que todo mundo reveza no gol: não marque ninguém no 🧤 e ignore o slot — ou marque a cada partida quem pegou, e cada um vai construindo a patente de goleiro dele.
+
+### 3.8 Quem enxerga as patentes
+
+A escada é motivação para uns e constrangimento para outros. Então a Liga escolhe, nos ajustes, entre:
+
+- **Todo mundo vê** *(padrão)* — a aba Patentes mostra a escada completa para qualquer um.
+- **Só o admin vê** — para os outros, a aba Patentes vira uma lista de estatísticas (rachas, partidas, gols) sem patente nenhuma, e as patentes somem também da presença, dos times e do resumo do fim do racha. O equilíbrio continua funcionando igual: o app segue montando os times pelo nível, só não conta a ninguém qual é.
+
+O rating numérico continua invisível para todos nos dois modos — inclusive para o admin.
+
+---
+
+## 4. Fluxo de uso
+
+### 4.1 Antes — 30 segundos
+
+**Formato.** Um toque: `5v5` (futsal), `6v6` (society), `7v7` (fut7), `11v11` (campo). O formato define quantos cabem por time e é usado para sugerir a quantidade de times.
+
+**Como vai ser hoje.** Dois modelos de racha, um toque:
+
+| Modo | O que muda |
+|---|---|
+| **Várias curtas** *(padrão)* | alvo de 2 gols ou 7 min, vencedor fica em quadra (empate com 3+ times: os dois saem), cada partida pesa pouco no rating — **10 a 15 partidas por noite** |
+| **Partida única** | **sempre 2 times**, fixos, com titulares e reservas; uma partida longa (50 min, sem alvo de gols); substituição é a operação principal; cada partida pesa muito mais |
+
+Os dois convivem na mesma Liga: o modo é do racha, não do grupo.
+
+**Presença.** Grade com todos os jogadores da Liga; toca no nome de quem chegou. Uma Liga pode ter 50 cadastrados e 14 presentes, e o contador fica grande no topo. Os presentes sobem para o começo da lista **quando a tela é redesenhada** — marcar presença não reordena nada embaixo do seu dedo, senão marcar 14 pessoas seguidas viraria uma caça ao nome que pulou de lugar.
+
+- **A lista vem ordenada por quem mais aparece nos rachas.** Quem joga toda semana está sempre nas primeiras linhas; quem apareceu uma vez em março fica no fim. É o que faz achar a galera de sempre sem usar a busca.
+- **Ao lado de cada nome tem um 🧤:** toque nele para dizer que essa pessoa **veio para ser goleiro hoje**. Quem tem o hábito já entra marcado, e dá para mudar a qualquer momento — inclusive no meio do racha, em partidas específicas.
+- Busca instantânea e **"+ Novo jogador"** que cadastra sem sair da tela (nome + patente + costuma ir ao gol).
+
+### 4.2 Times — 1 toque
+
+O app calcula sozinho quantos times cabem: no formato NvN cada time tem N−1 de linha quando os goleiros revezam. **12 de linha + 2 goleiros em 5v5 → 3 times de 4 + 2 goleiros no rodízio.** Dá para forçar 2, 3 ou 4 times.
+
+**"Equilibrar"** faz:
+1. distribui goleiros (um por time) ou separa o rodízio — cada goleiro entra na conta pela **patente de goleiro** dele, e os de linha pela de linha;
+2. **escolhe quem fica de fora**, quando sobra gente: uma fatia que atravessa todos os níveis, um sorteado de cada faixa. A fila tem que ser tão equilibrada quanto os times — jogar os piores todos para fora seria o pior jeito de montar um racha;
+3. **sorteia o draft com um ruído pequeno no nível de cada um** e monta pelo guloso: o melhor disponível cai sempre no time mais fraco que ainda tem vaga;
+4. algumas centenas de trocas 1:1 buscando minimizar a diferença de nível entre os times — e essa parte usa o **nível de verdade**, sem ruído nenhum, preservando tamanho e goleiros;
+5. **desmancha panelinha**: uma segunda rodada de trocas que separa quem já jogou junto em outros rachas — mas **só aceita trocas que não estragam o equilíbrio** (margem de 8 pontos internos, invisível em quadra). A prioridade é o equilíbrio; a repetição é critério de desempate.
+
+**Por que o ruído.** Com gente parelha não existe *um* arranjo equilibrado — existem dezenas. Sem ruído, tocar em "Equilibrar" de novo devolveria exatamente os mesmos times, e a única saída seria o sorteio no dádo. Com ele, cada toque dá um arranjo **diferente e igualmente equilibrado**: nos testes, 14 montagens seguidas dão 13 ou 14 times distintos, todos com menos de 10 pontos internos de diferença.
+
+O ruído vive **só dentro do montador**. A chance de vitória do confronto, a barra de equilíbrio e o veredito ("Times equilibrados") usam sempre o nível real — o que você lê na tela não é chutado.
+
+Por que isso importa: se os mesmos quatro caem sempre no mesmo time, o Elo deles vira o Elo *do time* e ninguém descobre o nível individual de ninguém. Misturar as duplas é o que faz a patente convergir para a pessoa.
+
+O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredito ("Times equilibrados" / "Leve vantagem: Time B").
+
+**Quantos por time.** No formato NvN cada time entra com N. Quando os goleiros revezam, o time é de N−1 de linha mais o goleiro da vez. A partir daí:
+
+- **time é sempre cheio.** No 5v5 se joga 5 contra 5 — não existe time de 3 esperando a vez, nem lado com um a menos. O app monta quantos times **inteiros** couberem: 10 de linha + 2 goleiros no 5v5 são **2 times de 4 + goleiro** e **2 de fora**, nunca 3 times de 4, 3 e 3;
+- **quem não completa um time fica de fora**, num banco compartilhado, e entra por substituição ou completando quem ficou curto. No racha curto ninguém é reserva de um time específico — isso só existe na **partida única**, onde os dois times são fixos a noite inteira;
+- **os dois times que entram juntos têm sempre o mesmo número.** Se um time ficou curto (alguém foi embora, alguém foi movido), ele é **completado com quem está de fora** (veja abaixo);
+- **só se joga com menos quando não dá dois times cheios**: 8 pessoas no 5v5 viram 4v4, com aviso na tela — e nunca 5x3;
+- na **partida única** são **sempre 2 times**: todo mundo dividido entre eles, N em quadra e o resto como reserva do próprio time;
+- na **partida única**, dentro do time os **primeiros da lista são os titulares** e o resto aparece marcado como reserva; no racha curto isso não existe — todo mundo do time entra.
+
+| Presentes (formato 5v5) | O que o app monta |
+|---|---|
+| 12 de linha + 2 goleiros | 3 times de 4, goleiros revezando — ninguém de fora |
+| 11 de linha + 2 goleiros | 2 times de 5 (4 + goleiro fixo) e **3 de fora** |
+| 10 de linha + 2 goleiros | 2 times de 5 (4 + goleiro fixo) e **2 de fora** |
+| 13 sem goleiro marcado | 2 times de 5 e **3 de fora** |
+| 16 de linha + 3 goleiros | 4 times de 4, goleiros revezando |
+| 8 pessoas | 4v4 — único caso em que se joga com menos, e a tela avisa |
+| Partida única, 10 de linha + 2 goleiros | 2 times de 6: 5 em quadra + 1 reserva cada |
+
+**A fila — o "de próximo".** Quem não coube num time inteiro não fica parado: forma a **fila**, e a fila é de pessoas, não de times. Ao fim de cada partida o ciclo é o de todo racha: **quem ganhou fica, quem perdeu sai, e a fila entra no lugar de quem saiu** — primeiro quem está esperando há mais tempo. Se a fila não dá para trocar o time inteiro, **alguns do time que perdeu ficam para completar**: entram 3, ficam 2, normalmente o goleiro e mais um. Quem sai vai para o fim da fila, e sai quem mais jogou na noite — é o que faz a roda girar parelha.
+
+No empate com 2 times ninguém sai automaticamente; se a galera combinar outra coisa, o botão **↻ Girar** roda a fila na hora. O ciclo inteiro está em [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md).
+
+**Completar o time que ficou curto.** Times nascem cheios, mas racha é racha: alguém vai embora no meio, alguém é puxado para outro time. Quando o time da vez entra com menos gente que o outro, ninguém joga em inferioridade e ninguém senta: a tela da próxima partida mostra **quem completa**, escolhido entre os que estão de fora — normalmente quem acabou de sair. Quem completa **joga aquela partida por aquele time e volta para o dele depois**; o rating enxerga isso naturalmente, porque a unidade é o trecho e o trecho guarda quem estava em quadra.
+
+O app **sugere** quem completa (quem menos jogou na noite, para a fila girar), mas **quem decide é você**: toque no nome para tirar e escolher outro, ou toque em *Jogar 4v4 assim* para os dois lados entrarem menores.
+
+Se mesmo assim um time entra incompleto, a tela avisa (“jogando 4v4 — puxe alguém de fora para fechar 5v5”) em vez de esconder o problema.
+
+**Mexer nos times é a operação mais frequente depois da presença**, então ela é a mais visível da tela:
+
+- todos os nomes ficam em botões grandes, e **quem está de fora tem card próprio com contador** — nunca escondido;
+- **arraste um nome sobre o outro para trocar de lugar**, ou arraste para dentro de um time, para o card "fora" ou para o card de goleiros — no celular, segure um instante antes de arrastar;
+- quem preferir tocar: toca em um jogador e em outro para trocar; toca no espaço de um time (ou no card "fora") para mover;
+- enquanto alguém está selecionado, uma barra fixa no topo mostra quem é e permite cancelar;
+- "Equilibrar" refaz tudo, 🎲 sorteia ignorando o nível, e os botões 2/3/4 times remontam na hora.
+
+### 4.3 Durante — 1 toque por partida
+
+Cronômetro grande, dois blocos coloridos e os slots de goleiro:
+
+- **Tocar no bloco do time = +1 gol.** Aparece uma tirinha com os nomes daquele time para marcar o autor — toca ou ignora, ela some sozinha em 6s. **Nunca bloqueia.**
+- **Os gols ficam listados abaixo do placar**, com minuto e autor: `3'12 — Rodrigo ✕`. Toque no nome para corrigir o autor (ou colocar um que você tinha pulado), e no **✕** para apagar aquele gol específico. É mais direto que um "desfazer" cego, porque você vê exatamente o que está removendo.
+- O cronômetro mostra o alvo configurado na Liga ("2 gols ou 7 min") e pisca quando bate. O **alvo** é a única coisa que continua sendo da Liga; o **modo** (curtas ou única) é de cada racha.
+- **Encerrar é um toque só, e o botão já diz o resultado**: `✓ Fim · Time A 2-1`. Ele grava exatamente o que está no placar e **não pergunta nada** — nem no 0-0, que é gravado como empate. Ninguém precisa tocar no time que venceu: os gols já disseram.
+- **Pausar e cancelar** ficam no topo, como ícones ao lado do relógio: `⏸` congela o relógio (bola na rua, discussão, chuva) e o tempo parado não conta para nada — nem para a duração dos trechos. `✕` joga fora a partida inteira, e **pede confirmação** antes, porque não tem volta.
+- **A barra de baixo tem duas coisas e só duas**: `↶` (desfaz o último gol, troca ou pausa — e, se não houver nada na partida, desfaz a última partida) e `✓ Fim · placar`. **"Encerrar racha" não mora aqui**: com o próximo time entrando, um toque errado do lado do "Fim" não pode acabar com a noite. Ele fica na tela entre partidas.
+- **O placar é o maior elemento da tela** e ocupa a metade de baixo, no alcance do polegar: tocar no bloco do time é gol, e o `−` no canto tira o último gol daquele lado sem precisar rolar até a lista.
+- **A chance de vitória de cada lado** aparece embaixo do placar, em letra pequena: `52% de chance`. É a expectativa do Elo para aquele confronto, atualizada conforme entra e sai gente. Fala do **confronto**, nunca de uma pessoa — e some junto com as patentes quando a liga escolhe deixá-las só para o admin.
+- Patentes aplicadas na hora, **trecho por trecho**: quem entrou no meio leva só o que aconteceu depois que entrou. Mas **entre uma partida e outra o app não fala de patente**: encerrar leva direto para a tela da próxima partida, com um aviso curto do placar registrado. Quem subiu e quem caiu aparece **no fim do racha** (seção 4.4) — no meio do jogo isso vira assunto, e assunto atrasa a próxima bola.
+- No histórico (aba **Jogos**), as partidas ficam **agrupadas por racha**: uma linha por noite com data, quantas partidas, quantos gols e as contestações — e as partidas aparecem depois de tocar no racha. Uma noite de 12 partidas é uma linha, não doze.
+- Se o resultado saiu errado: **"Desfazer a última"** no bloco de partidas de hoje resolve na hora; correção fina (mudar o vencedor, anular, apagar) fica no **Histórico → Revisar**, onde dá para olhar com calma depois.
+- **Empate com 3 ou 4 times: os dois saem.** Não dá para o "vencedor fica" decidir quem fica quando ninguém venceu, e deixar os dois em quadra faria a fila nunca andar. Com 2 times, empate não muda nada — eles jogam de novo.
+- **Entre uma partida e outra existe uma tela inteira: a próxima partida.** Não é um modal que some — é a tela padrão do racha enquanto nada está rolando, e ela mostra:
+  - o confronto `Time A VS Time C`, com a **chance de cada lado** e o retrospecto de hoje;
+  - **as duas escalações que vão entrar**, editáveis ali mesmo: toque num nome e depois no outro para trocar de lugar (ou arraste), inclusive puxando alguém de um time que está esperando ou de fora;
+  - quem está de fora, agrupado por time, e o rodízio de goleiros da vez;
+  - `＋ Chegou agora`, `⚖ Reequilibrar` e `Refazer times`.
+- **Quem entra é sugestão, não regra.** Tocar em qualquer um dos dois lados troca aquele time por outro. O app sugere seguindo "vencedor fica" e a fila de quem está esperando, mas você decide — inclusive repetir o mesmo confronto ou pular a vez de alguém. Só depois de conferir tudo é que você toca em **▶ Começar partida**.
+- **Substituição: arraste ou toque.** Arraste o nome de quem está fora sobre quem está em quadra e a troca acontece (no celular: segure o nome por um instante e arraste; no computador, arraste direto). Se preferir, o toque continua funcionando: toca em quem sai → escolhe quem entra, ou toca em quem está fora → escolhe quem sai. Trocar titular por reserva do mesmo time só inverte os dois.
+- **Toda troca fecha um trecho** e a tela avisa em letra pequena: `Trecho 2 desde a última troca · 1-0 em 3'20`. O placar do trecho novo é o que vale para quem entrou (seção 3.4).
+- **"Chegou agora"** (o atrasado): marca presença e manda direto para um time — ou para o rodízio de goleiros — no meio do racha.
+- **"Desfazer a última"** fica no bloco de partidas de hoje e reverte a partida inteira, patentes incluídas.
+
+### 4.4 Depois — o resumo
+
+Dá para **cancelar o racha** em vez de encerrar: as partidas já lançadas continuam no histórico e valendo, só a sessão some.
+
+Ao encerrar: partidas jogadas, artilheiro da noite e **a lista de quem subiu e quem caiu de patente** — é o único momento em que o app fala de patente durante um racha, e é de propósito: no fim, vira comemoração; no meio, viraria discussão. É a tela que vai para o grupo do WhatsApp.
+
+---
+
+## 5. Números: o racha, você e os outros
+
+O ranking responde "quem é o melhor". O que ninguém consegue responder no fim do ano é o resto: *quantas vezes eu joguei contra o Rodrigo? Quem me ganha sempre? Com quem eu ganho mais? Quantos rachas eu peguei esse ano?* A aba **Números** existe para isso — e ela é sobre você **e** sobre todo mundo, porque metade da graça é comparar.
+
+### 5.1 A unidade: quem estava em quadra
+
+Tudo aqui sai dos **trechos** (seção 3.4), não das partidas. Um **confronto** entre duas pessoas é um trecho em que as duas estavam em quadra **ao mesmo tempo, em lados opostos**; uma **parceria** é um trecho com as duas do mesmo lado.
+
+Duas consequências que importam:
+
+- **Vale igual em qualquer formato.** 1v1, 2v2, 5v5, 1v3 — o que conta é ter estado em campo junto. O histórico do duelo mostra o formato de cada encontro (`5v5`, `3v2`) para dar o contexto.
+- **Substituição é respeitada.** Se você saiu aos 4 minutos e o seu time tomou dois depois, aquele trecho não é seu — nem no rating, nem nas estatísticas. É a mesma regra em toda parte.
+
+### 5.2 O painel
+
+**Período:** `2026` ou `Desde sempre`, com uma quebra **ano a ano** (rachas, partidas, gols e aproveitamento de cada temporada). É a resposta direta para "quantos rachas joguei esse ano" e "e na vida?".
+
+| Bloco | O que mostra |
+|---|---|
+| **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, partidas no gol, barra V/E/D e as duas patentes |
+| **Duelos** | **Maior carrasco** e **Freguês** em destaque, e a lista de quem você mais enfrenta com V/E/D e barra. Tocar em um nome abre o histórico completo do confronto: data, placar, formato e resultado |
+| **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque |
+| **O racha no período** | mais presenças, mais vitórias, maior aproveitamento e artilharia, top 5 em cada |
+
+**"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga — dá para conferir o carrasco do outro também.
+
+### 5.3 Destaques do mês — e por que não é aproveitamento
+
+A primeira tela do racha mostra os **destaques dos últimos 30 dias** — a foto do mês, não o histórico
+inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. São duas listas e dois cards:
+
+1. **Os melhores do racha** — a maior patente **entre quem apareceu no período**. É a escada, filtrada por
+   presença: quem some do racha some do pódio. Cada um entra pela **valência que mais jogou no mês** — quem
+   passou metade do período no gol aparece com a patente de goleiro. A ordem é a mesma do ranking (degrau,
+   depois aproveitamento, depois nome), justamente para a posição não denunciar quem está na frente dentro
+   da mesma divisão.
+2. **Quem mais rendeu além do esperado** — o critério explicado abaixo.
+3. **Artilheiro** e **goleiro menos vazado**, lado a lado, mais **quem mais apareceu**.
+
+Cada linha do pódio escreve o que cada número é: `4 rachas · 21 partidas · 62% de vitórias`.
+
+**Na segunda lista, o critério não é aproveitamento, e não é vitória.** Num racha com times equilibrados, o aproveitamento de
+todo mundo tende a 50% — é justamente o que o app persegue. E contar vitória pura premia quem caiu no time
+bom. O critério é o **saldo acima do esperado**:
+
+```
+acima do esperado = Σ (resultado do trecho − chance que aquele lado tinha) × peso do trecho
+                    resultado = 1 vitória | 0,5 empate | 0 derrota
+```
+
+Ou seja: **a mesma conta que move a patente, sem o K** — o que sobra está em vitórias, que é a unidade que
+qualquer um entende. **+1,0 quer dizer "uma vitória inteira a mais do que o confronto pedia".**
+
+Por que isso funciona num racha:
+
+- **desconta o time.** Ganhar carregando os mais fracos rende muito; confirmar favoritismo rende pouco. No teste,
+  a zebra que vence leva +0,88 e o favorito que confirma leva +0,12 pela mesma vitória;
+- **soma zero dentro da partida.** O que um lado ganha acima do esperado, o outro perde — ninguém infla o
+  número jogando muito, só rendendo acima do que se esperava dele;
+- **respeita substituição**, porque a unidade é o trecho: o que o time fez com você no banco não entra;
+- **é acumulado, não média** — num racha, aparecer faz parte do mérito. E o piso é duplo: **2 rachas e 20
+  partidas no período**, para uma noite sortuda não virar destaque do mês.
+
+**Artilheiro** só aparece quando a maioria dos gols tem dono (metade ou mais). Autor de gol é opcional de
+propósito — e ranking de artilharia com metade dos gols sem dono é pior do que ranking nenhum. Quando falta
+dado, o card diz quantos gols ficaram sem autor em vez de premiar quem lembrou de se cadastrar.
+
+**Goleiro menos vazado** é a média de **gols sofridos por partida enquanto ele estava no gol** — também sai dos
+trechos, então o goleiro que entrou no meio só leva os gols que tomou. No rodízio isso é justo porque ele
+alterna de lado a noite toda.
+
+Com as **patentes fechadas** (seção 3.8) o destaque cai para vitórias no período: "acima do esperado" nasce do
+nível de quem estava em quadra, então sai de cena junto com as patentes.
+
+### 5.4 Por que existe um mínimo de partidas
+
+Aproveitamento com 3 jogos é ruído, e ruído no topo de um ranking destrói a credibilidade dele. Então:
+
+- o ranking de **aproveitamento da liga** só considera quem tem **10 partidas ou mais no período** (e o número aparece escrito na tela);
+- nos destaques pessoais (carrasco, freguês, melhor dupla) o piso é menor — 10, ou 10% das suas partidas, o que for menor, nunca abaixo de 3 — porque duelo individual acumula bem mais devagar que partida.
+
+O resto das listas (mais enfrentados, mais jogou junto) não tem piso: elas são ordenadas por **quantidade**, então não têm como ser distorcidas por amostra pequena.
+
+### 5.5 "Quem é você"
+
+Quando alguém assume um perfil neste aparelho (`Este perfil sou eu`, na ficha do jogador), o app passa a saber quais partidas são suas:
+
+- na aba **Jogos** (o histórico), as suas partidas ficam com uma **borda verde** e o selo `VOCÊ` do lado em que você jogou, colorido pelo seu resultado;
+- um filtro **Todas / Só as minhas** no topo do histórico;
+- o painel de Números abre direto em você.
+
+Sem ninguém assumido, nada quebra: o painel abre em quem mais aparece nos rachas e o histórico fica sem marcação.
+
+**Nada disso usa rating.** É contagem de resultado puro — por isso continua visível mesmo quando a liga esconde as patentes. Nesse caso só as duas patentes somem do bloco "A pessoa"; rachas, duelos, parcerias e aproveitamento ficam iguais.
+
+---
+
+## 6. Contestação e correção
+
+Quem lança resultado no meio de um racha erra — e às vezes o outro time discorda. Sem um caminho para reclamar, o histórico perde credibilidade e as pessoas param de lançar.
+
+- **Qualquer participante pode contestar uma partida** pelo histórico (botão ⚑). Uma pessoa contesta uma vez.
+- Ao atingir o limite de contestações (padrão **2**), a Liga escolhe o que acontece:
+  - **Sinaliza** *(padrão)* — a partida é marcada com ⚑ e continua valendo até alguém revisar;
+  - **Suspende** — a partida deixa de valer imediatamente e as patentes são recalculadas sem ela, até um admin decidir.
+- Na revisão, um admin pode: **manter**, **corrigir o resultado**, **anular** (fica no histórico, sem efeito) ou **apagar**. O Editor pode manter e corrigir; anular e apagar são só do admin.
+- **Toda correção recalcula a liga inteira do zero**, a partir do nível de entrada de cada jogador e de todas as partidas válidas em ordem. Corrigir uma partida de três semanas atrás não deixa resíduo em ninguém — é a mesma matemática rodando de novo. Isso é testado: recálculo do zero bate exatamente com o cálculo incremental.
+- Corrigir o vencedor de uma partida com substituições muda **o trecho que fechou a partida** — os trechos anteriores já tinham vencedor próprio, cada um com o seu placar.
+
+*A decidir na v2:* se muitas contestações devem **obrigar** revisão antes de a partida valer (hoje é a opção "Suspende") e se a contestação deve exigir um motivo em texto.
+
+---
+
+## 7. Contas, perfis e permissões
+
+### 7.1 Um membro é um jogador — e só um
+
+A regra que organiza tudo nesta seção: **dentro de uma Liga, uma conta corresponde a exatamente um perfil de jogador.** Não existe conta com dois perfis na mesma Liga, nem perfil dividido entre duas contas. Isso é o que faz "quantas vezes eu joguei contra o Rodrigo" ter uma resposta única.
+
+Fora dessa regra, tudo continua valendo: a mesma pessoa tem **patentes independentes em cada Liga**, e um perfil pode existir muito antes de a pessoa ter conta.
+
+### 7.2 Perfil sem dono
+
+Quando alguém cadastra "Bruninho" na tela de presença, nasce um **perfil sem dono**: existe, joga, acumula patente e estatística, mas não pertence a nenhuma conta. Esse é o caso normal — num racha de 16, metade nunca vai abrir o app.
+
+Quando o Bruninho entra na Liga, ele vê os perfis sem dono e **assume o seu**, já com todo o histórico anterior. A partir daí acompanha as próprias patentes em todas as Ligas dele num lugar só. Se alguém assumir o perfil errado, o admin desfaz o vínculo com um toque e o perfil volta a ficar sem dono.
+
+### 7.3 Entrar numa Liga: três caminhos, uma regra
+
+| Caminho | Como é | Quando serve |
+|---|---|---|
+| **Link de convite** | o admin gera o link e joga no grupo do WhatsApp; quem abre escolhe o próprio perfil e entra | começar uma Liga, chamar a galera toda de uma vez |
+| **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova | alguém que ouviu falar do racha e quer entrar |
+| **Busca dentro do app** | o admin procura a pessoa por `@usuário` ou nome e convida direto — já apontando qual perfil é dela | o mais comum: a pessoa já joga há meses e só agora criou conta |
+
+A regra única, nos três: **ninguém entra sem aceitar, e ninguém entra sem o admin querer.** O link vence (7 dias por padrão) e pode ser revogado; o código gera pedido, não entrada — a não ser que o admin ligue *entrada livre*; o convite direto é de uso único e só vale para aquela pessoa.
+
+Convidar já pode **reservar o perfil**: quem aceita cai direto no lugar certo — *"você é o Bruninho, 42 partidas, Titular 2"* — em vez de escolher numa lista e errar.
+
+### 7.4 O admin manda nos membros
+
+Controle total, sem meio-termo, porque um racha tem dono:
+
+- convidar, revogar convite, aprovar ou recusar pedido;
+- **vincular e desvincular** um perfil de uma conta;
+- trocar o papel de qualquer membro;
+- **remover um membro** — o jogador e todo o histórico dele **ficam**; só o acesso sai;
+- cadastrar jogador sem conta nenhuma (o caso normal);
+- passar o admin adiante — uma Liga nunca fica sem admin;
+- apagar a Liga.
+
+Toda ação de membro fica registrada: quem fez, em quem, quando.
+
+### 7.5 Papéis
+
+| Papel | Pode |
+|---|---|
+| **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, corrigir patente, dar papéis |
+| **Editor** | Cadastrar jogadores, montar times, corrigir o resultado de partidas (anular e apagar são só do admin) |
+| **Lançador** | Criar rachas e lançar resultados (padrão de todo mundo) |
+| **Jogador** | Visualiza ranking, histórico e as próprias estatísticas; pode contestar |
+
+O padrão de uma Liga nova é **todo mundo Lançador** — na prática quem está com o celular na mão é quem lança. O admin restringe só se der problema.
+
+**Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. Os papéis já são atribuíveis, mas **em v1 a visibilidade das patentes é a única regra de papel realmente aplicada**; o resto só vira regra de verdade com o backend.
+
+---
+
+## 8. Estado do protótipo (`index.html`)
+
+**Funciona de verdade, hoje:**
+
+- Múltiplas Ligas isoladas, cada uma com patentes, jogadores, ajustes e histórico próprios
+- Escada de 15 degraus com nomes editáveis, histerese, proteção pós-promoção e calibração
+- **Duas patentes por jogador** (linha e goleiro), independentes, com calibração própria
+- **Motor por trecho**: cada formação em campo é uma partida, com descarte de trecho curto e peso proporcional
+- **Rating 100% invisível em todas as telas**, com opção de esconder até a patente de quem não é admin (por aparelho, enquanto não há backend)
+- Formato 5v5 / 6v6 / 7v7 / 11v11 com sugestão automática de quantidade de times
+- Presença, montagem automática equilibrada, troca manual por toque, sorteio aleatório
+- Goleiros: fixos por time, rodízio com alternância de lado, improviso no meio da partida
+- Partida ao vivo: cronômetro com pausa, gol em um toque, autor opcional, substituição com trecho próprio, cancelar com confirmação, "chegou agora", desfazer
+- Presença ordenada por quem mais aparece, com marcação de goleiro por racha
+- Equilíbrio que evita repetir quem já jogou junto, sem abrir mão do equilíbrio
+- Vencedor fica, com fila de times, e tela de próxima partida com escalação editável e chance esperada de cada lado
+- Contestação, revisão, correção, anulação e recálculo integral
+- Ranking agrupado por patente, com escadas separadas de linha e de goleiro, histórico, resumo de fim de racha
+- **Destaques dos últimos 30 dias** na tela do racha: top 3 por saldo acima do esperado, artilheiro (quando os gols têm dono), goleiro menos vazado e presença
+- **Painel de números**: duelos e parcerias por pessoa (com histórico encontro a encontro), destaques (carrasco, freguês, melhor dupla), quebra ano a ano e rankings do racha no período
+- Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
+- Assumir perfil e papéis (simulados localmente)
+- Exportar/importar a liga inteira em JSON, com migração automática de ligas gravadas por versões anteriores
+- **Tudo em `localStorage`** — funciona offline, na quadra, sem internet
+
+**Ainda não existe (v2):**
+
+- Backend e conta real — hoje "assumir perfil" e papéis valem só naquele aparelho
+- Entrar numa liga por link, código ou convite direto (seção 7.3) — hoje não existe conta
+- Sincronização entre celulares (hoje: exporta/importa JSON)
+- Temporadas com reset parcial
+- Gráfico de evolução da patente ao longo do tempo
+- Motivo escrito na contestação e aviso para os admins
+- Sequências (maior série de vitórias), rivalidade por trio/quarteto e exportar o painel de números
+- Editar nome e "costuma ir ao gol" de quem já está cadastrado
+
+### 8.1 Caminho para a v2
+
+Trocar `localStorage` por **Supabase** (Postgres + Auth + Realtime) mantendo o mesmo modelo. O esquema completo — tabelas, convites, RLS, recálculo e migração — está em **[BANCO-DE-DADOS.md](BANCO-DE-DADOS.md)**; o resumo:
+
+As **estatísticas não são guardadas**: duelos, parcerias, presenças e aproveitamento são derivados dos trechos na hora de desenhar a tela. Não existe contador para desincronizar — corrigir uma partida de três semanas atrás conserta o painel junto.
+
+**O que fica guardado em cada partida** (e por que importa): placar e resultado, a **lista de trechos** (cada um com escalação dos dois lados, goleiro de cada lado, duração, peso, placar próprio e se conta), gols com autor, **o modo do racha** (que define o K) e o **id da sessão** (que alimenta a contagem de rachas da calibração). Com isso, o histórico é auto-suficiente: dá para recalcular a liga inteira do zero sem depender de nenhuma configuração atual.
+
+```
+profiles       (id, handle, nome)
+ligas          (id, nome, codigo, entrada_livre, cfg_json)
+liga_members   (liga_id, user_id, player_id, papel, status)   ← unique(liga_id,player_id): 1 membro = 1 jogador
+liga_invites   (id, liga_id, tipo, token, para_user, player_id, expira_em, status)
+join_requests  (id, liga_id, user_id, status)
+players        (id, liga_id, nome, rating_linha, rank_linha, rating_gol, rank_gol, costuma_gol, removido)
+sessions       (id, liga_id, data, modo, formato)
+matches        (id, liga_id, session_id, ordem, modo, formato, placar, resultado, deltas_json, anulada)
+stints         (id, match_id, ordem, ini_ms, dur_ms, peso, conta, lineups_json, gks_json, placar, resultado)
+goals          (id, match_id, stint_id, player_id NULL, lado, t_ms)
+disputes       (id, match_id, user_id, motivo, ts)
+audit_log      (id, liga_id, actor, acao, alvo, payload, ts)
+```
+
+O vínculo conta↔jogador mora em `liga_members`, e não em `players`: é uma `unique (liga_id, player_id)` que
+garante, no banco, que **um membro é um jogador só**. Jogador sem linha em `liga_members` é perfil sem dono.
+
+O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`, `buildTeams`, `pairCounts`, `statsLiga`, `encontros`, `statsAnos`) vai inteiro para o servidor — são funções puras, sem DOM. Auth sai de graça, Realtime resolve "dois celulares lançando ao mesmo tempo", e o app continua offline com fila de sincronização. O front muda pouco: só a camada de persistência.
+
+---
+
+## 9. Decisões de produto que valem defender
+
+> Os princípios estão aqui; o **registro datado** de cada decisão, com alternativas descartadas e onde ela vive no código e nos testes, está em [DECISOES.md](DECISOES.md).
+
+1. **O número não existe para o usuário.** Patente é identidade; ponto é contabilidade. Expor o ponto muda o comportamento das pessoas dentro da quadra — inclusive o corte entre patentes, que também é secreto. E se a liga preferir, nem a patente aparece: só o admin vê. A **única** porcentagem que o app mostra é a chance esperada **do confronto** — ela descreve quão parelho está o jogo, não o nível de ninguém em particular, e desaparece quando as patentes estão fechadas.
+2. **Patente é assunto de fim de racha.** Entre partidas o app não anuncia promoção nem queda: encerrar cai direto na tela da próxima partida. Quem subiu e quem caiu sai tudo junto no resumo do fim.
+3. **Ninguém precisa apontar o vencedor.** Marcar os gols já diz quem ganhou; encerrar é 1 toque e grava o placar, 0-0 incluído (empate). Um toque a menos por partida, doze vezes por noite.
+4. **A unidade de medida é o trecho, não a partida.** Substituição muda o nível dos dois lados, então cada formação em campo conta como uma partida própria — como o +/- da NBA. O que o seu time fez enquanto você estava no banco não é problema seu. Trecho de menos de 4 minutos cortado por troca é descartado em vez de virar ruído.
+5. **Uma partida vale uma partida.** O peso de cada trecho é a fatia da partida que ele ocupou, então quebrar uma partida em cinco trechos não multiplica o efeito dela na patente por cinco.
+6. **Gol não move patente.** Só vitória, empate e derrota — é o que reflete o racha. Gol é estatística de vitrine.
+7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Craque na linha e Promessa no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
+8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
+9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **4 rachas ou 15 partidas**, o que vier primeiro, e vale separado para cada uma das duas patentes.
+10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
+11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
+12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.
+13. **O modo é do racha, não da liga.** Uma liga mistura rachas curtos e longos no mesmo histórico; cada partida carrega o próprio peso. Mudar o padrão nunca reescreve o passado. (O *formato* — 5v5, 6v6, 7v7, 11v11 — é outra coisa, e essa é da liga.)
+14. **Equilíbrio primeiro, panelinha depois.** O app tenta separar quem sempre joga junto — mas só quando isso não custa equilíbrio. Times equilibrados são o produto; misturar as duplas é o que faz a patente convergir para a pessoa em vez de para o time.
+15. **A fila é sugestão, não regra.** O app propõe o próximo confronto pelo "vencedor fica", mas trocar qualquer um dos dois times custa 2 toques. Racha real não obedece fila.
+16. **Número maior é melhor dentro da patente.** Craque 3 é o topo, Craque 1 é o primeiro degrau — e os nomes (Iniciante → Promessa → Titular → Destaque → Craque) se leem sem ninguém explicar.
+17. **Estatística é derivada, nunca guardada.** Duelo, parceria, presença e aproveitamento saem dos trechos na hora. Contador gravado é contador que um dia desencontra do histórico — e aí ninguém sabe qual dos dois está certo.
+18. **Ranking de aproveitamento tem piso de partidas.** Sem piso, o topo é sempre de quem jogou três vezes, e a lista inteira perde a graça.
+19. **Time é sempre cheio; quem sobra é a fila.** No 5v5 se joga 5 contra 5 — quadra no Brasil não tem jogo menor que isso. O app monta quantos times inteiros couberem e o resto espera de fora; time de 3 "esperando a vez" não existe. E quando um time fica curto, ele é **completado** com quem está de fora, nunca compensado sentando alguém do outro lado. O app sugere quem completa; quem escolhe é quem está com o celular.
+20. **Reserva só existe na partida única.** No racha curto ninguém fica preso ao banco de um time: quem sobra é de fora, do racha, e entra na próxima troca.
+21. **Tema claro por padrão, escuro por escolha.** Celular no sol, em quadra descoberta, é o caso mais duro de leitura — e é nele que o app tem que funcionar. Para o racha da noite, o escuro está a um toque. É preferência do aparelho, não da liga.
+23. **A fila é de pessoas, não de times.** Quem perde sai, quem espera entra no lugar dele, e quem fica completa — é o "de próximo" que todo racha já joga, sem nome novo e sem tela nova para aprender.
+22. **Arrastar e tocar, os dois.** O arraste é mais direto para substituir e trocar de time; o toque continua funcionando porque no celular, com a mão suada, arraste erra.
