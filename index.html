@@ -575,16 +575,16 @@ const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.c
    rating — o "intervalo de classe" clássico do Elo, em que o mais forte
    vence ~75% dos confrontos. Base 1000, então a escada cobre 1000–1999,
    centrada em 1500 — a média que o Elo (soma zero) mantém para a liga.
-   Bronze é 1400–1599 e quem entra no padrão (1500) nasce Bronze 2: bem no
+   Prata é 1400–1599 e quem entra no padrão (1500) nasce Prata 2: bem no
    meio, com dois níveis para cada lado. Dentro do nível, número maior é
-   melhor: Ouro 3 é o topo, Madeira 1 o primeiro degrau.                    */
-/* madeira · ferro · bronze · prata · ouro
-   madeira: marrom fosco · ferro: aço escuro (cinza fechado, longe da prata
-   clara) · bronze: laranja · prata: quase branca · ouro: amarelo vivo       */
-const PATC_ESCURO=['#86603F','#5A646D','#D08A55','#DCE4EC','#FFD84D'];
-const PATC_CLARO =['#5E401F','#3A4249','#9A5626','#5B6B7A','#A06E00'];
+   melhor: Diamante 3 é o topo, Ferro 1 o primeiro degrau.                  */
+/* ferro · bronze · prata · ouro · diamante
+   ferro: aço escuro (cinza fechado, longe da prata clara) · bronze: laranja ·
+   prata: quase branca · ouro: amarelo vivo · diamante: azul-gelo            */
+const PATC_ESCURO=['#5A646D','#D08A55','#DCE4EC','#FFD84D','#8DB8FF'];
+const PATC_CLARO =['#3A4249','#9A5626','#5B6B7A','#A06E00','#2B5FCC'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
-const PATSHORT=['MAD','FER','BRO','PRA','OUR'];
+const PATSHORT=['FER','BRO','PRA','OUR','DIA'];
 const DIVS=['1','2','3'];
 const BASE=1000, STEP=200/3, TOP=14;
 const stepOf=e=>clamp(Math.floor((e-BASE)/STEP),0,TOP);
@@ -615,7 +615,7 @@ function defCfg(){return{
   startElo:1500, calGames:CAL_GAMES, calRachas:CAL_RACHAS,
   /* nomes que falam do papel no time, não de tempo de casa: quem joga há 20
      anos e é fraco não é "iniciante" nem "promessa" — é raiz. Editáveis por liga. */
-  patNames:['Madeira','Ferro','Bronze','Prata','Ouro'],
+  patNames:['Ferro','Bronze','Prata','Ouro','Diamante'],
   rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
   stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
@@ -690,9 +690,10 @@ function normalize(st){
     l.cfg=Object.assign({},d,l.cfg||{});
     if(!Array.isArray(l.cfg.patNames))l.cfg.patNames=d.patNames.slice();
     /* liga que ainda usa os nomes antigos de fábrica ganha os novos; nome editado à mão fica */
-    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante','Ferro|Bronze|Prata|Ouro|Diamante','Ferro|Bronze|Prata|Ouro'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
-    /* escada de 4 níveis (Ferro…Ouro editados à mão) ganha o degrau de baixo; qualquer outro tamanho volta ao padrão */
-    if(l.cfg.patNames.length===4)l.cfg.patNames=[d.patNames[0]].concat(l.cfg.patNames);
+    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante','Ferro|Bronze|Prata|Ouro','Madeira|Ferro|Bronze|Prata|Ouro'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
+    /* escada de 4 níveis editada à mão ganha o topo; 'Madeira' de fábrica na frente de nomes editados sai; outro tamanho volta ao padrão */
+    if(l.cfg.patNames.length===5&&l.cfg.patNames[0]==='Madeira')l.cfg.patNames=l.cfg.patNames.slice(1);
+    if(l.cfg.patNames.length===4)l.cfg.patNames=l.cfg.patNames.concat([d.patNames[4]]);
     if(l.cfg.patNames.length!==5)l.cfg.patNames=d.patNames.slice();
     /* a variação de nível é a mesma em toda liga: liga antiga com "estabilidade"
        ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */

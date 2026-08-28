@@ -385,17 +385,21 @@ está cego e dizer o remédio (separar por algumas noites; `avoidRepeat` já exi
 funciona.
 **Onde:** `inseparaveis`, `JUNTOS_MIN`/`JUNTOS_PCT`, `viewStats` (cardJuntos), `pSheet`.
 
-### D-36 · De volta a 5 níveis, com Madeira embaixo; sem nível até calibrar
-**28/08/2026.** Escada: **Madeira · Ferro · Bronze · Prata · Ouro**, 15 degraus, 1000–1999, entrada
-(1500) em **Bronze 2** — o degrau do meio. Ferro volta a ser aço escuro (a prata é quase branca,
-não confundem); Madeira é marrom fosco. E: quem não tem nível dado à mão (cadastro/admin) fica
-**sem nível** até sair da calibração — a escada o lista em "Sem nível ainda" com o progresso.
-**Por quê:** com 4 níveis a entrada caía numa fronteira (Prata 1) e a ponta de baixo ficava rasa;
-um quinto degrau embaixo dá espaço para quem está chegando sem inflar o topo. "Madeira" em vez de
-"Papel": é o nome que o pessoal já usa para liga de baixo, e a cor (marrom) tem lugar na escala.
-Não rotular quem ainda calibra evita o "Ferro 1" estampado em quem só não jogou o suficiente.
-**Descartado:** "Papel" (cor branca colide com a prata; soa a zoação); "Pedra"; entrada em Prata 1
-com 5 níveis (deixava só 1,5 nível acima).
+### D-36 · De volta a 5 níveis — Diamante no topo, Prata no meio; sem nível até calibrar
+**28/08/2026.** Escada: **Ferro · Bronze · Prata · Ouro · Diamante**, 15 degraus, 1000–1999,
+entrada (1500) em **Prata 2** — o degrau do meio. Cortes: Ferro <1200 · Bronze 1200 · Prata 1400 ·
+Ouro 1600 · Diamante 1800. Ferro é aço escuro (a prata é quase branca, não confundem); Diamante é
+azul-gelo. E: quem não tem nível dado à mão (cadastro/admin) fica **sem nível** até sair da
+calibração — a escada o lista em "Sem nível ainda" com o progresso.
+**Por quê:** com 4 níveis a entrada caía numa fronteira (Prata 1). Cinco níveis em 1000 pontos
+sempre deixam uma ponta rara (±300 da média = 85 %+ de expectativa). A primeira tentativa do dia
+pôs o quinto degrau embaixo ("Madeira", entrada em Bronze 2); foi revertida na mesma hora porque o
+jogador mediano — metade do racha — viraria "Bronze", e a ponta vazia ficaria embaixo, como
+constrangimento. Com Diamante em cima, a média é Prata (a leitura que todo mundo já traz de jogo) e
+a ponta vazia é ambição. O acolhimento de quem chega, que era a razão da Madeira, é feito pelo
+"sem nível até calibrar", que não carimba ninguém.
+**Descartado:** Madeira/Papel/Pedra embaixo (média vira Bronze); Platina no topo (visualmente irmã
+da Prata e não lê como topo para quem não joga videogame); entrada em Prata 1 com 5 níveis.
 **Onde:** `BASE=1000`, `TOP=14`, `PATC_*`, `PATSHORT`, `defCfg().patNames`, `normalize`,
 `temPatente`, `viewEscada` (bloco "Sem nível ainda").
 

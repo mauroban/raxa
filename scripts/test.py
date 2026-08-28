@@ -65,13 +65,13 @@ function lanca(lineA,lineB,result,o){
 const elo=(id,role)=>rt(P(liga,id),role||'L').elo;
 
 console.log('\n[1] escada de patentes');
-ok(rankLabel(liga,stepOf(1500))==='Bronze 2','1500 (padrao de entrada) = Bronze 2, no meio da escada');
+ok(rankLabel(liga,stepOf(1500))==='Prata 2','1500 (padrao de entrada) = Prata 2, no meio da escada');
 ok(Math.round(1500-stepMin(0))===500&&Math.round(stepMin(TOP+1)-1500)===500,'a entrada fica no centro: 500 pontos para cada lado');
-ok(rankLabel(liga,14)==='Ouro 3'&&rankLabel(liga,12)==='Ouro 1','no topo: Ouro 3 e o melhor, Ouro 1 o primeiro degrau');
-ok(rankLabel(liga,0)==='Madeira 1','o degrau mais baixo da escada e Madeira 1');
-ok(patOf(stepOf(1399))===1&&patOf(stepOf(1400))===2,'corte Ferro/Bronze em 1400');
-ok(patOf(stepOf(1799))===3&&patOf(stepOf(1800))===4,'corte Prata/Ouro em 1800');
-ok(patOf(stepOf(2100))===4&&stepOf(2100)===14,'acima de 2000 fica preso em Ouro 3');
+ok(rankLabel(liga,14)==='Diamante 3'&&rankLabel(liga,12)==='Diamante 1','no topo: Diamante 3 e o melhor, Diamante 1 o primeiro degrau');
+ok(rankLabel(liga,0)==='Ferro 1','o degrau mais baixo da escada e Ferro 1');
+ok(patOf(stepOf(1399))===1&&patOf(stepOf(1400))===2,'corte Bronze/Prata em 1400');
+ok(patOf(stepOf(1799))===3&&patOf(stepOf(1800))===4,'corte Ouro/Diamante em 1800');
+ok(patOf(stepOf(2100))===4&&stepOf(2100)===14,'acima de 2000 fica preso em Diamante 3');
 ok(stepOf(500)===0&&stepOf(9000)===14,'extremos ficam presos no primeiro/ultimo degrau');
 { const n=mk('Novo',1500,0);n.L.def=false;
   ok(!temPatente(n,'L'),'novato sem nivel manual e sem calibrar NAO tem nivel');
