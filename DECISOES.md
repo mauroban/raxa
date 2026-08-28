@@ -376,7 +376,7 @@ real); ajuste individual por desvio da média do time (não separa quem carrega 
 **Onde:** `KMODE.min`, `K_FULL`, `kFor`, `FORM_GAP`, `streakK`, `computeElo`.
 
 ### D-35 · O app aponta duplas inseparáveis em vez de fingir que as separa
-**28/08/2026.** `inseparaveis()` lista duplas com ≥40 partidas e ≥80 % do histórico do menor dos
+**28/08/2026.** `inseparaveis()` lista duplas com ≥35 partidas e ≥80 % do histórico do menor dos
 dois em comum; aparecem em Stats → Racha e como aviso na ficha de cada um.
 **Por quê:** é limite do modelo, não bug — no Elo por time, dois jogadores sempre no mesmo lado
 recebem exatamente os mesmos deltas e terminam com o mesmo rating. Tentar "descontar" isso no motor

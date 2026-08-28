@@ -1210,7 +1210,7 @@ function statsLiga(liga,periodo){
    mesmos pontos, então convergem para o mesmo nível — não importa quão bom
    cada um é. Quando uma dupla tem quase todo o histórico em comum, o app
    avisa: o remédio é separá-los na montagem por algumas noites.           */
-const JUNTOS_MIN=40, JUNTOS_PCT=.8;
+const JUNTOS_MIN=35, JUNTOS_PCT=.8;
 function inseparaveis(liga,st){
   const {J,PA}=st||statsLiga(liga,'sempre'),out=[],vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{
@@ -2221,8 +2221,8 @@ function viewStats(liga){
 `;
   const juntos=inseparaveis(liga,{J,PA});
   const cardJuntos=juntos.length?`
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">🔗 Sempre no mesmo time</div>
+  <div class="card" style="border-color:color-mix(in srgb,var(--gold) 45%,var(--line))">
+    <div class="row" style="margin-bottom:6px"><div class="k" style="color:var(--gold)">⚠ Sempre no mesmo time</div><div class="sp tiny" style="color:var(--gold)">nível não confiável</div></div>
     <div class="tiny muted" style="margin-bottom:8px">Quem joga quase sempre junto ganha e perde os mesmos pontos — o app não consegue separar o nível dos dois. Vale colocá-los em times diferentes por algumas noites (ou ligar "Evitar repetir quem já jogou junto" nos Ajustes).</div>
     ${juntos.map(x=>`<div class="rk3"><span class="pos">🔗</span>
       <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}<small>${x.n} de ${x.de} partidas juntos</small></div>
@@ -2245,7 +2245,7 @@ function viewStats(liga){
 
   </div>
 
-  <div class="card">
+${cardJuntos}  <div class="card">
     <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
     <div class="tiny muted" style="margin-bottom:6px">Só histórico: nada aqui usa nível.</div>
     <div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>
@@ -2266,7 +2266,7 @@ function viewStats(liga){
         <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}${aberto.duplas?`<small>${x.v}V em ${pl(x.n,'partida')}</small>`:''}</div>
         <span class="val">${x.pct}%</span></div>`).join('')+(duplas.length>3?`<button class="more" data-a="statsSec" data-k="duplas">${aberto.duplas?'▴ menos':'▾ ver até '+Math.min(10,duplas.length)}</button>`:'')
         :`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>
-  </div>${cardJuntos}`;
+  </div>`;
   return `
   <div class="card">${seg}
     ${eu?'':`<div class="tiny muted" style="margin-top:9px">Ninguém assumiu um perfil neste aparelho ainda — abra a ficha de alguém em Jogadores e toque em “Este perfil sou eu” para o app saber quais partidas são suas.</div>`}
