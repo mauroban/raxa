@@ -309,6 +309,23 @@ ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma parti
   ok(P(liga,'p6').pm===1&&P(liga,'p1').pm===0&&P(liga,B5[0]).pm===-1,'+/-: p6 +1 (estava no 1-0), p1 0 (trechos 0-0), time B -1');
   const Jst=statsLiga(liga,'sempre').J;
   ok(Jst['p6'].pm===1&&Jst[B5[0]].pm===-1,'stats: +/- bate com o motor');
+  /* D-45: na partida única o nível anda por CONFRONTO (trechos com a mesma escalação se juntam)
+     e o placar vale por margem. */
+  const U=unidadesNivel(liga,m);
+  ok(U.length===2,'3 trechos, mas A5xB5 aparece duas vezes (0-10 e 45-50): viram 2 confrontos, nao 3');
+  const uAB=U.find(u=>u.score[0]===0),uP6=U.find(u=>u.score[0]===1);
+  ok(uAB&&Math.abs(uAB.w-.3)<.01&&Math.abs(uAB.dur-15*MIN)<1,'o confronto juntado soma tempo (15 min) e peso (0,3)');
+  ok(uP6&&Math.abs(uP6.S[0]-.7311)<.001&&Math.abs(uAB.S[0]-.5)<.001,'placar por margem: 1-0 vale 0,73 para quem fez; 0-0 vale 0,5');
+  ok(Math.abs(margemS(3,0)[0]-.9526)<.001&&margemS(3,0)[0]>margemS(1,0)[0]&&margemS(5,0)[0]<1,'gol importa (3-0 > 1-0), mas satura (5-0 < 1,0)');
+  /* empatar com time pior custa pontos para o melhor e rende para o pior */
+  liga.matches.length=0;rebuildAll(liga);
+  P(liga,'p1').L.elo=P(liga,'p1').L.base=1600;
+  const c2={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[0,0],events:[],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
+  const st2=splitStints(c2,c2.startedAt+50*MIN,liga.cfg,'unica');
+  const m2={id:'mu3',ts:c2.startedAt+50*MIN,startedAt:c2.startedAt,endedAt:c2.startedAt+50*MIN,sessionId:'su3',mode:'unica',
+    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st2,score:[0,0],result:'draw',goals:[],disputes:[],voided:false};
+  applyMatch(liga,m2);
+  ok(m2.deltas['p1']<0&&m2.deltas[B5[0]]>0,'0-0 contra time pior: o melhor perde pontos, o pior ganha');
   liga.cfg.matchMode='curtas';
 }
 {

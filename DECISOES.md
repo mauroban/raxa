@@ -509,6 +509,22 @@ da liga mistura réguas. Substitui a decisão 13 antiga ("o modo é do racha").
 **Onde:** `newLiga`/`novaSheet`/`novaOpt`/`saveLiga`, `cfgNova`, `viewPresenca`, `viewCfg` ·
 DOCUMENTACAO §9 (decisão 13) · smoke "nova liga escolhe formato e modo na criacao".
 
+### D-45 · Partida única: nível por confronto, placar por margem; +/- em destaque só nela
+**28/08/2026.** Na liga de partida única, `unidadesNivel` junta os trechos que contam e têm a
+**mesma escalação dos dois lados** (e goleiros) num confronto só — placar, tempo e peso somados —
+e o resultado do confronto é a **margem saturada** `S = 0,5 + 0,5·tanh((gf−gc)/2)` (1-0 → 0,73,
+2-0 → 0,88, 3-0 → 0,95). `computeElo` aceita esse `[S0,S1]` fracionado; "acima do esperado" usa o
+mesmo S. V/E/D continua da partida inteira (D-38). O +/- aparece em primeiro (cartão, rankings,
+último racha, ficha) **só na liga de partida única**; no racha curto ele fica depois das vitórias
+e o resto continua exatamente como antes.
+**Por quê:** na partida longa os gols decidem o resultado e precisam pesar; mas um 0-0 contra
+time pior também tem que valer — a margem saturada dá as duas coisas. Juntar trechos do mesmo
+confronto evita que uma troca e a volta virem dois jogos. O racha curto já estava bom.
+**Descartado:** V/E/D por trecho (a vitória é da partida); margem linear sem teto (5-0 valeria
+cinco 1-0); +/- em destaque em toda liga.
+**Onde:** `margemS`, `unidadesNivel`, `applyMatch`, `computeElo`, `viewStats`, `pSheet` ·
+`test.py` (confronto juntado, margem, 0-0 contra time pior) · DOCUMENTACAO §3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

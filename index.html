@@ -866,7 +866,7 @@ function computeElo(liga,part,result,mode,weight){
     const {side,w}=part[pid];sum[side]+=rt(p,part[pid].role).elo*w;wsum[side]+=w;}
   const avg=[wsum[0]?sum[0]/wsum[0]:cfg.startElo,wsum[1]?sum[1]/wsum[1]:cfg.startElo];
   const Ea=1/(1+Math.pow(10,(avg[1]-avg[0])/400)),E=[Ea,1-Ea];
-  const Sc=result==='draw'?[.5,.5]:result===0?[1,0]:[0,1];
+  const Sc=Array.isArray(result)?result:result==='draw'?[.5,.5]:result===0?[1,0]:[0,1];
   const deltas={},pre={};
   for(const pid in part){const p=P(liga,pid);if(!p)continue;
     const tr=rt(p,part[pid].role);
@@ -899,12 +899,33 @@ function updateRank(liga,p,tr){
   tr.peak=Math.max(tr.peak||0,tr.rank);
   return tr.rank-before;
 }
+/* Partida única: o placar do confronto vale por MARGEM. 0-0 é meio a meio;
+   cada gol de diferença puxa para o lado de quem fez, saturando (1-0 → 0,73,
+   2-0 → 0,88, 3-0 → 0,95). Gol importa muito, mas 5-0 não vale cinco vezes
+   1-0 — e empatar com time pior em campo custa pontos, como no Elo.        */
+const margemS=(gf,gc)=>{const t=Math.tanh((gf-gc)/2);return [+(0.5+0.5*t).toFixed(4),+(0.5-0.5*t).toFixed(4)]};
+/* Unidades que movem o nível. No racha curto, cada trecho que conta (D-37).
+   Na partida única (D-45), trechos com o MESMO confronto (mesmas escalações
+   e goleiros dos dois lados) se juntam num só: placar somado, tempo somado,
+   resultado pela margem. Quem sai e volta contra o mesmo time não vira dois
+   jogos.                                                                    */
+function unidadesNivel(liga,m){
+  const sts=matchStints(liga,m).filter(st=>st.counted);
+  if(modoDe(liga,m)!=='unica')return sts.map(st=>({part:stintPart(st),S:st.result==='draw'?[.5,.5]:st.result===0?[1,0]:[0,1],w:st.w,dur:st.dur||0,score:st.score}));
+  const G={},ordem=[];
+  for(const st of sts){
+    const key=JSON.stringify([[...st.lineups[0]].sort(),[...st.lineups[1]].sort(),st.gks||[null,null]]);
+    let g=G[key];if(!g){g=G[key]={part:stintPart(st),w:0,dur:0,score:[0,0]};ordem.push(g)}
+    g.w+=st.w;g.dur+=st.dur||0;g.score[0]+=(st.score||[0,0])[0];g.score[1]+=(st.score||[0,0])[1];
+  }
+  ordem.forEach(g=>{g.w=+g.w.toFixed(4);g.S=margemS(g.score[0],g.score[1])});
+  return ordem;
+}
 function applyMatch(liga,m){
   const seen={};m.deltas={};m.over={};m.pre=m.pre||{};
-  for(const st of matchStints(liga,m)){
-    if(!st.counted)continue;
-    const part=stintPart(st);
-    const r=computeElo(liga,part,st.result,m.mode,st.w);
+  for(const st of unidadesNivel(liga,m)){
+    const part=st.part;
+    const r=computeElo(liga,part,st.S,m.mode,st.w);
     for(const pid in part){
       const p=P(liga,pid);if(!p)continue;
       const role=part[pid].role||'L',tr=rt(p,role),k=pid+role;
@@ -915,7 +936,7 @@ function applyMatch(liga,m){
       tr.elo+=d;m.deltas[pid]=(m.deltas[pid]||0)+d;
       /* Acima do esperado: (resultado - chance que ele tinha) x peso do trecho.
          Vale 1 = uma vitoria inteira a mais do que o confronto indicava.      */
-      const Sv=st.result==='draw'?.5:(st.result===part[pid].side?1:0);
+      const Sv=st.S[part[pid].side];
       m.over[pid]=(m.over[pid]||0)+(Sv-r.exp[part[pid].side])*(part[pid].w||1)*st.w;
       updateRank(liga,p,tr);
       seen[k].rank=tr.rank;
@@ -2131,7 +2152,7 @@ function statsWhoId(liga,J){
   return top||(liga.players[0]&&liga.players[0].id)||null;
 }
 function viewStats(liga){
-  const eu=euId(liga);
+  const eu=euId(liga),longa=liga.cfg.matchMode==='unica';   // +/- em destaque só na partida única (D-45)
   const per=statsPeriodo(liga);
   const tab=S.ui.statsTab==='racha'?'racha':'jogador';
   const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
@@ -2179,6 +2200,7 @@ function viewStats(liga){
   const TOPN=10;
   const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos).slice(0,TOPN);
   const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v).slice(0,TOPN);
+  const secPm=()=>`<div class="sec"><div class="k2">📊 Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>`;
   const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,TOPN);
   const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>pctDe(b.v,b.jogos)-pctDe(a.v,a.jogos)||b.jogos-a.jogos).slice(0,TOPN);
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,TOPN);
@@ -2242,8 +2264,8 @@ function viewStats(liga){
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
     ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best}</span>`:''}</div>`:''}
-    <div class="tiles five" style="margin-top:16px">
-      <div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>
+    <div class="tiles ${longa?'five':'four'}" style="margin-top:16px">
+      ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${me.jogos}</b><span>partidas</span></div>
       <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
@@ -2316,6 +2338,7 @@ function viewStats(liga){
     /* quem mais ganhou é a estatística da noite: vitórias, desempate por menos derrotas e mais partidas */
     const venc=[...todos].filter(x=>x.v).sort((a,b)=>b.v-a.v||a.d-b.d||b.jogos-a.jogos).slice(0,3);
     const pm=[...todos].filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v).slice(0,3);
+    const secPmRacha=`<div class="sec"><div class="k2">📊 Melhor +/−</div>${pm.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D</small></div><span class="val num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span></div>`).join('')}</div>`;
     const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,3);
     const tempo=[...todos].sort((a,b)=>b.min-a.min).slice(0,3);
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
@@ -2340,7 +2363,7 @@ function viewStats(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
-    ${pm.length?`<div class="sec"><div class="k2">📊 Melhor +/−</div>${pm.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D</small></div><span class="val num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span></div>`).join('')}</div>`:''}
+    ${pm.length&&longa?secPmRacha:''}
     ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${venc.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${pctDe(x.v,x.jogos)}% de vitórias</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')}</div>`:''}
     ${art.length?`<div class="sec"><div class="k2">⚽ Artilheiro</div>${art.map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2">📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></div>${rendeu.map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')}</div>`:''}
@@ -2372,10 +2395,11 @@ function viewStats(liga){
 
 ${cardJuntos}  <div class="card">
     <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
-    <div class="sec"><div class="k2">📊 Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>
+    ${longa?secPm():''}
     <div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>
     <div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>
     <div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>pctDe(x.v,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>
+    ${longa?'':secPm()}
     <div class="sec"><div class="k2">📈 Maior aproveitamento <span class="tiny muted">mín. ${MIN_JOGOS} partidas</span></div>
       ${rkBars(rkPct,x=>pctDe(x.v,x.jogos),x=>pctDe(x.v,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.','pct')}</div>
     <div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>
@@ -3484,7 +3508,7 @@ const A={
       </div>
       ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
       ${(()=>{const j=statsLiga(l,'sempre').J[p.id]||{min:0,minGk:0,sofridos:0,pm:0};return `<div class="stat four">
-        <div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>
+        ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
         <div><b class="num">${tot}</b><span>partidas</span></div>
         <div><b class="num">${tot?Math.round(vit/tot*100):0}%</b><span>vitórias</span></div>
         <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>

@@ -138,6 +138,8 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 > **Trecho × partida.** O rating anda por trecho (com o peso 1/n); a proteção pós-promoção (3.5) também conta trechos. Já calibração (3.6), partidas jogadas, V/E/D, forma e estatística (seção 5) contam **partidas de relógio**: numa partida com duas substituições válidas, o jogador que ficou o tempo todo conta **uma** partida, não três.
 
+> **Partida única: nível por confronto e por margem (D-45).** Na liga de partida única, trechos com **a mesma escalação dos dois lados** (e mesmos goleiros) se juntam num confronto só — quem sai e volta contra o mesmo time não vira dois jogos. O placar do confronto vale **por margem**, saturando: 0-0 é meio a meio (0,50), 1-0 vale 0,73 para quem fez, 2-0 0,88, 3-0 0,95. Gol importa muito, mas 5-0 não vale cinco vezes 1-0. Empatar com um time pior em quadra custa pontos ao melhor e rende ao pior, como no Elo. O peso continua sendo a fatia de tempo. No racha curto nada muda: trecho = unidade, V/E/D inteiro, peso 1/n (D-37).
+
 ### 3.5 Anti-ioiô: como a patente sobe e desce sem oscilar
 
 Alternar entre duas patentes toda semana destrói a graça do sistema. Três mecanismos, todos testados:
@@ -487,7 +489,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 **Sem "maior goleada".** Partida de racha é curta e termina em 2 gols; placar não mede nada. Retirada da aba Racha.
 
-**+/-.** A estatística principal de cada jogador: gols a favor menos gols contra enquanto ele estava em quadra, em todos os trechos. É o primeiro número do cartão do jogador (Stats e ficha) e o primeiro ranking do período e do último racha. Na partida longa, onde a noite tem uma partida só, é o que separa quem esteve dentro nos bons momentos de quem não esteve.
+**+/-.** Na liga de partida única, a estatística principal de cada jogador (no racha curto ela existe, mas fica depois das vitórias): gols a favor menos gols contra enquanto ele estava em quadra, em todos os trechos. É o primeiro número do cartão do jogador (Stats e ficha) e o primeiro ranking do período e do último racha. Na partida longa, onde a noite tem uma partida só, é o que separa quem esteve dentro nos bons momentos de quem não esteve.
 
 **Minutos e ritmo.** Cada trecho guarda a duração de jogo (sem pausas), então minutos em quadra e no gol são somas exatas por jogador. A aba Stats mostra minutos, **gols a cada 10 min** e, para goleiros, **sofridos a cada 10 min** (rankings de ritmo e o destaque "Menos vazado" pedem 1 h em quadra/no gol; goleiro é sempre medido por tempo, nunca por partida). Stats tem duas abas — **Jogador** (a pessoa: aproveitamento, ano a ano, duelos, parcerias) e **Racha** (a liga no período e os rankings) — e o período (ano ou desde sempre) é filtro, não aba. Rankings mostram 3 linhas e abrem até 10. Os filtros de período (Último · 30 dias · ano · Sempre) dividem uma linha só. Além dos anos e de "desde sempre", o filtro tem **Último mês** (30 dias) e **Último racha**; neste, a aba Racha troca os rankings de temporada por uma leitura da noite — presentes, partidas, gols, minutos de jogo, os times da noite com V/E/D e gols, **quem mais ganhou** (vitórias; desempate por menos derrotas), artilheiro, quem rendeu acima do esperado, tempo em quadra, menos vazado (mín. 20 min no gol), gols contra e quem subiu/caiu de nível.
 
