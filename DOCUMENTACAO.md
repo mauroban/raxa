@@ -472,7 +472,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 **Goleiro da próxima partida.** Com rodízio, a sugestão do app segue a regra do racha: **o goleiro do time que venceu fica**; só o outro lado troca, e recebe quem está há mais tempo esperando no rodízio. A pré-partida mostra os dois goleiros ("🧤 No gol") e qualquer um pode ser trocado na mão — por outro do rodízio ou por alguém do time — antes do apito; a escolha vale só para aquele confronto. "Foi embora" fica na pré-partida (ao lado de "Chegou agora"), e não na substituição. Não há botão de "girar a fila": troca fora do automático é toque/arraste entre fila e time.
 
-**Duplas inseparáveis.** Elo por time não separa quem joga sempre junto: os dois ganham e perdem os mesmos pontos e convergem para o mesmo nível, seja qual for a diferença real. Quando uma dupla tem ≥20 partidas e ≥80 % do histórico de um deles em comum, o app avisa em Stats → Racha ("🔗 Sempre no mesmo time", com a % de partidas juntos) e na ficha de cada um. O remédio é separá-los na montagem por algumas noites — ou ligar "Evitar repetir quem já jogou junto" nos Ajustes.
+**Duplas inseparáveis.** Elo por time não separa quem joga sempre junto: os dois ganham e perdem os mesmos pontos e convergem para o mesmo nível, seja qual for a diferença real. Quando uma dupla tem ≥40 partidas e ≥80 % do histórico de um deles em comum, o app avisa em Stats → Racha ("🔗 Sempre no mesmo time", com a % de partidas juntos) e na ficha de cada um. O remédio é separá-los na montagem por algumas noites — ou ligar "Evitar repetir quem já jogou junto" nos Ajustes.
 
 **Fila com 3–4 times.** Quem espera há mais tempo joga antes; vencedor fica (se ligado), perdedor vai para o fim da fila; empate manda os dois.
 

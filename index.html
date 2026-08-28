@@ -1210,7 +1210,7 @@ function statsLiga(liga,periodo){
    mesmos pontos, então convergem para o mesmo nível — não importa quão bom
    cada um é. Quando uma dupla tem quase todo o histórico em comum, o app
    avisa: o remédio é separá-los na montagem por algumas noites.           */
-const JUNTOS_MIN=20, JUNTOS_PCT=.8;
+const JUNTOS_MIN=40, JUNTOS_PCT=.8;
 function inseparaveis(liga,st){
   const {J,PA}=st||statsLiga(liga,'sempre'),out=[],vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{
