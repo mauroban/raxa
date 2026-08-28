@@ -183,10 +183,6 @@ body.painting{touch-action:none;overflow:hidden}
 .vs{display:grid;place-items:center;font-family:var(--disp);color:var(--mute2);font-size:15px}
 .minus{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:8px;border:1px solid currentColor;
   opacity:.4;display:grid;place-items:center;font-size:16px;background:transparent;color:inherit;cursor:pointer}
-.gkslot{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:8px}
-.gkbtn{border:1px dashed var(--line2);background:var(--panel);border-radius:11px;padding:8px 6px;color:var(--chalk);
-  font-size:13px;cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gkbtn.empty{color:var(--mute)}
 .lineup{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .lineup span{font-size:12px;color:var(--mute);background:rgba(255,255,255,.04);padding:3px 7px;border-radius:7px}
 .scorerbar{margin-top:10px;background:var(--panel2);border:1px solid var(--line2);border-radius:12px;padding:9px}
@@ -393,6 +389,16 @@ button.rk2{cursor:pointer} button.rk2:active{opacity:.65}
   border:1px solid currentColor}
 .mrow.eu{border-left:3px solid var(--lime);padding-left:9px}
 .slots{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:10px}
+/* escalação em duas colunas, logo abaixo do nome/placar: goleiro num slot
+   próprio em cima, depois um slot por jogador de linha (5 no 5v5) */
+.esc2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.esc2 .pl{display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;margin-top:5px;
+  font-size:14px;font-weight:500;background:rgba(255,255,255,.03);color:var(--chalk);width:100%;text-align:left;cursor:pointer;min-height:38px;font-family:inherit}
+.esc2 .pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.esc2 .pl.gk{border-color:color-mix(in srgb,var(--cyan) 45%,var(--line));background:color-mix(in srgb,var(--cyan) 8%,transparent);margin-top:0}
+.esc2 .pl.empty{border-style:dashed;color:var(--mute);background:transparent;font-weight:400}
+.esc2 .pl .ic{font-size:11px;color:var(--mute);flex:0 0 auto}
+.esc2 .pl .ic.sub{opacity:.7}
 .slot{border-radius:14px;padding:13px 10px;text-align:center;cursor:pointer;border:1px solid var(--line2);
   background:var(--panel2);color:var(--chalk)}
 .slot .nm{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-size:15px}
@@ -1768,6 +1774,24 @@ function chanceDeLineups(liga,lv,lineups,gks){
 }
 const pct=x=>Math.round(x*100)+'%';
 
+/* Escalação de um lado: slot do goleiro em cima, um slot por vaga de linha.
+   `orig` = ids do time de origem (quem não está nele leva o ícone de
+   substituto ⇄); goleiro do rodízio leva ↻. `act` monta os data-a de cada
+   slot; sem `act` os slots são só leitura.                                  */
+function escCol(liga,lv,ids,gk,per,orig,act){
+  const pool=lv.gkPool||[];
+  const linha=ids.filter(id=>id!==gk);
+  const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
+  const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="substituto: não é do time">⇄</span>':'';
+  const slot=(id,cls,attrs)=>id?`<button class="pl ${cls}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
+    :`<button class="pl ${cls} empty" ${attrs||''}><span class="nm">${cls==='gk'?'🧤 sem goleiro':'vaga'}</span></button>`;
+  let h=gk?`<button class="pl gk" ${act?act.gk:''}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
+    :`<button class="pl gk empty" ${act?act.gk:''}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
+  const n=Math.max(per,linha.length);
+  for(let i=0;i<n;i++){const id=linha[i];h+=slot(id,'',id&&act?act.pl(id):'')}
+  return `<div class="col">${h}</div>`;
+}
+
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
 function tpChip(liga,lv,id,big){
   const p=P(liga,id);if(!p)return '';
@@ -1830,6 +1854,9 @@ function viewProxima(liga,lv){
         <div class="nm">${esc(lv.teams[i].name)}</div>
         <div class="sub">${escal[sd].length} em quadra${compl[sd].length?' (+'+compl[sd].length+')':''}${ex?' · <b>'+pct(ex[sd])+'</b> de chance':''}</div>
       </button>`}).join('<div class="vs">VS</div>')}
+    </div>
+    <div class="esc2">
+      ${[0,1].map(sd=>escCol(liga,lv,escalCom[sd],gkDe(sd),per,lv.teams[pair[sd]].ids,{gk:`data-a="preGk" data-sd="${sd}"`,pl:()=>''})).join('')}
     </div>
     ${ex?`<div class="tiny muted" style="margin-top:9px">${esc(equilibrio)} — chance esperada pelo nível de quem entra em quadra.</div>`:''}
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
@@ -1931,26 +1958,21 @@ function viewJogo(liga,lv){
         ${c.score[s]?`<button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button>`:''}
       </div>`}).join('<div class="vs">VS</div>')}
   </div>
-  <div class="gkslot">
-    ${[0,1].map(s=>`<button class="gkbtn ${c.gks[s]?'':'empty'}" data-a="gkSheet" data-s="${s}">
-      🧤 ${c.gks[s]?esc(nameOf(liga,c.gks[s])):'definir goleiro'}</button>`).join('<div></div>')}
+  <div class="esc2">
+    ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,lv.teams[s===0?c.a:c.b].ids,
+      {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
   </div>
+  <div class="tiny muted" style="margin-top:6px">Toque num nome para substituir · ⇄ substituto · ↻ goleiro do rodízio</div>
   <div id="scorer"></div>
   ${golsCard(liga,lv,c)}
   <div class="card" style="margin-top:10px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
-    <div class="k" style="margin-bottom:8px">Em quadra — toque num nome para substituir</div>
-    ${[0,1].map(s=>{const res=reservasDe(s);return `
-      <div style="margin-bottom:12px">
-        <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">${esc(t[s].name)} · ${c.lineups[s].length} em quadra</div>
-        <div class="chips">${c.lineups[s].map(id=>`<button class="tp big" data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}">
-          ${esc(nameOf(liga,id))}${c.gks[s]===id?' 🧤':''}</button>`).join('')}</div>
-        ${res.length?`<div class="chips" style="margin-top:6px">
-          <span class="tiny muted" style="align-self:center;margin-right:2px">reservas:</span>
-          ${res.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}" style="opacity:.85">${esc(nameOf(liga,o.id))}</button>`).join('')}</div>`:''}
-      </div>`}).join('')}
-    <div class="hr"></div>
+    ${[0,1].map(s=>{const res=reservasDe(s);return res.length?`
+      <div style="margin-bottom:10px">
+        <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
+        <div class="chips">${res.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}" style="opacity:.85">${esc(nameOf(liga,o.id))}</button>`).join('')}</div>
+      </div>`:''}).join('')}
     <div class="row"><div class="k">Fora / outros times — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
     <div class="chips" style="margin-top:8px">
