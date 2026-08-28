@@ -76,7 +76,14 @@ ok(stepOf(500)===0&&stepOf(9000)===14,'extremos ficam presos no primeiro/ultimo 
 { const n=mk('Novo',1500,0);n.L.def=false;
   ok(!temPatente(n,'L'),'novato sem nivel manual e sem calibrar NAO tem nivel');
   n.L.games=CAL_GAMES;ok(temPatente(n,'L'),'depois de calibrar, tem');
-  const m2=mk('Manual',1500,0);m2.L.def=true;ok(temPatente(m2,'L'),'nivel dado a mao aparece desde o inicio'); }
+  const m2=mk('Manual',1500,0);m2.L.def=true;ok(temPatente(m2,'L'),'nivel dado a mao aparece desde o inicio');
+  /* subiu/caiu no fim do racha: quem nao tem nivel nao aparece */
+  const sem=mk('SemNivel',stepMid(3),0);sem.L.def=false;liga.players.push(sem);
+  const cia=[];for(let i=0;i<9;i++){const q=mk('Cia'+i,stepMid(3),0);q.L.def=true;liga.players.push(q);cia.push(q.id)}
+  let moveuSem=false;
+  for(let i=0;i<6;i++){const m=lanca([sem.id,...cia.slice(0,4)],cia.slice(4,9),0,{sid:'s-sem'});if((m.moves||[]).some(x=>x.pid===sem.id))moveuSem=true}
+  ok(sem.L.rank>3&&!moveuSem,'quem calibra sem nivel manual sobe por baixo mas nao entra em subiu/caiu');
+  liga.players=liga.players.filter(p=>p.id!==sem.id&&!cia.includes(p.id));liga.matches=liga.matches.filter(m=>m.sessionId!=='s-sem');rebuildAll(liga); }
 ok(Math.round(stepMin(3)-stepMin(0))===200,'patente tem 200 pontos (intervalo de classe do Elo)');
 
 console.log('\n[2] equilibrio de times');

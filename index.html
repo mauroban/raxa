@@ -925,7 +925,9 @@ function applyMatch(liga,m){
     if(m.sessionId&&tr.lastSession!==m.sessionId){tr.sessions=(tr.sessions||0)+1;tr.lastSession=m.sessionId}
     if(m.sessionId&&p.lastSession!==m.sessionId){p.sessions=(p.sessions||0)+1;p.lastSession=m.sessionId}
   }
-  m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from)
+  /* mudança de nível só existe para quem TEM nível: quem ainda calibra sem
+     nível manual anda por baixo, mas não aparece em subiu/caiu            */
+  m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from&&temPatente(P(liga,x.pid),x.role))
     .map(x=>({pid:x.pid,role:x.role,dir:x.rank>x.from?1:-1,rank:x.rank}));
   for(const g of m.goals||[]){const p=P(liga,g.pid);if(!p)continue;if(g.own)p.gc=(p.gc||0)+1;else p.goals++}
 }
@@ -3323,7 +3325,7 @@ const A={
         <div><b>${top?esc(nameOf(l,top[0]).split(' ')[0]):'—'}</b><span>artilheiro ${top?top[1]:''}</span></div>
         <div><b>${ups.length}</b><span>mudanças de nível</span></div>
       </div>
-      ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p)return '';
+      ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(p,role))return '';
         const tr=rt(p,role);return `<div class="promo" style="--pc:${patColor(tr.rank)}">
         <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
         <div class="tiny muted">agora é ${esc(rankLabel(l,tr.rank))}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
