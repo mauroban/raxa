@@ -104,7 +104,9 @@ DRIVER = r"""
   for(const e of dentro){
     const r=e.getBoundingClientRect(),cs=getComputedStyle(e);
     if(r.width===0&&r.height===0)continue;
-    if(r.right>LARG+1)problemas.push('estoura a direita: '+nome(e)+' ate '+Math.round(r.right)+'px (limite '+LARG+')');
+    /* dentro de uma faixa que rola de lado (filtros), passar da borda e o esperado */
+    const rola=e.closest&&[...(function*(){let x=e.parentElement;while(x){yield x;x=x.parentElement}})()].some(x=>/auto|scroll/.test(getComputedStyle(x).overflowX));
+    if(r.right>LARG+1&&!rola)problemas.push('estoura a direita: '+nome(e)+' ate '+Math.round(r.right)+'px (limite '+LARG+')');
     if(r.left<-1)problemas.push('estoura a esquerda: '+nome(e));
     if(cs.position==='fixed')problemas.push('position:fixed solto dentro do app: '+nome(e));
   }

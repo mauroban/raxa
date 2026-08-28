@@ -203,6 +203,10 @@ body.painting{touch-action:none;overflow:hidden}
 .teamtag{display:inline-block;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.06em;
   font-size:12px;padding:4px 9px;border-radius:7px;color:#fff;margin-bottom:7px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+/* filtros de período: uma linha só, rolando de lado se não couber */
+.chips.perfil{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
+.chips.perfil::-webkit-scrollbar{display:none}
+.chips.perfil .tp{flex:0 0 auto;white-space:nowrap;padding:0 11px;min-height:40px;font-size:14px}
 .filapos{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--mute2);align-self:center;margin-right:-2px}
 .balbar{height:6px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:8px}
 .balbar i{display:block;height:100%;background:var(--ok)}
@@ -2141,7 +2145,7 @@ function viewStats(liga){
       <button class="${tab==='jogador'?'on':''}" data-a="statsTab" data-v="jogador">Jogador</button>
       <button class="${tab==='racha'?'on':''}" data-a="statsTab" data-v="racha">Racha</button>
     </div>
-    <div class="chips" style="gap:5px">
+    <div class="chips perfil" style="gap:5px">
       <button class="tp ${soRacha?'sel':''}" data-a="statsPer" data-v="racha">Último racha</button>
       <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">Último mês</button>
       ${anosLiga.map(y=>`<button class="tp ${anoSel===y?'sel':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
@@ -2288,7 +2292,7 @@ function viewStats(liga){
   const cardJuntos=juntos.length?`
   <div class="card" style="border-color:color-mix(in srgb,var(--gold) 45%,var(--line))">
     <div class="row" style="margin-bottom:6px"><div class="k" style="color:var(--gold)">⚠ Sempre no mesmo time</div><div class="sp tiny" style="color:var(--gold)">nível não confiável</div></div>
-    <div class="tiny muted" style="margin-bottom:8px">Quem joga quase sempre junto ganha e perde os mesmos pontos — o app não consegue separar o nível dos dois. Vale colocá-los em times diferentes por algumas noites (ou ligar "Evitar repetir quem já jogou junto" nos Ajustes).</div>
+    <div class="tiny muted" style="margin-bottom:8px">Quem joga quase sempre junto ganha e perde os mesmos pontos — o app não consegue separar o nível dos dois. Vale colocá-los em times diferentes por alguns rachas (ou ligar "Evitar repetir quem já jogou junto" nos Ajustes).</div>
     ${juntos.map(x=>`<div class="rk3"><span class="pos">🔗</span>
       <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}<small>${x.n} de ${x.de} partidas juntos</small></div>
       <span class="val">${Math.round(x.pct*100)}%</span></div>`).join('')}
@@ -2457,7 +2461,7 @@ function viewHist(liga){
       <div class="row"><div class="k">${aberto.avulso?'Partidas avulsas':'Racha'}</div>
         <div class="sp tiny muted">${DIA(aberto.fim)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
-      <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro da noite: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
+      <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
     </div>
     <div class="card" style="padding:0">${ms.map(m=>mrow(liga,m,false,eu)).join('')}</div>`;
   }
@@ -2518,7 +2522,7 @@ function viewCfg(liga){
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
     <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: quem sobe fica <b>${c.protectMatches} partidas</b> protegido, e só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
-      Quem é novo anda rápido até completar <b>${c.calRachas} rachas</b> ou <b>${c.calGames} partidas</b>, o que vier primeiro — um cadastro errado se corrige em uma ou duas noites. Vale separado para o nível de linha e o de goleiro.</div>
+      Quem é novo anda rápido até completar <b>${c.calRachas} rachas</b> ou <b>${c.calGames} partidas</b>, o que vier primeiro — um cadastro errado se corrige em um ou dois rachas. Vale separado para o nível de linha e o de goleiro.</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:8px">Quem vê os níveis</div>
@@ -2552,7 +2556,7 @@ function viewCfg(liga){
     </div>
     <div class="tiny muted" style="margin-bottom:12px">${c.matchMode==='unica'
       ?'Uma partida longa, times fixos com reservas. Como são poucas partidas, cada uma pesa bem mais no nível.'
-      :'Várias partidas curtas com time de fora esperando — 10 a 15 por noite. Como são muitas, cada uma pesa pouco.'}
+      :'Várias partidas curtas com time de fora esperando — 10 a 15 por racha. Como são muitas, cada uma pesa pouco.'}
       <br>Cada racha escolhe o seu modo na hora — a liga pode ter uns curtos e outros longos no mesmo histórico, e cada partida guarda o peso do racha em que foi jogada.</div>
     <div class="k" style="margin-bottom:10px">Alvo (0 gols = sem alvo de gols)</div>
     <div class="row" style="gap:8px">
@@ -3469,7 +3473,7 @@ const A={
         <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
         <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
       </div>
-      ${(()=>{const jt=inseparaveis(l).filter(x=>x.a===p.id||x.b===p.id);return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por algumas noites para o app medir cada um.</div>`:''})()}
+      ${(()=>{const jt=inseparaveis(l).filter(x=>x.a===p.id||x.b===p.id);return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
         <div class="row"><div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div><div class="sp tiny muted">toque no cartão acima para trocar</div></div>
@@ -3932,6 +3936,7 @@ function loadUI(){
   try{
     const o=JSON.parse(localStorage.getItem(UIKEY)||'{}');
     if(o.ui)S.ui=Object.assign(S.ui,o.ui);
+    S.ui.tab='racha';                  // ao abrir o app, sempre a quadra; a aba só vale dentro da sessão
     if(o.active)S.active=o.active;      // normalize() descarta se a liga sumiu
   }catch(e){}
 }
