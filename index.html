@@ -1247,7 +1247,7 @@ function destaques(liga,dias){
         const x=add(pid),lado=part[pid].side;
         x.jogos++;x[st.result==='draw'?'e':(st.result===lado?'v':'d')]++;
         if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
-        if(part[pid].role==='G'){x.jogosG++;x.sofridos+=((st.score||[0,0])[lado===0?1:0])||0}
+        if(part[pid].role==='G'){x.jogosG++;x.minGk=(x.minGk||0)+(st.dur||0);x.sofridos+=((st.score||[0,0])[lado===0?1:0])||0}
       }
     });
     for(const pid in (m.over||{}))add(pid).over+=m.over[pid];
@@ -1264,9 +1264,9 @@ function destaques(liga,dias){
   const top=elegiveis.slice().sort((a,b)=>b.over-a.over||b.v-a.v||b.jogos-a.jogos).slice(0,3);
   const artilheiro=gols&&comDono/gols>=.5
     ? gente.slice().sort((a,b)=>b.gols-a.gols)[0] : null;
-  const gkPiso=Math.min(4,Math.max(...gente.map(x=>x.jogosG),0));
-  const goleiro=gkPiso?gente.filter(x=>x.jogosG>=gkPiso)
-    .sort((a,b)=>a.sofridos/a.jogosG-b.sofridos/b.jogosG||b.jogosG-a.jogosG)[0]:null;
+  /* menos vazado: sofridos por tempo no gol, e só com pelo menos 1 h — menos que isso é sorte */
+  const goleiro=gente.filter(x=>(x.minGk||0)>=60*60000)
+    .sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk)[0]||null;
   const presenca=gente.slice().sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos)[0];
   /* Os melhores da escada, só entre quem apareceu no período. A ordem é a mesma
      do ranking — degrau, depois aproveitamento, depois nome — para a posição
@@ -1543,8 +1543,8 @@ function statsBlock(liga){
           :(d.gols?'gols sem autor demais ('+(d.gols-d.comDono)+' de '+d.gols+')':'nenhum gol com autor')}</div></div>
       <div class="hl"><div class="t">🧤 Menos vazado</div>
         <div class="n">${d.goleiro?nome(d.goleiro.pid):'—'}</div>
-        <div class="s">${d.goleiro?(d.goleiro.sofridos/d.goleiro.jogosG).toFixed(1).replace('.',',')+' gol por partida · '+d.goleiro.jogosG+' no gol'
-          :'ninguém marcado no gol'}</div></div>
+        <div class="s">${d.goleiro?por10(d.goleiro.sofridos,d.goleiro.minGk)+' sofridos a cada 10 min · '+fmtMin(d.goleiro.minGk)+' no gol'
+          :'ninguém com 1 h no gol'}</div></div>
     </div>
     ${d.presenca?`<div class="tiny muted" style="margin-top:8px">📅 Mais presente: <b>${nome(d.presenca.pid)}</b> — ${d.presenca.nR} racha${d.presenca.nR===1?'':'s'}</div>`:''}
   </div>`;
@@ -2257,7 +2257,7 @@ function viewStats(liga){
     <div class="sec"><div class="k2">⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></div>
       ${rkBars(rkRitmo,x=>x.gols/x.min,x=>por10(x.gols,x.min),x=>x.gols+' gols em '+fmtMin(x.min),'Ninguém com 1 h em quadra e gol marcado ainda.','ritmo')}</div>
     <div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos a cada 10 min · mín. 1 h no gol</span></div>
-      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>x.sofridos+' sofridos em '+fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>
+      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>
     <div class="sec"><div class="k2">🔥 Maior sequência <span class="tiny muted">3 ou mais</span></div>
       ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>
     <div class="sec"><div class="k2">⭐ Melhor dupla <span class="tiny muted">mín. ${MIN_JOGOS} partidas juntos</span></div>

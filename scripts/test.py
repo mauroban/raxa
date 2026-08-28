@@ -489,12 +489,14 @@ ok(!destaques(liga,5000).artilheiro,'sem autor na maioria dos gols, nao inventa 
 
 liga.matches.length=0;rebuildAll(liga);
 const gA=gk2[0],gB=gk2[1],lA=[...A5.slice(0,4),gA],lB=[...B5.slice(0,4),gB];
-for(let i=0;i<2;i++)lanca(lA,lB,0,{sid:'g'+i,gks:[gA,gB],score:[2,0],goals:[],
+for(let i=0;i<10;i++)lanca(lA,lB,0,{sid:'g'+(i%3),gks:[gA,gB],score:[2,0],goals:[],   // 10 x 7 min > 1 h no gol
   events:[{at:1*MIN,type:'goal',side:0},{at:2*MIN,type:'goal',side:0}]});
 const DG=destaques(liga,5000);
 console.log('  goleiros: '+DG.gente.filter(x=>x.jogosG).map(x=>P(liga,x.pid).name+' '+x.sofridos+' em '+x.jogosG).join(' | '));
-ok(DG.goleiro&&DG.goleiro.pid===gA,'menos vazado: o goleiro com menos gols sofridos por partida');
-ok(DG.goleiro.sofridos===0&&DG.goleiro.jogosG===2,'e a conta sai dos trechos em que ele estava no gol');
+ok(DG.goleiro&&DG.goleiro.pid===gA,'menos vazado: o goleiro com menos gols sofridos por minuto no gol');
+ok(DG.goleiro.sofridos===0&&DG.goleiro.jogosG===10&&DG.goleiro.minGk>=60*60000,'e a conta sai dos trechos em que ele estava no gol (tempo incluso)');
+{ const l2=JSON.parse(JSON.stringify(liga));l2.matches=l2.matches.slice(0,3);
+  ok(!destaques(l2,5000).goleiro,'com menos de 1 h no gol ninguem e apontado'); }
 
 liga.matches.length=0;rebuildAll(liga);
 ok(destaques(liga,30).partidas===0,'sem partida no periodo, o bloco nao inventa destaque');
