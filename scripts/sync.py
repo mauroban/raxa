@@ -189,7 +189,7 @@ await step('criar conta entra direto',async()=>{
   await A.doSignup();
   ok('usuario criado',DB.users.length===1);
   ok('perfil criado com o username',DB.profiles[0].username==='mauro');
-  ok('sem e-mail de verdade',/@raxa\.local$/.test(DB.users[0].email));
+  ok('sem e-mail de verdade',/@raxa\.app$/.test(DB.users[0].email));
   ok('ME preenchido',ME&&ME.username==='mauro');
   ok('S.me.name e a conta',S.me.name==='mauro');
 });
