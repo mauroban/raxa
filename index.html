@@ -267,7 +267,7 @@ body.painting{touch-action:none;overflow:hidden}
 .lv2 .none{font-size:13px;color:var(--mute)}
 .ps-panel{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
 .ps-panel .k{margin-bottom:8px}
-.ladder4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ladder4{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}
 .ladder4 button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 4px 8px;color:var(--chalk);
   font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -2747,25 +2747,30 @@ const A={
   addPlayer(){
     const l=L();
     openSheet(`<h2>Novo jogador</h2>
-      <label class="f"><span class="k">Nome</span><input id="pn" placeholder="Como chamam ele" autocomplete="off"></label>
-      <div class="k" style="margin-bottom:7px">Onde ele entra — o palpite de quem conhece</div>
-      <div class="ladder">
-        ${l.cfg.patNames.map((n,i)=>`<button class="btn sm ${i===2?'pri':'ghost'}" data-a="pickPat" data-s="${i*3+1}"
-          style="flex-direction:column;line-height:1.2;padding:10px 6px;font-size:11px">${esc(n)}<span style="font-size:9px;opacity:.65">divisão 2</span></button>`).join('')}
+      <input id="pn" placeholder="Nome — como chamam ele" autocomplete="off" aria-label="nome"
+        style="font-family:var(--disp);font-size:20px;padding:10px 12px;width:100%;margin-bottom:4px">
+      <div class="trow">
+        <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
+        <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
       </div>
-      <div class="row" style="margin:12px 0 14px"><div>É goleiro?</div>
-        <button class="btn sm ghost sp" id="gkb" data-a="togGk">Não</button></div>
-      <input type="hidden" id="ps" value="7"><input type="hidden" id="pg" value="0">
-      <button class="btn wide pri" data-a="savePlayer">Cadastrar</button>
-      <div class="tiny muted" style="margin-top:10px;text-align:center;line-height:1.5">
-        Não precisa acertar: enquanto estiver calibrando (${l.cfg.calRachas} rachas ou ${l.cfg.calGames} partidas) ele sobe e desce rápido até achar o lugar dele.</div>`);
+      <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${l.cfg.calRachas} rachas ou ${l.cfg.calGames} partidas. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando.</small></div>
+        <div class="ladder4">
+          <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i>Sem nível</button>
+          ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i>${esc(n)}</button>`).join('')}
+        </div>
+      </div>
+      <input type="hidden" id="ps" value=""><input type="hidden" id="pg" value="0">
+      <div class="ps-foot"><button class="btn ghost" data-a="closeSheet">Cancelar</button><button class="btn pri" data-a="savePlayer">Cadastrar</button></div>`);
     setTimeout(()=>$('#pn')&&$('#pn').focus(),120);
   },
-  pickPat(el){$('#ps').value=el.dataset.s;$$('#sheet [data-a="pickPat"]').forEach(b=>b.classList.remove('pri'));el.classList.add('pri')},
-  togGk(el){const h=$('#pg');h.value=h.value==='1'?'0':'1';el.textContent=h.value==='1'?'Sim 🧤':'Não';el.classList.toggle('pri',h.value==='1')},
+  pickPat(el){$('#ps').value=el.dataset.s;$$('#sheet [data-a="pickPat"]').forEach(b=>b.classList.remove('on'));el.classList.add('on')},
+  togGk(el){const h=$('#pg');h.value=h.value==='1'?'0':'1';el.classList.toggle('on',h.value==='1');el.setAttribute('aria-checked',h.value==='1'?'true':'false')},
   savePlayer(){
     const n=$('#pn').value.trim();if(!n)return toast('Digite o nome');
-    const l=L(),p=mkPlayer(l,n,stepMid(+$('#ps').value),$('#pg').value==='1');
+    const l=L(),sv=$('#ps').value,gk=$('#pg').value==='1';
+    const p=mkPlayer(l,n,sv===''?l.cfg.startElo:stepMid(+sv),gk);
+    if(sv===''){p.L.def=false;p.G.def=false}          // sem palpite: fica sem nível até calibrar
     l.players.push(p);
     if(l.live){
       if(!l.live.presentIds.includes(p.id))l.live.presentIds.push(p.id);

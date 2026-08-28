@@ -150,7 +150,7 @@ Ordem de grandeza no padrão de racha curto (K=36, times parelhos): mover uma **
 
 ### 3.6 Entrada de um jogador novo
 
-Quem cadastra escolhe **a patente percebida** (um toque: Ferro … Diamante, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
+O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (5 rachas ou 25 partidas), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
 
 O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é maior (60 no lugar de 36 no racha curto, 70 no lugar de 44 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
 
