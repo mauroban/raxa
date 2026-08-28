@@ -254,6 +254,25 @@ pt=partida(A5,B5,{dur:7*MIN,events:[{at:3.5*MIN,type:'sub',side:0,out:'p1',in:'p
 ok(pt.stints.every(s=>s.counted),'partida de 7 min com troca na metade: os dois trechos contam');
 ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma partida');
 
+/* Trecho curto sem gol (menos de 20% da partida) nao conta — nem no fim. */
+{
+  const pt=partida(A5,B5,{dur:10*MIN,events:[{at:2*MIN,type:'goal',side:0},{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'}]});
+  console.log('  10 min, troca aos 9 sem gol depois: contam '+pt.stints.filter(s=>s.counted).length+' de '+pt.stints.length+' | pesos '+pt.stints.map(s=>s.w).join('/'));
+  ok(pt.stints.length===2&&!pt.stints[1].counted,'trecho final de 1 min sem gol e descartado');
+  ok(pt.stints[0].counted&&Math.abs(pt.stints[0].w-1)<0.01,'o trecho grande fica com a partida inteira');
+  const pt2=partida(A5,B5,{dur:10*MIN,events:[{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'},{at:9.5*MIN,type:'goal',side:1}]});
+  ok(pt2.stints[1].counted,'trecho final curto COM gol conta');
+  ok(Math.abs(pt2.stints[0].w-0.5)<0.01&&Math.abs(pt2.stints[1].w-0.5)<0.01,'dois trechos validos: K dividido por 2, mesmo com duracoes diferentes');
+  const pt3=partida(A5,B5,{dur:12*MIN,events:[{at:4*MIN,type:'sub',side:0,out:'p1',in:'p6'},{at:8*MIN,type:'sub',side:0,out:'p2',in:'p7'}]});
+  ok(pt3.stints.filter(s=>s.counted).length===3&&pt3.stints.every(s=>Math.abs(s.w-1/3)<0.01),'tres trechos validos: cada um vale 1/3');
+  /* resultado da partida vai para o maior trecho quando o final e descartado */
+  liga.matches.length=0;rebuildAll(liga);
+  const e0=elo('p6');
+  lanca(A5,B5,1,{dur:10*MIN,score:[0,1],events:[{at:2*MIN,type:'goal',side:1},{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'}]});
+  ok(elo('p6')===e0&&P(liga,'p6').L.games===0,'quem so jogou o trecho descartado nao ganha, nao perde e nao conta partida');
+  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.l===1,'quem jogou o trecho valido leva a derrota da partida');
+}
+
 /* Protecao pos-promocao: a unidade e o trecho, como em todo o resto do motor. */
 liga.matches.length=0;rebuildAll(liga);
 const prot=P(liga,'p2');prot.L.protect=3;
@@ -273,7 +292,7 @@ lanca(A5,B5,undefined,{dur:10*MIN,score:[1,1],goals:[],resultados:[0,1],
 console.log('  p1 (saiu no meio) '+(elo('p1')-P(liga,'p1').L.base)+' | p6 (entrou) '+(elo('p6')-P(liga,'p6').L.base)+' | p2 (jogou tudo) '+(elo('p2')-P(liga,'p2').L.base));
 ok(elo('p1')>P(liga,'p1').L.base,'quem saiu leva so o trecho que jogou — e nele o time venceu');
 ok(elo('p6')<P(liga,'p6').L.base,'quem entrou leva so o trecho dele — e nele o time perdeu');
-ok(P(liga,'p1').L.games===1&&P(liga,'p2').L.games===2,'quem jogou os dois trechos conta dois; quem jogou um, conta um');
+ok(P(liga,'p1').L.games===1&&P(liga,'p2').L.games===1,'partida e uma so: quem jogou os dois trechos conta UMA partida, quem jogou um tambem');
 liga.matches.length=0;rebuildAll(liga);
 
 console.log('\n[6] calibracao');
@@ -430,8 +449,9 @@ liga.matches.length=0;rebuildAll(liga);
 lanca(A5,B5,undefined,{dur:10*MIN,resultados:[0,1],
   events:[{at:5*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
 const comSub=statsLiga(liga,'sempre');
-ok(comSub.DU['p1']['p10'].n===1&&comSub.DU['p1']['p10'].v===1,'quem saiu duela so no trecho que jogou');
-ok(comSub.DU['p6']['p10'].n===1&&comSub.DU['p6']['p10'].d===1,'quem entrou leva so o trecho dele');
+ok(comSub.DU['p1']['p10'].n===1,'quem saiu duela na partida em que esteve em quadra');
+ok(comSub.DU['p6']['p10'].n===1,'quem entrou tambem conta o duelo da partida');
+ok(comSub.DU['p1']['p10'].v===comSub.DU['p6']['p10'].v,'e os dois levam o MESMO resultado: o da partida, nao o do trecho');
 ok(!comSub.PA['p1']['p6'],'quem se substituiu nunca esteve em quadra junto');
 
 liga.matches.length=0;rebuildAll(liga);

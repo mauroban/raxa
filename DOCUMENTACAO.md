@@ -30,7 +30,7 @@ A regra de ouro do produto:
 | Contexto de racha | **Liga** | O universo isolado de patentes. Todo jogador, ranking e histórico vive dentro de uma Liga. |
 | O evento do dia | **Racha** (sessão) | "Quinta 20h, quadra do Zé". Agrupa as partidas daquela noite. |
 | Confronto | **Partida** | Time A x Time B, do apito ao apito, com um placar. |
-| Formação em campo | **Trecho** | O pedaço da partida em que os 10 (ou 8, ou 14) em quadra são exatamente os mesmos. Toda substituição fecha um trecho e abre outro. **É o trecho que move patente**, não a partida. |
+| Formação em campo | **Trecho** | O pedaço da partida em que os 10 (ou 8, ou 14) em quadra são exatamente os mesmos. Toda substituição fecha um trecho e abre outro. **É o trecho que move patente**; vitória e derrota, porém, são da partida. |
 | Pessoa dentro da liga | **Jogador** | Perfil com patente, estatísticas e histórico. |
 | Conta de verdade | **Usuário** | Login que pode *assumir* perfis de Jogador em Ligas diferentes. |
 
@@ -95,14 +95,15 @@ Essa tabela é documentação de engenharia. **Ela não é exposta no app.**
 
 ### 3.4 Como o rating se move (motor interno)
 
-**A unidade não é a partida: é o trecho.** Uma substituição pode mudar bastante o nível dos dois lados — quem entrou não jogou o que quem saiu jogou. Então o motor quebra a partida em **trechos**: cada formação em campo é uma partida própria, com placar contado a partir da troca e com o set novo de jogadores. É o mesmo espírito do **+/- da NBA**: importa o que você faz enquanto está em quadra e contra quem. *Se o seu time foi mal enquanto você estava no banco, isso não te afeta.*
+**A unidade não é a partida: é o trecho.** Uma substituição pode mudar bastante o nível dos dois lados — quem entrou não jogou o que quem saiu jogou. Então o motor quebra a partida em **trechos**: cada formação em campo é um trecho próprio, com placar contado a partir da troca e com o set novo de jogadores. É o mesmo espírito do **+/- da NBA**: importa o que você faz enquanto está em quadra e contra quem. *Se o seu time foi mal enquanto você estava no banco, isso não te afeta.*
 
 Regras do trecho:
 
 - **Fecha trecho:** qualquer substituição (inclusive a do atrasado que entra no meio) e qualquer troca de goleiro — quem está no gol muda o nível dos dois lados.
 - **Trecho cortado por uma troca só conta se durou pelo menos 4 minutos — ou um terço da partida, o que for menor.** O limite é relativo de propósito: num racha de 7 minutos, 4 minutos fixos fariam quase toda troca descartar meia partida. Menos que isso, o trecho é descartado e ninguém ganha nem perde nada por ele. (Os 4 min são configuráveis nos ajustes da liga.)
-- **O trecho que termina no apito conta sempre**, dure o que durar.
-- **O peso do trecho é a fatia da partida que ele ocupou.** Os trechos que contam somam **exatamente uma partida**: dois de metade não valem em dobro, e quando um trecho é descartado por ser curto o peso dele é **redistribuído entre os que ficaram** — uma troca no começo não encolhe a partida.
+- **Trecho curto sem gol não conta para ninguém — nem o final.** Com mais de um trecho, qualquer trecho com menos de **20 % da partida** e **sem gol** é descartado, mesmo que seja o que termina no apito (uma troca a 40 segundos do fim não cria uma "partida" de 40 segundos). Se o trecho final foi descartado, **o resultado da partida vai para o maior trecho que conta**. Com gol, o trecho curto conta.
+- **Os trechos que contam dividem a partida em partes iguais.** Dois trechos válidos = K/2 em cada; três = K/3. A partida vale sempre exatamente uma partida, e uma troca no começo não a encolhe.
+- **Vitória e derrota são da partida, não do trecho.** Quem esteve em quadra em algum trecho que conta recebe o resultado final da partida uma vez (pelo lado em que terminou) — nas contagens de V/E/D, forma, partidas jogadas, duelos e parcerias. Trecho serve para o rating saber quem estava em quadra e com que peso; não é uma partida própria.
 - Vale igual para a partida longa: 50 minutos com muitas substituições viram muitos trechos, cada um com o seu peso e o seu placar.
 
 Dentro de cada trecho, Elo por time:
@@ -134,7 +135,7 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 **Em lançamento retroativo** (partida digitada depois, sem cronômetro) não há trechos: a partida entra inteira, com peso 1. Na prática é o que acontece com qualquer partida encerrada com menos de **45 segundos** de relógio — o app entende que o cronômetro não foi usado.
 
-> **A unidade é sempre o trecho.** Calibração (3.6), proteção pós-promoção (3.5) e os contadores de partidas jogadas (seção 5) contam **trechos**, não partidas de relógio: numa partida com duas substituições válidas, eles andam 3. É coerente com o resto — cada formação em campo é uma partida para o motor.
+> **Trecho × partida.** O rating anda por trecho (com o peso 1/n); a proteção pós-promoção (3.5) também conta trechos. Já calibração (3.6), partidas jogadas, V/E/D, forma e estatística (seção 5) contam **partidas de relógio**: numa partida com duas substituições válidas, o jogador que ficou o tempo todo conta **uma** partida, não três.
 
 ### 3.5 Anti-ioiô: como a patente sobe e desce sem oscilar
 

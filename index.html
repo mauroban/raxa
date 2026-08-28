@@ -819,12 +819,18 @@ function splitStints(c,endedAt,cfg){
     else if(ev.type==='sub'&&gks[ev.side]===ev.out)gks[ev.side]=null;
   }
   fecha(endedAt,'apito');
-  /* Uma partida vale uma partida: o peso do trecho descartado e redistribuido
-     entre os que contam, senao uma troca no comeco encolheria a partida.     */
-  const somaOk=out.reduce((a,st)=>a+(st.counted?st.w:0),0);
-  if(somaOk>0)out.forEach(st=>{if(st.counted)st.w=+(st.w/somaOk).toFixed(4)});
+  /* Com mais de um trecho: trecho curto (menos de 20% da partida) SEM gol não
+     conta para ninguém — nem o final. Os que contam dividem a partida em
+     partes iguais (o K de cada um é K/n). Uma partida vale uma partida.     */
+  if(out.length>1){
+    out.forEach(st=>{if(st.w<STINT_MIN_W&&st.score[0]+st.score[1]===0)st.counted=false});
+    if(!out.some(st=>st.counted))out.reduce((a,b)=>b.dur>a.dur?b:a).counted=true;
+    const n=out.filter(st=>st.counted).length;
+    out.forEach(st=>{st.w=st.counted?+(1/n).toFixed(4):0});
+  }
   return out;
 }
+const STINT_MIN_W=.2;
 /* Quem estava em campo no trecho e em que papel — goleiro move o nível de
    goleiro, todo o resto move a de linha.                                     */
 function stintPart(st){
@@ -895,22 +901,29 @@ function applyMatch(liga,m){
       const p=P(liga,pid);if(!p)continue;
       const role=part[pid].role||'L',tr=rt(p,role),k=pid+role;
       if(m.pre[pid]===undefined)m.pre[pid]=tr.elo;
-      if(!seen[k])seen[k]={pid,role,from:tr.rank,rank:tr.rank};
+      if(!seen[k])seen[k]={pid,role,from:tr.rank,rank:tr.rank,side:part[pid].side};
+      seen[k].side=part[pid].side;
       const d=r.deltas[pid]||0;
       tr.elo+=d;m.deltas[pid]=(m.deltas[pid]||0)+d;
       /* Acima do esperado: (resultado - chance que ele tinha) x peso do trecho.
          Vale 1 = uma vitoria inteira a mais do que o confronto indicava.      */
       const Sv=st.result==='draw'?.5:(st.result===part[pid].side?1:0);
       m.over[pid]=(m.over[pid]||0)+(Sv-r.exp[part[pid].side])*(part[pid].w||1)*st.w;
-      tr.games++;
-      const res=st.result==='draw'?'E':(st.result===part[pid].side?'V':'D');
-      if(res==='V')tr.w++;else if(res==='D')tr.l++;else tr.d++;
-      tr.form.unshift(res);tr.form=tr.form.slice(0,10);
-      if(m.sessionId&&tr.lastSession!==m.sessionId){tr.sessions=(tr.sessions||0)+1;tr.lastSession=m.sessionId}
-      if(m.sessionId&&p.lastSession!==m.sessionId){p.sessions=(p.sessions||0)+1;p.lastSession=m.sessionId}
       updateRank(liga,p,tr);
       seen[k].rank=tr.rank;
     }
+  }
+  /* Vitória/derrota é da PARTIDA: quem esteve num trecho que conta recebe o
+     resultado final dela uma vez, pelo lado em que terminou.                */
+  for(const k in seen){
+    const x=seen[k],p=P(liga,x.pid);if(!p)continue;
+    const tr=rt(p,x.role);
+    tr.games++;
+    const res=m.result==='draw'?'E':(m.result===x.side?'V':'D');
+    if(res==='V')tr.w++;else if(res==='D')tr.l++;else tr.d++;
+    tr.form.unshift(res);tr.form=tr.form.slice(0,10);
+    if(m.sessionId&&tr.lastSession!==m.sessionId){tr.sessions=(tr.sessions||0)+1;tr.lastSession=m.sessionId}
+    if(m.sessionId&&p.lastSession!==m.sessionId){p.sessions=(p.sessions||0)+1;p.lastSession=m.sessionId}
   }
   m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from)
     .map(x=>({pid:x.pid,role:x.role,dir:x.rank>x.from?1:-1,rank:x.rank}));
@@ -1200,26 +1213,35 @@ function statsLiga(liga,periodo){
   [...(liga.matches||[])].sort((a,b)=>a.ts-b.ts).forEach(m=>{   // em ordem: sequência depende dela
     if(m.voided||!noPeriodo(m,periodo))return;
     const sid=m.sessionId||m.id;
+    /* por partida: quem esteve em algum trecho que conta recebe o resultado
+       final uma vez; tempo, gols sofridos e tempo no gol saem dos trechos */
+    const em={};                                   // pid -> {side, gk, com:{}, contra:{}}
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;
       const part=stintPart(st),lados=[[],[]];
       for(const pid in part)lados[part[pid].side].push(pid);
       [0,1].forEach(s=>{
-        const res=st.result==='draw'?'e':(st.result===s?'v':'d');
         const meu=lados[s],deles=lados[s===0?1:0];
         meu.forEach(pid=>{
-          const x=j(pid);
-          x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
-          if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq)}else if(res==='d')x.seq=0;
-          x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
+          const x=j(pid),e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{}});
+          e.side=s;
           x.min+=st.dur||0;                                        // tempo de jogo (ms), pausas já descontadas
-          if(part[pid].role==='G'){x.gk++;x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
-          if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
-          meu.forEach(o=>{if(o===pid)return;const y=par(PA,pid,o);y.n++;y[res]++});
-          deles.forEach(o=>{const y=par(DU,pid,o);y.n++;y[res]++});
+          if(part[pid].role==='G'){e.gk=true;x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
+          meu.forEach(o=>{if(o!==pid)e.com[o]=1});
+          deles.forEach(o=>{e.contra[o]=1});
         });
       });
     });
+    for(const pid in em){
+      const e=em[pid],x=j(pid),res=m.result==='draw'?'e':(m.result===e.side?'v':'d');
+      x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
+      if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq)}else if(res==='d')x.seq=0;
+      x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
+      if(e.gk)x.gk++;
+      if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
+      for(const o in e.com){const y=par(PA,pid,o);y.n++;y[res]++}
+      for(const o in e.contra){const y=par(DU,pid,o);y.n++;y[res]++}
+    }
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)j(g.pid).gols++});
   });
   return{J,DU,PA};
@@ -1259,16 +1281,22 @@ function destaques(liga,dias){
     partidas++;
     const sid=m.sessionId||m.id;
     if(!rachas[sid]){rachas[sid]=1;nR++}
+    const em={};
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;
       const part=stintPart(st);
       for(const pid in part){
-        const x=add(pid),lado=part[pid].side;
-        x.jogos++;x[st.result==='draw'?'e':(st.result===lado?'v':'d')]++;
-        if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
-        if(part[pid].role==='G'){x.jogosG++;x.minGk=(x.minGk||0)+(st.dur||0);x.sofridos+=((st.score||[0,0])[lado===0?1:0])||0}
+        const x=add(pid),lado=part[pid].side,e=em[pid]||(em[pid]={side:lado,gk:false});
+        e.side=lado;
+        if(part[pid].role==='G'){e.gk=true;x.minGk=(x.minGk||0)+(st.dur||0);x.sofridos+=((st.score||[0,0])[lado===0?1:0])||0}
       }
     });
+    for(const pid in em){
+      const x=add(pid),e=em[pid];
+      x.jogos++;x[m.result==='draw'?'e':(m.result===e.side?'v':'d')]++;
+      if(e.gk)x.jogosG++;
+      if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
+    }
     for(const pid in (m.over||{}))add(pid).over+=m.over[pid];
     (m.goals||[]).forEach(g=>{gols++;if(g.pid){comDono++;if(!g.own)add(g.pid).gols++}});
   });
@@ -1324,13 +1352,17 @@ function statsAnos(liga,pid){
   (liga.matches||[]).forEach(m=>{
     if(m.voided)return;
     const y=ANO(m.ts),sid=m.sessionId||m.id;
+    let side=null,min=0;
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;
       const me=stintPart(st)[pid];if(!me)return;
-      const a=A[y]||(A[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0});
-      a.jogos++;a.min+=st.dur||0;a[st.result==='draw'?'e':(st.result===me.side?'v':'d')]++;
-      if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
+      side=me.side;min+=st.dur||0;
     });
+    if(side!==null){
+      const a=A[y]||(A[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0});
+      a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
+      if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
+    }
     (m.goals||[]).forEach(g=>{if(g.pid===pid&&!g.own&&A[ANO(m.ts)])A[ANO(m.ts)].gols++});
   });
   return Object.keys(A).map(k=>A[k]).sort((x,y)=>y.ano-x.ano);
@@ -1974,7 +2006,7 @@ function viewJogo(liga,lv){
       return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
     <div class="hr"></div>
     <div class="tiny muted" style="margin-top:8px">Arraste um nome sobre o outro para trocar — ou toque, se preferir.
-      Toda troca fecha um trecho: o placar do trecho novo vale para quem entrou.</div>
+      Toda troca fecha um trecho; trecho curto sem gol não conta para ninguém.</div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
       <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
@@ -2207,7 +2239,7 @@ function viewStats(liga){
       <span>⚽ <b class="num">${por10(me.gols,me.min)}</b> <span class="muted">gols a cada 10 min</span></span>
       ${me.gk?`<span>🧤 <b class="num">${por10(me.sofridos,me.minGk)}</b> <span class="muted">sofridos a cada 10 min · ${fmtMin(me.minGk)} no gol</span></span>`:''}
     </div>
-    <div class="tiny muted" style="margin-top:8px">Uma "partida" é cada formação em campo: quando alguém entra ou sai, começa outra. Minutos são tempo de jogo, sem as pausas.</div>
+    <div class="tiny muted" style="margin-top:8px">Vitória e derrota são da partida inteira; quem entrou ou saiu no meio leva o resultado se esteve em quadra num trecho que conta. Minutos são tempo de jogo, sem as pausas.</div>
     ${anos.length>1||per==='sempre'?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">Ano a ano</div>
       ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
@@ -3149,7 +3181,13 @@ const A={
     const stints=splitStints(c,endedAt,l.cfg);
     /* se o vencedor foi corrigido na mão, quem manda é a correção: ela vale
        para o trecho que fechou a partida.                                    */
-    if(stints.length&&result!==stintResult(c.score))stints[stints.length-1].result=result;
+    if(stints.length){
+      const last=stints[stints.length-1];
+      const alvo=last.counted?last:stints.filter(s=>s.counted).sort((a,b)=>b.dur-a.dur)[0];
+      /* trecho final descartado: o resultado da partida vai para o maior que conta;
+         final contando: só se o resultado lançado diverge do placar (correção) */
+      if(alvo&&(!last.counted||result!==stintResult(c.score)))alvo.result=result;
+    }
     const m={id:uid(),ts:endedAt,startedAt:c.startedAt,endedAt,sessionId:lv.id||null,mode:modo,
       names:[lv.teams[c.a].name,lv.teams[c.b].name],
       teamIdx:[c.a,c.b],lineups:c.lineups.map(x=>[...x]),

@@ -403,6 +403,21 @@ da Prata e não lê como topo para quem não joga videogame); entrada em Prata 1
 **Onde:** `BASE=1000`, `TOP=14`, `PATC_*`, `PATSHORT`, `defCfg().patNames`, `normalize`,
 `temPatente`, `viewEscada` (bloco "Sem nível ainda").
 
+### D-37 · Trecho curto sem gol não conta; K dividido por trechos válidos; V/D é da partida
+**28/08/2026.** Com mais de um trecho: trecho com menos de 20 % da partida e sem gol é descartado —
+inclusive o final; nesse caso o resultado da partida vai para o maior trecho que conta. Os
+trechos válidos dividem a partida em partes iguais (peso 1/n, ou seja K/n). Vitória, empate e
+derrota passam a ser **da partida**: quem esteve num trecho que conta recebe o resultado final
+uma vez, pelo lado em que terminou — em partidas jogadas, V/E/D, forma, duelos, parcerias,
+calibração e estatística. Tempo em quadra, gols sofridos e tempo no gol continuam vindo dos trechos.
+**Por quê:** uma troca a 40 segundos do fim criava uma "partida" de 40 segundos que contava
+vitória/derrota para 10 pessoas e girava o K; e "2 trechos = 2 partidas" inflava os contadores de
+quem fica em quadra. A partida é a unidade que o racha reconhece; o trecho é detalhe do motor.
+**Descartado:** peso proporcional à duração (mantido só como critério de "curto"); contar o
+resultado do trecho para quem entrou no meio.
+**Onde:** `splitStints` (`STINT_MIN_W`), `finish` (alvo do resultado), `applyMatch` (por partida),
+`statsLiga`, `statsAnos`, `destaques`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
