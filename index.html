@@ -780,8 +780,8 @@ function pausedUntil(c,t){
 const gameTime=(c,t)=>Math.max(0,t-c.startedAt-pausedUntil(c,t));
 function stintResult(sc){return sc[0]>sc[1]?0:sc[1]>sc[0]?1:'draw'}
 
-function splitStints(c,endedAt,cfg){
-  cfg=cfg||defCfg();
+function splitStints(c,endedAt,cfg,mode){
+  cfg=cfg||defCfg();mode=KMODE[mode]?mode:(KMODE[cfg.matchMode]?cfg.matchMode:'curtas');
   const total=gameTime(c,endedAt);
   const evs=[...(c.events||[])].sort((a,b)=>a.t-b.t);
   if(total<45000){                       // lançamento retroativo: sem cronômetro confiável
@@ -823,14 +823,30 @@ function splitStints(c,endedAt,cfg){
      conta para ninguém — nem o final. Os que contam dividem a partida em
      partes iguais (o K de cada um é K/n). Uma partida vale uma partida.     */
   if(out.length>1){
-    out.forEach(st=>{if(st.w<STINT_MIN_W&&st.score[0]+st.score[1]===0)st.counted=false});
-    if(!out.some(st=>st.counted))out.reduce((a,b)=>b.dur>a.dur?b:a).counted=true;
-    const n=out.filter(st=>st.counted).length;
-    out.forEach(st=>{st.w=st.counted?+(1/n).toFixed(4):0});
+    if(mode==='unica'){
+      /* Partida longa, trocas rolando: o peso é a fatia de tempo (quem jogou
+         10 de 50 min não pesa como quem jogou 40). Trecho conta a partir do
+         mínimo absoluto (stintMin), com ou sem gol; o final conta sempre.  */
+      out.forEach(st=>{st.counted=st.ended==='apito'||st.dur>=minDur});
+      if(!out.some(st=>st.counted))out.reduce((a,b)=>b.dur>a.dur?b:a).counted=true;
+      const soma=out.reduce((a,st)=>a+(st.counted?st.dur:0),0)||1;
+      out.forEach(st=>{st.w=st.counted?+(st.dur/soma).toFixed(4):0});
+    }else{
+      out.forEach(st=>{if(st.w<STINT_MIN_W&&st.score[0]+st.score[1]===0)st.counted=false});
+      if(!out.some(st=>st.counted))out.reduce((a,b)=>b.dur>a.dur?b:a).counted=true;
+      const n=out.filter(st=>st.counted).length;
+      out.forEach(st=>{st.w=st.counted?+(1/n).toFixed(4):0});
+    }
   }
   return out;
 }
 const STINT_MIN_W=.2;
+/* Partida longa: só quem esteve em quadra por pelo menos esta fração do tempo
+   que conta recebe a vitória/derrota da partida (e conta a partida jogada).
+   Quem jogou 3 minutos de 50 mexe no rating pelo trecho dele, mas não "jogou
+   a partida". No racha curto qualquer trecho válido basta.                 */
+const UNICA_MIN_SHARE=.25;
+const contaPartida=(liga,m,dur,total)=>modoDe(liga,m)!=='unica'||(total>0&&dur/total>=UNICA_MIN_SHARE);
 /* Quem estava em campo no trecho e em que papel — goleiro move o nível de
    goleiro, todo o resto move a de linha.                                     */
 function stintPart(st){
@@ -901,8 +917,8 @@ function applyMatch(liga,m){
       const p=P(liga,pid);if(!p)continue;
       const role=part[pid].role||'L',tr=rt(p,role),k=pid+role;
       if(m.pre[pid]===undefined)m.pre[pid]=tr.elo;
-      if(!seen[k])seen[k]={pid,role,from:tr.rank,rank:tr.rank,side:part[pid].side};
-      seen[k].side=part[pid].side;
+      if(!seen[k])seen[k]={pid,role,from:tr.rank,rank:tr.rank,side:part[pid].side,dur:0};
+      seen[k].side=part[pid].side;seen[k].dur+=st.dur||0;
       const d=r.deltas[pid]||0;
       tr.elo+=d;m.deltas[pid]=(m.deltas[pid]||0)+d;
       /* Acima do esperado: (resultado - chance que ele tinha) x peso do trecho.
@@ -915,8 +931,10 @@ function applyMatch(liga,m){
   }
   /* Vitória/derrota é da PARTIDA: quem esteve num trecho que conta recebe o
      resultado final dela uma vez, pelo lado em que terminou.                */
+  const totalDur=matchStints(liga,m).reduce((a,st)=>a+(st.counted?(st.dur||0):0),0);
   for(const k in seen){
     const x=seen[k],p=P(liga,x.pid);if(!p)continue;
+    if(!contaPartida(liga,m,x.dur,totalDur))continue;
     const tr=rt(p,x.role);
     tr.games++;
     const res=m.result==='draw'?'E':(m.result===x.side?'V':'D');
@@ -1225,8 +1243,8 @@ function statsLiga(liga,periodo){
       [0,1].forEach(s=>{
         const meu=lados[s],deles=lados[s===0?1:0];
         meu.forEach(pid=>{
-          const x=j(pid),e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{}});
-          e.side=s;
+          const x=j(pid),e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{},dur:0});
+          e.side=s;e.dur+=st.dur||0;
           x.min+=st.dur||0;                                        // tempo de jogo (ms), pausas já descontadas
           if(part[pid].role==='G'){e.gk=true;x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
           meu.forEach(o=>{if(o!==pid)e.com[o]=1});
@@ -1234,8 +1252,10 @@ function statsLiga(liga,periodo){
         });
       });
     });
+    const totalDur=matchStints(liga,m).reduce((a,st)=>a+(st.counted?(st.dur||0):0),0);
     for(const pid in em){
-      const e=em[pid],x=j(pid),res=m.result==='draw'?'e':(m.result===e.side?'v':'d');
+      const e=em[pid];if(!contaPartida(liga,m,e.dur,totalDur))continue;
+      const x=j(pid),res=m.result==='draw'?'e':(m.result===e.side?'v':'d');
       x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
       if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq)}else if(res==='d')x.seq=0;
       x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
@@ -1288,13 +1308,15 @@ function destaques(liga,dias){
       if(!st.counted)return;
       const part=stintPart(st);
       for(const pid in part){
-        const x=add(pid),lado=part[pid].side,e=em[pid]||(em[pid]={side:lado,gk:false});
-        e.side=lado;
+        const x=add(pid),lado=part[pid].side,e=em[pid]||(em[pid]={side:lado,gk:false,dur:0});
+        e.side=lado;e.dur+=st.dur||0;
         if(part[pid].role==='G'){e.gk=true;x.minGk=(x.minGk||0)+(st.dur||0);x.sofridos+=((st.score||[0,0])[lado===0?1:0])||0}
       }
     });
+    const totalDur=matchStints(liga,m).reduce((a,st)=>a+(st.counted?(st.dur||0):0),0);
     for(const pid in em){
-      const x=add(pid),e=em[pid];
+      const e=em[pid];if(!contaPartida(liga,m,e.dur,totalDur))continue;
+      const x=add(pid);
       x.jogos++;x[m.result==='draw'?'e':(m.result===e.side?'v':'d')]++;
       if(e.gk)x.jogosG++;
       if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
@@ -1354,13 +1376,13 @@ function statsAnos(liga,pid){
   (liga.matches||[]).forEach(m=>{
     if(m.voided)return;
     const y=ANO(m.ts),sid=m.sessionId||m.id;
-    let side=null,min=0;
+    let side=null,min=0,tot=0;
     matchStints(liga,m).forEach(st=>{
-      if(!st.counted)return;
+      if(!st.counted)return;tot+=st.dur||0;
       const me=stintPart(st)[pid];if(!me)return;
       side=me.side;min+=st.dur||0;
     });
-    if(side!==null){
+    if(side!==null&&contaPartida(liga,m,min,tot)){
       const a=A[y]||(A[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0});
       a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
@@ -1959,7 +1981,7 @@ function viewJogo(liga,lv){
   const alvo=liga.cfg.targetGoals>0
     ? liga.cfg.targetGoals+' gols ou '+liga.cfg.targetMin+' min'
     : liga.cfg.targetMin+' min';
-  const trechos=splitStints(c,Date.now(),liga.cfg);
+  const trechos=splitStints(c,Date.now(),liga.cfg,lv.mode||liga.cfg.matchMode);
   const atual=trechos[trechos.length-1];
   const ex=chanceDeLineups(liga,lv,c.lineups,c.gks);
   return `
@@ -3180,7 +3202,7 @@ const A={
     if(c.paused){c.events.push({t:endedAt,type:'resume'});c.paused=false}
     const modo=lv.mode||l.cfg.matchMode||'curtas';
     /* cada formação em campo vira um trecho: é isso que o nível enxerga */
-    const stints=splitStints(c,endedAt,l.cfg);
+    const stints=splitStints(c,endedAt,l.cfg,modo);
     /* se o vencedor foi corrigido na mão, quem manda é a correção: ela vale
        para o trecho que fechou a partida.                                    */
     if(stints.length){

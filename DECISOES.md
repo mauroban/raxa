@@ -418,6 +418,16 @@ resultado do trecho para quem entrou no meio.
 **Onde:** `splitStints` (`STINT_MIN_W`), `finish` (alvo do resultado), `applyMatch` (por partida),
 `statsLiga`, `statsAnos`, `destaques`.
 
+### D-38 · Partida única tem regra de trecho própria
+**28/08/2026.** No modo **partida única** (longa): peso do trecho = fatia de tempo (não 1/n);
+trecho conta a partir de `stintMin` com ou sem gol; o final conta sempre; e vitória/derrota/partida
+jogada só para quem esteve em quadra por ≥ 25 % do tempo que conta (`UNICA_MIN_SHARE`). O modo
+curto mantém a D-37 (curto sem gol descartado, K/n, qualquer trecho válido dá a partida).
+**Por quê:** em 50 minutos com trocas rolando, "1/n" faria um trecho de 3 minutos pesar como um
+de 30, e "qualquer trecho válido dá a vitória" entregaria a partida a quem entrou para cumprir
+tabela. Os dois formatos são jogos diferentes; a régua tem que ser diferente.
+**Onde:** `splitStints(…, mode)`, `contaPartida`, `applyMatch`, `statsLiga`, `statsAnos`, `destaques`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -280,6 +280,45 @@ ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma parti
   ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.l===1,'quem jogou o trecho valido leva a derrota da partida');
 }
 
+/* Partida longa (unica): peso proporcional ao tempo, trecho conta a partir do minimo
+   absoluto, e a vitoria so vai para quem jogou pelo menos 25% do tempo. */
+{
+  const c0={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[1,0],
+    events:[{type:'sub',side:0,out:'p1',in:'p6'},{type:'goal',side:0},{type:'sub',side:0,out:'p6',in:'p1'}],
+    lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
+  c0.events[0].t=c0.startedAt+10*MIN;c0.events[1].t=c0.startedAt+20*MIN;c0.events[2].t=c0.startedAt+45*MIN;
+  const st=splitStints(c0,c0.startedAt+50*MIN,liga.cfg,'unica');
+  console.log('  partida unica de 50 min, trocas aos 10 e 45: '+st.length+' trechos, pesos '+st.map(s=>s.w).join('/'));
+  ok(st.length===3&&st.every(s=>s.counted),'na partida longa todos os trechos de 5 min ou mais contam, com ou sem gol');
+  ok(Math.abs(st[0].w-.2)<.01&&Math.abs(st[1].w-.7)<.01&&Math.abs(st[2].w-.1)<.01,'peso e a fatia de tempo, nao 1/n');
+  const stC=splitStints(c0,c0.startedAt+50*MIN,liga.cfg,'curtas');
+  ok(!stC[2].counted,'a mesma partida no modo curto descartaria o trecho final de 5 min sem gol (10%)');
+  /* quem jogou pouco nao recebe a vitoria da partida */
+  liga.matches.length=0;rebuildAll(liga);
+  liga.cfg.matchMode='unica';
+  const m={id:'mu',ts:c0.startedAt+50*MIN,startedAt:c0.startedAt,endedAt:c0.startedAt+50*MIN,sessionId:'su',mode:'unica',
+    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st,score:[1,0],result:0,
+    goals:[],disputes:[],voided:false};
+  applyMatch(liga,m);liga.matches.push(m);
+  ok(P(liga,'p6').L.games===1&&P(liga,'p6').L.w===1,'p6 jogou 35 de 50 min (70%): leva a partida');
+  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'p1 jogou 10+5 = 15 de 50 (30%): tambem leva');
+  liga.cfg.matchMode='curtas';
+}
+{
+  /* p1 jogou 10 + 5 = 15 de 50 min (30%): conta. Um figurante de 3 min nao. */
+  liga.matches.length=0;rebuildAll(liga);liga.cfg.matchMode='unica';
+  const c1={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[1,0],events:[],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
+  c1.events=[{t:c1.startedAt+44*MIN,type:'sub',side:0,out:'p1',in:'p6'},{t:c1.startedAt+47*MIN,type:'sub',side:0,out:'p6',in:'p1'}];
+  const st1=splitStints(c1,c1.startedAt+50*MIN,liga.cfg,'unica');
+  const m1={id:'mu2',ts:c1.startedAt+50*MIN,startedAt:c1.startedAt,endedAt:c1.startedAt+50*MIN,sessionId:'su2',mode:'unica',
+    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st1,score:[1,0],result:0,goals:[],disputes:[],voided:false};
+  applyMatch(liga,m1);liga.matches.push(m1);
+  ok(P(liga,'p6').L.games===0,'quem jogou 3 de 50 min nao recebe a partida (nem vitoria, nem contagem)');
+  ok(P(liga,'p6').L.elo===P(liga,'p6').L.base,'e o trecho de 3 min (abaixo do minimo) nem mexe no rating dele');
+  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'quem jogou 47 de 50 leva a vitoria');
+  liga.cfg.matchMode='curtas';liga.matches.length=0;rebuildAll(liga);
+}
+
 /* Protecao pos-promocao: a unidade e o trecho, como em todo o resto do motor. */
 liga.matches.length=0;rebuildAll(liga);
 const prot=P(liga,'p2');prot.L.protect=3;
