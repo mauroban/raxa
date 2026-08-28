@@ -277,6 +277,22 @@ aparece, mas para Jogador responde com um aviso. Liga nova sem vínculo continua
 Jogadores já existentes com papel Lançador não mudam.
 **Onde:** `meuPapel`, `podeLancar`, `mkPlayer`/`migPlayer`, despachante de `click`/`change`.
 
+### D-28 · Fatos completos na partida, registro de correções, gol contra
+**28/08/2026.** (1) A partida passa a guardar o log bruto (`events`: gols, substituições, pausas,
+com hora) e cada gol leva `t`/`min` e `own`. (2) A liga ganha `log[]`: toda correção (nível,
+resultado, anular/reativar/manter, apagar partida, papel, vínculo de conta, remover/cadastrar por
+conta) registra quem, quando, de quê para quê — nunca é apagado e não entra em cálculo; o admin vê
+em Ajustes → Registro de correções. (3) Gol contra: a barra "Quem fez?" e a folha de correção têm a
+abinha discreta **do time | contra** que troca os nomes para os do outro time; o gol vai para o
+placar do time que ganhou o ponto, o autor não pontua na artilharia e acumula `gc` (aparece só na
+ficha, "· 1 contra").
+**Por quê:** nível, divisão e estatística são deriváveis de `matches` via `rebuildAll` — trocar o
+sistema de nivelamento é trocar o motor e recalcular. Mas o minuto do gol, a ordem dos eventos e o
+motivo de uma correção manual eram descartados no fechamento da partida: informação que nenhum
+recálculo futuro recupera. Agora o app registra os fatos independentemente de como os usa.
+**Onde:** `finish` (events/goals), `logAdd`/`LOG_TXT`/`logCard`, `scorerTabs`/`showScorer`,
+`goalScorer`/`setGoalScorer`/`scorer`/`scorerSide`, `applyMatch` (gc).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

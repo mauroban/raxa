@@ -472,6 +472,19 @@ console.log('  painel de numeros (duelos e parcerias de todos) em '+(Date.now()-
 ok(Date.now()-t2<300,'painel de numeros abaixo de 300 ms com '+liga.matches.length+' partidas');
 ok(Object.keys(painel.DU).length>0,'e ele volta com duelos preenchidos');
 
+console.log('\n[14] gol contra');
+{
+  const gA=P(liga,A5[0]).goals,gB=P(liga,B5[0]).goals;
+  const jbAntes=(statsLiga(liga,'sempre').J[B5[0]]||{gols:0}).gols;
+  lanca(A5,B5,0,{score:[2,0],goals:[{pid:A5[0],side:0},{pid:B5[0],side:0,own:true}]});
+  ok(P(liga,A5[0]).goals===gA+1,'gol normal conta para o autor');
+  ok(P(liga,B5[0]).goals===gB,'gol contra NAO conta como gol do autor');
+  ok(P(liga,B5[0]).gc===1,'gol contra fica registrado a parte (gc)');
+  rebuildAll(liga);
+  ok(P(liga,B5[0]).gc===1&&P(liga,B5[0]).goals===gB,'e sobrevive ao recalculo');
+  ok((statsLiga(liga,'sempre').J[B5[0]]||{gols:0}).gols===jbAntes,'artilharia do painel ignora o gol contra');
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """
