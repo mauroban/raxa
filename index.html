@@ -2781,7 +2781,11 @@ const A={
     let pair=(lv.nextPair||[]).filter(i=>all.includes(i));
     if(pair.length!==2||pair[0]===pair[1])pair=suggestPair(l,lv);
     const [a,b]=pair;
-    lv.queue=all.filter(i=>i!==a&&i!==b);       // o resto espera, na ordem dos times
+    /* quem espera continua na ordem em que esperava; time novo (ou que ainda
+       não passou pela fila) entra no fim. Reconstruir na ordem dos times
+       aqui era o que fazia o D nunca jogar com 4 times.                    */
+    const fila=(lv.queue||[]).filter(i=>all.includes(i)&&i!==a&&i!==b);
+    lv.queue=fila.concat(all.filter(i=>i!==a&&i!==b&&!fila.includes(i)));
     lv.nextPair=null;
     lv.stage='jogo';
     lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);

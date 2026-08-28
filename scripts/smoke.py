@@ -373,6 +373,26 @@ step('quem ganhou fica, quem perdeu roda com a fila (entram 3, ficam 2)',()=>{
     throw new Error('quem saiu tem que ir para o fim da fila');
   render();
 });
+step('4 times: quem espera ha mais tempo joga antes (A×B, A×C, C×D, ...)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.map(p=>p.id);lv.gkToday=l.players.filter(p=>p.gk).map(p=>p.id);
+  A.toTimes();if(L().live.teams.length!==4)A.nteams({dataset:{v:'4'}});
+  try{
+  if(L().live.teams.length!==4)throw new Error('esperava 4 times, veio '+L().live.teams.length);
+  const nomes=()=>L().live.cur?[L().live.cur.a,L().live.cur.b].join('x'):'-';
+  const joga=(vencedor)=>{A.startMatch();const c=L().live.cur;const s=vencedor===c.a?0:1;A.goal({dataset:{s:String(s)}});A.finish({dataset:{r:String(s)}})};
+  L().live.nextPair=[0,1];joga(0);                        // A×B, A ganha → fila C,D,B
+  let par=suggestPair(L(),L().live);
+  if(par.join()!=='0,2')throw new Error('depois de A×B esperava A×C, veio '+par.join('x'));
+  L().live.nextPair=par;joga(2);                          // A×C, C ganha → fila D,B,A
+  par=suggestPair(L(),L().live);
+  if(par.join()!=='2,3')throw new Error('depois de A×C (C ganhou) esperava C×D, veio '+par.join('x'));
+  L().live.nextPair=par;joga(3);                          // C×D, D ganha → fila B,A,C
+  par=suggestPair(L(),L().live);
+  if(par.join()!=='3,1')throw new Error('depois de C×D (D ganhou) esperava D×B, veio '+par.join('x'));
+  }finally{S=salvo;render()}
+});
 step('girar a fila na mao (empate, cansaco, o que o pessoal combinar)',()=>{
   const lv=L().live,antes=lv.teams[1].ids.slice();
   A.giraFila({dataset:{i:'1'}});
