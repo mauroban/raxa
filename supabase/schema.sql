@@ -348,3 +348,226 @@ grant execute on function public.cancel_request(uuid)             to authenticat
 grant execute on function public.league_accounts(uuid)            to authenticated;
 grant execute on function public.approve_request(uuid, uuid)      to authenticated;
 grant execute on function public.reject_request(uuid, uuid)       to authenticated;
+
+-- ============================================================================
+-- LIGA EM PARTES (substitui o documento único em leagues.data)
+--
+-- Cada entidade é uma linha com payload jsonb e carrega `v` = versão da liga
+-- em que foi gravada. Isso dá sync incremental: o cliente pede "o que mudou
+-- desde a versão X" (league_delta) e grava só o que mexeu (save_parts), com a
+-- mesma trava otimista de antes (version em leagues). Só FATOS ficam aqui:
+-- nível, Elo, forma e estatística são recalculados no cliente (rebuildAll).
+--
+-- Ligas antigas (documento em leagues.data) migram sozinhas na primeira
+-- leitura: migrate_league espalha o documento nas tabelas e esvazia data.
+-- ============================================================================
+alter table public.leagues add column if not exists cfg      jsonb   not null default '{}'::jsonb;
+alter table public.leagues add column if not exists migrated boolean not null default false;
+
+create table if not exists public.league_players (
+  league_id uuid   not null references public.leagues on delete cascade,
+  id        text   not null,
+  data      jsonb  not null,
+  v         bigint not null default 1,
+  deleted   boolean not null default false,
+  primary key (league_id, id)
+);
+create table if not exists public.league_matches (
+  league_id uuid   not null references public.leagues on delete cascade,
+  id        text   not null,
+  ts        bigint not null default 0,
+  data      jsonb  not null,
+  v         bigint not null default 1,
+  deleted   boolean not null default false,
+  primary key (league_id, id)
+);
+create table if not exists public.league_sessions (
+  league_id uuid   not null references public.leagues on delete cascade,
+  id        text   not null,
+  data      jsonb  not null,
+  v         bigint not null default 1,
+  deleted   boolean not null default false,
+  primary key (league_id, id)
+);
+create table if not exists public.league_live (
+  league_id uuid primary key references public.leagues on delete cascade,
+  data      jsonb,                      -- null = sem racha em andamento
+  v         bigint not null default 1
+);
+create table if not exists public.league_log (
+  league_id uuid   not null references public.leagues on delete cascade,
+  seq       bigserial,
+  data      jsonb  not null,
+  v         bigint not null default 1,
+  primary key (league_id, seq)
+);
+create index if not exists league_players_v  on public.league_players (league_id, v);
+create index if not exists league_matches_v  on public.league_matches (league_id, v);
+create index if not exists league_sessions_v on public.league_sessions (league_id, v);
+create index if not exists league_log_v      on public.league_log (league_id, v);
+
+-- Tudo passa pelas funções (security definer); sem policy = sem acesso direto.
+alter table public.league_players  enable row level security;
+alter table public.league_matches  enable row level security;
+alter table public.league_sessions enable row level security;
+alter table public.league_live     enable row level security;
+alter table public.league_log      enable row level security;
+
+-- --------------------------------------------------------------- migração --
+create or replace function public.migrate_league(p_id uuid)
+returns void language plpgsql security definer set search_path = public as $fn$
+declare l public.leagues; nv bigint;
+begin
+  select * into l from public.leagues where id = p_id for update;
+  if not found or l.migrated then return; end if;
+  nv := l.version + 1;
+  insert into public.league_players (league_id, id, data, v)
+    select p_id, p->>'id', p, nv from jsonb_array_elements(coalesce(l.data->'players','[]'::jsonb)) p
+    where p ? 'id' on conflict do nothing;
+  insert into public.league_matches (league_id, id, ts, data, v)
+    select p_id, m->>'id', coalesce((m->>'ts')::bigint,0), m, nv
+    from jsonb_array_elements(coalesce(l.data->'matches','[]'::jsonb)) m
+    where m ? 'id' on conflict do nothing;
+  insert into public.league_sessions (league_id, id, data, v)
+    select p_id, s->>'id', s, nv from jsonb_array_elements(coalesce(l.data->'sessions','[]'::jsonb)) s
+    where s ? 'id' on conflict do nothing;
+  insert into public.league_live (league_id, data, v)
+    values (p_id, nullif(l.data->'live','null'::jsonb), nv)
+    on conflict (league_id) do update set data = excluded.data, v = excluded.v;
+  insert into public.league_log (league_id, data, v)
+    select p_id, e, nv from jsonb_array_elements(coalesce(l.data->'log','[]'::jsonb)) e;
+  update public.leagues
+     set cfg = coalesce(l.data->'cfg','{}'::jsonb), data = '{}'::jsonb, migrated = true,
+         version = nv, updated_at = now()
+   where id = p_id;
+end $fn$;
+
+-- ------------------------------------------------------------------ delta --
+-- Tudo que mudou desde p_since (0 = carga inicial). Linhas apagadas vêm com
+-- deleted=true para o cliente tirar da tela.
+create or replace function public.league_delta(p_id uuid, p_since bigint)
+returns jsonb language plpgsql security definer set search_path = public as $fn$
+declare l public.leagues; lv public.league_live;
+begin
+  if auth.uid() is null then raise exception 'nao autenticado'; end if;
+  if not public.is_member(p_id) then raise exception 'nao e membro desta liga'; end if;
+  perform public.migrate_league(p_id);
+  select * into l from public.leagues where id = p_id;
+  select * into lv from public.league_live where league_id = p_id;
+  return jsonb_build_object(
+    'id', l.id, 'version', l.version, 'name', l.name, 'code', l.code, 'cfg', l.cfg,
+    'owner', (l.owner_id = auth.uid()),
+    'players', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted))
+                         from public.league_players where league_id = p_id and v > p_since
+                           and (p_since > 0 or not deleted)), '[]'::jsonb),
+    'matches', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted) order by ts)
+                         from public.league_matches where league_id = p_id and v > p_since
+                           and (p_since > 0 or not deleted)), '[]'::jsonb),
+    'sessions', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted))
+                         from public.league_sessions where league_id = p_id and v > p_since
+                           and (p_since > 0 or not deleted)), '[]'::jsonb),
+    'live', case when lv.league_id is not null and lv.v > p_since
+                 then jsonb_build_object('data', lv.data) else null end,
+    'log', coalesce((select jsonb_agg(data order by seq)
+                     from public.league_log where league_id = p_id and v > p_since), '[]'::jsonb)
+  );
+end $fn$;
+
+-- ------------------------------------------------------------------ gravar --
+-- p_parts: {name?, cfg?, players:[{id,data}|{id,deleted:true}], matches:[...],
+--           sessions:[...], live:{data}|{clear:true}, log:[entrada,...]}
+-- Compare-and-swap na versão da liga. Em conflito devolve o delta desde a
+-- versão do cliente: ele aplica por cima e reenvia só o que ainda difere.
+create or replace function public.save_parts(p_id uuid, p_version bigint, p_parts jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $fn$
+declare cur public.leagues; nv bigint; r jsonb;
+begin
+  if auth.uid() is null then raise exception 'nao autenticado'; end if;
+  if not public.is_member(p_id) then raise exception 'nao e membro desta liga'; end if;
+  perform public.migrate_league(p_id);
+  select * into cur from public.leagues where id = p_id for update;
+  if not found then raise exception 'liga nao existe'; end if;
+  if cur.version <> p_version then
+    return jsonb_build_object('ok', false, 'version', cur.version, 'delta', public.league_delta(p_id, p_version));
+  end if;
+  nv := cur.version + 1;
+
+  for r in select * from jsonb_array_elements(coalesce(p_parts->'players','[]'::jsonb)) loop
+    if coalesce((r->>'deleted')::boolean,false) then
+      update public.league_players set deleted = true, v = nv where league_id = p_id and id = r->>'id';
+    else
+      insert into public.league_players (league_id, id, data, v) values (p_id, r->>'id', r->'data', nv)
+      on conflict (league_id, id) do update set data = excluded.data, v = nv, deleted = false;
+    end if;
+  end loop;
+  for r in select * from jsonb_array_elements(coalesce(p_parts->'matches','[]'::jsonb)) loop
+    if coalesce((r->>'deleted')::boolean,false) then
+      update public.league_matches set deleted = true, v = nv where league_id = p_id and id = r->>'id';
+    else
+      insert into public.league_matches (league_id, id, ts, data, v)
+      values (p_id, r->>'id', coalesce((r->'data'->>'ts')::bigint,0), r->'data', nv)
+      on conflict (league_id, id) do update set data = excluded.data, ts = excluded.ts, v = nv, deleted = false;
+    end if;
+  end loop;
+  for r in select * from jsonb_array_elements(coalesce(p_parts->'sessions','[]'::jsonb)) loop
+    if coalesce((r->>'deleted')::boolean,false) then
+      update public.league_sessions set deleted = true, v = nv where league_id = p_id and id = r->>'id';
+    else
+      insert into public.league_sessions (league_id, id, data, v) values (p_id, r->>'id', r->'data', nv)
+      on conflict (league_id, id) do update set data = excluded.data, v = nv, deleted = false;
+    end if;
+  end loop;
+  if p_parts ? 'live' then
+    insert into public.league_live (league_id, data, v)
+    values (p_id, case when coalesce((p_parts->'live'->>'clear')::boolean,false) then null else p_parts->'live'->'data' end, nv)
+    on conflict (league_id) do update set data = excluded.data, v = nv;
+  end if;
+  insert into public.league_log (league_id, data, v)
+    select p_id, e, nv from jsonb_array_elements(coalesce(p_parts->'log','[]'::jsonb)) e;
+
+  update public.leagues
+     set name       = coalesce(nullif(trim(p_parts->>'name'),''), cur.name),
+         cfg        = coalesce(p_parts->'cfg', cur.cfg),
+         version    = nv,
+         updated_at = now()
+   where id = p_id
+  returning * into cur;
+  return jsonb_build_object('ok', true, 'version', cur.version, 'name', cur.name, 'code', cur.code);
+end $fn$;
+
+-- create_league continua recebendo o documento (é como o app monta a liga
+-- nova); a migração espalha nas tabelas na hora.
+create or replace function public.create_league(p_name text, p_data jsonb)
+returns public.leagues language plpgsql security definer set search_path = public as $fn$
+declare l public.leagues;
+begin
+  if auth.uid() is null then raise exception 'nao autenticado'; end if;
+  insert into public.leagues (name, code, owner_id, data)
+  values (coalesce(nullif(trim(p_name),''),'Meu racha'), public.gen_code(), auth.uid(), coalesce(p_data,'{}'::jsonb))
+  returning * into l;
+  insert into public.league_members (league_id, user_id) values (l.id, auth.uid());
+  perform public.migrate_league(l.id);
+  select * into l from public.leagues where id = l.id;
+  return l;
+end $fn$;
+
+-- Tamanho real da liga no banco (Ajustes → só o admin vê).
+create or replace function public.league_size(p_id uuid)
+returns jsonb language sql security definer stable set search_path = public as $fn$
+  select jsonb_build_object(
+    'players',  (select count(*) from public.league_players  where league_id = p_id and not deleted),
+    'matches',  (select count(*) from public.league_matches  where league_id = p_id and not deleted),
+    'sessions', (select count(*) from public.league_sessions where league_id = p_id and not deleted),
+    'log',      (select count(*) from public.league_log      where league_id = p_id),
+    'bytes',    (select coalesce(sum(pg_column_size(data)),0) from public.league_matches  where league_id = p_id)
+              + (select coalesce(sum(pg_column_size(data)),0) from public.league_players  where league_id = p_id)
+              + (select coalesce(sum(pg_column_size(data)),0) from public.league_sessions where league_id = p_id)
+              + (select coalesce(sum(pg_column_size(data)),0) from public.league_log      where league_id = p_id)
+              + (select coalesce(pg_column_size(data),0)      from public.league_live     where league_id = p_id)
+  ) where public.is_member(p_id);
+$fn$;
+
+grant execute on function public.migrate_league(uuid)               to authenticated;
+grant execute on function public.league_delta(uuid, bigint)         to authenticated;
+grant execute on function public.save_parts(uuid, bigint, jsonb)    to authenticated;
+grant execute on function public.league_size(uuid)                  to authenticated;

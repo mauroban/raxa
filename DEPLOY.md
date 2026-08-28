@@ -17,7 +17,9 @@ Tempo total: ~10 minutos.
    [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
    Cria as tabelas, a RLS, as funções e liga o Realtime. Pode rodar de novo sem quebrar.
    Se você já tinha aplicado uma versão anterior, rode de novo: a versão atual
-   adiciona `league_requests` (entrada por código passa por aprovação do admin),
+   troca o documento único por **tabelas por entidade** (`league_players`,
+   `league_matches`, `league_sessions`, `league_live`, `league_log`) com sync
+   incremental — ligas antigas migram sozinhas na primeira leitura —, adiciona `league_requests` (entrada por código passa por aprovação do admin),
    as funções de contas da liga, e
    **remove a policy de UPDATE direto** em `leagues` — toda gravação passa pelo
    `save_league` (compare-and-swap), então um cliente não consegue mais pular a
@@ -96,10 +98,10 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
   consegue gravar a liga inteira** — a RLS protege a fronteira entre ligas, não
   dentro delas. Aplicar papel no servidor exige o esquema relacional de
   `BANCO-DE-DADOS.md`.
-- **Última gravação vence, por liga.** Duas pessoas mexendo ao mesmo tempo: quem
+- **Última gravação vence, por entidade.** Duas pessoas mexendo ao mesmo tempo: quem
   gravar depois, com a versão certa, fica; quem estava com a versão velha recebe o
-  estado do servidor e perde a alteração local (a tela avisa
-  *"Atualizado por outra pessoa"*). Na prática só uma pessoa conduz o racha.
+  delta do servidor, perde a alteração local **só nas partes que o outro também
+  mexeu** e reenvia o resto (a tela avisa *"Atualizado por outra pessoa"*).
 - **Não funciona offline.** O protótipo funcionava; esta versão precisa de rede.
   Se a quadra não tiver sinal, é um problema real a resolver antes de valer como produto.
 - **O projeto gratuito do Supabase hiberna** depois de ~7 dias sem nenhum acesso.

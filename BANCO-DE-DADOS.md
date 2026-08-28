@@ -5,6 +5,12 @@
 > Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · requisitos em [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md)
 > · decisões em [DECISOES.md](DECISOES.md).
 
+> **Estado (28/08/2026):** o degrau intermediário está implementado em `supabase/schema.sql` —
+> tabelas por entidade (`league_players`, `league_matches`, `league_sessions`, `league_live`,
+> `league_log`) com payload jsonb de **fatos** e sync incremental por versão (`league_delta`,
+> `save_parts`). Este documento continua sendo o alvo relacional completo (trechos, gols e
+> vínculos como linhas próprias); ver D-29 em DECISOES.md.
+
 **Alvo:** Postgres (Supabase) — Auth, Row Level Security e Realtime saem prontos.
 Todo o motor (`splitStints`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`) é função pura e sobe
 sem reescrita, como Edge Function ou como job chamado pelo cliente.

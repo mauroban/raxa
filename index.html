@@ -3374,7 +3374,13 @@ const MAILDOM='@raxa.app';
 const userMail=u=>String(u).trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')+MAILDOM;
 
 let ME=null;                       // {id, username}
-let PEND=[];                       // meus pedidos de entrada aguardando o admin [{league_id,name,requested_at}]
+let PEND=[];
+const SIZE={};                     // por liga: {at, d:{players,matches,sessions,log,bytes}}
+async function loadSize(id){
+  if(!sb||!ME)return;SIZE[id]=Object.assign({at:Date.now()},SIZE[id]||{});
+  const r=await sb.rpc('league_size',{p_id:id});
+  if(!r.error&&r.data){SIZE[id]={at:Date.now(),d:r.data};if(!ocupado())render()}
+}                       // meus pedidos de entrada aguardando o admin [{league_id,name,requested_at}]
 const VER={}, SNAP={}, CODE={};    // por liga: versão do servidor, último doc gravado, código de convite
 let syncT=null, syncing=false, netErr=false, chan=null;
 const dirty=new Set();
@@ -3391,7 +3397,43 @@ function loadUI(){
 }
 
 /* ---------- sincronizador ---------- */
-const ligaData=l=>l;                   // o documento é a própria liga
+/* ---------- fatos vs. derivados ----------
+   No servidor a liga vive em partes (jogadores, partidas, rachas, live, log)
+   e só os FATOS vão para lá. Nível, Elo, forma, gols e contagens são
+   recalculados aqui (rebuildAll) a partir das partidas.                     */
+const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,
+  L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def)},G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def)}});
+const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;return o};
+const factsDoc=l=>({name:l.name,cfg:l.cfg,players:(l.players||[]).map(playerFacts),
+  matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],live:l.live||null,log:l.log||[]});
+const snapNovo=()=>({players:{},matches:{},sessions:{},live:'null',log:0,name:null,cfg:null});
+/* O que difere do último estado conhecido do servidor — e o snapshot que
+   passa a valer se o servidor aceitar. Comparação por entidade, em JSON. */
+function diffParts(l){
+  const s=SNAP[l.id]||(SNAP[l.id]=snapNovo()),parts={},snap={players:{},matches:{},sessions:{}};
+  const ent=(key,arr,facts)=>{
+    const out=[],seen={};
+    arr.forEach(x=>{const j=JSON.stringify(facts(x));seen[x.id]=1;if(s[key][x.id]!==j){out.push({id:x.id,data:JSON.parse(j)});snap[key][x.id]=j}});
+    Object.keys(s[key]).forEach(id=>{if(!seen[id]){out.push({id,deleted:true});snap[key][id]=null}});
+    if(out.length)parts[key]=out;
+  };
+  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);
+  const live=JSON.stringify(l.live||null);if(live!==s.live){parts.live=l.live?{data:JSON.parse(live)}:{clear:true};snap.live=live}
+  const cfg=JSON.stringify(l.cfg);if(cfg!==s.cfg){parts.cfg=JSON.parse(cfg);snap.cfg=cfg}
+  if(l.name!==s.name){parts.name=l.name;snap.name=l.name}
+  const log=l.log||[];
+  if(log.length>s.log){parts.log=log.slice(s.log);snap.log=log.length}
+  else if(log.length<s.log)snap.log=log.length;
+  return {parts,snap};
+}
+function commitSnap(id,snap){
+  const s=SNAP[id]||(SNAP[id]=snapNovo());
+  ['players','matches','sessions'].forEach(k=>Object.keys(snap[k]).forEach(x=>{if(snap[k][x]===null)delete s[k][x];else s[k][x]=snap[k][x]}));
+  if(snap.live!==undefined)s.live=snap.live;
+  if(snap.cfg!==undefined)s.cfg=snap.cfg;
+  if(snap.name!==undefined)s.name=snap.name;
+  if(snap.log!==undefined)s.log=snap.log;
+}
 function markDirty(id){if(!id)return;dirty.add(id);agenda()}
 /* Sem rede, a nova tentativa espaça (0,45 s → 1 s → 2 s … até 30 s) em vez de
    martelar o servidor a cada meio segundo; a primeira gravação boa zera.   */
@@ -3420,23 +3462,24 @@ async function flush(){
   if(!sb||!ME||syncing)return;
   syncing=true;
   try{
-    for(const id of [...dirty]){
+    let guarda=0;
+    while(dirty.size&&guarda++<20){                // liga re-suja por conflito volta na mesma passada
+      const id=[...dirty][0];
       dirty.delete(id);
       const l=S.ligas.find(x=>x.id===id);
-      if(!l)continue;
-      const json=JSON.stringify(ligaData(l));
-      if(SNAP[id]===json)continue;                 // save() sem mudança real (trocar de aba, abrir liga)
+      if(!l||VER[id]===undefined)continue;         // liga ainda não existe no servidor (create em voo)
+      const {parts,snap}=diffParts(l);
+      if(!Object.keys(parts).length)continue;      // save() sem mudança real (trocar de aba, abrir liga)
       syncDot('salvando');
-      const {data,error}=await sb.rpc('save_league',{p_id:id,p_data:JSON.parse(json),p_version:VER[id]||1});
-      if(error){netErr=true;tentativas++;syncDot('erro');dirty.add(id);continue}
+      const {data,error}=await sb.rpc('save_parts',{p_id:id,p_version:VER[id]||1,p_parts:parts});
+      if(error){netErr=true;tentativas++;syncDot('erro');dirty.add(id);break}   // sem rede: espera o backoff
       netErr=false;tentativas=0;
-      if(data&&data.ok===false){                   // alguém gravou antes: o servidor manda o estado bom
-        VER[id]=data.version;
-        aplicaRemoto(id,data.data,data.name,data.code);
+      if(data&&data.ok===false){                   // alguém gravou antes: aplica o delta e reenvia o que sobrou
+        applyDelta(id,data.delta);
         toast('Atualizado por outra pessoa');
-        render();
+        render();dirty.add(id);
       }else if(data){
-        VER[id]=data.version;SNAP[id]=json;if(data.code)CODE[id]=data.code;
+        VER[id]=data.version;commitSnap(id,snap);if(data.code)CODE[id]=data.code;
       }
     }
   }finally{
@@ -3446,24 +3489,60 @@ async function flush(){
   }
 }
 
-function aplicaRemoto(id,data,name,code){
-  const i=S.ligas.findIndex(x=>x.id===id);
-  const l=Object.assign({createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],live:null},
-                        data||{},{id:id,name:name||(data&&data.name)||'Liga'});
-  if(i<0)S.ligas.push(l);else S.ligas[i]=l;
-  if(code)CODE[id]=code;
+/* Aplica um delta do servidor (carga inicial = tudo; depois, só o que mudou
+   desde a versão que este aparelho conhece). Entidade que veio no delta
+   sobrescreve a local; o resto fica como está — inclusive edição pendente. */
+function applyDelta(id,d){
+  if(!d)return;
+  let l=S.ligas.find(x=>x.id===id);
+  if(!l){l={id,createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],live:null,log:[],name:d.name||'Liga'};S.ligas.push(l)}
+  const s=SNAP[id]||(SNAP[id]=snapNovo());
+  if(d.name)l.name=d.name;
+  if(d.cfg&&Object.keys(d.cfg).length)l.cfg=d.cfg;
+  let recalc=false;
+  const ent=(key,rows)=>{(rows||[]).forEach(r=>{
+    const i=l[key].findIndex(x=>x.id===r.id);
+    if(r.deleted){if(i>=0)l[key].splice(i,1);delete s[key][r.id]}
+    else{if(i>=0)l[key][i]=r.data;else l[key].push(r.data)}
+    recalc=true})};
+  ent('players',d.players);ent('matches',d.matches);ent('sessions',d.sessions);
+  if(d.live)l.live=d.live.data||null;
+  if(d.log&&d.log.length)l.log=(l.log||[]).concat(d.log);
+  if(d.code)CODE[id]=d.code;
+  VER[id]=d.version;
   S=normalize(S);
-  const fin=S.ligas.find(x=>x.id===id);
-  if(fin)SNAP[id]=JSON.stringify(ligaData(fin));
+  l=S.ligas.find(x=>x.id===id);if(!l)return;
+  if(recalc){l.matches.sort((a,b)=>a.ts-b.ts);rebuildAll(l)}
+  /* snapshot só do que veio no delta, já normalizado — o que não veio pode
+     ter edição local esperando para subir */
+  const snapDe=(key,rows,facts)=>(rows||[]).forEach(r=>{if(r.deleted)return;const x=l[key].find(y=>y.id===r.id);if(x)s[key][r.id]=JSON.stringify(facts(x))});
+  snapDe('players',d.players,playerFacts);snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);
+  if(d.live)s.live=JSON.stringify(l.live||null);
+  if(d.cfg&&Object.keys(d.cfg).length)s.cfg=JSON.stringify(l.cfg);
+  if(d.name)s.name=l.name;
+  if(d.log&&d.log.length)s.log=l.log.length;
+  if(s.log===0&&!(d.log&&d.log.length))s.log=(l.log||[]).length;
+}
+/* compat: quem ainda chama aplicaRemoto (import antigo) recebe o documento inteiro como delta */
+function aplicaRemoto(id,data,name,code){
+  const doc=data||{};
+  applyDelta(id,{version:VER[id]||1,name:name||doc.name,code,cfg:doc.cfg||{},
+    players:(doc.players||[]).map(p=>({id:p.id,data:p})),matches:(doc.matches||[]).map(m=>({id:m.id,data:m})),
+    sessions:(doc.sessions||[]).map(x=>({id:x.id,data:x})),live:{data:doc.live||null},log:doc.log||[]});
 }
 
 async function loadAll(){
-  const {data,error}=await sb.from('leagues').select('id,name,code,data,version').order('created_at');
+  const {data,error}=await sb.from('leagues').select('id,name,code,version').order('created_at');
   if(error)throw error;
   S.ligas=[];
-  (data||[]).forEach(row=>{
-    VER[row.id]=row.version;CODE[row.id]=row.code;
-    aplicaRemoto(row.id,row.data,row.name,row.code);
+  Object.keys(SNAP).forEach(k=>delete SNAP[k]);
+  const rows=data||[];
+  const deltas=await Promise.all(rows.map(row=>sb.rpc('league_delta',{p_id:row.id,p_since:0})));
+  rows.forEach((row,i)=>{
+    const r=deltas[i];
+    if(r.error||!r.data){toast('Não consegui carregar '+row.name);return}
+    CODE[row.id]=row.code;
+    applyDelta(row.id,r.data);
   });
   S=normalize(S);
   await loadPend();
@@ -3494,10 +3573,9 @@ function watch(){
       const row=p.new&&p.new.user_id?p.new:p.old;
       if(!row||row.user_id!==ME.id)return;
       if(p.eventType==='INSERT'){                    // o admin aprovou
-        const {data}=await sb.from('leagues').select('id,name,code,data,version').eq('id',row.league_id).maybeSingle();
+        const {data}=await sb.rpc('league_delta',{p_id:row.league_id,p_since:0});
         if(!data)return;
-        VER[data.id]=data.version;CODE[data.id]=data.code;
-        aplicaRemoto(data.id,data.data,data.name,data.code);
+        applyDelta(data.id,data);
         PEND=PEND.filter(x=>x.league_id!==data.id);
         S=normalize(S);render();toast('Você entrou em '+data.name);
       }else if(p.eventType==='DELETE'){              // o admin tirou você
@@ -3535,11 +3613,10 @@ async function refetch(id,tent){
     setTimeout(()=>refetch(id,tent),700);return;
   }
   if(ocupado()){pendente.add(id);return}                                // não redesenha por cima de digitação
-  const {data,error}=await sb.from('leagues').select('id,name,code,data,version').eq('id',id).maybeSingle();
+  const {data,error}=await sb.rpc('league_delta',{p_id:id,p_since:VER[id]||0});
   if(error||!data)return;
   if((VER[id]||0)>=data.version)return;             // eco da nossa própria gravação
-  VER[id]=data.version;
-  aplicaRemoto(id,data.data,data.name,data.code);
+  applyDelta(id,data);
   render();
 }
 
@@ -3660,8 +3737,7 @@ function reid(de,para){
 async function createLeague(name,base){
   const tmp=mkLiga(name,base);
   if(!sb||!ME)return tmp;                    // sem backend configurado (ex.: smoke test)
-  const doc=Object.assign({},S.ligas.find(x=>x.id===tmp));
-  delete doc.id;
+  const doc=factsDoc(S.ligas.find(x=>x.id===tmp));
   const {data,error}=await sb.rpc('create_league',{p_name:name,p_data:doc});
   if(error){                                 // desfaz: nada de liga fantasma que nunca grava
     S.ligas=S.ligas.filter(x=>x.id!==tmp);
@@ -3672,8 +3748,14 @@ async function createLeague(name,base){
   }
   reid(tmp,data.id);
   VER[data.id]=data.version;CODE[data.id]=data.code;
-  const fin=S.ligas.find(x=>x.id===data.id);
-  if(fin)SNAP[data.id]=JSON.stringify(ligaData(fin));
+  /* o snapshot é o documento que foi: qualquer edição feita enquanto a rede
+     respondia aparece como diferença e sobe na próxima gravação */
+  const s=SNAP[data.id]=snapNovo();
+  doc.players.forEach(p=>s.players[p.id]=JSON.stringify(p));
+  doc.matches.forEach(m=>s.matches[m.id]=JSON.stringify(m));
+  doc.sessions.forEach(x=>s.sessions[x.id]=JSON.stringify(x));
+  s.live=JSON.stringify(doc.live);s.cfg=JSON.stringify(doc.cfg);s.name=doc.name;s.log=doc.log.length;
+  markDirty(data.id);
   saveUI();render();
   return data.id;
 }
@@ -3758,8 +3840,8 @@ Object.assign(A,{
       return;
     }
     const lg=data&&data.league;if(!lg)return;
-    VER[lg.id]=lg.version;CODE[lg.id]=lg.code;
-    aplicaRemoto(lg.id,lg.data,lg.name,lg.code);
+    const r=await sb.rpc('league_delta',{p_id:lg.id,p_since:0});
+    if(r.data)applyDelta(lg.id,r.data);
     S.active=lg.id;S.ui.tab='racha';closeSheet();saveUI();render();
     toast('Você já está em '+lg.name);
   },
@@ -3975,7 +4057,11 @@ function logCard(liga){
     else if(e.a==='delMatch'&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
     return `<div class="tiny" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="muted num">${new Date(e.ts).toLocaleDateString('pt-BR')} · @${esc(e.by||'?')}</span><br>${o}</div>`;
   };
-  return `<div class="card"><div class="k" style="margin-bottom:6px">Registro de correções</div>
+  const sz=SIZE[liga.id];
+  if(!sz||Date.now()-sz.at>60000)setTimeout(()=>loadSize(liga.id),0);
+  const szTxt=sz&&sz.d?`No servidor: ${sz.d.matches} partida${sz.d.matches===1?'':'s'} · ${sz.d.players} jogadores · ${sz.d.log} correções · ${(sz.d.bytes/1024).toFixed(0)} KB`:'';
+  return `${szTxt?`<div class="card"><div class="k" style="margin-bottom:6px">Tamanho da liga</div><div class="tiny muted">${szTxt}. Cada gravação manda só o que mudou; cada aparelho recebe só o delta.</div></div>`:''}
+  <div class="card"><div class="k" style="margin-bottom:6px">Registro de correções</div>
     <div class="tiny muted" style="margin-bottom:6px">Quem mexeu no quê. Só o admin vê; nunca é apagado.</div>
     ${log.length?log.map(linha).join(''):'<div class="tiny muted">Nada corrigido ainda.</div>'}
     ${(liga.log||[]).length>25?`<div class="tiny muted" style="margin-top:6px">…e mais ${liga.log.length-25} no backup.</div>`:''}</div>`;

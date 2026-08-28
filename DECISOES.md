@@ -293,6 +293,29 @@ recálculo futuro recupera. Agora o app registra os fatos independentemente de c
 **Onde:** `finish` (events/goals), `logAdd`/`LOG_TXT`/`logCard`, `scorerTabs`/`showScorer`,
 `goalScorer`/`setGoalScorer`/`scorer`/`scorerSide`, `applyMatch` (gc).
 
+### D-29 · A liga deixa de ser um JSON só: partes por entidade e sync incremental
+**28/08/2026.** `leagues.data` (documento inteiro) sai de cena. Entram `league_players`,
+`league_matches`, `league_sessions`, `league_live` e `league_log`, cada linha com payload jsonb e
+`v` = versão da liga em que foi gravada. Duas funções fazem tudo: `league_delta(id, desde)` devolve
+o que mudou desde uma versão (0 = carga inicial) e `save_parts(id, versão, partes)` grava só as
+partes que mudaram, com o mesmo compare-and-swap de antes. Em conflito o servidor devolve o delta e
+o cliente reenvia o que ainda difere — perde-se só o que os dois mexeram. Só **fatos** vão para o
+banco: `playerFacts` (nome, conta, papel, palpite de entrada) e `matchFacts` (sem `deltas`/`moves`);
+`rebuildAll` refaz nível e estatística ao carregar. Ligas antigas migram sozinhas na primeira
+leitura (`migrate_league`). Ajustes mostra o tamanho real no servidor (`league_size`).
+**Por quê:** armazenamento nunca foi o problema; transporte era. Com o documento único, cada gol
+subia e descia a liga inteira para todo aparelho aberto — em um ano de racha semanal, ~1 MB por
+toque, e a saída do plano gratuito estourava numa noite cheia. Agora um gol custa ~1 KB, e o
+histórico só desce uma vez, na carga.
+**Por que não o relacional completo (BANCO-DE-DADOS.md) agora:** o motor roda no cliente e lê a
+partida como um objeto (trechos, escalações, gols). Quebrar em linhas de trecho/gol obrigaria a
+remontar tudo no load sem ganho de transporte — é o passo certo quando o recálculo for para o
+servidor. Partida como linha jsonb é a granularidade em que o app pensa.
+**Descartado:** manter o documento e só separar o `live` (resolvia o gol, não o histórico que
+cresce); normalizar trechos e gols já (ver acima).
+**Onde:** `supabase/schema.sql` (bloco "LIGA EM PARTES"), `playerFacts`/`matchFacts`/`factsDoc`,
+`diffParts`/`commitSnap`, `flush`, `applyDelta`, `loadAll`, `refetch`, `logCard` (tamanho).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

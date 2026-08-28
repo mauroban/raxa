@@ -468,6 +468,8 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 ## 8. Estado do protótipo (`index.html`)
 
+**No servidor, a liga vive em partes.** Cada jogador, partida, racha e entrada do log é uma linha própria (payload jsonb de fatos), mais uma linha `live` para o racha em andamento. O app grava só o que mudou (`save_parts`) e recebe só o que mudou desde a versão que conhece (`league_delta`); um gol é ~1 KB subindo e ~1 KB descendo em cada aparelho, independentemente do tamanho do histórico. Nível e estatística nunca vão para o banco.
+
 **Fatos vs. derivados.** `matches` (escalações, trechos, placar, gols com autor/minuto/contra, `events` bruto) e `sessions` são fatos; nível, Elo, forma, gols e contagens em `players` são derivados e `rebuildAll()` os refaz do zero. `log[]` na liga registra toda correção manual (quem, quando, antes → depois) e nunca é apagado. Gol contra: abinha "contra" ao marcar o autor; não conta na artilharia, aparece só na ficha.
 
 **Presença em lote.** Na tela "Quem chegou", segurar um nome e arrastar marca todo mundo por onde o dedo passa (ou desmarca, se o primeiro nome apagou). No computador é clicar e arrastar. O "segurar" existe para não brigar com a rolagem da lista.
