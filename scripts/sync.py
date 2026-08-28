@@ -48,13 +48,14 @@ global.prompt=()=>'Mauro';
 global.alert=()=>{};
 
 /* -------- Supabase falso: um Postgres de mentira, com RLS de mentira -------- */
-const DB={users:[],profiles:[],leagues:[],members:[]};
+const DB={users:[],profiles:[],leagues:[],members:[],requests:[]};
 let RT=[];                                  // assinantes de realtime
 const uuid=(n=>()=>'uuid-'+(++n))(0);
 const jclone=o=>JSON.parse(JSON.stringify(o));
 let CODEN=0;
 
 function emit(ev,row){ RT.forEach(fn=>fn({eventType:ev,new:row?{id:row.id}:null,old:row?{id:row.id}:null})) }
+function emitM(ev,row){ RT.forEach(fn=>fn({eventType:ev,new:ev==='INSERT'?row:null,old:ev==='DELETE'?row:null})) }
 
 function fakeClient(){
   let session=null;
@@ -75,9 +76,34 @@ function fakeClient(){
       if(!uidNow())return{data:null,error:{message:'nao autenticado'}};
       const row=DB.leagues.find(l=>l.code===String(p_code).trim().toUpperCase());
       if(!row)return{data:null,error:{message:'codigo nao encontrado'}};
-      if(!DB.members.some(m=>m.league_id===row.id&&m.user_id===uidNow()))
-        DB.members.push({league_id:row.id,user_id:uidNow()});
-      return{data:jclone(row),error:null};
+      if(DB.members.some(m=>m.league_id===row.id&&m.user_id===uidNow()))
+        return{data:{status:'member',league:jclone(row)},error:null};
+      if(!DB.requests.some(r=>r.league_id===row.id&&r.user_id===uidNow()))
+        DB.requests.push({league_id:row.id,user_id:uidNow(),requested_at:new Date().toISOString()});
+      return{data:{status:'pending',id:row.id,name:row.name},error:null};
+    },
+    my_requests(){
+      return{data:DB.requests.filter(r=>r.user_id===uidNow()).map(r=>({league_id:r.league_id,name:DB.leagues.find(l=>l.id===r.league_id).name,requested_at:r.requested_at})),error:null};
+    },
+    cancel_request({p_id}){DB.requests=DB.requests.filter(r=>!(r.league_id===p_id&&r.user_id===uidNow()));return{data:null,error:null}},
+    league_accounts({p_id}){
+      const l=DB.leagues.find(x=>x.id===p_id);if(!l||l.owner_id!==uidNow())return{data:[],error:null};
+      const un=u=>(DB.profiles.find(p=>p.id===u)||{}).username||'?';
+      return{data:DB.requests.filter(r=>r.league_id===p_id).map(r=>({user_id:r.user_id,username:un(r.user_id),joined_at:r.requested_at,is_owner:false,pending:true}))
+        .concat(DB.members.filter(m=>m.league_id===p_id).map(m=>({user_id:m.user_id,username:un(m.user_id),joined_at:new Date().toISOString(),is_owner:m.user_id===l.owner_id,pending:false}))),error:null};
+    },
+    approve_request({p_id,p_user}){
+      const l=DB.leagues.find(x=>x.id===p_id);if(!l||l.owner_id!==uidNow())return{data:null,error:{message:'so o admin aprova entrada'}};
+      if(!DB.requests.some(r=>r.league_id===p_id&&r.user_id===p_user))return{data:null,error:{message:'pedido nao encontrado'}};
+      DB.requests=DB.requests.filter(r=>!(r.league_id===p_id&&r.user_id===p_user));
+      const row={league_id:p_id,user_id:p_user};DB.members.push(row);emitM('INSERT',row);
+      return{data:null,error:null};
+    },
+    reject_request({p_id,p_user}){DB.requests=DB.requests.filter(r=>!(r.league_id===p_id&&r.user_id===p_user));return{data:null,error:null}},
+    remove_member({p_id,p_user}){
+      const row={league_id:p_id,user_id:p_user};
+      DB.members=DB.members.filter(m=>!(m.league_id===p_id&&m.user_id===p_user));emitM('DELETE',row);
+      return{data:null,error:null};
     },
     save_league({p_id,p_data,p_version}){
       if(!uidNow())return{data:null,error:{message:'nao autenticado'}};
@@ -238,7 +264,27 @@ await step('outra conta entra pelo codigo',async()=>{
   ok('luis nao ve a liga dos outros',S.ligas.length===0,S.ligas.length+' ligas');
   val('#jc',codigo);
   await A.doJoin();
-  ok('entrou na liga',S.active===ligaId);
+  ok('o codigo gera um PEDIDO, nao entrada',S.active===null&&S.ligas.length===0&&PEND.length===1,'ligas='+S.ligas.length+' pend='+PEND.length);
+  ok('no servidor, luis nao e membro',!DB.members.some(m=>m.league_id===ligaId&&m.user_id===ME.id));
+});
+
+await step('o admin ve o pedido e aprova',async()=>{
+  const luisId=ME.id;
+  await A.logout();
+  val('#au','mauro');val('#ap','segredo1');authMode='entrar';
+  await A.doLogin();
+  A.openLiga({dataset:{id:ligaId}});
+  A.tab({dataset:{v:'ranking'}});
+  await loadAccounts(ligaId);
+  ok('o card Membros mostra o pedido',/pediu para entrar/.test(els['#app'].innerHTML));
+  await A.accApprove({dataset:{u:luisId}});
+  ok('luis virou membro no servidor',DB.members.some(m=>m.league_id===ligaId&&m.user_id===luisId));
+  ok('o pedido sumiu',!DB.requests.length);
+  await A.logout();
+  val('#au','luis');val('#ap','segredo2');
+  await A.doLogin();
+  ok('luis agora ve a liga',S.ligas.length===1&&PEND.length===0,'ligas='+S.ligas.length+' pend='+PEND.length);
+  A.openLiga({dataset:{id:ligaId}});
   ok('recebeu os 19 jogadores',L().players.length===19,L().players.length+'');
   ok('recebeu a presenca do racha',L().live&&L().live.presentIds.length===10);
 });

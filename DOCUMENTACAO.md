@@ -428,7 +428,7 @@ Quando o Bruninho entra na Liga, ele vê os perfis sem dono e **assume o seu**, 
 | Caminho | Como é | Quando serve |
 |---|---|---|
 | **Link de convite** | o admin gera o link e joga no grupo do WhatsApp; quem abre escolhe o próprio perfil e entra | começar uma Liga, chamar a galera toda de uma vez |
-| **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova | alguém que ouviu falar do racha e quer entrar |
+| **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova em Membros — **implementado** | alguém que ouviu falar do racha e quer entrar |
 | **Busca dentro do app** | o admin procura a pessoa por `@usuário` ou nome e convida direto — já apontando qual perfil é dela | o mais comum: a pessoa já joga há meses e só agora criou conta |
 
 A regra única, nos três: **ninguém entra sem aceitar, e ninguém entra sem o admin querer.** O link vence (7 dias por padrão) e pode ser revogado; o código gera pedido, não entrada — a não ser que o admin ligue *entrada livre*; o convite direto é de uso único e só vale para aquela pessoa.

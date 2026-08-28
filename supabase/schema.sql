@@ -244,3 +244,107 @@ end $fn$;
 grant execute on function public.is_league_admin(uuid)        to authenticated;
 grant execute on function public.league_accounts(uuid)        to authenticated;
 grant execute on function public.remove_member(uuid, uuid)    to authenticated;
+
+-- ------------------------------------------------ pedidos de entrada -------
+-- O código não entra mais direto: gera um PEDIDO, e só o admin aprova. Quem
+-- pediu vê "aguardando" na home; quando o admin aprova, o vínculo em
+-- league_members aparece e o Realtime avisa o aparelho dele.
+create table if not exists public.league_requests (
+  league_id    uuid references public.leagues on delete cascade,
+  user_id      uuid references auth.users     on delete cascade,
+  requested_at timestamptz not null default now(),
+  primary key (league_id, user_id)
+);
+alter table public.league_requests enable row level security;
+drop policy if exists requests_read   on public.league_requests;
+drop policy if exists requests_cancel on public.league_requests;
+create policy requests_read   on public.league_requests for select to authenticated using (user_id = auth.uid());
+create policy requests_cancel on public.league_requests for delete to authenticated using (user_id = auth.uid());
+
+-- join_league agora devolve jsonb: {status:'member', league:{...}} se já era
+-- membro, ou {status:'pending', id, name} depois de registrar o pedido.
+drop function if exists public.join_league(text);
+create or replace function public.join_league(p_code text)
+returns jsonb language plpgsql security definer set search_path = public as $fn$
+declare l public.leagues;
+begin
+  if auth.uid() is null then raise exception 'nao autenticado'; end if;
+  select * into l from public.leagues where code = upper(trim(p_code));
+  if not found then raise exception 'codigo nao encontrado'; end if;
+  if public.is_member(l.id) then
+    return jsonb_build_object('status','member','league',to_jsonb(l));
+  end if;
+  insert into public.league_requests (league_id, user_id)
+  values (l.id, auth.uid()) on conflict do nothing;
+  return jsonb_build_object('status','pending','id',l.id,'name',l.name);
+end $fn$;
+
+-- Meus pedidos pendentes (a liga em si não é legível antes de virar membro).
+create or replace function public.my_requests()
+returns table(league_id uuid, name text, requested_at timestamptz)
+language sql security definer stable set search_path = public as $fn$
+  select r.league_id, l.name, r.requested_at
+  from public.league_requests r join public.leagues l on l.id = r.league_id
+  where r.user_id = auth.uid() order by r.requested_at;
+$fn$;
+
+create or replace function public.cancel_request(p_id uuid)
+returns void language sql security definer set search_path = public as $fn$
+  delete from public.league_requests where league_id = p_id and user_id = auth.uid();
+$fn$;
+
+-- league_accounts passa a trazer também quem PEDIU (pending=true), para o
+-- admin ver tudo numa lista só.
+drop function if exists public.league_accounts(uuid);
+create or replace function public.league_accounts(p_id uuid)
+returns table(user_id uuid, username text, joined_at timestamptz, is_owner boolean, pending boolean)
+language sql security definer stable set search_path = public as $fn$
+  select m.user_id, coalesce(pr.username, '?'), m.joined_at, (l.owner_id = m.user_id), false
+  from public.league_members m
+  join public.leagues l on l.id = m.league_id
+  left join public.profiles pr on pr.id = m.user_id
+  where m.league_id = p_id and public.is_league_admin(p_id)
+  union all
+  select r.user_id, coalesce(pr.username, '?'), r.requested_at, false, true
+  from public.league_requests r
+  left join public.profiles pr on pr.id = r.user_id
+  where r.league_id = p_id and public.is_league_admin(p_id)
+  order by 5 desc, 3;
+$fn$;
+
+create or replace function public.approve_request(p_id uuid, p_user uuid)
+returns void language plpgsql security definer set search_path = public as $fn$
+begin
+  if not public.is_league_admin(p_id) then raise exception 'so o admin aprova entrada'; end if;
+  if not exists (select 1 from public.league_requests where league_id = p_id and user_id = p_user) then
+    raise exception 'pedido nao encontrado';
+  end if;
+  insert into public.league_members (league_id, user_id) values (p_id, p_user) on conflict do nothing;
+  delete from public.league_requests where league_id = p_id and user_id = p_user;
+end $fn$;
+
+create or replace function public.reject_request(p_id uuid, p_user uuid)
+returns void language plpgsql security definer set search_path = public as $fn$
+begin
+  if not public.is_league_admin(p_id) then raise exception 'so o admin recusa entrada'; end if;
+  delete from public.league_requests where league_id = p_id and user_id = p_user;
+end $fn$;
+
+-- Realtime em league_members: quem foi aprovado (ou removido) fica sabendo na
+-- hora. A RLS garante que cada um só recebe o próprio vínculo.
+do $do$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'league_members'
+  ) then
+    alter publication supabase_realtime add table public.league_members;
+  end if;
+end $do$;
+
+grant execute on function public.join_league(text)                to authenticated;
+grant execute on function public.my_requests()                    to authenticated;
+grant execute on function public.cancel_request(uuid)             to authenticated;
+grant execute on function public.league_accounts(uuid)            to authenticated;
+grant execute on function public.approve_request(uuid, uuid)      to authenticated;
+grant execute on function public.reject_request(uuid, uuid)       to authenticated;

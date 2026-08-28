@@ -254,6 +254,17 @@ diz de que lado da média a pessoa está.
 recálculo do zero reposiciona todo mundo. Nome editado à mão nos quatro primeiros fica.
 **Onde:** `BASE=1100`, `TOP=11`, `PATC_*`, `PATSHORT`, `defCfg().patNames`, `normalize`, `fixTrack`.
 
+### D-26 · Código gera pedido; o admin aprova
+**28/08/2026.** Digitar o código da liga não entra mais direto: cria um pedido em `league_requests`.
+O admin vê o pedido no card **Membros** (primeiro da lista, "pediu para entrar") e aprova ou recusa;
+quem pediu vê "Aguardando aprovação" na home e, aprovado, a liga aparece sozinha (Realtime em
+`league_members`, RLS entrega só o próprio vínculo). O mesmo canal avisa quem foi removido.
+**Por quê:** o código vaza (print no grupo, encaminhado) e qualquer um entraria numa liga que grava
+o documento inteiro. Um racha tem dono; entrada é decisão dele. Sem "entrada livre" por enquanto —
+se um grupo grande sentir falta, vira ajuste da liga.
+**Onde:** `join_league` (devolve `{status}`), `my_requests`, `approve_request`/`reject_request`,
+`league_accounts` (coluna `pending`), `PEND`, `A.doJoin`/`accApprove`/`accReject`, `watch()`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -17,6 +17,8 @@ Tempo total: ~10 minutos.
    [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
    Cria as tabelas, a RLS, as funções e liga o Realtime. Pode rodar de novo sem quebrar.
    Se você já tinha aplicado uma versão anterior, rode de novo: a versão atual
+   adiciona `league_requests` (entrada por código passa por aprovação do admin),
+   as funções de contas da liga, e
    **remove a policy de UPDATE direto** em `leagues` — toda gravação passa pelo
    `save_league` (compare-and-swap), então um cliente não consegue mais pular a
    trava de versão gravando direto na tabela.
@@ -71,7 +73,9 @@ gh api -X POST repos/:owner/raxa/pages -f "source[branch]=main" -f "source[path]
 1. Abra a URL, **Criar conta**, usuário e senha (mínimo 6 caracteres).
 2. **+ Nova liga** — ou **Carregar o racha de sábado** para já vir com 19 nomes.
 3. Aba **Ajustes** → o **código de convite** de 6 letras está no topo. Compartilhe.
-4. Cada pessoa cria a conta dela e usa **Entrar com um código**.
+4. Cada pessoa cria a conta dela e usa **Entrar com um código**. Isso gera um
+   **pedido**: o admin aprova em **Jogadores → Membros** e a liga aparece para a
+   pessoa na hora (ela vê "Aguardando aprovação" na home até lá).
 5. Em **Jogadores**, cada um abre o próprio nome e toca em **assumir perfil** para
    vincular a conta ao jogador.
 
