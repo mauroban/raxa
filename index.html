@@ -3464,7 +3464,7 @@ const A={
       ${(()=>{const jt=inseparaveis(l).filter(x=>x.a===p.id||x.b===p.id);return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
-        <div class="row"><div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div><div class="sp tiny muted">toque no cartão acima para trocar</div></div>
+        <div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div>
         <div class="ladder4">
           ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankDe(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
         </div>
