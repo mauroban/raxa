@@ -142,6 +142,9 @@ body.painting{touch-action:none;overflow:hidden}
 .team .bd{padding:9px;display:flex;flex-wrap:wrap;gap:6px;min-height:46px}
 .tp{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
   padding:7px 9px;font-size:14px;font-weight:500;cursor:pointer;color:var(--chalk)}
+/* Na montagem de times o chip leva um lavado da cor do nível (--pc): fundo a
+   14%, borda a 40%. Dá para ler a divisão de relance sem virar carnaval. */
+.tp.lv{background:color-mix(in srgb,var(--pc) 14%,transparent);border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
 .tp.sel{background:var(--chalk);color:#0B0F0D;border-color:var(--chalk)}
 .cA{background:linear-gradient(100deg,var(--lime),var(--lime2))} .cB{background:linear-gradient(100deg,#FF8A5C,var(--coral))}
 .cC{background:linear-gradient(100deg,#6EE2F7,var(--cyan))} .cD{background:linear-gradient(100deg,#fff,#CBD8CF)}
@@ -1620,9 +1623,9 @@ const pct=x=>Math.round(x*100)+'%';
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
 function tpChip(liga,lv,id,big){
   const p=P(liga,id);if(!p)return '';
-  const gk=ehGkHoje(lv,id);
-  return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''}" data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
-    ${temPatente(p,gk?'G':'L')?patDot(liga,rt(p,gk?'G':'L').rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
+  const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(p,role)&&vePat(liga);
+  return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv':''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
+    ${tem?patDot(liga,rt(p,role).rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
 function timeCard(liga,lv,i,per,completando){
