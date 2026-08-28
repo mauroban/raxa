@@ -1486,7 +1486,7 @@ function linhaDestaque(liga,x,i,badge){
       <div class="nm">${esc(nameOf(liga,x.pid))}${x.val==='G'?' 🧤':''}</div>
       <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${pctDe(x.v,x.jogos)}% de vitórias</div>
     </div>
-    ${badge&&p&&temPatente(p,x.val)?patBadge(liga,rt(p,x.val).rank,'solid'):''}
+    ${badge&&p&&temPatente(p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
   </div>`;
 }
 /* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
