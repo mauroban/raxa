@@ -305,6 +305,10 @@ ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma parti
   applyMatch(liga,m);liga.matches.push(m);
   ok(P(liga,'p6').L.games===1&&P(liga,'p6').L.w===1,'p6 jogou 35 de 50 min (70%): leva a partida');
   ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'p1 jogou 10+5 = 15 de 50 (30%): tambem leva');
+  /* +/-: gols a favor menos contra enquanto estava em quadra, em todos os trechos */
+  ok(P(liga,'p6').pm===1&&P(liga,'p1').pm===0&&P(liga,B5[0]).pm===-1,'+/-: p6 +1 (estava no 1-0), p1 0 (trechos 0-0), time B -1');
+  const Jst=statsLiga(liga,'sempre').J;
+  ok(Jst['p6'].pm===1&&Jst[B5[0]].pm===-1,'stats: +/- bate com o motor');
   liga.cfg.matchMode='curtas';
 }
 {

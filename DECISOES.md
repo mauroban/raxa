@@ -484,6 +484,19 @@ fantasma em cada time. E na partida longa a lista de gols cresce muito e empurra
 os nomes de quem pode entrar.
 **Onde:** `escCol`, `viewJogo` · smoke "partida unica com goleiro fixo: escalacao sem vaga fantasma".
 
+### D-43 · +/- é a estatística principal
+**28/08/2026.** Cada jogador tem um **+/-** (como na NBA): gols do seu lado menos gols do outro
+enquanto esteve em quadra, somando todos os trechos — gol é gol, mesmo em trecho curto. Aparece
+em primeiro nos cartões do jogador (Stats e ficha), como primeiro ranking do período e do último
+racha. V/E/D continua por partida (D-37/D-38).
+**Por quê:** na partida única existe uma partida só por racha — vitória e derrota viram um dado
+por noite e não separam ninguém. O que separa é o placar enquanto cada um estava dentro.
+**Descartado (por ora):** contar V/E/D por trecho na partida única — a vitória é da partida
+inteira; o que precisa variar por trecho é o *nível*, e isso ainda está em desenho (ver
+conversa: juntar trechos com o mesmo confronto, pontuar um pouco por gol).
+**Onde:** `plusMinus`, `applyMatch` (`p.pm`), `statsLiga`/`statsAnos` (`pm`), `viewStats`, `pSheet` ·
+`test.py` "+/-".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
