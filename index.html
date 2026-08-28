@@ -1216,9 +1216,16 @@ function commitGks(liga,lv,pair){
 const ANO=ms=>new Date(ms).getFullYear();
 const ANO_ATUAL=()=>new Date().getFullYear();
 /* período das estatísticas: 'sempre', 'ano' (= ano atual) ou um ano específico */
-const statsPeriodo=()=>{const v=S.ui.statsPer;return v==='sempre'?'sempre':/^\d{4}$/.test(String(v))?+v:'ano'};
+/* 'sempre' | 'ano' (atual) | 2024 | 'mes' (últimos 30 dias) | 'racha:<id>' (o último racha) */
+const ultimoRachaId=liga=>{const ms=(liga.matches||[]).filter(m=>!m.voided);if(!ms.length)return null;const m=ms.reduce((a,b)=>b.ts>a.ts?b:a);return m.sessionId||m.id};
+const statsPeriodo=liga=>{const v=S.ui.statsPer;
+  if(v==='sempre'||v==='mes')return v;
+  if(v==='racha')return 'racha:'+(liga?ultimoRachaId(liga):'');
+  return /^\d{4}$/.test(String(v))?+v:'ano'};
 function noPeriodo(m,p){
   if(!p||p==='sempre')return true;
+  if(p==='mes')return m.ts>=Date.now()-30*86400000;
+  if(typeof p==='string'&&p.indexOf('racha:')===0)return (m.sessionId||m.id)===p.slice(6);
   return ANO(m.ts)===(p==='ano'?ANO_ATUAL():+p);
 }
 const MIN_JOGOS=10;          // piso para entrar em ranking de aproveitamento
@@ -1517,7 +1524,7 @@ function logAdd(liga,a,extra){
 }
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
-  delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador'};
+  delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol'};
 /* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
 const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
@@ -2142,18 +2149,19 @@ function listaRank(liga,itens,fmt,vazio){
 function statsWhoId(liga,J){
   if(S.ui.statsWho&&P(liga,S.ui.statsWho))return S.ui.statsWho;
   const eu=euId(liga);if(eu)return eu;
-  const src=J||statsLiga(liga,statsPeriodo()).J;
+  const src=J||statsLiga(liga,statsPeriodo(liga)).J;
   const top=Object.keys(src).sort((a,b)=>src[b].nR-src[a].nR)[0];
   return top||(liga.players[0]&&liga.players[0].id)||null;
 }
 function viewStats(liga){
   const eu=euId(liga);
-  const per=statsPeriodo();
+  const per=statsPeriodo(liga);
   const tab=S.ui.statsTab==='racha'?'racha':'jogador';
+  const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
   const {J,DU,PA}=statsLiga(liga,per);
   const who=statsWhoId(liga,J);
-  const anoSel=per==='sempre'?null:(per==='ano'?ANO_ATUAL():per);
-  const rot=per==='sempre'?'desde sempre':'em '+anoSel;
+  const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
+  const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?'no último racha':'em '+anoSel;
   /* filtro de período: os anos que existem no histórico + desde sempre */
   const anosLiga=[...new Set(liga.matches.filter(m=>!m.voided).map(m=>ANO(m.ts)))].sort((a,b)=>b-a);
   if(!anosLiga.includes(ANO_ATUAL()))anosLiga.unshift(ANO_ATUAL());
@@ -2162,6 +2170,8 @@ function viewStats(liga){
       <button class="${tab==='racha'?'on':''}" data-a="statsTab" data-v="racha">Racha</button>
     </div>
     <div class="chips" style="gap:5px">
+      <button class="tp ${soRacha?'sel':''}" data-a="statsPer" data-v="racha">Último racha</button>
+      <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">Último mês</button>
       ${anosLiga.map(y=>`<button class="tp ${anoSel===y?'sel':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
       <button class="tp ${per==='sempre'?'sel':''}" data-a="statsPer" data-v="sempre">Desde sempre</button>
     </div>`;
@@ -2311,7 +2321,56 @@ function viewStats(liga){
       <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}<small>${x.n} de ${x.de} partidas juntos</small></div>
       <span class="val">${Math.round(x.pct*100)}%</span></div>`).join('')}
   </div>`:'';
-  const cardsRacha=`
+  /* Um racha só pede outra leitura: quem estava, como foi a noite, quem se
+     destacou nela. Nada de ranking de temporada.                            */
+  const cardsUmRacha=(()=>{
+    if(!soRacha)return '';
+    if(!ms.length)return `<div class="card"><div class="k">Último racha</div><div class="tiny muted">Nenhum racha registrado ainda.</div></div>`;
+    const sid=per.slice(6),sess=(liga.sessions||[]).find(x=>x.id===sid);
+    const ini=Math.min(...ms.map(m=>m.startedAt||m.ts)),fim=Math.max(...ms.map(m=>m.endedAt||m.ts));
+    const jogo=ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.counted?(st.dur||0):0),0),0);
+    const presentes=sess?sess.presentIds.length:Object.keys(J).length;
+    /* times da noite: por nome, com V/E/D e gols */
+    const T={};ms.forEach(m=>{[0,1].forEach(s=>{const n=m.names[s],t=T[n]||(T[n]={n,v:0,e:0,d:0,gp:0,gc:0});
+      t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++})});
+    const times=Object.values(T).sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
+    const todos=Object.keys(J).map(id=>J[id]);
+    const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,3);
+    const tempo=[...todos].sort((a,b)=>b.min-a.min).slice(0,3);
+    const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
+    const rendeu=Object.keys(over).map(pid=>({pid,over:over[pid],j:(J[pid]||{}).jogos||0})).filter(x=>x.j>=3).sort((a,b)=>b.over-a.over).slice(0,3);
+    const gks=todos.filter(x=>x.minGk>=20*60000).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk).slice(0,3);
+    const moves=[];ms.forEach(m=>(m.moves||[]).forEach(x=>moves.push(x)));
+    const net={};moves.forEach(x=>{const k=x.pid+'|'+(x.role||'L');net[k]=(net[k]||0)+x.dir});
+    const subiu=Object.entries(net).filter(x=>x[1]>0),caiu=Object.entries(net).filter(x=>x[1]<0);
+    const gc=[];ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.own&&g.pid)gc.push(g.pid)}));
+    const lin=(x,val,sub)=>`<div class="rk3"><span class="pos">·</span><div class="nm">${esc(nameOf(liga,x.pid))}${sub?`<small>${sub}</small>`:''}</div><span class="val">${val}</span></div>`;
+    return `
+  <div class="card">
+    <div class="k" style="margin-bottom:10px">Racha de ${DIA(ini)} · ${new Date(ini).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${new Date(fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="tiles four">
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${presentes}</b><span>presentes</span></div>
+      <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
+    </div>
+    ${times.length?`<div class="sec"><div class="k2">Times da noite</div>
+      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} a favor · ${t.gc} contra</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
+  </div>
+  <div class="card">
+    <div class="k" style="margin-bottom:2px">Destaques da noite</div>
+    ${art.length?`<div class="sec"><div class="k2">⚽ Artilheiro</div>${art.map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')}</div>`:''}
+    ${rendeu.length?`<div class="sec"><div class="k2">📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></div>${rendeu.map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')}</div>`:''}
+    ${tempo.length?`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${tempo.map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')}</div>`:''}
+    ${gks.length?`<div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">mín. 20 min no gol</span></div>${gks.map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')}</div>`:''}
+    ${gc.length?`<div class="sec"><div class="k2">🙈 Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
+    ${subiu.length||caiu.length?`<div class="sec"><div class="k2">Nível</div>
+      ${subiu.map(x=>{const [pid,role]=x[0].split('|'),p=P(liga,pid);return p?lin({pid},'🔺 '+esc(rankLabel(liga,rt(p,role).rank)),role==='G'?'no gol':null):''}).join('')}
+      ${caiu.map(x=>{const [pid,role]=x[0].split('|'),p=P(liga,pid);return p?lin({pid},'🔻 '+esc(rankLabel(liga,rt(p,role).rank)),role==='G'?'no gol':null):''}).join('')}</div>`
+      :'<div class="tiny muted" style="margin-top:8px">Ninguém mudou de nível.</div>'}
+  </div>`;
+  })();
+  const cardsRacha=soRacha?cardsUmRacha:`
   <div class="card">
     <div class="k" style="margin-bottom:10px">O racha ${rot}</div>
     <div class="tiles">
@@ -3109,6 +3168,7 @@ const A={
   },
   /* alterna a barra / a folha entre os nomes do time que marcou e os do outro (gol contra) */
   scorerSide(el){
+    if(el.dataset.for==='goalScorerM'){const [id,i]=el.dataset.t.split('|');return A.goalScorerM({dataset:{id,i,own:el.dataset.own}})}
     const c=L().live.cur;
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){showScorer(c.events[i].side,el.dataset.own==='1');break}
@@ -3275,6 +3335,13 @@ const A={
       ${d.length?`<div class="card" style="background:var(--panel2);margin-bottom:12px">
         <div class="k" style="margin-bottom:6px">${d.length} contestação(ões)</div>
         <div class="tiny">${d.map(x=>esc(x.by)).join(', ')}</div></div>`:''}
+      ${(m.goals||[]).length?`<div class="k" style="margin-bottom:6px">Gols — toque para corrigir o autor</div>
+      <div class="card" style="padding:0;margin-bottom:14px">${(m.goals||[]).map((g,i)=>`<button class="rank" data-a="goalScorerM" data-id="${m.id}" data-i="${i}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;cursor:pointer">
+        <span class="pdot" style="--pc:var(--mute);background:${['var(--lime)','var(--coral)','var(--cyan)','var(--white)'][m.teamIdx?m.teamIdx[g.side]:g.side]}"></span>
+        <span class="num tiny muted" style="min-width:38px">${g.min!==undefined?mmss(g.min):''}</span>
+        <div style="min-width:0;flex:1"><div class="nm">${g.pid?esc(nameOf(l,g.pid))+(g.own?' <span class="tiny muted">contra</span>':''):'<span class="muted">sem autor</span>'}</div>
+          <div class="meta"><span class="tiny muted">gol do ${esc(m.names[g.side])}</span></div></div>
+        <div style="color:var(--mute);font-size:18px">›</div></button>`).join('')}</div>`:''}
       <div class="k" style="margin-bottom:8px">Corrigir resultado</div>
       <div style="display:grid;gap:7px;margin-bottom:14px">
         ${[[0,esc(m.names[0])+' venceu'],['draw','Empate'],[1,esc(m.names[1])+' venceu']]
@@ -3285,6 +3352,33 @@ const A={
         <button class="btn sm ${m.voided?'pri':'ghost'}" data-a="voidMatch" data-id="${m.id}">${m.voided?'Reativar':'Anular'}</button>
         <button class="btn sm danger sp" data-a="delMatch" data-id="${m.id}">Apagar</button>
       </div>`);
+  },
+  /* autor de um gol numa partida já encerrada (revisão): a lista é quem esteve
+     em quadra pelo time que marcou; "contra" troca para o outro time         */
+  goalScorerM(el){
+    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
+    const i=+el.dataset.i,g=(m.goals||[])[i];if(!g)return;
+    const contra=el.dataset.own!==undefined?el.dataset.own==='1':!!g.own,lado=contra?1-g.side:g.side;
+    const em=new Set();matchStints(l,m).forEach(st=>(st.lineups[lado]||[]).forEach(id=>em.add(id)));
+    openSheet(`<h2>Quem fez esse gol?</h2>
+      <div class="row" style="margin-bottom:10px"><div class="tiny muted">gol do ${esc(m.names[g.side])}${g.min!==undefined?' · '+mmss(g.min):''}</div>
+        ${scorerTabs('goalScorerM',m.id+'|'+i,contra)}</div>
+      <div class="chips">${[...em].map(id=>`<button class="tp big ${g.pid===id&&!!g.own===contra?'sel':''}" data-a="setGoalScorerM" data-id="${m.id}" data-i="${i}" data-pid="${id}" data-own="${contra?1:0}">${esc(nameOf(l,id))}</button>`).join('')}
+        <button class="tp big" data-a="setGoalScorerM" data-id="${m.id}" data-i="${i}" data-pid="">sem autor</button></div>
+      <div style="height:12px"></div><button class="btn wide ghost" data-a="review" data-id="${m.id}">Voltar à revisão</button>`);
+  },
+  setGoalScorerM(el){
+    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
+    const i=+el.dataset.i,g=(m.goals||[])[i];if(!g)return;
+    const pid=el.dataset.pid||null,own=!!(pid&&el.dataset.own==='1');
+    if(g.pid===pid&&!!g.own===own)return A.review({dataset:{id:m.id}});
+    logAdd(l,'goal',{mid:m.id,i,from:g.pid,fromOwn:!!g.own,to:pid,toOwn:own});
+    g.pid=pid;g.own=own;
+    /* o log bruto da partida acompanha, para a estatística futura não divergir */
+    if(Array.isArray(m.events)&&g.t){const ev=m.events.find(e=>e.type==='goal'&&e.t===g.t);if(ev){ev.pid=pid;ev.own=own}}
+    rebuildAll(l);save();render();A.review({dataset:{id:m.id}});toast('Autor corrigido');
   },
   fixResult(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
@@ -3543,7 +3637,7 @@ const A={
   toggleCfg(el){const l=L();l.cfg[el.dataset.k]=!l.cfg[el.dataset.k];save();render()},
   setVis(el){const l=L();l.cfg.rankVisibility=el.dataset.v==='admin'?'admin':'todos';save();render()},
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
-  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'?'sempre':(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');save();render()},
+  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
@@ -3559,7 +3653,7 @@ const A={
   duelo(el){
     const l=L(),rival=el.dataset.id,mesmo=el.dataset.m==='1';
     const who=statsWhoId(l);if(!who||!rival)return;
-    const per=statsPeriodo();
+    const per=statsPeriodo(L());
     const lista=encontros(l,who,rival,per,mesmo);
     const a={n:0,v:0,e:0,d:0};
     lista.forEach(x=>{a.n++;a[x.res==='V'?'v':x.res==='D'?'d':'e']++});
@@ -4521,6 +4615,7 @@ function logCard(liga){
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
+    else if(e.a==='goal')o+=`: ${e.from?esc(nome(e.from))+(e.fromOwn?' (contra)':''):'sem autor'} → ${e.to?esc(nome(e.to))+(e.toOwn?' (contra)':''):'sem autor'}`;
     else if(e.a==='delMatch'&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
     return `<div class="tiny" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="muted num">${new Date(e.ts).toLocaleDateString('pt-BR')} · @${esc(e.by||'?')}</span><br>${o}</div>`;
   };

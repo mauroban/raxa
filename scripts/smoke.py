@@ -302,6 +302,30 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
 });
 step('aba numeros',()=>{S.ui.tab='stats';render()});
 step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:String(new Date().getFullYear())}});A.statsPer({dataset:{v:'2019'}});A.statsPer({dataset:{v:'ano'}})});
+step('numeros: ultimo racha e ultimo mes',()=>{
+  A.statsTab({dataset:{v:'racha'}});
+  A.statsPer({dataset:{v:'racha'}});
+  const h=els['#app'].innerHTML;
+  if(!/Racha de /.test(h)||!/Destaques da noite/.test(h))throw new Error('aba racha no periodo "ultimo racha" sem os cards proprios');
+  if(/Rankings/.test(h))throw new Error('ranking de temporada nao cabe no ultimo racha');
+  A.statsPer({dataset:{v:'mes'}});
+  if(!/no último mês/.test(els['#app'].innerHTML))throw new Error('periodo ultimo mes nao aplicou');
+  A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
+});
+step('revisao: corrigir autor de gol de partida encerrada',()=>{
+  const l=L(),m=[...l.matches].reverse().find(x=>(x.goals||[]).length);
+  if(!m)return;
+  A.review({dataset:{id:m.id}});
+  if(!/corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('revisao sem a lista de gols');
+  A.goalScorerM({dataset:{id:m.id,i:'0'}});
+  const em=new Set();matchStints(l,m).forEach(st=>(st.lineups[m.goals[0].side]||[]).forEach(id=>em.add(id)));
+  const novo=[...em].find(id=>id!==m.goals[0].pid);
+  const antes=P(l,novo).goals;
+  A.setGoalScorerM({dataset:{id:m.id,i:'0',pid:novo,own:'0'}});
+  if(m.goals[0].pid!==novo)throw new Error('autor nao mudou');
+  if(P(l,novo).goals!==antes+1)throw new Error('o gol nao foi recontado para o novo autor');
+  if(!l.log.some(e=>e.a==='goal'))throw new Error('correcao de autor sem registro no log');
+});
 step('numeros: abas jogador/racha e listas compactas',()=>{
   A.statsTab({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
