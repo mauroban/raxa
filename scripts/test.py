@@ -65,14 +65,18 @@ function lanca(lineA,lineB,result,o){
 const elo=(id,role)=>rt(P(liga,id),role||'L').elo;
 
 console.log('\n[1] escada de patentes');
-ok(rankLabel(liga,stepOf(1500))==='Prata 1','1500 (padrao de entrada) = Prata 1, na media da escada');
-ok(Math.round(1500-stepMin(0))===400&&Math.round(stepMin(TOP+1)-1500)===400,'a entrada fica no centro: 400 pontos para cada lado');
-ok(rankLabel(liga,11)==='Ouro 3'&&rankLabel(liga,9)==='Ouro 1','no topo: Ouro 3 e o melhor, Ouro 1 o primeiro degrau');
-ok(rankLabel(liga,0)==='Ferro 1','o degrau mais baixo da escada e Ferro 1');
-ok(patOf(stepOf(1499))===1&&patOf(stepOf(1500))===2,'corte Bronze/Prata em 1500');
-ok(patOf(stepOf(1699))===2&&patOf(stepOf(1700))===3,'corte Prata/Ouro em 1700');
-ok(patOf(stepOf(1900))===3&&stepOf(1900)===11,'acima de 1900 fica preso em Ouro 3 (escada tem 4 niveis)');
-ok(stepOf(500)===0&&stepOf(9000)===11,'extremos ficam presos no primeiro/ultimo degrau');
+ok(rankLabel(liga,stepOf(1500))==='Bronze 2','1500 (padrao de entrada) = Bronze 2, no meio da escada');
+ok(Math.round(1500-stepMin(0))===500&&Math.round(stepMin(TOP+1)-1500)===500,'a entrada fica no centro: 500 pontos para cada lado');
+ok(rankLabel(liga,14)==='Ouro 3'&&rankLabel(liga,12)==='Ouro 1','no topo: Ouro 3 e o melhor, Ouro 1 o primeiro degrau');
+ok(rankLabel(liga,0)==='Madeira 1','o degrau mais baixo da escada e Madeira 1');
+ok(patOf(stepOf(1399))===1&&patOf(stepOf(1400))===2,'corte Ferro/Bronze em 1400');
+ok(patOf(stepOf(1799))===3&&patOf(stepOf(1800))===4,'corte Prata/Ouro em 1800');
+ok(patOf(stepOf(2100))===4&&stepOf(2100)===14,'acima de 2000 fica preso em Ouro 3');
+ok(stepOf(500)===0&&stepOf(9000)===14,'extremos ficam presos no primeiro/ultimo degrau');
+{ const n=mk('Novo',1500,0);n.L.def=false;
+  ok(!temPatente(n,'L'),'novato sem nivel manual e sem calibrar NAO tem nivel');
+  n.L.games=CAL_GAMES;ok(temPatente(n,'L'),'depois de calibrar, tem');
+  const m2=mk('Manual',1500,0);m2.L.def=true;ok(temPatente(m2,'L'),'nivel dado a mao aparece desde o inicio'); }
 ok(Math.round(stepMin(3)-stepMin(0))===200,'patente tem 200 pontos (intervalo de classe do Elo)');
 
 console.log('\n[2] equilibrio de times');

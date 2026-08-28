@@ -385,6 +385,20 @@ está cego e dizer o remédio (separar por algumas noites; `avoidRepeat` já exi
 funciona.
 **Onde:** `inseparaveis`, `JUNTOS_MIN`/`JUNTOS_PCT`, `viewStats` (cardJuntos), `pSheet`.
 
+### D-36 · De volta a 5 níveis, com Madeira embaixo; sem nível até calibrar
+**28/08/2026.** Escada: **Madeira · Ferro · Bronze · Prata · Ouro**, 15 degraus, 1000–1999, entrada
+(1500) em **Bronze 2** — o degrau do meio. Ferro volta a ser aço escuro (a prata é quase branca,
+não confundem); Madeira é marrom fosco. E: quem não tem nível dado à mão (cadastro/admin) fica
+**sem nível** até sair da calibração — a escada o lista em "Sem nível ainda" com o progresso.
+**Por quê:** com 4 níveis a entrada caía numa fronteira (Prata 1) e a ponta de baixo ficava rasa;
+um quinto degrau embaixo dá espaço para quem está chegando sem inflar o topo. "Madeira" em vez de
+"Papel": é o nome que o pessoal já usa para liga de baixo, e a cor (marrom) tem lugar na escala.
+Não rotular quem ainda calibra evita o "Ferro 1" estampado em quem só não jogou o suficiente.
+**Descartado:** "Papel" (cor branca colide com a prata; soa a zoação); "Pedra"; entrada em Prata 1
+com 5 níveis (deixava só 1,5 nível acima).
+**Onde:** `BASE=1000`, `TOP=14`, `PATC_*`, `PATSHORT`, `defCfg().patNames`, `normalize`,
+`temPatente`, `viewEscada` (bloco "Sem nível ainda").
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

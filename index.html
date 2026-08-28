@@ -571,22 +571,22 @@ const RANK_MARGIN=13, PROTECT=3, CAL_GAMES=25, CAL_RACHAS=5;
 const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.cfg.matchMode:'curtas');
 
 /* ---------- escada de níveis ----------
-   4 níveis × 3 divisões = 12 degraus. Cada nível ocupa 200 pontos de
+   5 níveis × 3 divisões = 15 degraus. Cada nível ocupa 200 pontos de
    rating — o "intervalo de classe" clássico do Elo, em que o mais forte
-   vence ~75% dos confrontos. Base 1100, então a escada cobre 1100–1899,
+   vence ~75% dos confrontos. Base 1000, então a escada cobre 1000–1999,
    centrada em 1500 — a média que o Elo (soma zero) mantém para a liga.
-   Prata é 1500–1699 e quem entra no padrão (1500) nasce Prata 1: na média,
-   com 400 pontos para cada lado. Dentro do nível, número maior é melhor:
-   Ouro 3 é o topo, Ouro 1 o primeiro degrau.                              */
-/* ferro · bronze · prata · ouro */
-/* ferro enferrujado (marrom-avermelhado opaco) fica longe da prata, que é
-   clara e fria, quase branca — no escuro e no claro.                        */
-const PATC_ESCURO=['#6E4A3C','#D08A55','#DCE4EC','#FFD84D'];
-const PATC_CLARO =['#4A2E24','#9A5626','#5B6B7A','#A06E00'];
+   Bronze é 1400–1599 e quem entra no padrão (1500) nasce Bronze 2: bem no
+   meio, com dois níveis para cada lado. Dentro do nível, número maior é
+   melhor: Ouro 3 é o topo, Madeira 1 o primeiro degrau.                    */
+/* madeira · ferro · bronze · prata · ouro
+   madeira: marrom fosco · ferro: aço escuro (cinza fechado, longe da prata
+   clara) · bronze: laranja · prata: quase branca · ouro: amarelo vivo       */
+const PATC_ESCURO=['#86603F','#5A646D','#D08A55','#DCE4EC','#FFD84D'];
+const PATC_CLARO =['#5E401F','#3A4249','#9A5626','#5B6B7A','#A06E00'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
-const PATSHORT=['FER','BRO','PRA','OUR'];
+const PATSHORT=['MAD','FER','BRO','PRA','OUR'];
 const DIVS=['1','2','3'];
-const BASE=1100, STEP=200/3, TOP=11;
+const BASE=1000, STEP=200/3, TOP=14;
 const stepOf=e=>clamp(Math.floor((e-BASE)/STEP),0,TOP);
 const stepMin=s=>BASE+s*STEP;
 const stepMid=s=>Math.round(BASE+(s+.5)*STEP);
@@ -615,7 +615,7 @@ function defCfg(){return{
   startElo:1500, calGames:CAL_GAMES, calRachas:CAL_RACHAS,
   /* nomes que falam do papel no time, não de tempo de casa: quem joga há 20
      anos e é fraco não é "iniciante" nem "promessa" — é raiz. Editáveis por liga. */
-  patNames:['Ferro','Bronze','Prata','Ouro'],
+  patNames:['Madeira','Ferro','Bronze','Prata','Ouro'],
   rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
   stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
@@ -635,8 +635,11 @@ function defState(){return{v:2,me:{id:uid(),name:''},ligas:[],active:null,ui:{ta
 function newTrack(e,def){return{elo:e,base:e,rank:stepOf(e),peak:stepOf(e),protect:0,def:!!def,
   games:0,w:0,l:0,d:0,sessions:0,lastSession:null,form:[]};}
 const rt=(p,role)=>role==='G'?p.G:p.L;
-/* Só tem nível quem definiu no cadastro ou quem já jogou naquela valência. */
-const temPatente=(p,role)=>{const t=rt(p,role);return !!(t&&(t.def||t.games>0))};
+/* Só tem nível quem recebeu um à mão (cadastro ou admin) ou quem já saiu da
+   calibração naquela valência. Enquanto calibra sem nível manual, o rating
+   existe por baixo (monta time, entra na conta) mas não vira rótulo.        */
+const temPatente=(p,role)=>{const t=rt(p,role);if(!t)return false;
+  return !!(t.def||((t.sessions||0)>=CAL_RACHAS||(t.games||0)>=CAL_GAMES))};
 function fixTrack(t,e){
   t=Object.assign(newTrack(e),t||{});
   t.def=!!t.def;
@@ -687,9 +690,10 @@ function normalize(st){
     l.cfg=Object.assign({},d,l.cfg||{});
     if(!Array.isArray(l.cfg.patNames))l.cfg.patNames=d.patNames.slice();
     /* liga que ainda usa os nomes antigos de fábrica ganha os novos; nome editado à mão fica */
-    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante','Ferro|Bronze|Prata|Ouro|Diamante'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
-    /* escada encolheu de 5 para 4 níveis: o quinto nome some, quem estava lá vira o topo (rank é reclampado no fixTrack) */
-    if(l.cfg.patNames.length!==4)l.cfg.patNames=l.cfg.patNames.slice(0,4).concat(d.patNames.slice(l.cfg.patNames.length)).slice(0,4);
+    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque','Bronze|Prata|Ouro|Platina|Diamante','Ferro|Bronze|Prata|Ouro|Diamante','Ferro|Bronze|Prata|Ouro'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
+    /* escada de 4 níveis (Ferro…Ouro editados à mão) ganha o degrau de baixo; qualquer outro tamanho volta ao padrão */
+    if(l.cfg.patNames.length===4)l.cfg.patNames=[d.patNames[0]].concat(l.cfg.patNames);
+    if(l.cfg.patNames.length!==5)l.cfg.patNames=d.patNames.slice();
     /* a variação de nível é a mesma em toda liga: liga antiga com "estabilidade"
        ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */
     l.cfg.rankMargin=RANK_MARGIN;l.cfg.protectMatches=PROTECT;
@@ -2013,7 +2017,15 @@ function viewEscada(liga){
     <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="rankRole" data-v="L" style="flex:1">Linha</button>
     <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="rankRole" data-v="G" style="flex:1">🧤 Goleiro</button>
   </div>`;
-  if(!ps.length)return html+`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`;
+  const semNivel=liga.players.filter(p=>!temPatente(p,role)&&(rt(p,role).games>0||role==='L')).sort((a,b)=>rt(b,role).games-rt(a,role).games||a.name.localeCompare(b.name));
+  const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
+    <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
+      <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>
+      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
+        <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${tr.sessions||0}/${liga.cfg.calRachas} rachas · ${tr.games}/${liga.cfg.calGames} partidas</span></div></div>
+      </div>`}).join('')}</div>
+    <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${liga.cfg.calRachas} rachas ou ${liga.cfg.calGames} partidas — ou se o admin definir um na ficha.</div>`:'';
+  if(!ps.length)return html+(semNivel.length?blocoSem:`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`);
   let lastPat=-1;
   for(const p of ps){
     const tr=rt(p,role),pt=patOf(tr.rank);
@@ -2037,7 +2049,7 @@ function viewEscada(liga){
       <div style="color:var(--mute);font-size:18px">›</div>
     </div>`;
   }
-  return html+'</div><div style="height:12px"></div><button class="btn wide ghost" data-a="addPlayer">+ Novo jogador</button>';
+  return html+'</div>'+blocoSem+'<div style="height:12px"></div><button class="btn wide ghost" data-a="addPlayer">+ Novo jogador</button>';
 }
 
 /* ---------- aba números: o dashboard do racha e de si mesmo ---------- */
@@ -4363,6 +4375,7 @@ Object.assign(A,{
     const l=L(),a=(ACC[l.id].lista||[]).find(x=>x.user_id===el.dataset.u);if(!a)return;
     if(!souAdmin(l))return toast('Só o admin cria jogador para conta');
     const p=mkPlayer(l,a.username,l.cfg.startElo,false);
+    p.L.def=false;                                   // ninguém deu palpite: fica sem nível até calibrar
     p.owner=a.username;l.players.push(p);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:a.username});
     closeSheet();save();render();A.pSheet({dataset:{id:p.id}});toast('Jogador criado — ajuste o nível na ficha');
   },
