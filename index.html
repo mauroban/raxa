@@ -113,6 +113,20 @@ label.f .k{display:block;margin-bottom:6px}
 .pat.solid{background:linear-gradient(160deg,var(--pc),color-mix(in srgb,var(--pc) 72%,#000));color:#08110A;
   border-color:transparent;box-shadow:0 8px 20px -12px var(--pc)}
 .pat.big{font-size:14px;padding:6px 11px;border-radius:9px}
+/* divisão 1: fosca — sem brilho, borda mais fina, tinta mais fechada */
+.pat.d1{border-color:color-mix(in srgb,var(--pc) 38%,transparent);background:color-mix(in srgb,var(--pc) 9%,transparent)}
+.pat.d1 b{opacity:.6}
+/* divisão 3: polida — reflexo no topo, borda cheia, halo suave e o número aceso */
+.pat.d3{border-color:var(--pc);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 34%,transparent) 0%,color-mix(in srgb,var(--pc) 12%,transparent) 55%,color-mix(in srgb,var(--pc) 22%,transparent) 100%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--pc) 25%,transparent),0 0 10px -2px color-mix(in srgb,var(--pc) 70%,transparent);
+  text-shadow:0 0 6px color-mix(in srgb,var(--pc) 60%,transparent)}
+.pat.d3 b{opacity:1}
+.pat.solid.d3{background:linear-gradient(160deg,#fff 0%,var(--pc) 22%,color-mix(in srgb,var(--pc) 72%,#000) 100%);
+  box-shadow:0 8px 20px -10px var(--pc),0 0 0 1px color-mix(in srgb,var(--pc) 60%,#fff) inset}
+.pat.solid.d1{background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 85%,#000),color-mix(in srgb,var(--pc) 55%,#000));box-shadow:none}
+.pdot.d1{opacity:.75}
+.pdot.d3{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--pc) 45%,transparent),0 0 6px var(--pc)}
 .pdot{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
 
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -145,6 +159,8 @@ body.painting{touch-action:none;overflow:hidden}
 /* Na montagem de times o chip leva um lavado da cor do nível (--pc): fundo a
    14%, borda a 40%. Dá para ler a divisão de relance sem virar carnaval. */
 .tp.lv{background:color-mix(in srgb,var(--pc) 14%,transparent);border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
+.tp.lv.d1{background:color-mix(in srgb,var(--pc) 10%,transparent);border-color:color-mix(in srgb,var(--pc) 28%,var(--line))}
+.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 70%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 24%,transparent),color-mix(in srgb,var(--pc) 12%,transparent));box-shadow:0 0 8px -2px color-mix(in srgb,var(--pc) 60%,transparent)}
 .tp.sel{background:var(--chalk);color:#0B0F0D;border-color:var(--chalk)}
 .tp.vaga{border-style:dashed;color:var(--mute);background:transparent}
 .tp.emp{border-style:dashed}
@@ -588,11 +604,15 @@ function mixHex(hex,alvo,t){
   const m=v=>Math.round(v+(alvo-v)*t).toString(16).padStart(2,'0');
   return '#'+m(c(0))+m(c(2))+m(c(4));
 }
-const patColor=s=>{const base=PATC[patOf(s)],d=s%3;return d===0?mixHex(base,0,.28):d===2?mixHex(base,255,.34):base};
+/* Divisão: a 1 é fosca (cor mais fechada), a 2 é o metal, a 3 é POLIDA — a
+   mesma cor, com brilho (reflexo + halo via CSS .d3) em vez de mais clara:
+   clarear lavava a cor e parecia transparente, não superior.               */
+const patColor=s=>{const base=PATC[patOf(s)],d=s%3;return d===0?mixHex(base,0,.28):base};
+const divCls=s=>'d'+(s%3+1);
 const patName=(liga,s)=>liga.cfg.patNames[patOf(s)];
 const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
-const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''}" style="--pc:${patColor(s)}">${esc(patName(liga,s))} <b>${divOf(s)}</b></span>`;
-const patBadgeShort=(liga,s)=>`<span class="pat" style="--pc:${patColor(s)}">${PATSHORT[patOf(s)]} <b>${divOf(s)}</b></span>`;
+const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''} ${divCls(s)}" style="--pc:${patColor(s)}">${esc(patName(liga,s))} <b>${divOf(s)}</b></span>`;
+const patBadgeShort=(liga,s)=>`<span class="pat ${divCls(s)}" style="--pc:${patColor(s)}">${PATSHORT[patOf(s)]} <b>${divOf(s)}</b></span>`;
 
 /* ---------- estado ---------- */
 function defCfg(){return{
@@ -1419,7 +1439,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
-const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
+const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="--pc:${patColor(step)}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
 /* Aproveitamento do time no racha de hoje — sem destaque, só para dar contexto. */
 function teamRecord(liga,lv,ti){
@@ -1733,7 +1753,7 @@ const pct=x=>Math.round(x*100)+'%';
 function tpChip(liga,lv,id,big){
   const p=P(liga,id);if(!p)return '';
   const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(p,role)&&vePat(liga);
-  return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv':''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
+  return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
     ${tem?patDot(liga,rt(p,role).rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
@@ -1990,7 +2010,7 @@ function viewEscada(liga){
       lastPat=pt;
     }
     html+=`<div class="rank" data-a="pSheet" data-id="${p.id}">
-      <span class="pat" style="--pc:${patColor(tr.rank)};min-width:34px;justify-content:center"><b>${divOf(tr.rank)}</b></span>
+      <span class="pat ${divCls(tr.rank)}" style="--pc:${patColor(tr.rank)};min-width:34px;justify-content:center"><b>${divOf(tr.rank)}</b></span>
       <div style="min-width:0;flex:1">
         <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
         <div class="meta">
