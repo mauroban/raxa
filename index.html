@@ -632,7 +632,7 @@ function defCfg(){return{
   patNames:['Ferro','Bronze','Prata','Ouro','Diamante'],
   rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
-  stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
+  stintMin:3,                     /* trecho cortado por substituição só conta a partir daqui (min) */
   avoidRepeat:true,               /* evitar repetir quem já jogou junto em outros rachas */
   rankVisibility:'todos',         /* 'todos' | 'admin' */
   disputeThreshold:2, disputeMode:'flag'
@@ -712,6 +712,7 @@ function normalize(st){
     /* a variação de nível é a mesma em toda liga: liga antiga com "estabilidade"
        ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */
     l.cfg.rankMargin=RANK_MARGIN;l.cfg.protectMatches=PROTECT;
+    if(l.cfg.stintMin===4)l.cfg.stintMin=3;             // padrão antigo → padrão novo (valor editado à mão fica)
     l.cfg.calGames=CAL_GAMES;l.cfg.calRachas=CAL_RACHAS;
     delete l.cfg.stability;
     delete l.cfg.tiers;delete l.cfg.tierNames;delete l.cfg.gkOutOfElo;delete l.cfg.gkOutOfRank;
@@ -796,7 +797,7 @@ function splitStints(c,endedAt,cfg,mode){
   const out=[];let from=c.startedAt,score=[0,0];
   /* Trecho curto vira ruido. O minimo e relativo: num racha de 7 min, 4 min
      seria quase a partida inteira e nenhuma troca contaria nunca.           */
-  const minDur=Math.min((cfg.stintMin||4)*60000,total/3);
+  const minDur=Math.min((cfg.stintMin||3)*60000,total/3);
   const fecha=(to,ended)=>{
     const dur=Math.max(0,gameTime(c,to)-gameTime(c,from));
     out.push({from,to,dur,w:+clamp(dur/total,0,1).toFixed(4),
