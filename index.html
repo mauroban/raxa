@@ -62,6 +62,7 @@ h1,h2,h3{margin:0;font-family:var(--disp);font-weight:800;letter-spacing:.005em;
 .k{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute)}
 .num{font-variant-numeric:tabular-nums}
 .muted{color:var(--mute)} .tiny{font-size:12.5px;line-height:1.5}
+.card>.row+.tiny,.card>.tiny+.row{margin-top:8px}
 .hr{height:1px;background:var(--line);margin:14px 0}
 .row{display:flex;align-items:center;gap:10px}
 .sp{margin-left:auto}
@@ -168,7 +169,7 @@ label.f .k{display:block;margin-bottom:6px}
 
 /* ---------- presença ---------- */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(max-width:400px){.grid{grid-template-columns:1fr}}
+@media(max-width:460px){.grid{grid-template-columns:1fr}}
 .pcw{display:flex;gap:6px;min-width:0}
 .pcw .pchip{flex:1;min-width:0}
 .pchip{display:flex;align-items:center;gap:6px;padding:0 10px;min-height:50px;border-radius:12px;border:1px solid transparent;
@@ -275,9 +276,9 @@ body.painting{touch-action:none;overflow:hidden}
 .side .hint{font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
 .side.a{background:var(--bibA)} .side.b{background:var(--bibB)} .side.c{background:var(--bibC)}
 .side.d{background:var(--bibD);color:#0F1F16}
-.scoreb.big .side{min-height:clamp(150px,30vh,240px);display:flex;flex-direction:column;justify-content:center;padding:14px 10px}
+.scoreb.big .side{min-height:clamp(150px,30vh,240px);display:flex;flex-direction:column;justify-content:center;padding:22px 10px 16px}
 .scoreb.big .side .sc{font-size:clamp(76px,22vw,120px)}
-.minus{position:absolute;top:8px;right:8px;width:42px;height:42px;border-radius:11px;border:1.5px solid currentColor;
+.minus{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:11px;border:1.5px solid currentColor;
   opacity:.75;display:grid;place-items:center;font-size:22px;background:transparent;color:inherit;cursor:pointer}
 .minus:active{transform:scale(.92)}
 @media(max-height:620px){
@@ -289,7 +290,7 @@ body.painting{touch-action:none;overflow:hidden}
 .lineup span{font-size:12px;color:var(--mute);background:var(--panel2);padding:3px 7px;border-radius:7px}
 .scorerbar{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px}
 .scorerbar .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
-.goalrow{display:flex;align-items:center;gap:9px;padding:4px 0;border-bottom:1px solid var(--line)}
+.goalrow{display:flex;align-items:center;gap:12px;padding:4px 0;border-bottom:1px solid var(--line)}
 .goalrow:last-child{border-bottom:0}
 .goalrow .who{flex:1;text-align:left;background:transparent;border:0;color:var(--chalk);font-family:inherit;
   font-size:14.5px;padding:10px 0;min-height:44px;cursor:pointer}
@@ -299,7 +300,7 @@ body.painting{touch-action:none;overflow:hidden}
 .goalrow .x:active{transform:scale(.92)}
 
 /* ---------- escada / ranking ---------- */
-.secthd{display:flex;align-items:center;gap:9px;margin:18px 2px 7px}
+.secthd{display:flex;align-items:center;gap:10px;margin:20px 4px 8px}
 .secthd .nm{font-family:var(--disp);font-weight:800;font-size:20px;color:var(--pc);letter-spacing:.03em;text-transform:uppercase}
 .secthd .ln{flex:1;height:2px;background:var(--pc);opacity:.35;border-radius:1px}
 .secthd .ct{font-family:var(--disp);font-weight:800;font-size:14px;color:var(--mute);letter-spacing:.06em}
@@ -334,8 +335,8 @@ body.painting{touch-action:none;overflow:hidden}
 .rachaRow .meta{font-size:12px;color:var(--mute);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap}
 
 /* ---------- destaques e números ---------- */
-.k2{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute);margin:14px 0 2px}
-.dest{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.k2{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute);margin:16px 0 4px}
+.dest{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
 .dest:last-of-type{border-bottom:0}
 .dest .pos{font-size:18px;line-height:1;flex:0 0 auto}
 .dest .who{flex:1;min-width:0}
@@ -373,22 +374,22 @@ body.painting{touch-action:none;overflow:hidden}
 .hero{display:flex;align-items:center;gap:12px}
 .hero .who{flex:1;min-width:0}
 .hero h2{font-size:26px;margin:1px 0 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.herogrid{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-top:16px}
-.ring{position:relative;width:104px;height:104px;margin-bottom:14px}
+.herogrid{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;margin-top:18px;margin-bottom:6px}
+.ring{position:relative;width:104px;height:104px;margin:4px 0 30px}
 .ring svg{width:104px;height:104px;transform:rotate(-90deg)}
 .ring .tr{fill:none;stroke:var(--panel2);stroke-width:9}
 .ring .pr{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round}
 .ring .rv{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:30px}
-.ring .rl{position:absolute;left:-10px;right:-10px;bottom:-15px;text-align:center;font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.ring .rl{position:absolute;left:-14px;right:-14px;bottom:-22px;text-align:center;font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .ved{display:grid;gap:8px}
-.ved .r{display:grid;grid-template-columns:58px 1fr 26px;gap:8px;align-items:center}
+.ved .r{display:grid;grid-template-columns:70px 1fr 28px;gap:10px;align-items:center}
 .ved .r span{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-size:11px;font-weight:700}
 .ved .r b{text-align:right;font-family:var(--disp);font-weight:800;font-size:17px}
 .ved .prog{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}
 .ved .prog i{display:block;height:100%}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tiles.four{grid-template-columns:repeat(4,1fr)}
-.tile{position:relative;overflow:hidden;background:var(--fill);border:0;border-radius:12px;padding:13px 4px 9px;text-align:center}
+.tile{position:relative;overflow:hidden;background:var(--fill);border:0;border-radius:12px;padding:14px 4px 10px;text-align:center}
 .tile::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc,var(--chalk))}
 .tile b{display:block;font-family:var(--disp);font-weight:900;font-size:26px;line-height:1;margin-bottom:5px}
 .tiles.four .tile b{font-size:22px}
@@ -397,7 +398,7 @@ body.painting{touch-action:none;overflow:hidden}
 .mini .tm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini .tm.r{text-align:right}
 .mini .sc{font-family:var(--disp);font-weight:900;font-size:28px;letter-spacing:.03em}
-.rk2{display:grid;grid-template-columns:22px 30px 1fr auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);
+.rk2{display:grid;grid-template-columns:22px 30px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);
   width:100%;background:transparent;border-left:0;border-right:0;border-top:0;color:inherit;font:inherit;text-align:left;cursor:default}
 button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2:last-child{border-bottom:0}
@@ -405,7 +406,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2.top .pos{color:var(--gold)}
 .rk2 .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rk2 .sub{font-size:11px;color:var(--mute);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rk2 .prog{height:4px;border-radius:2px;background:var(--panel2);overflow:hidden;margin-top:5px}
+.rk2 .prog{height:4px;border-radius:2px;background:var(--panel2);overflow:hidden;margin-top:8px}
 .rk2 .prog i{display:block;height:100%;background:var(--ok)}
 .rk2.top .prog i{background:var(--gold)}
 .rk2 .val{font-family:var(--disp);font-weight:800;font-size:16px;white-space:nowrap;text-align:right}
@@ -1984,7 +1985,7 @@ function viewJogo(liga,lv){
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
       {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
   </div>
-  <div class="tiny muted" style="margin-top:6px">Toque num nome para substituir</div>
+  <div class="tiny muted" style="margin:10px 2px 0">Toque num nome para substituir</div>
   ${golsCard(liga,lv,c)}
   <div class="card" style="margin-top:10px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
@@ -2228,13 +2229,13 @@ function viewStats(liga){
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
     ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best}</span>`:''}</div>`:''}
-    <div class="tiles four" style="margin-top:12px">
+    <div class="tiles four" style="margin-top:16px">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${me.jogos}</b><span>partidas</span></div>
       <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>
     </div>
-    <div class="tiny" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 14px">
+    <div class="tiny" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px">
       <span>⚽ <b class="num">${por10(me.gols,me.min)}</b> <span class="muted">gols a cada 10 min</span></span>
       ${me.gk?`<span>🧤 <b class="num">${por10(me.sofridos,me.minGk)}</b> <span class="muted">sofridos a cada 10 min · ${fmtMin(me.minGk)} no gol</span></span>`:''}
     </div>

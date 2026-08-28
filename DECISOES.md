@@ -466,6 +466,10 @@ ação ("Toque em quem chegou · 🧤 marca goleiro"). A explicação completa c
 na DOCUMENTACAO.
 **Por quê:** o usuário sentiu a tela poluída, e o motivo era texto demais: parágrafo explicativo
 embaixo de cada bloco, lido uma vez e ignorado para sempre.
+Na mesma passada, respiro entre texto e gráfico: anel de aproveitamento com o rótulo
+afastado dos cartões, coluna de V/E/D que cabe "Derrotas", barras dos rankings a 8 px do
+texto, presença em uma coluna até 460 px (nome inteiro em vez de "Jefferso…"), placar com o
+"−" longe do nome do time.
 **Descartado:** esconder as instruções atrás de um "?" por bloco — mais um alvo em cada tela.
 **Onde:** `index.html` (`<style>`, `viewPresenca`, `viewTimes`, `viewProxima`, `viewJogo`,
 `statsBlock`, `viewStats`, `viewRanking`) · smoke continua cobrindo os textos que importam.
