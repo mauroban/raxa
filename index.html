@@ -273,6 +273,53 @@ html{overscroll-behavior-y:contain}
 .hl .t{font-family:var(--cond);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
 .hl .n{font-family:var(--disp);font-size:17px;margin:3px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hl .s{font-size:11px;color:var(--mute)}
+/* ---------- aba Stats ---------- */
+.avatar{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;font-family:var(--disp);font-size:24px;
+  background:var(--pc,var(--lime));color:var(--bg);transform:rotate(-3deg);flex:0 0 auto;box-shadow:0 10px 22px -10px var(--pc,var(--lime))}
+.av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-size:13px;
+  background:var(--panel2);border:1px solid var(--line);color:var(--chalk);flex:0 0 auto}
+.hero{display:flex;align-items:center;gap:12px}
+.hero .who{flex:1;min-width:0}
+.hero h2{font-size:24px;margin:1px 0 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.herogrid{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-top:16px}
+.ring{position:relative;width:104px;height:104px;margin-bottom:14px}
+.ring svg{width:104px;height:104px;transform:rotate(-90deg)}
+.ring .tr{fill:none;stroke:var(--panel2);stroke-width:9}
+.ring .pr{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round}
+.ring .rv{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-size:27px}
+.ring .rl{position:absolute;left:-10px;right:-10px;bottom:-15px;text-align:center;font-family:var(--cond);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.ved{display:grid;gap:8px}
+.ved .r{display:grid;grid-template-columns:58px 1fr 26px;gap:8px;align-items:center}
+.ved .r span{font-family:var(--cond);text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-size:11px;font-weight:700}
+.ved .r b{text-align:right;font-family:var(--disp);font-size:16px}
+.ved .prog{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}
+.ved .prog i{display:block;height:100%}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tiles.four{grid-template-columns:repeat(4,1fr)}
+.tile{position:relative;overflow:hidden;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:13px 4px 9px;text-align:center}
+.tile::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc,var(--lime))}
+.tile b{display:block;font-family:var(--disp);font-size:24px;line-height:1;margin-bottom:5px}
+.tiles.four .tile b{font-size:20px}
+.tile span{font-family:var(--cond);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);line-height:1.2;display:block}
+.mini{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin-top:10px}
+.mini .tm{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini .tm.r{text-align:right}
+.mini .sc{font-family:var(--disp);font-size:26px;letter-spacing:.04em}
+.rk2{display:grid;grid-template-columns:22px 30px 1fr auto;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);
+  width:100%;background:transparent;border-left:0;border-right:0;border-top:0;color:inherit;font:inherit;text-align:left;cursor:default}
+button.rk2{cursor:pointer} button.rk2:active{opacity:.65}
+.rk2:last-child{border-bottom:0}
+.rk2 .pos{font-family:var(--disp);font-size:15px;color:var(--mute2);text-align:center}
+.rk2.top .pos{color:var(--gold)}
+.rk2 .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rk2 .sub{font-size:11px;color:var(--mute);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk2 .prog{height:4px;border-radius:2px;background:var(--panel2);overflow:hidden;margin-top:5px}
+.rk2 .prog i{display:block;height:100%;background:var(--lime2)}
+.rk2.top .prog i{background:var(--gold)}
+.rk2 .val{font-family:var(--cond);font-weight:700;font-size:14px;white-space:nowrap;text-align:right}
+.rk2 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:11px}
+.sec{margin-top:14px}
+.sec .k2{margin-top:0}
 .mine{font-family:var(--cond);font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:6px;
   border:1px solid currentColor}
 .mrow.eu{border-left:3px solid var(--lime);padding-left:9px}
@@ -432,13 +479,14 @@ const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.c
 /* ---------- escada de patentes ----------
    5 patentes × 3 divisões = 15 degraus. Cada patente ocupa 200 pontos de
    rating — o "intervalo de classe" clássico do Elo, em que o mais forte
-   vence ~75% dos confrontos. Base 1000, então Titular cobre 1400–1599 e
-   quem entra no padrão (1500) nasce Titular 2. Dentro da patente, número
-   maior é melhor: Craque 3 é o topo da escada, Craque 1 é o primeiro degrau.  */
-const PATC_ESCURO=['#8B9AA3','#54D07C','#4EA8F5','#B96BF0','#FFC53D'];
-const PATC_CLARO =['#5A6A74','#1B8F49','#1266C4','#7A31B4','#8A5B00'];
+   vence ~75% dos confrontos. Base 1000, então Ouro cobre 1400–1599 e
+   quem entra no padrão (1500) nasce Ouro 2. Dentro da patente, número
+   maior é melhor: Diamante 3 é o topo da escada, Diamante 1 é o primeiro degrau.  */
+/* bronze · prata · ouro · platina · diamante */
+const PATC_ESCURO=['#D08A55','#C3CDD4','#FFC53D','#7FE6E0','#8DB8FF'];
+const PATC_CLARO =['#9A5626','#5E6E78','#8A5B00','#0E7F86','#2B5FCC'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
-const PATSHORT=['INI','PRO','TIT','DES','CRA'];
+const PATSHORT=['BRO','PRA','OUR','PLA','DIA'];
 const DIVS=['1','2','3'];
 const BASE=1000, STEP=200/3, TOP=14;
 const stepOf=e=>clamp(Math.floor((e-BASE)/STEP),0,TOP);
@@ -454,7 +502,9 @@ const patBadgeShort=(liga,s)=>`<span class="pat" style="--pc:${PATC[patOf(s)]}">
 /* ---------- estado ---------- */
 function defCfg(){return{
   startElo:1500, calGames:CAL_GAMES, calRachas:CAL_RACHAS,
-  patNames:['Iniciante','Promessa','Titular','Destaque','Craque'],
+  /* nomes que falam do papel no time, não de tempo de casa: quem joga há 20
+     anos e é fraco não é "iniciante" nem "promessa" — é raiz. Editáveis por liga. */
+  patNames:['Bronze','Prata','Ouro','Platina','Diamante'],
   rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
   stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
@@ -523,6 +573,8 @@ function normalize(st){
     const d=defCfg();
     l.cfg=Object.assign({},d,l.cfg||{});
     if(!Array.isArray(l.cfg.patNames)||l.cfg.patNames.length!==5)l.cfg.patNames=d.patNames.slice();
+    /* liga que ainda usa os nomes antigos de fábrica ganha os novos; nome editado à mão fica */
+    if(['Iniciante|Promessa|Titular|Destaque|Craque','Raiz|Boleiro|Titular|Destaque|Craque'].indexOf(l.cfg.patNames.join('|'))>=0)l.cfg.patNames=d.patNames.slice();
     /* a variação de patente é a mesma em toda liga: liga antiga com "estabilidade"
        ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */
     l.cfg.rankMargin=RANK_MARGIN;l.cfg.protectMatches=PROTECT;
@@ -1170,8 +1222,8 @@ function drawApp(){
     </div>
     <div class="tabs">
       <button class="${tab==='racha'?'on':''}" data-a="tab" data-v="racha">Racha</button>
-      <button class="${tab==='stats'?'on':''}" data-a="tab" data-v="stats">📊 Stats</button>
-      <button class="${tab==='ranking'?'on':''}" data-a="tab" data-v="ranking">Patentes</button>
+      <button class="${tab==='stats'?'on':''}" data-a="tab" data-v="stats">Stats</button>
+      <button class="${tab==='ranking'?'on':''}" data-a="tab" data-v="ranking">Jogadores</button>
       <button class="${tab==='hist'?'on':''}" data-a="tab" data-v="hist">Jogos</button>
       <button class="${tab==='cfg'?'on':''}" data-a="tab" data-v="cfg">Ajustes</button>
     </div>${body}`;
@@ -1726,6 +1778,10 @@ function todayBlock(liga,lv){
 /* ---------- patentes ---------- */
 function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
+  return membrosCard(liga)+viewEscada(liga);
+}
+/* a escada de patentes: linha ou goleiro */
+function viewEscada(liga){
   if(!vePat(liga)){
     const ps=[...liga.players].sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
     return `<div class="card" style="margin-bottom:10px">
@@ -1800,32 +1856,36 @@ function viewStats(liga){
   const per=S.ui.statsPer==='sempre'?'sempre':'ano';
   const {J,DU,PA}=statsLiga(liga,per);
   const who=statsWhoId(liga,J);
-  if(!liga.matches.length)return `<div class="empty"><div class="big">Nada para contar ainda</div>
+  const rot=per==='ano'?'em '+ANO_ATUAL():'desde sempre';
+  const seg=`<div class="row" style="gap:6px">
+      <button class="btn sm ${per==='ano'?'pri':'ghost'}" data-a="statsPer" data-v="ano" style="flex:1">${ANO_ATUAL()}</button>
+      <button class="btn sm ${per==='sempre'?'pri':'ghost'}" data-a="statsPer" data-v="sempre" style="flex:1">Desde sempre</button>
+    </div>`;
+  if(!liga.matches.length)return `<div class="card">${seg}</div><div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
   const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0};
-  const rot=per==='ano'?'em '+ANO_ATUAL():'desde o começo';
+  const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const av=pid=>`<span class="av">${esc(iniciais(nameOf(liga,pid)))}</span>`;
 
-  /* --- a liga no período: o retrato de uma olhada --- */
+  /* --- a liga no período --- */
   const ms=liga.matches.filter(m=>!m.voided&&noPeriodo(m,per));
   const rachas={};ms.forEach(m=>rachas[m.sessionId||m.id]=1);
+  const nRachas=Object.keys(rachas).length;
   const golsTot=ms.reduce((a,m)=>a+(m.score||[0,0])[0]+(m.score||[0,0])[1],0);
   const empates=ms.filter(m=>m.result==='draw').length;
   const goleada=ms.reduce((g,m)=>{const d=Math.abs((m.score||[0,0])[0]-(m.score||[0,0])[1]);return d>g.d?{d,m}:g},{d:0,m:null});
-  const nRachas=Object.keys(rachas).length;
 
-  /* --- duelos e parcerias da pessoa escolhida --- */
-  const duelos=Object.keys(DU[who]||{}).map(id=>Object.assign({pid:id},DU[who][id]))
-    .sort((a,b)=>b.n-a.n||b.d-a.d);
-  const parcerias=Object.keys(PA[who]||{}).map(id=>Object.assign({pid:id},PA[who][id]))
-    .sort((a,b)=>b.n-a.n);
+  /* --- duelos e parcerias da pessoa --- */
+  const duelos=Object.keys(DU[who]||{}).map(id=>Object.assign({pid:id},DU[who][id])).sort((a,b)=>b.n-a.n||b.d-a.d);
+  const parcerias=Object.keys(PA[who]||{}).map(id=>Object.assign({pid:id},PA[who][id])).sort((a,b)=>b.n-a.n);
   const comMin=arr=>arr.filter(x=>x.n>=Math.min(MIN_JOGOS,Math.max(3,Math.round(me.jogos/10))));
   const carrasco=[...comMin(duelos)].sort((a,b)=>(b.d-b.v)-(a.d-a.v)||b.d-a.d)[0];
   const fregues=[...comMin(duelos)].sort((a,b)=>(b.v-b.d)-(a.v-a.d)||b.v-a.v)[0];
   const dupla=[...comMin(parcerias)].sort((a,b)=>pctDe(b.v,b.n)-pctDe(a.v,a.n)||b.n-a.n)[0];
   const parceiro=parcerias[0];
 
-  /* --- rankings da liga no período --- */
+  /* --- top 5 --- */
   const todos=Object.keys(J).map(id=>J[id]);
   const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos).slice(0,5);
   const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,5);
@@ -1833,7 +1893,6 @@ function viewStats(liga){
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,5);
   const rkSeq=[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v).slice(0,5);
   const rkGk=todos.filter(x=>x.gk>=5).sort((a,b)=>a.sofridos/a.gk-b.sofridos/b.gk||b.gk-a.gk).slice(0,5);
-  /* melhor dupla da liga: cada par uma vez, mínimo de jogos juntos */
   const duplas=[];const vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
     const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,pct:pctDe(y.v,y.n)})}));
@@ -1841,86 +1900,104 @@ function viewStats(liga){
   const anos=who?statsAnos(liga,who):[];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
+  /* lista com barra proporcional ao líder; o 1º ganha o dourado */
+  const rkBars=(itens,num,fmt,sub,vazio)=>{
+    if(!itens.length)return `<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div>`;
+    const max=Math.max(...itens.map(num),1e-9);
+    return itens.map((x,i)=>{const sb=sub?sub(x):null;return `<div class="rk2 ${i===0?'top':''}">
+      <span class="pos">${i+1}</span>${av(x.pid)}
+      <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.pid))}</div>
+        ${sb?`<div class="sub">${sb}</div>`:''}<div class="prog"><i style="width:${Math.max(4,num(x)/max*100)}%"></i></div></div>
+      <span class="val">${fmt(x)}</span></div>`}).join('');
+  };
+  const C=2*Math.PI*43,pct=pctDe(me.v,me.jogos);
+  const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
+  const listaDuelo=(arr,m)=>arr.slice(0,8).map(x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
+      <span class="pos" style="font-size:12px;color:${x.v>x.d?'var(--ok)':x.d>x.v?'var(--bad)':'var(--mute2)'}">${x.v>x.d?'▲':x.d>x.v?'▼':'='}</span>${av(x.pid)}
+      <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.pid))}</div>
+        <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${pctDe(x.v,x.n)}% de vitória</div>${vedBar(x)}</div>
+      <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`).join('');
+  const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
+
   return `
-  <div class="card">
-    <div class="row" style="gap:6px">
-      <button class="btn sm ${per==='ano'?'pri':'ghost'}" data-a="statsPer" data-v="ano" style="flex:1">${ANO_ATUAL()}</button>
-      <button class="btn sm ${per==='sempre'?'pri':'ghost'}" data-a="statsPer" data-v="sempre" style="flex:1">Desde sempre</button>
-    </div>
-    ${eu?'':`<div class="tiny muted" style="margin-top:9px">Ninguém assumiu um perfil neste aparelho ainda — abra a ficha de alguém em Patentes e toque em “Este perfil sou eu” para o app saber quais partidas são suas.</div>`}
+  <div class="card">${seg}
+    ${eu?'':`<div class="tiny muted" style="margin-top:9px">Ninguém assumiu um perfil neste aparelho ainda — abra a ficha de alguém em Jogadores e toque em “Este perfil sou eu” para o app saber quais partidas são suas.</div>`}
   </div>
 
   <div class="card">
-    <div class="k" style="margin-bottom:8px">O racha ${rot}</div>
-    <div class="stat">
-      <div><b class="num">${nRachas}</b><span>racha${nRachas===1?'':'s'}</span></div>
-      <div><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
-      <div><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
+    <div class="hero">
+      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(p,'L')?PATC[patOf(p.L.rank)]:'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="who">
+        <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
+        <h2>${esc(p?p.name:'—')}</h2>
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          ${vePat(liga)&&p&&temPatente(p,'L')?patBadge(liga,p.L.rank,'solid'):''}
+          ${vePat(liga)&&p&&temPatente(p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤</span>':''}
+          ${me.ultimos.length?formaDots(me.ultimos):''}
+        </div>
+      </div>
+      <button class="btn sm ghost" data-a="statsWho" style="width:auto;padding:9px 11px">Trocar</button>
     </div>
-    <div style="height:8px"></div>
-    <div class="stat">
-      <div><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
-      <div><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
-      <div><b class="num">${nRachas?Math.round(ms.length/nRachas):'—'}</b><span>partidas por racha</span></div>
+    <div class="herogrid">
+      <div class="ring">
+        <svg viewBox="0 0 104 104"><circle class="tr" cx="52" cy="52" r="43"/>
+          <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(pct/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
+        <div class="rv num">${pct}%</div><div class="rl">aproveitamento</div>
+      </div>
+      <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
-    ${goleada.m?`<div class="tiny muted" style="margin-top:8px">🔥 Maior goleada: <b>${esc(goleada.m.names[0])} ${goleada.m.score[0]}-${goleada.m.score[1]} ${esc(goleada.m.names[1])}</b> · ${DIA(goleada.m.ts)}</div>`:''}
-  </div>
-
-  <div class="card">
-    <div class="row" style="margin-bottom:4px">
-      <div class="k">${who===eu?'Você':'Jogador'}</div>
-      <button class="btn sm ghost sp" data-a="statsWho">Trocar jogador</button>
+    ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best}</span>`:''}</div>`:''}
+    <div class="tiles four" style="margin-top:12px">
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--cyan)"><b class="num">${me.jogos}</b><span>partidas</span></div>
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${me.gk}</b><span>no gol</span></div>
     </div>
-    <h2 style="font-size:22px;margin:2px 0 8px">${esc(p?p.name:'—')}</h2>
-    ${me.ultimos.length?`<div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <span class="tiny muted">últimas</span>${formaDots(me.ultimos)}
-      ${me.seq>=2?`<span class="tiny" style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas</span>`:''}
-      ${me.best>=3?`<span class="tiny muted">· melhor sequência: ${me.best}</span>`:''}
-    </div>`:''}
-    ${vePat(liga)&&p?`<div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap">
-      ${temPatente(p,'L')?patBadge(liga,p.L.rank,'solid')+'<span class="tiny muted">linha</span>':''}
-      ${temPatente(p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤 gol</span>'
-        :'<span class="tiny muted">sem patente no gol — ainda não pegou</span>'}</div>`:''}
-    <div class="stat">
-      <div><b class="num">${me.nR}</b><span>rachas ${rot}</span></div>
-      <div><b class="num">${me.jogos}</b><span>partidas</span></div>
-      <div><b class="num">${pctDe(me.v,me.jogos)}%</b><span>aproveitamento</span></div>
-    </div>
-    <div style="height:8px"></div>
-    <div class="stat">
-      <div><b class="num">${me.v}</b><span>vitórias</span></div>
-      <div><b class="num">${me.gols}</b><span>gols</span></div>
-      <div><b class="num">${me.gk}</b><span>no gol</span></div>
-    </div>
-    ${vedBar(me)}
-    <div class="tiny muted" style="margin-top:6px">${vedTxt(me)} · uma "partida" é cada formação em campo: quando alguém entra ou sai, começa outra.</div>
+    <div class="tiny muted" style="margin-top:8px">Uma "partida" é cada formação em campo: quando alguém entra ou sai, começa outra.</div>
     ${anos.length>1||per==='sempre'?`<div class="hr"></div>
-      <div class="k" style="margin-bottom:8px">Ano a ano</div>
+      <div class="k2" style="margin-top:0">Ano a ano</div>
       ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
         <span class="tiny muted">${pl(a.nR,'racha')} · ${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')}</span>
         <span class="val num">${pctDe(a.v,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
   <div class="card">
-    <div class="k" style="margin-bottom:8px">Duelos — quem você enfrenta</div>
-    ${carrasco||fregues?`<div class="duo">
-      ${carrasco?`<div class="hl bad"><div class="t">😤 Maior carrasco</div>
-        <div class="n">${esc(nameOf(liga,carrasco.pid))}</div>
-        <div class="s">${carrasco.d}V dele × ${carrasco.v}V suas em ${carrasco.n} confrontos</div></div>`:''}
-      ${fregues&&(!carrasco||fregues.pid!==carrasco.pid)?`<div class="hl ok"><div class="t">😎 Freguês</div>
-        <div class="n">${esc(nameOf(liga,fregues.pid))}</div>
-        <div class="s">${fregues.v}V suas × ${fregues.d}V dele em ${fregues.n} confrontos</div></div>`:''}
+    <div class="k" style="margin-bottom:10px">O racha ${rot}</div>
+    <div class="tiles">
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachas}</b><span>racha${nRachas===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
+    </div>
+    <div style="height:8px"></div>
+    <div class="tiles">
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
+      <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachas?Math.round(ms.length/nRachas):'—'}</b><span>partidas por racha</span></div>
+    </div>
+    ${goleada.m?`<div class="k2">🔥 Maior goleada · ${DIA(goleada.m.ts)}</div>
+    <div class="mini" style="margin-top:0">
+      <div class="tm ${goleada.m.result===0?'win':''}">${esc(goleada.m.names[0])}</div>
+      <div class="sc num">${goleada.m.score[0]}<span class="muted" style="margin:0 5px">–</span>${goleada.m.score[1]}</div>
+      <div class="tm r ${goleada.m.result===1?'win':''}">${esc(goleada.m.names[1])}</div>
     </div>`:''}
-    ${duelos.length?duelos.slice(0,8).map(x=>`<button class="rkbtn" data-a="duelo" data-id="${x.pid}" data-m="0">
-      <div class="row"><span class="nm">${esc(nameOf(liga,x.pid))}</span>
-        <span class="sp tiny num ${x.v>x.d?'win':x.d>x.v?'dn':'muted'}">${x.v}V ${x.e}E ${x.d}D</span></div>
-      ${vedBar(x)}
-      <div class="tiny muted" style="margin-top:4px">${pl(x.n,'confronto')} · ${pctDe(x.v,x.n)}% seu · toque para ver o histórico</div>
-    </button>`).join(''):'<div class="tiny muted">Ainda não enfrentou ninguém neste período.</div>'}
   </div>
 
   <div class="card">
-    <div class="k" style="margin-bottom:8px">Parcerias — quem joga do seu lado</div>
+    <div class="k" style="margin-bottom:8px">Duelos — quem ${esc(quem)} enfrenta</div>
+    ${carrasco||fregues?`<div class="duo">
+      ${carrasco?`<div class="hl bad"><div class="t">😤 Maior carrasco</div>
+        <div class="n">${esc(nameOf(liga,carrasco.pid))}</div>
+        <div class="s">${carrasco.d}V dele × ${carrasco.v}V ${who===eu?'suas':'de '+esc(quem)} em ${carrasco.n}</div></div>`:''}
+      ${fregues&&(!carrasco||fregues.pid!==carrasco.pid)?`<div class="hl ok"><div class="t">😎 Freguês</div>
+        <div class="n">${esc(nameOf(liga,fregues.pid))}</div>
+        <div class="s">${fregues.v}V ${who===eu?'suas':'de '+esc(quem)} × ${fregues.d}V dele em ${fregues.n}</div></div>`:''}
+    </div>`:''}
+    ${duelos.length?listaDuelo(duelos,0):'<div class="tiny muted">Ainda não enfrentou ninguém neste período.</div>'}
+    ${duelos.length?'<div class="tiny muted" style="margin-top:8px">▲ leva vantagem · ▼ leva desvantagem · toque para ver o histórico</div>':''}
+  </div>
+
+  <div class="card">
+    <div class="k" style="margin-bottom:8px">Parcerias — quem joga do lado de ${esc(quem)}</div>
     ${parceiro?`<div class="duo">
       <div class="hl"><div class="t">🤝 Mais jogou junto</div>
         <div class="n">${esc(nameOf(liga,parceiro.pid))}</div>
@@ -1929,32 +2006,27 @@ function viewStats(liga){
         <div class="n">${esc(nameOf(liga,dupla.pid))}</div>
         <div class="s">${pctDe(dupla.v,dupla.n)}% em ${pl(dupla.n,'partida')} juntos</div></div>`:''}
     </div>`:''}
-    ${parcerias.length?parcerias.slice(0,8).map(x=>`<button class="rkbtn" data-a="duelo" data-id="${x.pid}" data-m="1">
-      <div class="row"><span class="nm">${esc(nameOf(liga,x.pid))}</span>
-        <span class="sp tiny num ${x.v>x.d?'win':x.d>x.v?'dn':'muted'}">${x.v}V ${x.e}E ${x.d}D</span></div>
-      ${vedBar(x)}
-      <div class="tiny muted" style="margin-top:4px">${pl(x.n,'partida')} juntos · ${pctDe(x.v,x.n)}% de vitória</div>
-    </button>`).join(''):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
+    ${parcerias.length?listaDuelo(parcerias,1):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
   </div>
 
   <div class="card">
-    <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
-    <div class="tiny muted" style="margin-bottom:10px">Só histórico: nada aqui usa patente.</div>
-    <div class="k2">Mais presenças</div>${listaRank(liga,rkRachas,x=>pl(x.nR,'racha'))}
-    <div class="k2">Mais vitórias</div>${listaRank(liga,rkVit,x=>x.v+'V')}
-    <div class="k2">Maior aproveitamento <span class="tiny muted">(mín. ${MIN_JOGOS} partidas)</span></div>
-    ${listaRank(liga,rkPct,x=>pctDe(x.v,x.jogos)+'%','Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.')}
-    <div class="k2">Artilharia</div>${listaRank(liga,rkGols,x=>x.gols+' gols','Nenhum gol com autor marcado.')}
-    <div class="k2">Maior sequência de vitórias <span class="tiny muted">(3 ou mais)</span></div>
-    ${listaRank(liga,rkSeq,x=>x.best+' seguidas','Ninguém emendou 3 ainda.')}
-    <div class="k2">🧤 Menos vazado <span class="tiny muted">(mín. 5 partidas no gol)</span></div>
-    ${listaRank(liga,rkGk,x=>(x.sofridos/x.gk).toFixed(1).replace('.',',')+' por partida','Ninguém com 5 partidas no gol ainda.')}
-    <div class="k2">⭐ Melhor dupla <span class="tiny muted">(mín. ${MIN_JOGOS} partidas juntos)</span></div>
-    ${duplas.length?duplas.slice(0,5).map((x,i)=>`<div class="rk">
-      <span class="pos num">${i+1}</span>
-      <span class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}</span>
-      <span class="val num">${x.pct}% <span class="tiny muted">em ${x.n}</span></span>
-    </div>`).join(''):`<div class="tiny muted" style="padding:8px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}
+    <div class="k" style="margin-bottom:2px">Top 5 ${rot}</div>
+    <div class="tiny muted" style="margin-bottom:6px">Só histórico: nada aqui usa patente.</div>
+    <div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'))}</div>
+    <div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>pctDe(x.v,x.jogos)+'% em '+pl(x.jogos,'partida'))}</div>
+    <div class="sec"><div class="k2">📈 Maior aproveitamento <span class="tiny muted">(mín. ${MIN_JOGOS} partidas)</span></div>
+      ${rkBars(rkPct,x=>pctDe(x.v,x.jogos),x=>pctDe(x.v,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.')}</div>
+    <div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.')}</div>
+    <div class="sec"><div class="k2">🔥 Maior sequência de vitórias <span class="tiny muted">(3 ou mais)</span></div>
+      ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.')}</div>
+    <div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">(mín. 5 partidas no gol)</span></div>
+      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.gk),x=>(x.sofridos/x.gk).toFixed(1).replace('.',',')+'<small>por partida</small>',x=>pl(x.gk,'partida')+' no gol · '+x.sofridos+' sofridos','Ninguém com 5 partidas no gol ainda.')}</div>
+    <div class="sec"><div class="k2">⭐ Melhor dupla <span class="tiny muted">(mín. ${MIN_JOGOS} partidas juntos)</span></div>
+      ${duplas.length?duplas.slice(0,5).map((x,i)=>`<div class="rk2 ${i===0?'top':''}">
+        <span class="pos">${i+1}</span><span class="av" style="font-size:11px">${esc(iniciais(nameOf(liga,x.a))[0]||'')}${esc(iniciais(nameOf(liga,x.b))[0]||'')}</span>
+        <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}</div>
+          <div class="sub">${x.v}V em ${pl(x.n,'partida')} juntos</div><div class="prog"><i style="width:${Math.max(4,x.pct/Math.max(1,duplas[0].pct)*100)}%"></i></div></div>
+        <span class="val">${x.pct}%</span></div>`).join(''):`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>
   </div>`;
 }
 
@@ -2062,14 +2134,13 @@ function membrosCard(liga){
     <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Lançador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
       ${adm?'Toque num membro para mudar a permissão dele.':'Só o admin muda permissões e revisa partidas.'}
       ${liga.players.some(p=>p.owner)?'':'<br>Enquanto ninguém vincular um perfil, todo mundo é admin.'}</div>
-    ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'10px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
+    ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'8px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
         <div class="meta"><span class="tiny muted">@${esc(p.owner)}</span></div></div>
       <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Lançador'}</span>
       <div style="color:var(--mute);font-size:18px">›</div></div>`).join('')}</div>`
-      :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Em <b>Patentes</b>, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
-    ${semConta.length?`<div class="k2" style="margin-top:0">Sem conta (${semConta.length})</div>
-      <div class="chips">${semConta.map(p=>`<button class="tp" data-a="pSheet" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>`:''}
+      :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Aqui embaixo, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
+    ${semConta.length?`<div class="tiny muted">${semConta.length} jogador${semConta.length===1?'':'es'} sem conta — alguém lança por ele${semConta.length===1?'':'s'}. Estão na escada abaixo; a ficha diz quem é.</div>`:''}
   </div>`;
 }
 
@@ -2077,7 +2148,6 @@ function membrosCard(liga){
 function viewCfg(liga){
   const c=liga.cfg;
   return `
-  ${membrosCard(liga)}
   <div class="card">
     <div class="k" style="margin-bottom:8px">Tamanho do time (padrão)</div>
     <div class="row" style="gap:6px">
@@ -2096,7 +2166,7 @@ function viewCfg(liga){
       <button class="btn sm ${c.rankVisibility==='admin'?'pri':'ghost'}" data-a="setVis" data-v="admin" style="flex:1">Só o admin</button>
     </div>
     <div class="tiny muted">${c.rankVisibility==='admin'
-      ?'A aba Patentes mostra só as estatísticas para quem não é admin. Serve para grupo em que a patente exposta viraria zoação.'
+      ?'A aba Jogadores mostra só as estatísticas para quem não é admin. Serve para grupo em que a patente exposta viraria zoação.'
       :'Todo mundo vê a escada completa. O rating numérico continua invisível para todos.'}</div>
   </div>
   <div class="card">

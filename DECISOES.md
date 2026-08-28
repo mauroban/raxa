@@ -50,7 +50,7 @@ com preset gravado volta ao padrão na carga.
 **18/08/2026.** Quem nunca jogou na linha, ou nunca pegou no gol, **não tem patente ali**: fica fora
 daquela escada e a ficha diz *sem patente*. Se entrar naquela posição, vale o **nível de entrada padrão**
 e começa a construir a dele, em calibração. O palpite do cadastro vale só para a valência da pessoa.
-**Por quê:** cadastrar um Craque de linha fazia dele um Craque no gol — a escada de goleiro vinha cheia
+**Por quê:** cadastrar um Diamante de linha fazia dele um Diamante no gol — a escada de goleiro vinha cheia
 de gente que nunca defendeu.
 **Descartado:** herdar a patente da outra valência (comportamento anterior, migrado na carga).
 **Onde:** DOCUMENTACAO §3.7 · REGRAS-DO-RACHA §5 · RF-03.1c/1d · `newTrack`, `temPatente` · smoke.
@@ -222,8 +222,20 @@ ninguém mais tinha poder de revisão.
 entre uma semana e outra, e o nome antigo não dizia nada. Ganhou o retrato da liga no período (rachas,
 partidas, gols, média, empates, maior goleada), forma recente e sequência de vitórias do jogador, e
 rankings de sequência, goleiro menos vazado e melhor dupla. **Membros** (quem tem conta, com que papel)
-vive no topo dos Ajustes, onde está o código de convite — é a mesma pergunta: "quem está aqui?".
+vive no topo da aba **Jogadores** (ex-Patentes), acima da escada — é a mesma pergunta: "quem está aqui?".
 **Onde:** `viewStats`, `statsLiga` (seq/best/ultimos/sofridos), `membrosCard`.
+
+### D-24 · Os nomes de patente são metais, não descrições da pessoa
+**28/08/2026.** Escada padrão: **Bronze · Prata · Ouro · Platina · Diamante** (antes Iniciante ·
+Promessa · Titular · Destaque · Craque). As cores da escada acompanham os metais. Liga com os nomes
+antigos de fábrica migra sozinha; nome editado à mão fica.
+**Por quê:** "Iniciante" e "Promessa" descrevem quem está começando — e a base da escada é cheia de
+gente que joga há vinte anos. Chamar o veterano de iniciante é errado e soa ofensivo. Metal é um
+*rank*, não um adjetivo: Bronze não diz nada sobre idade, experiência ou talento, todo mundo entende
+sem explicação (jogos, olimpíadas) e a cor vem de graça.
+**Descartado:** Raiz · Boleiro · Titular · Destaque · Craque (mesmo dia) — resolvia o "iniciante", mas
+"Titular" e "Destaque" já são palavras do app com outro sentido (titulares do time, Destaques do mês).
+**Onde:** `defCfg().patNames`, `PATSHORT`, `PATC_*`, `normalize` · Ajustes → Nomes das patentes.
 
 ## Como registrar uma decisão nova
 

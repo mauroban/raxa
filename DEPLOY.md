@@ -72,7 +72,7 @@ gh api -X POST repos/:owner/raxa/pages -f "source[branch]=main" -f "source[path]
 2. **+ Nova liga** — ou **Carregar o racha de sábado** para já vir com 19 nomes.
 3. Aba **Ajustes** → o **código de convite** de 6 letras está no topo. Compartilhe.
 4. Cada pessoa cria a conta dela e usa **Entrar com um código**.
-5. Em **Patentes**, cada um abre o próprio nome e toca em **assumir perfil** para
+5. Em **Jogadores**, cada um abre o próprio nome e toca em **assumir perfil** para
    vincular a conta ao jogador.
 
 Com o racha rolando, quem está com a tela aberta acompanha placar, cronômetro e
