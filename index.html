@@ -1351,7 +1351,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','renamePlayer','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
@@ -2369,7 +2369,7 @@ let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1900)}
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
-function closeSheet(){
+function closeSheet(){PD=null;
   $('#sheet').classList.remove('on');$('#scrim').classList.remove('on');
   if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);   // atualização que ficou esperando a folha fechar
 }
@@ -3020,24 +3020,34 @@ const A={
   },
 
   /* ----- jogador ----- */
+  /* ----- ficha do jogador: rascunho, salvar, cancelar -----
+     Nada muda no jogador enquanto a folha está aberta: nome, nível, gol,
+     conta e permissão vão para PD (rascunho) e só entram no Salvar — com as
+     mesmas checagens de papel e o mesmo registro no log das ações diretas. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    const role=el.dataset.r==='G'?'G':el.dataset.r==='L'?'L':(S.ui.rankRole==='G'?'G':'L');
-    const tr=rt(p,role),ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,adm=souAdmin(l),edt=souEditor(l);
-    const corAv=ver&&temPatente(p,'L')?patColor(p.L.rank):ver&&temPatente(p,'G')?patColor(p.G.rank):'var(--mute)';
-    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=temPatente(p,r);
+    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null}};
+    if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
+    const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,adm=souAdmin(l),edt=souEditor(l);
+    const rankDe=r=>PD.rank[r]!==null?PD.rank[r]:rt(p,r).rank;
+    const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
+    const corAv=ver&&temPatente(p,'L')?patColor(rankDe('L')):ver&&temPatente(p,'G')?patColor(rankDe('G')):'var(--mute)';
+    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=temPatente(p,r)||PD.rank[r]!==null;
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
-        <span class="k">${rotulo}</span>
-        ${tem?patBadge(l,t.rank,'big'+(r==='L'?' solid':'')):'<span class="none">sem nível</span>'}
-        ${tem?`<div class="best">${calibrando(l,p,t)?`calibrando · ${t.sessions||0}/${l.cfg.calRachas} rachas`
+        <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
+        ${tem?patBadge(l,rankDe(r),'big'+(r==='L'?' solid':'')):'<span class="none">sem nível</span>'}
+        ${temPatente(p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${t.sessions||0}/${l.cfg.calRachas} rachas`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
+    const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;
     openSheet(`
       <div class="ps-hd">
-        <div class="avatar" style="--pc:${corAv}">${esc(iniciais(p.name))}</div>
+        <div class="avatar" style="--pc:${corAv}">${esc(iniciais(PD.name||p.name))}</div>
         <div style="min-width:0;flex:1">
-          <h2><span>${esc(p.name)}</span>${edt?`<button class="ico" data-a="renamePlayer" data-id="${p.id}" title="renomear" aria-label="renomear">✎</button>`:''}</h2>
-          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}${p.gk?' · 🧤':''}</div>
+          ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value" placeholder="Nome" aria-label="nome do jogador"
+              style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`
+            :`<h2><span>${esc(p.name)}</span></h2>`}
+          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}</div>
         </div>
       </div>
       ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
@@ -3049,41 +3059,88 @@ const A={
       ${ver&&adm?`<div class="ps-panel">
         <div class="row"><div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div><div class="sp tiny muted">toque no cartão acima para trocar</div></div>
         <div class="ladder4">
-          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(tr.rank)===k?'on':''}" style="--pc:${PATC[k]}" data-a="setRank" data-id="${p.id}" data-r="${role}" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
+          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankDe(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
         </div>
         <div class="step">
-          <button class="btn ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="-1" aria-label="uma divisão abaixo">−</button>
-          <div class="cur">${esc(rankLabel(l,tr.rank))}</div>
-          <button class="btn ghost" data-a="bumpRank" data-id="${p.id}" data-r="${role}" data-d="1" aria-label="uma divisão acima">+</button>
+          <button class="btn ghost" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo">−</button>
+          <div class="cur">${esc(rankLabel(l,rankDe(role)))}</div>
+          <button class="btn ghost" data-a="pdBump" data-d="1" aria-label="uma divisão acima">+</button>
         </div>
       </div>`:''}
       <div style="height:6px"></div>
       <div class="trow">
         <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
-        <button class="sw ${p.gk?'on':''}" data-a="togGkP" data-id="${p.id}" role="switch" aria-checked="${p.gk?'true':'false'}" aria-label="costuma ir ao gol"></button>
+        <button class="sw ${PD.gk?'on':''}" data-a="pdGk" role="switch" aria-checked="${PD.gk?'true':'false'}" aria-label="costuma ir ao gol" ${edt?'':'disabled'}></button>
       </div>
       <div class="trow">
-        <div class="lbl">Conta<small>${p.owner?'vinculada a <b>@'+esc(p.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
-        ${p.owner?(p.owner===S.me.name||adm?`<button class="btn sm ghost" data-a="unclaim" data-id="${p.id}">desvincular</button>`:'')
-          :`<button class="btn sm pri" data-a="claim" data-id="${p.id}">Sou eu</button>`}
+        <div class="lbl">Conta<small>${PD.owner?'vinculada a <b>@'+esc(PD.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
+        ${PD.owner?(podeConta?`<button class="btn sm ghost" data-a="pdOwner">desvincular</button>`:'')
+          :`<button class="btn sm ghost" data-a="pdOwner">Sou eu</button>`}
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
         <div class="lbl">Permissão${adm?'':'<small>só o admin muda</small>'}</div>
         ${adm?`<div class="seg">${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
-            .map(x=>`<button class="${p.role===x[0]?'on':''}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>`
+            .map(x=>`<button class="${PD.role===x[0]?'on':''}" data-a="pdRole" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>`
           :`<div class="tiny">${PAPEL[p.role]||'Jogador'}</div>`}
       </div>
-      ${edt?`<div class="ps-foot"><button class="btn danger ghost" data-a="delPlayer" data-id="${p.id}">Remover jogador</button></div>`:''}`);
+      <div class="ps-foot">
+        <button class="btn ghost" data-a="pdCancel">Cancelar</button>
+        <button class="btn pri" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
+      </div>
+      ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
-  renamePlayer(el){
-    const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    if(!souEditor(l))return toast('Só admin ou editor renomeia');
-    const n=prompt('Novo nome:',p.name);if(n===null)return;
-    const nome=n.trim();if(!nome)return toast('Digite o nome');
-    if(nome===p.name)return;
-    if(l.players.some(x=>x.id!==p.id&&x.name.toLowerCase()===nome.toLowerCase()))return toast('Já existe alguém com esse nome');
-    logAdd(l,'rename',{pid:p.id,from:p.name,to:nome});
-    p.name=nome;save();render();A.pSheet({dataset:{id:p.id}});toast('Renomeado');
+  pdRank(el){if(!PD)return;PD.rank[PD.view]=+el.dataset.s;A.pSheet({dataset:{id:PD.id}})},
+  pdBump(el){if(!PD)return;const p=P(L(),PD.id),r=PD.view,cur=PD.rank[r]!==null?PD.rank[r]:rt(p,r).rank;
+    PD.rank[r]=clamp(cur+(+el.dataset.d),0,TOP);A.pSheet({dataset:{id:PD.id}})},
+  pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
+  pdRole(el){if(!PD)return;PD.role=el.dataset.r;A.pSheet({dataset:{id:PD.id}})},
+  pdOwner(){if(!PD)return;if(!PD.owner&&!S.me.name)return toast('Entre na sua conta primeiro');PD.owner=PD.owner?null:S.me.name;A.pSheet({dataset:{id:PD.id}})},
+  pdCancel(){PD=null;closeSheet()},
+  pdSave(){
+    const l=L(),d=PD;if(!d)return;const p=P(l,d.id);if(!p){PD=null;closeSheet();return}
+    const adm=souAdmin(l),edt=souEditor(l);
+    /* nome */
+    const nome=String(d.name||'').trim();
+    if(nome!==p.name){
+      if(!edt)return toast('Só admin ou editor renomeia');
+      if(!nome)return toast('Digite o nome');
+      if(l.players.some(x=>x.id!==p.id&&x.name.toLowerCase()===nome.toLowerCase()))return toast('Já existe alguém com esse nome');
+    }
+    /* permissão */
+    if(d.role!==(p.role||'jogador')){
+      if(!adm)return toast('Só o admin muda permissão');
+      const outrosAdmins=l.players.some(x=>x.id!==p.id&&x.owner&&x.role==='admin');
+      if(p.role==='admin'&&d.role!=='admin'&&(d.owner||p.owner)&&!outrosAdmins)return toast('A liga precisa de pelo menos um admin');
+    }
+    /* conta */
+    if(d.owner!==(p.owner||null)){
+      if(p.owner&&!(p.owner===S.me.name||adm))return toast('Só o dono do perfil ou o admin desvincula');
+      if(d.owner&&l.players.some(x=>x.id!==p.id&&x.owner===d.owner))return toast('Você já tem um perfil nesta liga — desvincule o outro antes');
+    }
+    /* nível */
+    if((d.rank.L!==null||d.rank.G!==null)&&!adm)return toast('Só o admin corrige nível');
+    if(d.gk!==!!p.gk&&!edt)return toast('Só admin ou editor edita o jogador');
+
+    if(nome!==p.name){logAdd(l,'rename',{pid:p.id,from:p.name,to:nome});p.name=nome}
+    if(d.gk!==!!p.gk)p.gk=d.gk;
+    if(d.role!==(p.role||'jogador')){logAdd(l,'role',{pid:p.id,from:p.role,to:d.role});p.role=d.role}
+    let msg='Salvo';
+    if(d.owner!==(p.owner||null)){
+      if(d.owner){
+        const temAdmin=l.players.some(x=>x.owner&&x.role==='admin');
+        if(!temAdmin){p.role='admin';msg='Perfil vinculado — você é o admin da liga'}
+        logAdd(l,'link',{pid:p.id,user:d.owner,self:d.owner===S.me.name});
+      }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
+      p.owner=d.owner;
+    }
+    ['L','G'].forEach(r=>{
+      if(d.rank[r]===null)return;
+      const tr=rt(p,r),sN=d.rank[r],target=stepMid(sN);
+      if(sN===tr.rank&&tr.def)return;
+      logAdd(l,'rank',{pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target});
+      tr.base+=target-tr.elo;tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches;tr.def=true;
+    });
+    PD=null;closeSheet();save();render();toast(msg);
   },
   setRank(el){
     const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L',s=+el.dataset.s,target=stepMid(s);
@@ -3230,6 +3287,7 @@ function showScorer(side,contra){
    depois disso o touchmove é cancelado e a página não rola.
    ========================================================================== */
 let paint=null;
+let PD=null;                          // rascunho da ficha do jogador aberta
 function paintChipAt(x,y){
   const el=document.elementFromPoint(x,y),chip=el&&el.closest?el.closest('#plist .pchip'):null;
   if(!chip||paint.done.has(chip.dataset.id))return;
