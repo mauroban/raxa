@@ -279,7 +279,17 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   eu.role='admin';l.players[1].owner=null;l.players[1].role='lancador';S.ui.tab='racha';render();
 });
 step('aba numeros',()=>{S.ui.tab='stats';render()});
-step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:'ano'}})});
+step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:String(new Date().getFullYear())}});A.statsPer({dataset:{v:'2019'}});A.statsPer({dataset:{v:'ano'}})});
+step('numeros: abas jogador/racha e listas compactas',()=>{
+  A.statsTab({dataset:{v:'racha'}});
+  const h=els['#app'].innerHTML;
+  if(!/Rankings/.test(h)||!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
+  if(/Duelos —/.test(h))throw new Error('duelos nao deveriam estar na aba racha');
+  A.statsSec({dataset:{k:'pres'}});A.statsSec({dataset:{k:'pres'}});
+  A.statsTab({dataset:{v:'jogador'}});
+  const h2=els['#app'].innerHTML;
+  if(!/Duelos —/.test(h2)||!/minutos/.test(h2))throw new Error('aba jogador sem duelos/minutos');
+});
 step('numeros: trocar de jogador',()=>{A.statsWho();A.setStatsWho({dataset:{id:L().players[3].id}})});
 step('duelos e parcerias batem com o historico',()=>{
   const l=L(),who=statsWhoId(l),SL=statsLiga(l,'sempre');
