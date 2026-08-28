@@ -3961,7 +3961,6 @@ function loadUI(){
   try{
     const o=JSON.parse(localStorage.getItem(UIKEY)||'{}');
     if(o.ui)S.ui=Object.assign(S.ui,o.ui);
-    S.ui.tab='racha';                  // ao abrir o app, sempre a quadra; a aba só vale dentro da sessão
     if(o.active)S.active=o.active;      // normalize() descarta se a liga sumiu
   }catch(e){}
 }
