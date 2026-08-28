@@ -328,6 +328,14 @@ substituído para a fila sem ninguém pedir — a fila "sugerida" ficava errada 
 racha é outra coisa, e precisa de um botão próprio.
 **Onde:** `doSub`, `undo` (sub), `splitStints` (`in:null`), `A.leaveRacha`, `outPick`, `lateSheet`.
 
+### D-31 · A vaga mora no cartão do time
+**28/08/2026.** Time com jogador a menos mostra uma vaga tracejada por lugar vazio dentro do próprio
+cartão — na montagem (`slotPick`: fila e reservas de outros times, quem jogou menos hoje primeiro)
+e na pré-partida (`fillPick`: completa só aquela partida; o emprestado aparece no cartão com ✕).
+**Por quê:** "falta 1" escrito no cabeçalho não dizia o que fazer; o card "Completar" embaixo
+resolvia a pré-partida mas a montagem não tinha caminho direto. A vaga é o próprio convite.
+**Onde:** `timeCard` (vagas/emprestados), `A.slotPick`/`slotSet`, `viewProxima`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

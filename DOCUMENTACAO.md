@@ -468,6 +468,10 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 ## 8. Estado do protótipo (`index.html`)
 
+**Substituição, vaga e "foi embora".** Trocar alguém durante a partida vale só para aquela partida: os times voltam iguais na seguinte (a única troca que fica é titular ⇄ reserva do mesmo time). Time com gente a menos mostra **vagas tracejadas dentro do cartão**: na montagem a vaga puxa alguém da fila ou da reserva de outro time; na pré-partida ela escolhe quem completa só aquela partida (o emprestado aparece no cartão com ✕ e volta para o time dele depois). Quem se machuca ou precisa ir embora sai por **Foi embora / machucou** (na folha de substituição ou em "Chegou agora"): sai da presença, do time, da fila e do rodízio; se estava em quadra, a partida segue com um a menos e o trecho seguinte registra isso.
+
+**Fila com 3–4 times.** Quem espera há mais tempo joga antes; vencedor fica (se ligado), perdedor vai para o fim da fila; empate manda os dois.
+
 **Minutos e ritmo.** Cada trecho guarda a duração de jogo (sem pausas), então minutos em quadra e no gol são somas exatas por jogador. A aba Stats mostra minutos, **gols a cada 10 min** e, para goleiros, **sofridos a cada 10 min** (rankings de ritmo pedem 1 h em quadra/no gol). Stats tem duas abas — **Jogador** (a pessoa: aproveitamento, ano a ano, duelos, parcerias) e **Racha** (a liga no período e os rankings) — e o período (ano ou desde sempre) é filtro, não aba. Rankings mostram 3 linhas e abrem até 10.
 
 **No servidor, a liga vive em partes.** Cada jogador, partida, racha e entrada do log é uma linha própria (payload jsonb de fatos), mais uma linha `live` para o racha em andamento. O app grava só o que mudou (`save_parts`) e recebe só o que mudou desde a versão que conhece (`league_delta`); um gol é ~1 KB subindo e ~1 KB descendo em cada aparelho, independentemente do tamanho do histórico. Nível e estatística nunca vão para o banco.

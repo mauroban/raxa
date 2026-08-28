@@ -146,6 +146,8 @@ body.painting{touch-action:none;overflow:hidden}
    14%, borda a 40%. Dá para ler a divisão de relance sem virar carnaval. */
 .tp.lv{background:color-mix(in srgb,var(--pc) 14%,transparent);border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
 .tp.sel{background:var(--chalk);color:#0B0F0D;border-color:var(--chalk)}
+.tp.vaga{border-style:dashed;color:var(--mute);background:transparent}
+.tp.emp{border-style:dashed}
 .cA{background:linear-gradient(100deg,var(--lime),var(--lime2))} .cB{background:linear-gradient(100deg,#FF8A5C,var(--coral))}
 .cC{background:linear-gradient(100deg,#6EE2F7,var(--cyan))} .cD{background:linear-gradient(100deg,#fff,#CBD8CF)}
 
@@ -1367,7 +1369,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','slotPick','slotSet','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
@@ -1688,16 +1690,24 @@ function tpChip(liga,lv,id,big){
     ${tem?patDot(liga,rt(p,role).rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
-function timeCard(liga,lv,i,per,completando){
+/* Time com gente a menos mostra uma VAGA por lugar vazio, dentro do próprio
+   cartão. Na montagem a vaga puxa alguém da fila/reserva para o time; na
+   pré-partida ela escolhe quem completa só aquela partida (fillPick).      */
+function timeCard(liga,lv,i,per,completando,sd){
   const t=lv.teams[i];if(!t)return '';
-  const tit=t.ids.slice(0,per),res=t.ids.slice(per),falta=per-t.ids.length-(completando||0);
+  const cIds=Array.isArray(completando)?completando:[],cN=Array.isArray(completando)?completando.length:(completando||0);
+  const tit=t.ids.slice(0,per),res=t.ids.slice(per),falta=per-t.ids.length-cN;
+  const emprestados=cIds.map(id=>`<button class="tp big emp" data-a="fillDel" data-sd="${sd}" data-id="${id}" title="joga esta partida emprestado">${esc(nameOf(liga,id))} <small>✕</small></button>`).join('');
+  const vagas=falta>0&&!lv.fillOff?Array.from({length:falta},()=>sd===undefined
+      ?`<button class="tp big vaga" data-a="slotPick" data-i="${i}">＋ vaga</button>`
+      :`<button class="tp big vaga" data-a="fillPick" data-sd="${sd}">＋ completar</button>`).join(''):'';
   return `<div class="team">
     <div class="hd ${TEAMBG[i]}">${esc(t.name)}
-      <span class="sp" style="font-size:12px;opacity:.8">${completando?`${t.ids.length}+${completando} completando`
+      <span class="sp" style="font-size:12px;opacity:.8">${cN?`${t.ids.length}+${cN} completando`
         :falta>0?`${t.ids.length}/${per} · falta ${falta}`
         :res.length?`${per} + ${res.length} reserva${res.length>1?'s':''}`:`${per}/${per}`}</span></div>
     <div class="bd" data-a="toTeam" data-i="${i}" data-drop-zone="team:${i}">
-      ${tit.map(id=>tpChip(liga,lv,id,true)).join('')
+      ${tit.map(id=>tpChip(liga,lv,id,true)).join('')+emprestados+vagas
         ||'<span class="tiny muted" style="padding:6px">toque num jogador e depois aqui</span>'}
     </div>
     ${res.length?`<div style="padding:0 9px 9px">
@@ -1738,7 +1748,7 @@ function viewProxima(liga,lv){
   </div>
   ${cardCompletar(liga,lv,pair)}
   <div class="teamwrap" style="margin-top:10px">
-    ${[0,1].map(sd=>timeCard(liga,lv,pair[sd],per,compl[sd].length)).join('')}
+    ${[0,1].map(sd=>timeCard(liga,lv,pair[sd],per,compl[sd],sd)).join('')}
   </div>
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
     <div class="row"><div class="k">Fora desta partida</div>
@@ -2713,6 +2723,22 @@ const A={
     if(i>=0)lv.teams[i].ids.push(lv.sel);
     lv.sel=null;save();render();
   },
+
+  /* vaga na montagem: quem está na fila ou na reserva de outro time entra neste */
+  slotPick(el){
+    const l=L(),lv=l.live,i=+el.dataset.i,t=lv.teams[i];if(!t)return;
+    const per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
+    const fila=filaDe(lv);
+    const reservas=[];lv.teams.forEach((tt,k)=>{if(k!==i)tt.ids.slice(per).forEach(id=>reservas.push({id,de:tt.name}))});
+    const cnt=jogosHoje(l,lv);
+    const chip=(id,de)=>`<button class="tp big" data-a="slotSet" data-i="${i}" data-id="${id}">${temPatente(P(l,id),'L')?patDot(l,P(l,id).L.rank):''}${esc(nameOf(l,id))}${de?` <small>${esc(de)}</small>`:''}${cnt[id]?` <small>${cnt[id]} hoje</small>`:''}</button>`;
+    openSheet(`<h2>Vaga no ${esc(t.name)}</h2>
+      ${fila.length?`<div class="k" style="margin-bottom:6px">Na fila</div><div class="chips" style="margin-bottom:12px">${fila.map(id=>chip(id)).join('')}</div>`:''}
+      ${reservas.length?`<div class="k" style="margin-bottom:6px">Reserva de outro time</div><div class="chips" style="margin-bottom:12px">${reservas.map(r=>chip(r.id,r.de)).join('')}</div>`:''}
+      ${!fila.length&&!reservas.length?'<div class="tiny muted" style="margin-bottom:12px">Ninguém sobrando. Chame alguém que chegou agora.</div>':''}
+      <button class="btn wide ghost" data-a="lateSheet">＋ Chegou agora</button>`);
+  },
+  slotSet(el){const lv=L().live;lv.sel=el.dataset.id;closeSheet();A.toTeam({dataset:{i:el.dataset.i}})},
 
   /* ----- chegou atrasado ----- */
   lateSheet(){

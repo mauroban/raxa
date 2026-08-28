@@ -420,6 +420,21 @@ step('alguem vai embora e o time fica curto',()=>{
   onDrop(x,{dataset:{dropZone:'bench'}});
   if(lv.teams[1].ids.length!==4)throw new Error('o time deveria ter ficado com 4');
 });
+step('time curto mostra uma vaga no cartao; tocar nela puxa alguem da fila',()=>{
+  const lv=L().live;
+  if(lv.stage==='jogo'){A.endMatch&&0;}
+  render();
+  const h=els['#app'].innerHTML;
+  if(!/＋ vaga|＋ completar|tp big emp/.test(h))throw new Error('cartao do time curto sem vaga nem emprestado');
+  if(lv.stage!=='jogo'){
+    const antes=lv.teams[1].ids.length,fila=filaDe(lv);
+    A.slotPick({dataset:{i:'1'}});
+    if(!/Vaga no/.test(els['#sheet'].innerHTML))throw new Error('folha da vaga nao abriu');
+    A.slotSet({dataset:{i:'1',id:fila[0]}});
+    if(lv.teams[1].ids.length!==antes+1||!lv.teams[1].ids.includes(fila[0]))throw new Error('a vaga nao foi preenchida');
+    onDrop(fila[0],{dataset:{dropZone:'bench'}});   // devolve para os passos seguintes
+  }
+});
 step('a partida ainda entra 5v5: o time curto e completado por quem esta na fila',()=>{
   A.startMatch();
   const c=L().live.cur;
