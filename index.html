@@ -207,9 +207,8 @@ body.painting{touch-action:none;overflow:hidden}
   font-size:12px;padding:4px 9px;border-radius:7px;color:#fff;margin-bottom:7px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 /* filtros de período: uma linha só, rolando de lado se não couber */
-.chips.perfil{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
-.chips.perfil::-webkit-scrollbar{display:none}
-.chips.perfil .tp{flex:0 0 auto;white-space:nowrap;padding:0 11px;min-height:40px;font-size:14px}
+.chips.perfil{flex-wrap:nowrap}
+.chips.perfil .tp{flex:1 1 0;justify-content:center;white-space:nowrap;padding:0 6px;min-height:40px;font-size:14px}
 .filapos{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--mute2);align-self:center;margin-right:-2px}
 .balbar{height:6px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:8px}
 .balbar i{display:block;height:100%;background:var(--ok)}
@@ -413,6 +412,9 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:11px;font-family:var(--body)}
 .sec{margin-top:14px}
 .sec .k2{display:flex;align-items:center;justify-content:space-between;margin-top:0}
+/* a regra do ranking (mínimo, unidade) é nota, não título: menor, sem caixa alta, e nunca empurra o título para a linha de baixo */
+.sec .k2 .tiny{font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:500;text-align:right;white-space:nowrap;margin-left:8px;flex:0 0 auto}
+.sec .k2>:first-child{white-space:nowrap}
 .rk3{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
 .rk3:last-child{border-bottom:0}
 .rk3 .pos{font-family:var(--disp);font-weight:800;font-size:14px;color:var(--mute2);text-align:center}
@@ -2134,11 +2136,11 @@ function viewStats(liga){
       <button class="${tab==='jogador'?'on':''}" data-a="statsTab" data-v="jogador">Jogador</button>
       <button class="${tab==='racha'?'on':''}" data-a="statsTab" data-v="racha">Racha</button>
     </div>
-    <div class="chips perfil" style="gap:5px">
-      <button class="tp ${soRacha?'sel':''}" data-a="statsPer" data-v="racha">Último racha</button>
-      <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">Último mês</button>
+    <div class="chips perfil" style="gap:6px">
+      <button class="tp ${soRacha?'sel':''}" data-a="statsPer" data-v="racha">Último</button>
+      <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">30 dias</button>
       ${anosLiga.map(y=>`<button class="tp ${anoSel===y?'sel':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
-      <button class="tp ${per==='sempre'?'sel':''}" data-a="statsPer" data-v="sempre">Desde sempre</button>
+      <button class="tp ${per==='sempre'?'sel':''}" data-a="statsPer" data-v="sempre">Sempre</button>
     </div>`;
   if(!liga.matches.length)return `<div class="card">${seg}</div><div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
@@ -2364,7 +2366,7 @@ ${cardJuntos}  <div class="card">
     <div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>
     <div class="sec"><div class="k2">⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></div>
       ${rkBars(rkRitmo,x=>x.gols/x.min,x=>por10(x.gols,x.min),x=>x.gols+' gols em '+fmtMin(x.min),'Ninguém com 1 h em quadra e gol marcado ainda.','ritmo')}</div>
-    <div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos a cada 10 min · mín. 1 h no gol</span></div>
+    <div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></div>
       ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>
     <div class="sec"><div class="k2">🔥 Maior sequência <span class="tiny muted">3 ou mais</span></div>
       ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>
