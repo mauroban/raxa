@@ -1786,7 +1786,7 @@ function todayBlock(liga,lv){
 /* ---------- níveis ---------- */
 function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
-  return membrosCard(liga)+contasCard(liga)+viewEscada(liga);
+  return membrosCard(liga)+viewEscada(liga);
 }
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
@@ -2131,9 +2131,8 @@ function viewHist(liga){
    só um nome no cadastro — alguém lança por ele. Tocar abre a ficha, onde o
    admin muda o papel.                                                        */
 const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
-let contasCard=liga=>'';   // o backend sobrepõe (contas da liga, só para o admin)
 const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
-function membrosCard(liga){
+let membrosCard=function(liga){
   const eu=euId(liga),meu=meuPapel(liga),adm=souAdmin(liga);
   const comConta=liga.players.filter(p=>p.owner),semConta=liga.players.filter(p=>!p.owner);
   const ord=[...comConta].sort((a,b)=>(PAPEL_ORD[a.role]??2)-(PAPEL_ORD[b.role]??2)||a.name.localeCompare(b.name));
@@ -2151,7 +2150,7 @@ function membrosCard(liga){
       :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Aqui embaixo, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
     ${semConta.length?`<div class="tiny muted">${semConta.length} jogador${semConta.length===1?'':'es'} sem conta — alguém lança por ele${semConta.length===1?'':'s'}. Estão na escada abaixo; a ficha diz quem é.</div>`:''}
   </div>`;
-}
+};
 
 /* ---------- ajustes ---------- */
 function viewCfg(liga){
@@ -3647,26 +3646,39 @@ async function loadAccounts(id){
   ACC[id]={at:Date.now(),lista:error?((c&&c.lista)||[]):(data||[]),erro:error?traduz(error):null};
   if(!ocupado())render();
 }
-contasCard=function(liga){
-  if(!sb||!ME||!souAdmin(liga))return '';
+/* Para o admin, o card Membros é a lista de CONTAS (com ou sem jogador): é
+   a única lista que ele precisa. Para os outros, a versão do protótipo
+   (jogadores com perfil vinculado).                                        */
+const membrosCardBase=membrosCard;
+membrosCard=function(liga){
+  if(!sb||!ME||!souAdmin(liga))return membrosCardBase(liga);
   const c=ACC[liga.id];
   if(!c||(!c.carregando&&Date.now()-c.at>ACC_TTL))setTimeout(()=>loadAccounts(liga.id),0);
-  if(!c||!c.lista)return `<div class="card"><div class="k">Contas na liga</div><div class="tiny muted">Buscando…</div></div>`;
-  const semJog=c.lista.filter(a=>!liga.players.some(p=>p.owner===a.username));
-  const comJog=c.lista.filter(a=>liga.players.some(p=>p.owner===a.username));
-  const linha=a=>{const p=liga.players.find(x=>x.owner===a.username);
-    return `<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
+  const eu=euId(liga),semConta=liga.players.filter(p=>!p.owner).length;
+  if(!c||!c.lista)return `<div class="card"><div class="row" style="margin-bottom:6px"><div class="k">Membros</div></div><div class="tiny muted">Buscando contas…</div></div>`;
+  const jog=a=>liga.players.find(p=>p.owner===a.username);
+  const semJog=c.lista.filter(a=>!jog(a));
+  const ord=[...c.lista].sort((a,b)=>{const pa=jog(a),pb=jog(b);
+    if(!pa!==!pb)return pa?1:-1;                                   // sem jogador primeiro: é o que precisa de ação
+    return ((pa?PAPEL_ORD[pa.role]??2:9)-(pb?PAPEL_ORD[pb.role]??2:9))||a.username.localeCompare(b.username)});
+  const linha=a=>{const p=jog(a);
+    return p?`<div class="rank" data-a="pSheet" data-id="${p.id}">
+      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
+        <div class="meta"><span class="tiny muted">@${esc(a.username)}${a.is_owner?' · dono':''}</span></div></div>
+      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Lançador'}</span>
+      <div style="color:var(--mute);font-size:18px">›</div></div>`
+    :`<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
       <div style="min-width:0;flex:1"><div class="nm">@${esc(a.username)}${a.user_id===ME.id?' <span class="tiny muted">(você)</span>':''}</div>
-        <div class="meta"><span class="tiny ${p?'muted':''}" ${p?'':'style="color:var(--gold)"'}>${p?'jogador: '+esc(p.name):'sem jogador vinculado'}</span></div></div>
+        <div class="meta"><span class="tiny" style="color:var(--gold)">sem jogador — toque para vincular</span></div></div>
       ${a.is_owner?'<span class="pat" style="--pc:var(--gold)">Dono</span>':''}
       <div style="color:var(--mute);font-size:18px">›</div></div>`};
   return `<div class="card">
-    <div class="row" style="margin-bottom:6px"><div class="k">Contas na liga</div>
-      <div class="sp tiny muted num">${c.lista.length} conta${c.lista.length===1?'':'s'}${semJog.length?' · '+semJog.length+' sem jogador':''}</div></div>
-    <div class="tiny muted" style="margin-bottom:10px">Só você (admin) vê esta lista. Toque numa conta para vincular a um jogador, criar o jogador dela ou tirá-la da liga.</div>
+    <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
+      <div class="sp tiny muted num">${c.lista.length} conta${c.lista.length===1?'':'s'}${semJog.length?' · '+semJog.length+' sem jogador':''}${semConta?' · '+semConta+' só no cadastro':''}</div></div>
+    <div class="tiny muted" style="margin-bottom:10px">Você é <b>Admin</b>. Toque num membro para mudar permissão ou vínculo; só você vê as contas ainda sem jogador.</div>
     ${c.erro?`<div class="tiny" style="color:var(--red);margin-bottom:8px">${esc(c.erro)}</div>`:''}
-    ${semJog.length||comJog.length?`<div class="card" style="padding:0;margin:0">${semJog.map(linha).join('')}${comJog.map(linha).join('')}</div>`
-      :'<div class="tiny muted">Só você está na liga por enquanto.</div>'}
+    <div class="card" style="padding:0;margin:0 0 ${semConta?'8px':'0'}">${ord.map(linha).join('')}</div>
+    ${semConta?`<div class="tiny muted">${semConta} jogador${semConta===1?'':'es'} sem conta — alguém lança por ele${semConta===1?'':'s'}. Estão na escada abaixo.</div>`:''}
   </div>`;
 };
 
