@@ -79,7 +79,7 @@ Então:
 - **Cada patente = 200 pontos de rating.** Diferença de uma patente ≈ 75% de vitória esperada. Diferença de duas ≈ 91%.
 - **Cada divisão = ~67 pontos.** Diferença de uma divisão ≈ 60% de vitória esperada — perceptível, mas não gritante.
 - A escada cobre 1000–1999, **centrada em 1500**. Como o Elo é soma zero, a média da liga fica sempre perto do valor de entrada — então o meio da escada precisa ser a média, ou um nível enche e o outro fica vazio. O valor de entrada padrão (1500) cai em **Prata 2**: o degrau do meio, com dois níveis inteiros para cada lado.
-- **Sem nível até calibrar.** Quem entra sem um nível dado à mão (cadastro ou admin) não recebe rótulo enquanto calibra (5 rachas ou 25 partidas): o rating existe por baixo — monta time, entra na conta dos outros — mas a escada mostra a pessoa em "Sem nível ainda", com o progresso da calibração.
+- **Zerar o nível.** Na ficha, o admin pode tirar o nível dado à mão de quem ainda **não jogou** naquela valência ("Tirar o nível — calibrar do zero"): o jogador volta ao rating de entrada e fica sem nível até completar a calibração. Fica no registro de correções. **Sem nível até calibrar.** Quem entra sem um nível dado à mão (cadastro ou admin) não recebe rótulo enquanto calibra (5 rachas ou 25 partidas): o rating existe por baixo — monta time, entra na conta dos outros — mas a escada mostra a pessoa em "Sem nível ainda", com o progresso da calibração.
 
 | Patente | Faixa interna de rating |
 |---|---|
