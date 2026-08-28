@@ -399,6 +399,10 @@ button.rk2{cursor:pointer} button.rk2:active{opacity:.65}
 .esc2 .pl.empty{border-style:dashed;color:var(--mute);background:transparent;font-weight:400}
 .esc2 .pl .ic{font-size:11px;color:var(--mute);flex:0 0 auto}
 .esc2 .pl .ic.sub{opacity:.7}
+.esc2 .pl.sel{background:var(--chalk);color:#0B0F0D;border-color:var(--chalk)}
+.esc2 .col .teamtag{margin-bottom:6px;display:block}
+.esc2 .col .res{margin-top:8px}
+.esc2 .col .res .k{margin-bottom:4px;font-size:10px}
 .slot{border-radius:14px;padding:13px 10px;text-align:center;cursor:pointer;border:1px solid var(--line2);
   background:var(--panel2);color:var(--chalk)}
 .slot .nm{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-size:15px}
@@ -1778,18 +1782,18 @@ const pct=x=>Math.round(x*100)+'%';
    `orig` = ids do time de origem (quem não está nele leva o ícone de
    substituto ⇄); goleiro do rodízio leva ↻. `act` monta os data-a de cada
    slot; sem `act` os slots são só leitura.                                  */
-function escCol(liga,lv,ids,gk,per,orig,act){
-  const pool=lv.gkPool||[];
+function escCol(liga,lv,ids,gk,per,orig,act,extra){
+  const pool=lv.gkPool||[];extra=extra||{};
   const linha=ids.filter(id=>id!==gk);
   const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
   const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="substituto: não é do time">⇄</span>':'';
-  const slot=(id,cls,attrs)=>id?`<button class="pl ${cls}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
-    :`<button class="pl ${cls} empty" ${attrs||''}><span class="nm">${cls==='gk'?'🧤 sem goleiro':'vaga'}</span></button>`;
+  const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
+    :`<button class="pl ${cls} empty" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
   let h=gk?`<button class="pl gk" ${act?act.gk:''}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
     :`<button class="pl gk empty" ${act?act.gk:''}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
   const n=Math.max(per,linha.length);
   for(let i=0;i<n;i++){const id=linha[i];h+=slot(id,'',id&&act?act.pl(id):'')}
-  return `<div class="col">${h}</div>`;
+  return `<div class="col" ${extra.attrs||''}>${extra.head||''}${h}${extra.foot||''}</div>`;
 }
 
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
@@ -1856,28 +1860,23 @@ function viewProxima(liga,lv){
       </button>`}).join('<div class="vs">VS</div>')}
     </div>
     <div class="esc2">
-      ${[0,1].map(sd=>escCol(liga,lv,escalCom[sd],gkDe(sd),per,lv.teams[pair[sd]].ids,{gk:`data-a="preGk" data-sd="${sd}"`,pl:()=>''})).join('')}
+      ${[0,1].map(sd=>{const ti=pair[sd],t=lv.teams[ti],res=t.ids.slice(per);
+        return escCol(liga,lv,escalCom[sd],gkDe(sd),per,t.ids,
+          {gk:`data-a="preGk" data-sd="${sd}"`,
+           pl:id=>compl[sd].includes(id)?`data-a="fillDel" data-sd="${sd}" data-id="${id}" title="tirar quem completa"`
+                 :`data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}"`,
+           empty:lv.fillOff?'':`data-a="fillPick" data-sd="${sd}"`},
+          {attrs:`data-a="toTeam" data-i="${ti}" data-drop-zone="team:${ti}"`,
+           head:`<div class="teamtag ${TEAMBG[ti]}">${esc(t.name)}${gp.fica[sd]?' <span style="opacity:.75;font-weight:400">· goleiro fica</span>':''}</div>`,
+           foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false)).join('')}</div></div>`:''})}).join('')}
     </div>
-    ${ex?`<div class="tiny muted" style="margin-top:9px">${esc(equilibrio)} — chance esperada pelo nível de quem entra em quadra.</div>`:''}
+    <div class="tiny muted" style="margin-top:8px">🧤 toque para trocar o goleiro${pool.length?' · ↻ rodízio':''} · ⇄ não é do time · toque num nome e depois no outro para trocar, ou arraste${pool.length>1?` · esperando no rodízio: ${pool.filter(id=>!gp.gks.includes(id)).map(id=>esc(nameOf(liga,id))).join(', ')||'ninguém'}`:''}</div>
+    ${ex?`<div class="tiny muted" style="margin-top:6px">${esc(equilibrio)} — chance esperada pelo nível de quem entra em quadra.</div>`:''}
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
       return rs.length?`<div class="tiny muted" style="margin-top:6px">Hoje: ${rs.map(x=>esc(x.n)+' '+x.r.w+'V'+(x.r.d?' '+x.r.d+'E':'')+' '+x.r.l+'D').join(' · ')}</div>`:''})()}
     ${outros.length?`<div class="tiny muted" style="margin-top:6px">Esperando: ${outros.map(i=>esc(lv.teams[i].name)).join(', ')}${liga.cfg.winnerStays?' · vencedor fica, empate os dois saem':''}</div>`:''}
   </div>
-  ${pool.length||gkDe(0)||gkDe(1)?`<div class="card" style="margin-top:10px">
-    <div class="row"><div class="k">🧤 No gol</div><div class="sp tiny muted">${gp.manual?'escolhido na mão':pool.length?'goleiro do time que venceu fica; o outro lado troca':'goleiro fixo do time'}</div></div>
-    <div class="row" style="gap:8px;margin-top:8px">
-      ${[0,1].map(sd=>{const g=gkDe(sd);return `<button class="slot ${TEAMCLASS[pair[sd]]}" data-a="preGk" data-sd="${sd}" style="flex:1;padding:9px 10px">
-        <div class="tiny" style="opacity:.75">${esc(lv.teams[pair[sd]].name)}</div>
-        <div class="nm" style="font-size:15px">${g?'🧤 '+esc(nameOf(liga,g)):'sem goleiro'}</div>
-        <div class="sub">${gp.fica[sd]?'fica — o time venceu':gp.manual?'toque para trocar':g&&pool.includes(g)?'do rodízio':g?'do time':'toque para escolher'}</div>
-      </button>`}).join('')}
-    </div>
-    ${pool.length>1?`<div class="tiny muted" style="margin-top:8px">Esperando no rodízio: ${pool.filter(id=>!gp.gks.includes(id)).map(id=>esc(nameOf(liga,id))).join(', ')||'ninguém'}</div>`:''}
-  </div>`:''}
   ${cardCompletar(liga,lv,pair)}
-  <div class="teamwrap" style="margin-top:10px">
-    ${[0,1].map(sd=>timeCard(liga,lv,pair[sd],per,compl[sd],sd)).join('')}
-  </div>
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
     <div class="row"><div class="k">Fora desta partida</div>
       <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+outros.reduce((a,i)=>a+lv.teams[i].ids.length,0)}</div></div>
@@ -1910,17 +1909,8 @@ function cardCompletar(liga,lv,pair){
   return `<div class="card gkcard" style="margin-top:10px">
     <div class="row"><div class="k">Completar para fechar ${info.alvo}v${info.alvo}</div>
       <button class="btn sm ghost sp" data-a="fillOff">${lv.fillOff?'Completar de novo':`Jogar ${menor}v${menor} assim`}</button></div>
-    ${lv.fillOff?'<div class="tiny muted" style="margin-top:8px">Os dois lados entram com ${menor} — ninguém completa.</div>'
-      :[0,1].map(sd=>{
-      if(!f[sd].length&&!falta[sd])return '';
-      const t=lv.teams[pair[sd]];
-      return `<div style="margin-top:9px">
-        <div class="teamtag ${TEAMBG[pair[sd]]}">${esc(t.name)} entra com ${info.tam[sd]}</div>
-        <div class="chips">
-          ${f[sd].map(id=>`<button class="tp big" data-a="fillDel" data-sd="${sd}" data-id="${id}">${esc(nameOf(liga,id))} ✕</button>`).join('')}
-          ${falta[sd]?`<button class="tp big" data-a="fillPick" data-sd="${sd}" style="border-style:dashed">＋ quem completa (${falta[sd]})</button>`:''}
-        </div></div>`}).join('')}
-    ${lv.fillOff?'':`<div class="tiny muted" style="margin-top:9px">Quem completa joga esta partida por esse time e volta para o dele depois. Toque no nome para tirar.</div>`}
+    <div class="tiny muted" style="margin-top:8px">${lv.fillOff?`Os dois lados entram com ${menor} — ninguém completa.`
+      :`Quem completa aparece na escalação com ⇄, joga esta partida por esse time e volta para o dele depois. Toque nele para tirar; toque em “＋ completar” para escolher outro.`}</div>
   </div>`;
 }
 function viewJogo(liga,lv){
