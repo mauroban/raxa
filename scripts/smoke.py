@@ -219,6 +219,16 @@ step('desfazer',()=>A.undo());
 step('encerrar segunda partida',()=>{A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}})});
 step('formato 11v11',()=>A.setFormat({dataset:{v:'11'}}));
 step('modo partida unica',()=>A.setMatchMode({dataset:{v:'unica'}}));
+step('partida unica com goleiro fixo: escalacao sem vaga fantasma',()=>{
+  const l=L(),lv=l.live;lv.stage='jogo';lv.cur=null;
+  const gks=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  lv.presentIds=[...new Set(gks.concat(l.players.filter(p=>!p.gk).slice(0,10).map(p=>p.id)))];lv.gkToday=gks.slice();
+  A.setFormat({dataset:{v:'5'}});applyPlan(l,lv);
+  if((lv.gkPool||[]).length)throw new Error('com um goleiro por time nao deveria haver rodizio');
+  render();
+  if(/pl  empty|＋ completar|>vaga</.test(document.querySelector('#app').innerHTML))throw new Error('escalacao mostra vaga que nao existe (goleiro fixo conta como um dos 5)');
+  A.setFormat({dataset:{v:'11'}});
+});
 step('modo varias curtas',()=>A.setMatchMode({dataset:{v:'curtas'}}));
 step('comecar partida para as substituicoes',()=>A.startMatch());
 step('substituir tocando em quem esta em quadra',()=>{

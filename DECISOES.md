@@ -474,6 +474,16 @@ texto, presença em uma coluna até 460 px (nome inteiro em vez de "Jefferso…"
 **Onde:** `index.html` (`<style>`, `viewPresenca`, `viewTimes`, `viewProxima`, `viewJogo`,
 `statsBlock`, `viewStats`, `viewRanking`) · smoke continua cobrindo os textos que importam.
 
+### D-42 · Goleiro fixo é um dos N; gols abaixo das substituições
+**28/08/2026.** Na escalação (`escCol`), o número de lugares de linha é `per` menos 1 quando o
+goleiro é fixo (fora do rodízio) — ele ocupa um dos `per` lugares. Goleiro do rodízio continua
+entrando além de `per`. Na partida ao vivo, o cartão **Gols** passa para baixo do cartão de
+reservas/fora (substituições), antes de "Partidas de hoje".
+**Por quê:** na partida única (e em qualquer racha com um goleiro por time) aparecia uma vaga
+fantasma em cada time. E na partida longa a lista de gols cresce muito e empurrava para longe
+os nomes de quem pode entrar.
+**Onde:** `escCol`, `viewJogo` · smoke "partida unica com goleiro fixo: escalacao sem vaga fantasma".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

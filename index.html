@@ -1831,7 +1831,10 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
     :`<button class="pl ${cls} empty" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
   let h=gk?`<button class="pl gk" ${act?act.gk:''}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
     :`<button class="pl gk empty" ${act?act.gk:''}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
-  const n=Math.max(per,linha.length);
+  /* `per` é o tamanho do time. Goleiro do rodízio entra ALÉM dele; goleiro
+     fixo (partida única, ou um por time) é um dos `per` — senão sobra uma
+     vaga fantasma na escalação.                                             */
+  const n=Math.max(per-(gk&&!pool.includes(gk)?1:0),linha.length);
   for(let i=0;i<n;i++){const id=linha[i];h+=slot(id,'',id&&act?act.pl(id):'')}
   return `<div class="col" ${extra.attrs||''}>${extra.head||''}${h}${extra.foot||''}</div>`;
 }
@@ -1988,7 +1991,6 @@ function viewJogo(liga,lv){
       {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
   </div>
   <div class="tiny muted" style="margin:10px 2px 0">Toque num nome para substituir</div>
-  ${golsCard(liga,lv,c)}
   <div class="card" style="margin-top:10px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
@@ -2012,6 +2014,7 @@ function viewJogo(liga,lv){
       <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
     </div>
   </div>
+  ${golsCard(liga,lv,c)}
   ${lv.matchIds.length?todayBlock(liga,lv):''}`;
 }
 function mmss(ms){const s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+"'"+String(s%60).padStart(2,'0')}
