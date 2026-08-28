@@ -1299,7 +1299,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${PATC[patOf(step)]}"></span>`:'';
@@ -2268,7 +2268,7 @@ function barFor(liga){
     <button class="btn pri" data-a="toTimes" ${lv.presentIds.length<4?'disabled':''}>Montar times (${lv.presentIds.length})</button>`;
   if(lv.stage==='times')return `
     <button class="btn ghost" data-a="backPres">Voltar</button>
-    <button class="btn pri" data-a="startMatch">▶ Começar partida</button>`;
+    <button class="btn pri" data-a="startJogo">▶ Começar racha</button>`;
   if(!lv.cur)return `
     <button class="btn ghost" data-a="endRacha">Encerrar racha</button>
     <button class="btn pri" data-a="startMatch">▶ Começar partida</button>`;
@@ -2661,6 +2661,18 @@ const A={
   },
 
   /* ----- partida ----- */
+  /* Times fechados: o racha começa, mas a partida não. A tela seguinte é a de
+     "Próxima partida" — quem joga, escalação, chance — e só o apito é o botão
+     "Começar partida". Assim dá para conferir/trocar quem entra antes do relógio. */
+  startJogo(){
+    const l=L(),lv=l.live;
+    if(lv.teams.length<2)return toast('Monte os times primeiro');
+    if(!Array.isArray(lv.queue))lv.queue=[];
+    lv.stage='jogo';lv.cur=null;
+    lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
+    lv.nextPair=suggestPair(l,lv);resetFill(lv);
+    save();render();
+  },
   startMatch(){
     const l=L(),lv=l.live;
     if(lv.cur)return;

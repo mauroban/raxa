@@ -81,6 +81,13 @@ step('forcar 3 times: com 16 na linha no 7v7 so cabem 2 cheios',()=>{
 step('equilibrar de novo',()=>A.balance());
 step('sortear aleatorio',()=>A.shuffle());
 step('equilibrar',()=>A.balance());
+step('comecar racha: cai na tela de proxima partida, sem relogio',()=>{
+  A.startJogo();
+  const lv=L().live;
+  if(lv.stage!=='jogo'||lv.cur)throw new Error('esperava stage jogo sem partida em andamento');
+  if(!/Próxima partida/.test(els['#app'].innerHTML))throw new Error('tela de proxima partida nao apareceu');
+  if(!/Começar partida/.test(els['#bar'].innerHTML))throw new Error('barra deveria oferecer Começar partida');
+});
 step('comecar partida',()=>A.startMatch());
 step('os dois lados entram com o mesmo numero (4 de linha + goleiro)',()=>{
   const c=L().live.cur;
