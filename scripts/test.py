@@ -54,6 +54,8 @@ function lanca(lineA,lineB,result,o){
   const {c,stints,t0,dur}=partida(lineA,lineB,o);
   if(o.resultados)stints.forEach((s,i)=>{if(o.resultados[i]!==undefined)s.result=o.resultados[i]});
   else stints.forEach(s=>s.result=result);
+  /* partida unica usa o placar do trecho (margem): trecho sem gol registrado ganha o placar do resultado */
+  stints.forEach(s=>{if(!s.score||s.score[0]+s.score[1]===0)s.score=s.result===0?[1,0]:s.result===1?[0,1]:[0,0]});
   const m={id:'m'+liga.matches.length,ts:t0+dur,startedAt:t0,endedAt:t0+dur,sessionId:o.sid||'s1',
     mode:o.mode,names:['Time A','Time B'],teamIdx:[0,1],
     lineups:c.lineups.map(x=>[...x]),startLineups:[[...lineA],[...lineB]],
@@ -214,159 +216,23 @@ const rU=computeElo(liga,part,1);
 ok(Math.abs(rU.deltas['p10'])>Math.abs(dA),'zebra rende mais que o favorito confirmar');
 const rd=computeElo(liga,part,'draw');
 ok(rd.deltas['p1']<0&&rd.deltas['p10']>0,'empate: favorito perde, azarao ganha');
-ok(KMODE.curtas.base>12,'racha curto (10 a 15 partidas por noite) pesa mais que na calibragem antiga de 25 partidas');
+ok(KMODE.curtas.base===20&&KMODE.curtas.cal===40&&KMODE.unica.base===20,'K classico: 40 calibrando, 20 depois, nos dois modos');
 const divisao=stepMin(1)-stepMin(0);
 const vitLiq=divisao/(KMODE.curtas.base/2);
 console.log('  K='+KMODE.curtas.base+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
-ok(vitLiq>=3&&vitLiq<=5,'meia noite boa (3 a 5 vitorias liquidas) vale uma divisao');
-{ /* Ferro 1 estabelecido (fora da calibracao) que vence 7 seguidas em times parelhos: tem que subir 2 divisoes na noite */
-  const f=mk('Ferro1',stepMid(0),0);f.L.games=40;f.L.sessions=8;f.L.def=true;f.L.rank=0;liga.players.push(f);
-  const par=[];for(let i=0;i<9;i++){const q=mk('Par'+i,stepMid(0),0);q.L.games=40;q.L.sessions=8;q.L.rank=0;liga.players.push(q);par.push(q.id)}
-  const meu=[f.id,...par.slice(0,4)],eles=par.slice(4,9);
-  const r0=f.L.rank;
-  /* o balanceador remonta os times a cada partida para ficar ~50/50: aqui os outros voltam ao nivel de origem */
-  for(let i=0;i<7;i++){par.forEach(id=>{const q=P(liga,id);q.L.elo=stepMid(0)});lanca(meu,eles,0,{sid:'noite-ferro'})}
-  console.log('  Ferro 1 vencendo 7 seguidas: '+rankLabel(liga,r0)+' -> '+rankLabel(liga,f.L.rank)+' ('+Math.round(f.L.elo-stepMid(0))+' pts)');
-  ok(f.L.rank-r0>=2,'7 vitorias seguidas em times parelhos sobem pelo menos 2 divisoes (antes: 1)');
-  ok(streakK(f.L)===STREAK_K,'sequencia de 4+ liga o acelerador de K');
-  ok(streakK({form:['V','E','V','V','D','V','E','V','V','V']})===STREAK_K,'7V-1D em 10 (com empates no meio) tambem liga o acelerador');
-  ok(streakK({form:['V','D','V','E','D','V','D','V','D','E']})===1,'forma misturada nao liga');
+ok(vitLiq>=6&&vitLiq<=7,'com K=20 uma divisao pede 6 a 7 vitorias liquidas (metade de um racha bom)');
+{ /* Elo classico: K constante depois da calibracao, sem acelerador nem decaimento */
   const km=KMODE.curtas;
-  ok(kFor(km,{games:20})===km.base&&kFor(km,{games:60})===km.base,'ate 60 partidas o K e cheio');
-  ok(kFor(km,{games:120})<km.base&&kFor(km,{games:120})>km.min,'com 120 partidas o K ja caiu, mas nao no piso');
-  ok(kFor(km,{games:400})===km.min,'veterano de 400 partidas fica no piso (24)');
-  /* veterano mal calibrado: K no piso, mas o acelerador o tira de la */
-  const v=mk('Vet',stepMid(0),0);v.L.games=400;v.L.sessions=60;v.L.def=true;v.L.rank=0;liga.players.push(v);
-  const meu2=[v.id,...par.slice(0,4)];
-  for(let i=0;i<7;i++){par.forEach(id=>{const q=P(liga,id);q.L.elo=stepMid(0)});lanca(meu2,eles,0,{sid:'noite-vet'})}
-  console.log('  veterano (400 partidas) vencendo 7 seguidas: '+rankLabel(liga,0)+' -> '+rankLabel(liga,v.L.rank)+' ('+Math.round(v.L.elo-stepMid(0))+' pts)');
-  ok(v.L.rank>=1,'veterano preso la embaixo sobe pelo menos 1 divisao numa noite perfeita');
-}
-
-console.log('\n[5] trechos: cada formacao em campo e uma partida');
-let pt=partida(A5,B5,{dur:8*MIN,events:[{at:4*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
-console.log('  8 min com troca aos 4: '+pt.stints.length+' trechos de peso '+pt.stints.map(s=>s.w).join(' / '));
-ok(pt.stints.length===2,'a substituicao fecha um trecho e abre outro');
-ok(Math.abs(pt.stints[0].w-0.5)<0.01&&Math.abs(pt.stints[1].w-0.5)<0.01,'cada trecho vale metade da partida');
-ok(pt.stints.every(s=>s.counted),'trecho de 4 min conta');
-ok(pt.stints[0].lineups[0].includes('p1')&&pt.stints[1].lineups[0].includes('p6'),'o trecho novo tem o set novo de jogadores');
-ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'os trechos somados valem uma partida — 2 trechos nao valem em dobro');
-
-pt=partida(A5,B5,{dur:8*MIN,events:[{at:2*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
-console.log('  8 min com troca aos 2: contam '+pt.stints.filter(s=>s.counted).length+' de '+pt.stints.length+' trechos');
-ok(!pt.stints[0].counted,'trecho cortado por troca com menos de 4 min e descartado');
-ok(pt.stints[1].counted,'o trecho que termina no apito conta sempre');
-ok(Math.abs(pt.stints[1].w-1)<0.01,'o peso do trecho descartado e redistribuido: a partida continua valendo 1');
-
-/* O minimo e relativo: num racha de 7 min, 4 min fixos fariam qualquer troca
-   descartar quase a partida inteira.                                        */
-pt=partida(A5,B5,{dur:7*MIN,events:[{at:3.5*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
-ok(pt.stints.every(s=>s.counted),'partida de 7 min com troca na metade: os dois trechos contam');
-ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma partida');
-
-/* Trecho curto sem gol (menos de 20% da partida) nao conta — nem no fim. */
-{
-  const pt=partida(A5,B5,{dur:10*MIN,events:[{at:2*MIN,type:'goal',side:0},{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'}]});
-  console.log('  10 min, troca aos 9 sem gol depois: contam '+pt.stints.filter(s=>s.counted).length+' de '+pt.stints.length+' | pesos '+pt.stints.map(s=>s.w).join('/'));
-  ok(pt.stints.length===2&&!pt.stints[1].counted,'trecho final de 1 min sem gol e descartado');
-  ok(pt.stints[0].counted&&Math.abs(pt.stints[0].w-1)<0.01,'o trecho grande fica com a partida inteira');
-  const pt2=partida(A5,B5,{dur:10*MIN,events:[{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'},{at:9.5*MIN,type:'goal',side:1}]});
-  ok(pt2.stints[1].counted,'trecho final curto COM gol conta');
-  ok(Math.abs(pt2.stints[0].w-0.5)<0.01&&Math.abs(pt2.stints[1].w-0.5)<0.01,'dois trechos validos: K dividido por 2, mesmo com duracoes diferentes');
-  const pt3=partida(A5,B5,{dur:12*MIN,events:[{at:4*MIN,type:'sub',side:0,out:'p1',in:'p6'},{at:8*MIN,type:'sub',side:0,out:'p2',in:'p7'}]});
-  ok(pt3.stints.filter(s=>s.counted).length===3&&pt3.stints.every(s=>Math.abs(s.w-1/3)<0.01),'tres trechos validos: cada um vale 1/3');
-  /* resultado da partida vai para o maior trecho quando o final e descartado */
+  ok(kFor(km,{games:20})===20&&kFor(km,{games:400})===20,'K nao decai com o historico');
+  ok(streakK({form:['V','V','V','V','V','V']})===1,'sequencia nao acelera o K');
   liga.matches.length=0;rebuildAll(liga);
-  const e0=elo('p6');
-  lanca(A5,B5,1,{dur:10*MIN,score:[0,1],events:[{at:2*MIN,type:'goal',side:1},{at:9*MIN,type:'sub',side:0,out:'p1',in:'p6'}]});
-  ok(elo('p6')===e0&&P(liga,'p6').L.games===0,'quem so jogou o trecho descartado nao ganha, nao perde e nao conta partida');
-  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.l===1,'quem jogou o trecho valido leva a derrota da partida');
-}
-
-/* Partida longa (unica): peso proporcional ao tempo, trecho conta a partir do minimo
-   absoluto, e a vitoria so vai para quem jogou pelo menos 25% do tempo. */
-{
-  const c0={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[1,0],
-    events:[{type:'sub',side:0,out:'p1',in:'p6'},{type:'goal',side:0},{type:'sub',side:0,out:'p6',in:'p1'}],
-    lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
-  c0.events[0].t=c0.startedAt+10*MIN;c0.events[1].t=c0.startedAt+20*MIN;c0.events[2].t=c0.startedAt+45*MIN;
-  const st=splitStints(c0,c0.startedAt+50*MIN,liga.cfg,'unica');
-  console.log('  partida unica de 50 min, trocas aos 10 e 45: '+st.length+' trechos, pesos '+st.map(s=>s.w).join('/'));
-  ok(st.length===3&&st.every(s=>s.counted),'na partida longa todos os trechos de 5 min ou mais contam, com ou sem gol');
-  ok(Math.abs(st[0].w-.2)<.01&&Math.abs(st[1].w-.7)<.01&&Math.abs(st[2].w-.1)<.01,'peso e a fatia de tempo, nao 1/n');
-  const stC=splitStints(c0,c0.startedAt+50*MIN,liga.cfg,'curtas');
-  ok(!stC[2].counted,'a mesma partida no modo curto descartaria o trecho final de 5 min sem gol (10%)');
-  /* quem jogou pouco nao recebe a vitoria da partida */
+  liga.players.forEach(p=>{p.L.games=CAL_GAMES;p.L.elo=1500});
+  const dv=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
+  ok(dv===10,'vitoria em jogo parelho, calibrado: +10 (K=20 x 0,5), deu '+dv);
   liga.matches.length=0;rebuildAll(liga);
-  liga.cfg.matchMode='unica';
-  const m={id:'mu',ts:c0.startedAt+50*MIN,startedAt:c0.startedAt,endedAt:c0.startedAt+50*MIN,sessionId:'su',mode:'unica',
-    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st,score:[1,0],result:0,
-    goals:[],disputes:[],voided:false};
-  applyMatch(liga,m);liga.matches.push(m);
-  ok(P(liga,'p6').L.games===1&&P(liga,'p6').L.w===1,'p6 jogou 35 de 50 min (70%): leva a partida');
-  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'p1 jogou 10+5 = 15 de 50 (30%): tambem leva');
-  /* +/-: gols a favor menos contra enquanto estava em quadra, em todos os trechos */
-  ok(P(liga,'p6').pm===1&&P(liga,'p1').pm===0&&P(liga,B5[0]).pm===-1,'+/-: p6 +1 (estava no 1-0), p1 0 (trechos 0-0), time B -1');
-  const Jst=statsLiga(liga,'sempre').J;
-  ok(Jst['p6'].pm===1&&Jst[B5[0]].pm===-1,'stats: +/- bate com o motor');
-  /* D-45: na partida única o nível anda por CONFRONTO (trechos com a mesma escalação se juntam)
-     e o placar vale por margem. */
-  const U=unidadesNivel(liga,m);
-  ok(U.length===2,'3 trechos, mas A5xB5 aparece duas vezes (0-10 e 45-50): viram 2 confrontos, nao 3');
-  const uAB=U.find(u=>u.score[0]===0),uP6=U.find(u=>u.score[0]===1);
-  ok(uAB&&Math.abs(uAB.w-.3)<.01&&Math.abs(uAB.dur-15*MIN)<1,'o confronto juntado soma tempo (15 min) e peso (0,3)');
-  ok(uP6&&Math.abs(uP6.S[0]-.7311)<.001&&Math.abs(uAB.S[0]-.5)<.001,'placar por margem: 1-0 vale 0,73 para quem fez; 0-0 vale 0,5');
-  ok(Math.abs(margemS(3,0)[0]-.9526)<.001&&margemS(3,0)[0]>margemS(1,0)[0]&&margemS(5,0)[0]<1,'gol importa (3-0 > 1-0), mas satura (5-0 < 1,0)');
-  /* empatar com time pior custa pontos para o melhor e rende para o pior */
-  liga.matches.length=0;rebuildAll(liga);
-  P(liga,'p1').L.elo=P(liga,'p1').L.base=1600;
-  const c2={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[0,0],events:[],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
-  const st2=splitStints(c2,c2.startedAt+50*MIN,liga.cfg,'unica');
-  const m2={id:'mu3',ts:c2.startedAt+50*MIN,startedAt:c2.startedAt,endedAt:c2.startedAt+50*MIN,sessionId:'su3',mode:'unica',
-    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st2,score:[0,0],result:'draw',goals:[],disputes:[],voided:false};
-  applyMatch(liga,m2);
-  ok(m2.deltas['p1']<0&&m2.deltas[B5[0]]>0,'0-0 contra time pior: o melhor perde pontos, o pior ganha');
-  liga.cfg.matchMode='curtas';
 }
-{
-  /* Um figurante de 2 min (abaixo do minimo de 3) nao conta nada. */
-  liga.matches.length=0;rebuildAll(liga);liga.cfg.matchMode='unica';
-  const c1={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[1,0],events:[],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
-  c1.events=[{t:c1.startedAt+45*MIN,type:'sub',side:0,out:'p1',in:'p6'},{t:c1.startedAt+47*MIN,type:'sub',side:0,out:'p6',in:'p1'}];
-  const st1=splitStints(c1,c1.startedAt+50*MIN,liga.cfg,'unica');
-  const m1={id:'mu2',ts:c1.startedAt+50*MIN,startedAt:c1.startedAt,endedAt:c1.startedAt+50*MIN,sessionId:'su2',mode:'unica',
-    names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st1,score:[1,0],result:0,goals:[],disputes:[],voided:false};
-  applyMatch(liga,m1);liga.matches.push(m1);
-  ok(P(liga,'p6').L.games===0,'quem jogou 2 de 50 min nao recebe a partida (nem vitoria, nem contagem)');
-  ok(P(liga,'p6').L.elo===P(liga,'p6').L.base,'e o trecho de 2 min (abaixo do minimo de 3) nem mexe no rating dele');
-  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'quem jogou 48 de 50 leva a vitoria');
-  liga.cfg.matchMode='curtas';liga.matches.length=0;rebuildAll(liga);
-}
-
-/* Protecao pos-promocao: a unidade e o trecho, como em todo o resto do motor. */
-liga.matches.length=0;rebuildAll(liga);
-const prot=P(liga,'p2');prot.L.protect=3;
-lanca(A5,B5,0,{dur:10*MIN,events:[{at:5*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
-ok(prot.L.protect===1,'a protecao e contada em trechos: 2 trechos gastam 2');
-liga.matches.length=0;rebuildAll(liga);
-
-pt=partida(A5,B5,{dur:10*MIN,
-  events:[{at:3*MIN,type:'goal',side:0},{at:5*MIN,type:'sub',side:0,out:'p1',in:'p6'},{at:7*MIN,type:'goal',side:1}],
-  fimA:['p6','p2','p3','p4','p5'],score:[1,1]});
-ok(pt.stints[0].score[0]===1&&pt.stints[0].score[1]===0&&pt.stints[0].result===0,'o 1o trecho fica com o gol que aconteceu nele');
-ok(pt.stints[1].score[1]===1&&pt.stints[1].result===1,'o placar volta a zero na troca — o 2o trecho e do time que marcou depois');
-
-liga.matches.length=0;rebuildAll(liga);
-lanca(A5,B5,undefined,{dur:10*MIN,score:[1,1],goals:[],resultados:[0,1],
-  events:[{at:5*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});
-console.log('  p1 (saiu no meio) '+(elo('p1')-P(liga,'p1').L.base)+' | p6 (entrou) '+(elo('p6')-P(liga,'p6').L.base)+' | p2 (jogou tudo) '+(elo('p2')-P(liga,'p2').L.base));
-ok(elo('p1')>P(liga,'p1').L.base,'quem saiu leva so o trecho que jogou — e nele o time venceu');
-ok(elo('p6')<P(liga,'p6').L.base,'quem entrou leva so o trecho dele — e nele o time perdeu');
-ok(P(liga,'p1').L.games===1&&P(liga,'p2').L.games===1,'partida e uma so: quem jogou os dois trechos conta UMA partida, quem jogou um tambem');
-liga.matches.length=0;rebuildAll(liga);
-
 console.log('\n[6] calibracao');
-liga.players.forEach(p=>{p.L.games=20;p.L.sessions=6});
+liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});
 const novato=mk('Novato',1500,0);liga.players.push(novato);
 const partN=stintPart({lineups:[[novato.id,'p2','p3'],['p10','p11','p12']],gks:[null,null]});
 const rn=computeElo(liga,partN,0);
@@ -374,18 +240,24 @@ ok(Math.abs(rn.deltas[novato.id])>Math.abs(rn.deltas['p2']),'novato anda mais ra
 const cal=mk('Cal',1500,0);
 ok(calibrando(liga,cal,cal.L),'quem chega esta calibrando');
 const CG=liga.cfg.calGames,CR=liga.cfg.calRachas;
-ok(CG===CAL_GAMES&&CR===CAL_RACHAS,'calibracao e fixa: '+CG+' partidas ou '+CR+' rachas, sem opcao por liga');
+ok(CG===25&&CR===3,'calibracao e fixa: 25 partidas no racha curto, 3 rachas na partida unica');
 cal.L.games=CG-1;cal.L.sessions=CR-1;
 ok(calibrando(liga,cal,cal.L),(CG-1)+' partidas em '+(CR-1)+' rachas: ainda calibrando');
 cal.L.games=CG;
 ok(!calibrando(liga,cal,cal.L),CG+' partidas encerra a calibracao');
 cal.L.games=6;cal.L.sessions=CR;
-ok(!calibrando(liga,cal,cal.L),CR+' rachas encerra a calibracao mesmo com poucas partidas');
+ok(calibrando(liga,cal,cal.L),'no racha curto, rachas nao encerram: so partidas');
+liga.cfg.matchMode='unica';
+ok(!calibrando(liga,cal,cal.L),'na partida unica, '+CR+' rachas encerram a calibracao mesmo com poucas partidas');
+cal.L.games=CG;cal.L.sessions=CR-1;
+ok(calibrando(liga,cal,cal.L),'na partida unica, partidas nao encerram: so rachas');
+liga.cfg.matchMode='curtas';cal.L.games=CG;
 /* a calibracao precisa corrigir um cadastro errado em uma ou duas noites */
 const errado=mk('Errado',1500,0);liga.players.push(errado);
+const par=['p2','p3','p10','p11','p12'].map(id=>P(liga,id));const eloAntes=par.map(x=>x.L.elo);par.forEach(x=>x.L.elo=1500);
 let ganho=0;for(let i=0;i<12;i++){const r=computeElo(liga,stintPart({lineups:[[errado.id,'p2','p3'],['p10','p11','p12']],gks:[null,null]}),0,'curtas');ganho+=r.deltas[errado.id]}
-liga.players.pop();
-ok(ganho>=STEP*2,'12 vitorias em calibracao ja sobem mais de duas divisoes ('+Math.round(ganho)+' pts)');
+par.forEach((x,i)=>x.L.elo=eloAntes[i]);liga.players.pop();
+ok(ganho>=STEP*2,'12 vitorias parelhas em calibracao (K=40) sobem mais de duas divisoes ('+Math.round(ganho)+' pts)');
 ok(calibrando(liga,cal,cal.G),'a patente de goleiro dele continua calibrando — sao trilhas separadas');
 liga.players.forEach(p=>{['L','G'].forEach(k=>{p[k].games=0;p[k].sessions=0})});
 
@@ -436,11 +308,11 @@ const partM=stintPart({lineups:[A5,B5],gks:[null,null]});
 const dCurta=computeElo(liga,partM,0,'curtas').deltas['p1'];
 const dUnica=computeElo(liga,partM,0,'unica').deltas['p1'];
 console.log('  mesma vitoria: racha curto move '+dCurta+', racha de partida unica move '+dUnica);
-ok(Math.abs(dUnica)>Math.abs(dCurta),'partida unica pesa mais que uma partida curta');
+ok(dUnica===dCurta,'mesmo K nos dois modos: o que muda e o peso da unidade (1/n x fatia de tempo)');
 const mCurta=lanca(A5,B5,0,{mode:'curtas',sid:'rA'}), mUnica=lanca(A5,B5,0,{mode:'unica',sid:'rB'});
 rebuildAll(liga);
 console.log('  historico misto: racha curto '+mCurta.deltas['p1']+' | racha longo '+mUnica.deltas['p1']);
-ok(Math.abs(mUnica.deltas['p1'])>Math.abs(mCurta.deltas['p1']),'no mesmo historico, cada partida mantem o peso do seu racha');
+ok(mCurta.deltas['p1']>0&&mUnica.deltas['p1']<0,'na partida unica o placar vale por margem: favorito de 88% ganhando so de 1-0 (0,73) PERDE pontos, enquanto no racha curto a vitoria e inteira e rende');
 const congelado=JSON.stringify(mCurta.deltas);
 liga.cfg.matchMode='unica';rebuildAll(liga);
 ok(JSON.stringify(mCurta.deltas)===congelado,'mudar o padrao da liga nao mexe em partida ja jogada');

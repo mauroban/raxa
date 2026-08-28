@@ -524,40 +524,19 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    vitórias para subir 3 divisões, e o racha ficava desequilibrado esse tempo
    todo. Com 36 (e o acelerador de sequência abaixo) uma noite perfeita vale
    ~2 divisões; uma noite normal, meia.                                       */
-const KMODE={curtas:{cal:60,base:36,min:24},unica:{cal:70,base:44,min:30}};
-/* K que decai com histórico (à la Glicko): quem tem muitas partidas já provou
-   onde está e balança menos; quem está chegando anda rápido. Até K_FULL
-   partidas vale `base`; depois cai com a raiz do histórico até `min`.      */
-const K_FULL=60;
-function kFor(km,tr){
-  const g=tr.games||0;
-  if(g<=K_FULL)return km.base;
-  return Math.max(km.min,km.base*Math.sqrt(K_FULL/g));
-}
-/* Acelerador: sinal de nível ERRADO, não de sorte — e é o que impede alguém
-   calibrado em times ruins de ficar preso lá embaixo com K pequeno.
-   Dispara com 4+ resultados iguais seguidos OU saldo de ±6 nas últimas 10
-   (7 vitórias e 1 derrota com empates no meio também conta). Vale nos dois
-   sentidos, e multiplica o K por 1,5 enquanto o sinal durar.               */
-const STREAK_MIN=4, STREAK_K=1.5, FORM_GAP=6;
-function streakK(tr){
-  const f=tr.form||[];
-  if(f.length>=STREAK_MIN&&f[0]!=='E'){let run=true;for(let i=0;i<STREAK_MIN;i++)if(f[i]!==f[0]){run=false;break}if(run)return STREAK_K}
-  if(f.length>=8){let v=0,d=0;f.slice(0,10).forEach(x=>{if(x==='V')v++;else if(x==='D')d++});if(Math.abs(v-d)>=FORM_GAP)return STREAK_K}
-  return 1;
-}
-/* Por que esses números: times equilibrados fazem todo confronto valer ~50%, e
-   um jogo 50/50 carrega pouca informação. Com K=16 um nível (200 pts) levava
-   ~100 partidas — o palpite do cadastro mandava por meses. Com 22 no racha
-   curto, quem ganha 60% sobe um nível em ~45 partidas (4 sábados); e a
-   calibração com K=60 por 25 partidas corrige um cadastro errado em uma ou
-   duas noites, em vez de deixar o cara mal escalado por um mês.              */
+/* Elo como já se usa há décadas (FIDE): K=40 enquanto calibra, K=20 depois.
+   Sem acelerador de sequência e sem decaimento por histórico — o que separa o
+   racha curto da partida única é o peso da unidade (1/n × K contra fatia de
+   tempo × K), não o K. Ver D-46.                                            */
+const KMODE={curtas:{cal:40,base:20,min:20},unica:{cal:40,base:20,min:20}};
+function kFor(km,tr){return km.base}
+const streakK=tr=>1;
 /* Histerese fixa: promove ao passar do corte + 13, rebaixa ao cair abaixo do
    corte − 13, e quem subiu fica 3 partidas protegido. Um degrau tem ~67
    pontos, então a banda fica em ~93: segura o ioiô sem travar a subida.
    Não é opção da liga de propósito — nível tem que variar igual em todo
    racha, senão a mesma escada significa coisas diferentes.                  */
-const RANK_MARGIN=13, PROTECT=3, CAL_GAMES=25, CAL_RACHAS=5;
+const RANK_MARGIN=13, PROTECT=0, CAL_GAMES=25, CAL_RACHAS=3;   // PROTECT=0: sem proteção pós-promoção (D-46)
 const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.cfg.matchMode:'curtas');
 
 /* ---------- escada de níveis ----------
@@ -883,10 +862,15 @@ function computeElo(liga,part,result,mode,weight){
 /* Calibrando até completar 4 rachas OU 15 partidas — o que vier primeiro.
    Vale por trilha: quem nunca pegou no gol calibra do zero o nível de
    goleiro na primeira vez que for para lá.                                  */
+/* Calibração: no racha curto são 25 PARTIDAS (10 a 15 por noite: duas noites);
+   na partida única, onde a noite tem uma partida só, são 3 RACHAS.          */
 function calibrando(liga,p,tr){
   tr=tr||(p&&p.L)||p;
-  return (tr.sessions||0)<liga.cfg.calRachas && (tr.games||0)<liga.cfg.calGames;
+  return liga.cfg.matchMode==='unica'?(tr.sessions||0)<liga.cfg.calRachas:(tr.games||0)<liga.cfg.calGames;
 }
+/* texto do que falta calibrar, no idioma da liga */
+const calMeta=liga=>liga.cfg.matchMode==='unica'?{n:liga.cfg.calRachas,u:'rachas',de:tr=>tr.sessions||0}:{n:liga.cfg.calGames,u:'partidas',de:tr=>tr.games||0};
+const calTxt=(liga,tr)=>{const c=calMeta(liga);return c.de(tr)+'/'+c.n+' '+c.u};
 function updateRank(liga,p,tr){
   tr=tr||p.L;
   const cfg=liga.cfg,before=tr.rank;
@@ -2098,9 +2082,9 @@ function viewEscada(liga){
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
-        <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${tr.sessions||0}/${liga.cfg.calRachas} rachas · ${tr.games}/${liga.cfg.calGames} partidas</span></div></div>
+        <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${calTxt(liga,tr)}</span></div></div>
       </div>`}).join('')}</div>
-    <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${liga.cfg.calRachas} rachas ou ${liga.cfg.calGames} partidas — ou se o admin definir um na ficha.</div>`:'';
+    <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
   if(!ps.length)return html+(semNivel.length?blocoSem:`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`);
   let lastPat=-1;
   for(const p of ps){
@@ -2118,7 +2102,7 @@ function viewEscada(liga){
         <div class="meta">
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${role==='L'&&p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}
-          ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${tr.games}/${liga.cfg.calGames} partidas">⏳ ${tr.games}/${liga.cfg.calGames}</span>`:''}
+          ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
           <span class="form">${tr.form.slice(0,6).map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>
         </div>
       </div>
@@ -2547,8 +2531,8 @@ function viewCfg(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
-    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: quem sobe fica <b>${c.protectMatches} partidas</b> protegido, e só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
-      Quem é novo anda rápido até completar <b>${c.calRachas} rachas</b> ou <b>${c.calGames} partidas</b>, o que vier primeiro — um cadastro errado se corrige em um ou dois rachas. Vale separado para o nível de linha e o de goleiro.</div>
+    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo clássico (K 20, dobrado na calibração). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
+      Quem é novo anda rápido (K dobrado) até completar <b>${calMeta(liga).n} ${calMeta(liga).u}</b> — um cadastro errado se corrige em um ou dois rachas. Vale separado para o nível de linha e o de goleiro.</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:8px">Quem vê os níveis</div>
@@ -2902,7 +2886,7 @@ const A={
         <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
-        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${l.cfg.calRachas} rachas ou ${l.cfg.calGames} partidas. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando.</small></div>
+        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando.</small></div>
         <div class="ladder4">
           <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i>Sem nível</button>
           ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i>${esc(n)}</button>`).join('')}
@@ -3492,7 +3476,7 @@ const A={
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
         <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
         ${tem?patBadge(l,rankDe(r),'big'):'<span class="none">sem nível</span>'}
-        ${temPatente(p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${t.sessions||0}/${l.cfg.calRachas} rachas`
+        ${temPatente(p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
     const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;

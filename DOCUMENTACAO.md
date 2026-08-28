@@ -123,14 +123,12 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 **K pelo modo do racha.** Não existe controle separado de "ritmo": o peso de cada partida sai direto do modo escolhido na abertura daquele racha, porque é ele que determina quantas partidas cabem numa noite. (**Formato** é sempre 5v5/6v6/7v7/11v11; **modo** é várias curtas ou partida única.)
 
-| Modo do racha | K calibrando | K normal | Por quê |
+| Modo da liga | K calibrando | K normal | Unidade e peso |
 |---|---|---|---|
-| **Várias curtas** *(padrão)* | 60 | 22 | 10–15 partidas por noite — é o número real de um racha de 2 gols ou 7 min |
-| **Partida única** | 70 | 30 | uma partida por noite — ela precisa valer alguma coisa |
+| **Várias curtas** *(padrão)* | 40 | 20 | trecho; K/n por partida (D-37) |
+| **Partida única** | 40 | 20 | confronto; K × fatia de tempo, placar por margem (D-45) |
 
-> **Por que 36 e não 22 (28/08/2026, revisto no mesmo dia).** Com 22, um Ferro 1 estabelecido vencendo tudo levou 18 vitórias seguidas para subir 3 divisões — duas noites inteiras com o racha desequilibrado. Com 36 e o acelerador de sequência (abaixo), 7 vitórias seguidas sobem 2 divisões na noite. Antes disso: Times equilibrados fazem todo confronto valer ~50%, e um jogo 50/50 carrega pouca informação. Com K=16, uma patente inteira (200 pontos) levava ~100 partidas: o palpite do cadastro mandava por meses. Com 22, quem ganha 60% sobe uma patente em ~45 partidas — quatro sábados. A estabilidade continua vindo da histerese e da proteção (3.5), não de um K pequeno.
-
-> **Por que 16 e não 12.** A calibragem antiga supunha 20 a 30 partidas por noite. Um racha de 2 gols ou 7 minutos, com troca de time, fila e conversa no meio, entrega **10 a 15**. Com metade das partidas, cada uma tem que pesar cerca do dobro para que uma noite continue significando a mesma coisa.
+> **Elo clássico (D-46, 28/08/2026).** K = 40 enquanto calibra e 20 depois — os números da FIDE, testados há décadas. Sem acelerador de sequência e sem decaimento por histórico (valores anteriores: 36/22 com acelerador ×1,5; ficam só no histórico do repositório). O que separa os dois modos não é o K, é a unidade e o peso.
 
 > **Formato e modo são da liga (D-44).** Tamanho do time (5v5, 6v6, 7v7, 11v11) e modo (várias curtas ou partida única) se escolhem na criação da liga e não mudam depois — grupo que muda de formato cria outra liga. Cada partida ainda **guarda** o modo com que foi jogada (o histórico antigo, de quando o modo era do racha, continua valendo).
 
@@ -145,22 +143,22 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 Alternar entre duas patentes toda semana destrói a graça do sistema. Três mecanismos, todos testados:
 
 1. **Margem de promoção/rebaixamento (histerese).** Passar do corte não basta: é preciso passar **do corte + margem** para subir, e cair **abaixo do corte − margem** para descer. A margem vale em **todo degrau**, e o degrau que importa é a divisão: ~67 pontos. Por isso ela é calibrada contra esse número, e não contra os 200 da patente — margem grande demais não estabiliza, trava. Com a margem padrão de **13 pontos**, quem fica oscilando ±12 pontos em volta de um corte **não muda de degrau**, e a banda efetiva fica em ~93 no lugar de 67 (40% mais larga).
-2. **Proteção pós-promoção.** Quem acabou de subir não pode cair nos **3 trechos seguintes** (a unidade do motor, seção 3.4). Noite ruim logo depois de subir não desfaz a conquista.
+2. ~~Proteção pós-promoção~~ — **removida (D-46)**: com 10 a 15 partidas por racha, 3 trechos de proteção nem se percebiam.
 3. **A patente é um estado, não um cálculo.** Ela fica guardada no jogador e só muda quando as condições acima são satisfeitas — não é recalculada do rating a cada tela.
 
-Os valores são **fixos e iguais em toda liga**: margem **13** e proteção de **3 trechos** (banda efetiva de ~93 pontos, pouco mais de um degrau). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
+Os valores são **fixos e iguais em toda liga**: margem **13** (banda efetiva de ~93 pontos, pouco mais de um degrau). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
 
-Ordem de grandeza no padrão de racha curto (K=36, times parelhos): mover uma **divisão** exige cerca de **4 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — meia noite boa; uma **patente** inteira, cerca de 12 — duas noites muito boas. **K decai com histórico** (à la Glicko): até 60 partidas vale 36; depois cai com a raiz do histórico até o piso de 24 (~120 partidas: 25; 400: 24). Quem já provou onde está balança menos; quem chega anda rápido. **Acelerador:** sinal de nível *errado*, não de sorte — 4+ resultados iguais seguidos **ou** saldo de ±6 nas últimas 10 (7V-1D com empates no meio conta) multiplicam o K por 1,5 enquanto o sinal durar, nos dois sentidos. É o que impede alguém calibrado em times ruins de ficar preso lá embaixo: um veterano de 400 partidas vencendo 7 seguidas sobe uma divisão na noite; um jogador novo, duas. No modo de partida única (K=44) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
+Ordem de grandeza no racha curto (K=20, times parelhos): mover uma **divisão** exige cerca de **7 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — metade de um racha bom; uma **patente** inteira, cerca de 20. Calibrando (K=40), a metade disso.
 
 ### 3.6 Entrada de um jogador novo
 
-O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (5 rachas ou 25 partidas), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
+O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (25 partidas no racha curto; 3 rachas na partida única), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
 
-O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é maior (60 no lugar de 36 no racha curto, 70 no lugar de 44 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
+O jogador fica **calibrando** até completar **25 partidas** (liga de várias curtas) ou **3 rachas** (liga de partida única). Nesse período o K é o dobro (40 no lugar de 20) e as margens de histerese não valem, então ele anda rápido e acha o lugar dele em uma ou duas noites.
 
 A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
 
-A regra tem duas pontas de propósito: num racha de **partida única** ele levaria 25 semanas para calibrar se dependesse só de partidas — então 5 rachas resolvem; num racha de **várias curtas** ele joga de 10 a 15 partidas na primeira noite — então 25 partidas resolvem em uma noite, antes que uma sequência atípica defina a patente dele para sempre.
+A regra é por modo de propósito: numa liga de **partida única** ele levaria 25 semanas para calibrar se dependesse de partidas — então são 3 rachas; numa de **várias curtas** ele joga de 10 a 15 partidas por noite — então são 25 partidas, duas noites.
 
 O palpite inicial de quem conhece o jogador **já é melhor que sorteio no olho** e a calibração corrige o palpite em poucas partidas. Esperar "dados suficientes" para ser útil é o mesmo que não ter app.
 
@@ -576,7 +574,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 6. **Gol não move patente.** Só vitória, empate e derrota — é o que reflete o racha. Gol é estatística de vitrine.
 7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Ouro na linha e Prata no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
 8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
-9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **5 rachas ou 25 partidas**, o que vier primeiro, e vale separado para cada uma das duas patentes.
+9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **25 partidas** (várias curtas) ou **3 rachas** (partida única), e vale separado para cada uma das duas patentes.
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
 11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
 12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.

@@ -525,6 +525,19 @@ cinco 1-0); +/- em destaque em toda liga.
 **Onde:** `margemS`, `unidadesNivel`, `applyMatch`, `computeElo`, `viewStats`, `pSheet` ·
 `test.py` (confronto juntado, margem, 0-0 contra time pior) · DOCUMENTACAO §3.
 
+### D-46 · Elo clássico: K 40/20, sem acelerador, sem proteção; calibração por modo
+**28/08/2026.** `KMODE` vira 40 calibrando / 20 depois nos dois modos; `kFor` devolve K constante
+e `streakK` devolve 1 (sem acelerador de sequência, sem decaimento por histórico). `PROTECT=0`:
+sai a proteção pós-promoção (o campo `protect` continua no dado, sempre zero). Calibração por
+modo da liga: **25 partidas** no racha curto, **3 rachas** na partida única (`calibrando`,
+`calMeta`, `calTxt`); os textos de "calibrando · x/25 partidas" ou "x/3 rachas" seguem o modo.
+**Por quê:** o usuário: "Elo já é muito bem testado e já sabemos o que funciona" — os números da
+FIDE em vez de uma calibragem própria; e a proteção de 3 partidas num racha de 10–15 nem se
+percebia. Substitui as calibragens de K das decisões anteriores (36/22, acelerador ×1,5).
+**Descartado:** manter o acelerador só na calibração; proteção em rachas em vez de partidas.
+**Onde:** `KMODE`, `kFor`, `streakK`, `PROTECT`, `calibrando`, `calMeta` · DOCUMENTACAO §3.4–3.6,
+§9 (decisão 9) · RF-03.6/03.7/03.10 · `test.py` [5]–[6], [8c].
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
