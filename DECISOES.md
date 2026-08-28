@@ -428,6 +428,14 @@ de 30, e "qualquer trecho válido dá a vitória" entregaria a partida a quem en
 tabela. Os dois formatos são jogos diferentes; a régua tem que ser diferente.
 **Onde:** `splitStints(…, mode)`, `contaPartida`, `applyMatch`, `statsLiga`, `statsAnos`, `destaques`.
 
+### D-39 · Empate com 3 times: um fica; goleiro fica com o time que fica
+**28/08/2026.** `lv.lastStay` guarda quem ficou em quadra depois de cada partida: o vencedor; no
+empate com 3 times, o que entrou por último (o que já estava sai); com 4 times, ninguém; com 2,
+os dois. `planGks` segura o goleiro do rodízio para todo time em `lastStay` — não só o vencedor.
+**Por quê:** é a regra da quadra; "empate os dois saem" com 3 times deixava a quadra vazia para o
+único time da fila.
+**Onde:** `finish` (rotação), `planGks`, `suggestPair` (via `lastWinner`).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

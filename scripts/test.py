@@ -191,6 +191,9 @@ liga.cfg.matchMode='curtas';
   lv3.lastWinner=1;lv3.lastGks={0:h1[0],1:h1[1]};
   const h2=planGks(liga,lv3,[1,2]);
   ok(h2.gks[0]==='gB'&&h2.fica[0]&&h2.gks[1]==='gC','3 goleiros: o do vencedor fica, o lado que troca recebe quem esperava (gC)');
+  lv3.lastStay=[1];lv3.lastWinner=null;                          // empate com 3 times: o 1 ficou
+  ok(planGks(liga,lv3,[1,2]).gks[0]==='gB'&&planGks(liga,lv3,[1,2]).fica[0],'no empate, o goleiro fica com o time que ficou em quadra');
+  lv3.lastWinner=1;
   lv3.nextGks={pair:[1,2],gks:['gB','gA']};
   ok(planGks(liga,lv3,[1,2]).gks[1]==='gA'&&planGks(liga,lv3,[1,2]).manual,'escolha manual na pre-partida vence a sugestao');
   ok(!planGks(liga,lv3,[2,1]).manual,'a escolha manual so vale para aquele confronto');

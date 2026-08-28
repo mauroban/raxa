@@ -1176,8 +1176,8 @@ function suggestPair(liga,lv){
   const order=[...all.filter(i=>fila.indexOf(i)<0),...fila];
   return [order[0],order[1]];
 }
-/* Goleiros da próxima partida. Regra do racha: o goleiro do time que VENCEU
-   fica com o time; só o outro lado troca, e troca para quem está há mais
+/* Goleiros da próxima partida. Regra do racha: o goleiro fica com o time que
+   FICA em quadra (venceu, ou ficou no empate); só o outro lado troca, e troca para quem está há mais
    tempo esperando no rodízio (gkPool é a fila). O lançador pode trocar na
    mão antes do apito (lv.nextGks) — o critério da quadra manda.
    planGks só olha; commitGks aplica na largada e gira a fila.              */
@@ -1190,7 +1190,8 @@ function planGks(liga,lv,pair){
   const gks=[null,null],fica=[false,false];
   [0,1].forEach(sd=>{
     const t=pair[sd],g=last[t];
-    if(liga.cfg.winnerStays&&lv.lastWinner===t&&g&&pool.includes(g)){gks[sd]=g;fica[sd]=true}
+    const ficou=Array.isArray(lv.lastStay)?lv.lastStay.includes(t):lv.lastWinner===t;   // venceu, ou ficou no empate
+    if(liga.cfg.winnerStays&&ficou&&g&&pool.includes(g)){gks[sd]=g;fica[sd]=true}
   });
   const livres=pool.filter(id=>!gks.includes(id));
   if(pool.length===1&&!gks[0]&&!gks[1]){                  // um goleiro só: alterna o lado
@@ -3289,15 +3290,21 @@ const A={
     l.matches.push(m);lv.matchIds.push(m.id);
     lv.lastGks={};lv.lastGks[c.a]=c.gks[0]||null;lv.lastGks[c.b]=c.gks[1]||null;   // para o goleiro do vencedor ficar
     const saiu=[];
+    /* lastStay: quem FICA em quadra — é com esse time que o goleiro fica */
     if(lv.teams.length>2){
-      if(result==='draw'||!l.cfg.winnerStays){        // empate com 3 ou 4 times: os dois saem
-        lv.lastWinner=null;lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
+      if(!l.cfg.winnerStays||(result==='draw'&&lv.teams.length>3)){   // 4 times e empate: os dois saem
+        lv.lastWinner=null;lv.lastStay=[];lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
+      }else if(result==='draw'){
+        /* 3 times e empate: um fica — o que entrou por último (o outro já estava, e sai) */
+        const fica=(lv.lastWinner===c.a)?c.b:(lv.lastWinner===c.b)?c.a:c.b,sai=fica===c.a?c.b:c.a;
+        lv.lastWinner=fica;lv.lastStay=[fica];lv.queue.push(sai);saiu.push(sai);
       }else{
         const winner=result===0?c.a:c.b,perdedor=winner===c.a?c.b:c.a;
-        lv.lastWinner=winner;lv.queue.push(perdedor);saiu.push(perdedor);
+        lv.lastWinner=winner;lv.lastStay=[winner];lv.queue.push(perdedor);saiu.push(perdedor);
       }
     }else{
       lv.lastWinner=result==='draw'?null:(result===0?c.a:c.b);
+      lv.lastStay=result==='draw'?[c.a,c.b]:[lv.lastWinner];
       /* dois times: quem perdeu não sai de quadra, mas o time dele roda com a fila */
       if(result!=='draw'&&l.cfg.winnerStays)saiu.push(result===0?c.b:c.a);
     }

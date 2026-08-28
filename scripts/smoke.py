@@ -435,8 +435,30 @@ step('4 times: quem espera ha mais tempo joga antes (A×B, A×C, C×D, ...)',()=
   par=suggestPair(L(),L().live);
   if(par.join()!=='2,3')throw new Error('depois de A×C (C ganhou) esperava C×D, veio '+par.join('x'));
   L().live.nextPair=par;joga(3);                          // C×D, D ganha → fila B,A,C
+  {const lv=L().live;if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===3))throw new Error('lastStay deveria ser o vencedor (D)')}
   par=suggestPair(L(),L().live);
   if(par.join()!=='3,1')throw new Error('depois de C×D (D ganhou) esperava D×B, veio '+par.join('x'));
+  }finally{S=salvo;render()}
+});
+step('3 times e empate: um time fica (o que entrou por ultimo) e o goleiro fica com ele',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,12).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  A.toTimes();if(L().live.teams.length!==3)A.nteams({dataset:{v:'3'}});
+  try{
+    if(L().live.teams.length!==3)throw new Error('esperava 3 times, veio '+L().live.teams.length);
+    L().live.nextPair=[0,1];A.startMatch();
+    A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence B → A fica, C entra
+    let par=suggestPair(L(),L().live);
+    if(par.join()!=='0,2')throw new Error('esperava A×C, veio '+par.join('x'));
+    L().live.nextPair=par;A.startMatch();A.finish({dataset:{r:'draw'}}); // A×C empata → C fica (entrou por ultimo), A sai
+    const lv2=L().live;
+    if(!(lv2.lastStay&&lv2.lastStay.length===1&&lv2.lastStay[0]===2))throw new Error('no empate com 3 times, C (o que entrou) deveria ficar');
+    par=suggestPair(L(),lv2);
+    if(par[0]!==2)throw new Error('a proxima deveria comecar pelo C que ficou, veio '+par.join('x'));
+    const gp=planGks(L(),lv2,par);
+    if(lv2.gkPool.length&&lv2.lastGks[2]&&!(gp.gks[0]===lv2.lastGks[2]&&gp.fica[0]))throw new Error('o goleiro do time que ficou no empate deveria ficar');
   }finally{S=salvo;render()}
 });
 step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>{
