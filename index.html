@@ -110,8 +110,6 @@ label.f .k{display:block;margin-bottom:6px}
   color:var(--pc);border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);
   background:color-mix(in srgb,var(--pc) 13%,transparent)}
 .pat b{font-weight:700;opacity:.72;font-size:10px}
-.pat.solid{background:linear-gradient(160deg,var(--pc),color-mix(in srgb,var(--pc) 72%,#000));color:#08110A;
-  border-color:transparent;box-shadow:0 8px 20px -12px var(--pc)}
 .pat.big{font-size:14px;padding:6px 11px;border-radius:9px}
 /* divisões: 1 fosca → 2 metal → 3 polida. Passos pequenos e na mesma
    direção (borda, fundo, número, brilho), para ler como uma escala.       */
@@ -123,9 +121,6 @@ label.f .k{display:block;margin-bottom:6px}
   background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 24%,transparent),color-mix(in srgb,var(--pc) 13%,transparent));
   box-shadow:0 0 6px -2px color-mix(in srgb,var(--pc) 45%,transparent)}
 .pat.d3 b{opacity:1}
-.pat.solid.d1{background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 90%,#000),color-mix(in srgb,var(--pc) 62%,#000));box-shadow:none}
-.pat.solid.d3{background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 70%,#fff) 0%,var(--pc) 28%,color-mix(in srgb,var(--pc) 72%,#000) 100%);
-  box-shadow:0 8px 20px -12px var(--pc)}
 .pdot.d1{opacity:.7}
 .pdot.d3{box-shadow:0 0 4px color-mix(in srgb,var(--pc) 70%,transparent)}
 .pdot{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
@@ -2139,7 +2134,7 @@ function viewStats(liga){
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
         <div class="row" style="gap:6px;flex-wrap:wrap">
-          ${vePat(liga)&&p&&temPatente(p,'L')?patBadge(liga,p.L.rank,'solid'):''}
+          ${vePat(liga)&&p&&temPatente(p,'L')?patBadge(liga,p.L.rank):''}
           ${vePat(liga)&&p&&temPatente(p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤</span>':''}
           ${me.ultimos.length?formaDots(me.ultimos):''}
         </div>
@@ -3254,7 +3249,7 @@ const A={
     const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=temPatente(p,r)||PD.rank[r]!==null;
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
         <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
-        ${tem?patBadge(l,rankDe(r),'big'+(r==='L'?' solid':'')):'<span class="none">sem nível</span>'}
+        ${tem?patBadge(l,rankDe(r),'big'):'<span class="none">sem nível</span>'}
         ${temPatente(p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${t.sessions||0}/${l.cfg.calRachas} rachas`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
