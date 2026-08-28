@@ -375,6 +375,16 @@ que agora também enxerga 7V-1D com empates no meio (sequência pura de 4 era es
 real); ajuste individual por desvio da média do time (não separa quem carrega de quem é carregado).
 **Onde:** `KMODE.min`, `K_FULL`, `kFor`, `FORM_GAP`, `streakK`, `computeElo`.
 
+### D-35 · O app aponta duplas inseparáveis em vez de fingir que as separa
+**28/08/2026.** `inseparaveis()` lista duplas com ≥20 partidas e ≥80 % do histórico do menor dos
+dois em comum; aparecem em Stats → Racha e como aviso na ficha de cada um.
+**Por quê:** é limite do modelo, não bug — no Elo por time, dois jogadores sempre no mesmo lado
+recebem exatamente os mesmos deltas e terminam com o mesmo rating. Tentar "descontar" isso no motor
+(peso por contribuição, gols, etc.) inventaria informação que o app não tem. Mostrar onde o dado
+está cego e dizer o remédio (separar por algumas noites; `avoidRepeat` já existe) é honesto e
+funciona.
+**Onde:** `inseparaveis`, `JUNTOS_MIN`/`JUNTOS_PCT`, `viewStats` (cardJuntos), `pSheet`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
