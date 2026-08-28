@@ -2962,7 +2962,7 @@ const A={
       <div class="hr"></div>
       <div class="k" style="margin-bottom:8px">Conta</div>
       ${p.owner?`<div class="tiny" style="margin-bottom:10px">Perfil de <b>${esc(p.owner)}</b>
-          <button class="btn sm ghost" style="margin-left:8px" data-a="unclaim" data-id="${p.id}">desvincular</button></div>`
+          ${p.owner===S.me.name||souAdmin(l)?`<button class="btn sm ghost" style="margin-left:8px" data-a="unclaim" data-id="${p.id}">desvincular</button>`:''}</div>`
         :`<button class="btn sm wide ghost" data-a="claim" data-id="${p.id}" style="margin-bottom:10px">Este perfil sou eu</button>`}
       <div class="k" style="margin:12px 0 8px">Permissão</div>
       ${souAdmin(l)?`<div class="row" style="gap:5px;flex-wrap:wrap">
@@ -2992,7 +2992,11 @@ const A={
     if(!S.me.name){const n=prompt('Seu nome de usuário:');if(!n)return;S.me.name=n.trim()}
     p.owner=S.me.name;closeSheet();save();render();toast('Perfil vinculado a você');
   },
-  unclaim(el){const p=P(L(),el.dataset.id);p.owner=null;closeSheet();save();render()},
+  unclaim(el){
+    const l=L(),p=P(l,el.dataset.id);
+    if(p.owner!==S.me.name&&!souAdmin(l))return toast('Só o dono do perfil ou o admin desvincula');
+    p.owner=null;closeSheet();save();render();
+  },
   setRole(el){
     const l=L(),p=P(l,el.dataset.id);
     if(!souAdmin(l))return toast('Só o admin muda permissão');
