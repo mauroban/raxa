@@ -70,11 +70,11 @@ button{font-family:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 /* ---------- topo compacto ---------- */
-.top{display:flex;align-items:center;gap:10px;height:var(--toph);padding:0 2px;position:sticky;top:0;z-index:40;
+.hdr{display:flex;align-items:center;gap:10px;height:var(--toph);padding:0 2px;position:sticky;top:0;z-index:40;
   background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   margin:0 -12px;padding-left:12px;padding-right:12px}
-.top h1{font-size:22px;letter-spacing:.01em}
-.top .sub{font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr h1{font-size:22px;letter-spacing:.01em}
+.hdr .sub{font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brandmark{width:32px;height:32px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
   background:var(--chalk);color:var(--onink);font-family:var(--disp);font-weight:900;font-size:20px;line-height:1}
 .iconbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line2);color:var(--chalk);
@@ -474,7 +474,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 /* claro: coletes com texto branco precisam de cor fechada — já são; o D amarelo usa tinta */
 :root[data-theme="claro"] .side.d .hint,:root[data-theme="claro"] .side.d .nm{opacity:.85}
 :root[data-theme="escuro"] .card{box-shadow:none}
-:root[data-theme="escuro"] .top{background:color-mix(in srgb,var(--bg) 86%,transparent)}
+:root[data-theme="escuro"] .hdr{background:color-mix(in srgb,var(--bg) 86%,transparent)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -1402,7 +1402,7 @@ function render(){
   try{drawApp()}
   catch(e){
     console.error(e);
-    $('#app').innerHTML=`<div class="top"><div class="brandmark">R</div><div><h1>Raxa</h1>
+    $('#app').innerHTML=`<div class="hdr"><div class="brandmark">R</div><div><h1>Raxa</h1>
         <div class="sub">algo deu errado</div></div></div>
       <div class="card"><h2 style="font-size:20px;margin-bottom:8px">Não consegui desenhar a tela</h2>
       <div class="tiny muted" style="line-height:1.55;margin-bottom:12px">${esc(e.message||String(e))}</div>
@@ -1433,7 +1433,7 @@ function drawApp(){
   const body=tab==='racha'?viewRacha(liga):tab==='ranking'?viewRanking(liga)
     :tab==='stats'?viewStats(liga):tab==='hist'?viewHist(liga):viewCfg(liga);
   $('#app').innerHTML=`
-    <div class="top">
+    <div class="hdr">
       <div class="brandmark">R</div>
       <div style="min-width:0">
         <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h1>
@@ -1448,7 +1448,7 @@ function drawApp(){
 }
 function renderHome(){
   $('#app').innerHTML=`
-  <div class="top"><div class="brandmark">R</div><div><h1>Raxa</h1><div class="sub">Níveis de quadra</div></div></div>
+  <div class="hdr"><div class="brandmark">R</div><div><h1>Raxa</h1><div class="sub">Níveis de quadra</div></div></div>
   ${S.ligas.length?S.ligas.map(l=>`
     <button class="card ligacard" data-a="openLiga" data-id="${l.id}">
       <div class="dot">${esc(l.name.slice(0,1).toUpperCase())}</div>
@@ -2063,9 +2063,9 @@ function viewEscada(liga){
   const lista=liga.players.filter(p=>temPatente(p,role));   // sem nível na valência, fora da escada
   const ps=[...lista].sort((a,b)=>{const x=rt(a,role),y=rt(b,role);
     return y.rank-x.rank||(y.games?y.w/y.games:0)-(x.games?x.w/x.games:0)||a.name.localeCompare(b.name)});
-  let html=`<div class="row" style="gap:6px;margin-bottom:10px">
+  let html=`<div class="row" style="gap:6px;margin:12px 0 10px">
     <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="rankRole" data-v="L" style="flex:1">Linha</button>
-    <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="rankRole" data-v="G" style="flex:1">🧤 Goleiro</button>
+    <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="rankRole" data-v="G" style="flex:1">Goleiro</button>
   </div>`;
   const semNivel=liga.players.filter(p=>!temPatente(p,role)&&(rt(p,role).games>0||role==='L')).sort((a,b)=>rt(b,role).games-rt(a,role).games||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
@@ -2329,11 +2329,11 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
     ${times.length?`<div class="sec"><div class="k2">Times da noite</div>
-      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} a favor · ${t.gc} contra</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
+      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} gols feitos · ${t.gc} sofridos</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
-    ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${venc.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D em ${pl(x.jogos,'partida')}</small></div><span class="val">${x.v}<small>V</small> · ${pctDe(x.v,x.jogos)}%</span></div>`).join('')}</div>`:''}
+    ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${venc.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${pctDe(x.v,x.jogos)}% de vitórias</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')}</div>`:''}
     ${art.length?`<div class="sec"><div class="k2">⚽ Artilheiro</div>${art.map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2">📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></div>${rendeu.map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${tempo.map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')}</div>`:''}
@@ -4164,7 +4164,7 @@ async function refetch(id,tent){
    TELAS DE CONTA
    ========================================================================== */
 function topo(sub){
-  return `<div class="top"><div class="brandmark">R</div><div><h1>Raxa</h1>
+  return `<div class="hdr"><div class="brandmark">R</div><div><h1>Raxa</h1>
     <div class="sub">${esc(sub)}</div></div></div>`;
 }
 
