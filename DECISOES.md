@@ -225,17 +225,19 @@ rankings de sequência, goleiro menos vazado e melhor dupla. **Membros** (quem t
 vive no topo da aba **Jogadores** (ex-Patentes), acima da escada — é a mesma pergunta: "quem está aqui?".
 **Onde:** `viewStats`, `statsLiga` (seq/best/ultimos/sofridos), `membrosCard`.
 
-### D-24 · Os nomes de patente são metais, não descrições da pessoa
-**28/08/2026.** Escada padrão: **Bronze · Prata · Ouro · Platina · Diamante** (antes Iniciante ·
-Promessa · Titular · Destaque · Craque). As cores da escada acompanham os metais. Liga com os nomes
-antigos de fábrica migra sozinha; nome editado à mão fica.
+### D-24 · Os níveis são metais, e na interface "patente" se chama "nível"
+**28/08/2026.** Escada padrão: **Ferro · Bronze · Prata · Ouro · Diamante** — quem entra nasce
+**Prata 2**, no meio. As cores acompanham os metais. Liga com qualquer escada antiga de fábrica
+(Iniciante…, Raiz…, Bronze…Platina) migra sozinha; nome editado à mão fica.
 **Por quê:** "Iniciante" e "Promessa" descrevem quem está começando — e a base da escada é cheia de
-gente que joga há vinte anos. Chamar o veterano de iniciante é errado e soa ofensivo. Metal é um
-*rank*, não um adjetivo: Bronze não diz nada sobre idade, experiência ou talento, todo mundo entende
-sem explicação (jogos, olimpíadas) e a cor vem de graça.
-**Descartado:** Raiz · Boleiro · Titular · Destaque · Craque (mesmo dia) — resolvia o "iniciante", mas
-"Titular" e "Destaque" já são palavras do app com outro sentido (titulares do time, Destaques do mês).
-**Onde:** `defCfg().patNames`, `PATSHORT`, `PATC_*`, `normalize` · Ajustes → Nomes das patentes.
+gente que joga há vinte anos. Metal é um *rank*, não um adjetivo: Ferro não diz nada sobre idade,
+experiência ou talento, todo mundo entende sem explicação e a cor vem de graça. Entrar em Prata (o
+meio) e não em Ouro deixa dois degraus acima para subir e dois abaixo para achar o lugar.
+Na **interface** a palavra é **nível** ("nível de goleiro", "Níveis fechados"); "patente" continua
+sendo o termo interno (código e documentação), porque é o nome do conceito, não do que o usuário lê.
+**Descartado:** Raiz · Boleiro · Titular · Destaque · Craque; Bronze · Prata · Ouro · Platina · Diamante
+(entrada em Ouro 2, alto demais); "Lata" na base (é o único metal que diz "ruim").
+**Onde:** `defCfg().patNames`, `PATSHORT`, `PATC_*`, `normalize` · Ajustes → Nomes dos níveis.
 
 ## Como registrar uma decisão nova
 

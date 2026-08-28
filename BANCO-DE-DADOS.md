@@ -185,7 +185,7 @@ Todo racha tem um código de 6 caracteres visível nos ajustes ("RXA7Q2"). Quem 
 O admin procura por `@handle` ou nome em `profiles` e convida direto: nasce um `liga_invites` do tipo
 `direto`, e a pessoa vê o convite na tela dela. **Ninguém entra sem aceitar** — nem por busca, nem por
 código, nem por link. Convidar já pode reservar o perfil (`player_id`), então quem aceita cai direto no
-histórico certo: "você é o Bruninho, 42 partidas, Ouro 2".
+histórico certo: "você é o Bruninho, 42 partidas, Prata 2".
 
 ### 5.4 O que o admin controla
 Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:

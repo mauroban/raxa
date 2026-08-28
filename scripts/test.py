@@ -65,9 +65,9 @@ function lanca(lineA,lineB,result,o){
 const elo=(id,role)=>rt(P(liga,id),role||'L').elo;
 
 console.log('\n[1] escada de patentes');
-ok(rankLabel(liga,stepOf(1500))==='Ouro 2','1500 (padrao de entrada) = Ouro 2');
+ok(rankLabel(liga,stepOf(1500))==='Prata 2','1500 (padrao de entrada) = Prata 2');
 ok(rankLabel(liga,14)==='Diamante 3'&&rankLabel(liga,12)==='Diamante 1','no topo: Diamante 3 e o melhor, Diamante 1 o primeiro degrau');
-ok(rankLabel(liga,0)==='Bronze 1','o degrau mais baixo da escada e Bronze 1');
+ok(rankLabel(liga,0)==='Ferro 1','o degrau mais baixo da escada e Ferro 1');
 ok(patOf(stepOf(1399))===1&&patOf(stepOf(1400))===2,'corte Prata/Titular em 1400');
 ok(patOf(stepOf(1799))===3&&patOf(stepOf(1800))===4,'corte Destaque/Diamante em 1800');
 ok(stepOf(500)===0&&stepOf(9000)===14,'extremos ficam presos no primeiro/ultimo degrau');

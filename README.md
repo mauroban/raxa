@@ -19,7 +19,7 @@ Na primeira tela (ou no rodapé da lista de ligas), **"Carregar o racha de sába
 ## O que ele faz
 
 - **Liga** = grupo com patentes próprias. A mesma galera em vários rachas = uma liga só.
-- **Patentes** em vez de pontos: 5 patentes × 3 divisões (Bronze → Prata → Ouro → Platina → Diamante). **O rating numérico existe por baixo e nunca é mostrado a ninguém** — e o admin pode fechar até a patente, deixando-a visível só para ele.
+- **Patentes** em vez de pontos: 5 patentes × 3 divisões (Ferro → Bronze → Prata → Ouro → Diamante). **O rating numérico existe por baixo e nunca é mostrado a ninguém** — e o admin pode fechar até a patente, deixando-a visível só para ele.
 - **Duas patentes por pessoa**: uma de linha e uma de goleiro, independentes — e **quem nunca jogou numa das duas não tem patente nela**; se entrar naquela posição, começa do nível padrão. Quem veio para o gol se marca na presença, e isso muda a cada racha.
 - **O que move a patente é o trecho, não a partida**: cada formação em campo conta como uma partida própria, com o placar contado a partir da substituição — o mesmo espírito do +/- da NBA. O que o seu time fez enquanto você estava no banco não te afeta.
 - **Formato** 5v5, 6v6, 7v7 ou 11v11, e dois **modos** de racha: várias curtas com time de fora, ou uma partida única com 2 times fixos e reservas.
