@@ -226,6 +226,22 @@ step('substituir tocando em quem esta em quadra',()=>{
   const fora=benchList(L(),L().live);
   if(fora.length)A.doSub({dataset:{s:'0',out:L().live.cur.lineups[0][0],id:fora[0].id}});
 });
+step('substituicao nao mexe no time: quem entrou emprestado nao vira titular',()=>{
+  const lv=L().live,c=lv.cur;if(!c)return;
+  const ti=c.a,t=lv.teams[ti],emprestado=c.lineups[0].find(id=>!t.ids.includes(id));
+  if(emprestado&&t.ids.includes(emprestado))throw new Error('o emprestado entrou no time');
+  lv.teams.forEach((tt,i)=>{if(tt.ids.length!==tt.ids.filter(Boolean).length)throw new Error('time com buraco')});
+});
+step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos',()=>{
+  const lv=L().live,c=lv.cur;if(!c)return;
+  const id=c.lineups[1][c.lineups[1].length-1],antes=c.lineups[1].length,tam=lv.presentIds.length;
+  A.leaveRacha({dataset:{id}});
+  if(c.lineups[1].length!==antes-1)throw new Error('deveria ter saido da quadra');
+  if(lv.presentIds.length!==tam-1||lv.presentIds.includes(id))throw new Error('deveria ter saido da presenca');
+  if(lv.teams.some(t=>t.ids.includes(id)))throw new Error('deveria ter saido do time');
+  const st=splitStints(c,Date.now()+60000,L().cfg);
+  if(st[st.length-1].lineups[1].includes(id))throw new Error('o trecho seguinte ainda conta com ele');
+});
 step('substituir tocando em quem esta fora',()=>{
   const fora=benchList(L(),L().live);
   if(fora.length){A.inPick({dataset:{id:fora[0].id}});

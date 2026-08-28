@@ -316,6 +316,18 @@ cresce); normalizar trechos e gols já (ver acima).
 **Onde:** `supabase/schema.sql` (bloco "LIGA EM PARTES"), `playerFacts`/`matchFacts`/`factsDoc`,
 `diffParts`/`commitSnap`, `flush`, `applyDelta`, `loadAll`, `refetch`, `logCard` (tamanho).
 
+### D-30 · Substituição é da partida, não do time; "foi embora" tira a pessoa do racha
+**28/08/2026.** Trocar alguém durante a partida não mexe mais em `lv.teams`: quem entra emprestado
+(da fila ou de outro time) volta para onde estava na partida seguinte, e quem saiu continua no time
+dele. A única troca que fica é titular ⇄ reserva dentro do mesmo time. Novo: **Foi embora /
+machucou** (na folha de substituição e em "Chegou agora → Alguém foi embora?") tira a pessoa da
+presença, do time, da fila e do rodízio; se estava em quadra, sai sem substituto — evento `sub`
+com `in:null`, e o trecho seguinte conta com um a menos, como aconteceu.
+**Por quê:** mexer no time a cada substituição deixava um time com um a menos e mandava o
+substituído para a fila sem ninguém pedir — a fila "sugerida" ficava errada a partir daí. Sair do
+racha é outra coisa, e precisa de um botão próprio.
+**Onde:** `doSub`, `undo` (sub), `splitStints` (`in:null`), `A.leaveRacha`, `outPick`, `lateSheet`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -749,7 +749,8 @@ function splitStints(c,endedAt,cfg){
     fecha(ev.t,'troca');
     if(ev.type==='sub'){
       const k=lin[ev.side].indexOf(ev.out);
-      if(k>=0)lin[ev.side][k]=ev.in;else lin[ev.side].push(ev.in);
+      if(!ev.in){if(k>=0)lin[ev.side].splice(k,1)}                 // foi embora: sai sem ninguém no lugar
+      else if(k>=0)lin[ev.side][k]=ev.in;else lin[ev.side].push(ev.in);
     }
     if(Array.isArray(ev.gks))gks=ev.gks.slice();
     else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
@@ -1366,7 +1367,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
@@ -2724,7 +2725,36 @@ const A={
           ${temPatente(p,'L')?patDot(l,p.L.rank):''}${esc(p.name)}${p.gk?' 🧤':''}</button>`).join('')
           :'<span class="tiny muted">Todo mundo do cadastro já está presente.</span>'}
       </div>
-      <button class="btn wide ghost" data-a="addPlayer">+ Cadastrar jogador novo</button>`);
+      <button class="btn wide ghost" data-a="addPlayer">+ Cadastrar jogador novo</button>
+      <div class="hr"></div>
+      <div class="k" style="margin-bottom:6px">Alguém foi embora?</div>
+      <div class="tiny muted" style="margin-bottom:8px">Machucou, precisou sair: toque no nome e ele sai da presença, do time e da fila. As partidas que jogou continuam valendo.</div>
+      <div class="chips">${lv.presentIds.map(id=>`<button class="tp" data-a="leaveRacha" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}</div>`);
+  },
+  /* Sai do racha no meio: presença, time, fila, rodízio de goleiro — e, se
+     estava em quadra, sai da partida sem ninguém no lugar (o trecho seguinte
+     conta com um a menos, como aconteceu de verdade).                       */
+  leaveRacha(el){
+    const l=L(),lv=l.live,id=el.dataset.id;if(!lv)return;
+    if(!confirm(nameOf(l,id)+' foi embora? Sai do racha de hoje; o histórico fica.'))return;
+    const c=lv.cur;
+    if(c){
+      [0,1].forEach(sd=>{
+        const k=c.lineups[sd].indexOf(id);
+        if(k<0)return;
+        c.lineups[sd].splice(k,1);
+        if(c.gks[sd]===id)c.gks[sd]=null;
+        c.events.push({t:Date.now(),type:'sub',side:sd,out:id,in:null,gks:[...c.gks]});
+      });
+      if(Array.isArray(c.fill))c.fill=c.fill.map(x=>(x||[]).filter(x=>x!==id));
+    }
+    lv.teams.forEach(t=>{t.ids=t.ids.filter(x=>x!==id)});
+    lv.presentIds=lv.presentIds.filter(x=>x!==id);
+    lv.gkToday=(lv.gkToday||[]).filter(x=>x!==id);
+    lv.gkPool=(lv.gkPool||[]).filter(x=>x!==id);
+    if(Array.isArray(lv.fila))lv.fila=lv.fila.filter(x=>x!==id);
+    if(Array.isArray(lv.fill))lv.fill=lv.fill.map(x=>(x||[]).filter(x=>x!==id));
+    closeSheet();save();render();toast(nameOf(l,id)+' saiu do racha');
   },
   lateFila(el){
     const l=L(),lv=l.live,id=el.dataset.id;
@@ -2872,8 +2902,10 @@ const A={
     const ev=c.events.pop();
     if(ev.type==='goal')c.score[ev.side]--;
     if(ev.type==='sub'){
-      const k=c.lineups[ev.side].indexOf(ev.in);if(k>=0)c.lineups[ev.side][k]=ev.out;
-      const t=l.live.teams[ev.side===0?c.a:c.b],j=t.ids.indexOf(ev.in);if(j>=0)t.ids[j]=ev.out;
+      if(!ev.in){if(!c.lineups[ev.side].includes(ev.out))c.lineups[ev.side].push(ev.out)}
+      else{const k=c.lineups[ev.side].indexOf(ev.in);if(k>=0)c.lineups[ev.side][k]=ev.out}
+      const t=l.live.teams[ev.side===0?c.a:c.b],j=t.ids.indexOf(ev.in),j0=t.ids.indexOf(ev.out);
+      if(j>=0&&j0>=0){t.ids[j]=ev.out;t.ids[j0]=ev.in}              // só a troca titular ⇄ reserva mexeu no time
     }
     if(ev.type==='pause')c.paused=false;
     if(ev.type==='resume')c.paused=true;
@@ -2893,7 +2925,9 @@ const A={
         ?opts.map(o=>`<button class="tp big" data-a="doSub" data-s="${s}" data-out="${out}" data-id="${o.id}">
           ${esc(nameOf(l,o.id))}${o.from?' <small>'+esc(o.from)+'</small>':''}</button>`).join('')
         :'<span class="tiny muted">Ninguém no banco. Use “chegou agora” ou marque mais gente na presença.</span>'}</div>
-      <div style="height:12px"></div><button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
+      <div style="height:12px"></div>
+      <button class="btn wide ghost" data-a="leaveRacha" data-id="${out}" style="margin-bottom:8px">🚑 Foi embora / machucou — sai sem substituto</button>
+      <button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
   },
   inPick(el){                       // toquei em quem está fora
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
@@ -2908,14 +2942,15 @@ const A={
     const s=+el.dataset.s,out=el.dataset.out,inn=el.dataset.id,pool=lv.gkPool||[];
     const k=c.lineups[s].indexOf(out);
     if(k>=0)c.lineups[s][k]=inn;else c.lineups[s].push(inn);
+    /* Substituição vale só para ESTA partida. Quem entra emprestado (da fila
+       ou de outro time) volta para onde estava na próxima; quem saiu continua
+       no time dele. Mexer nos times aqui deixava um time com um a menos e
+       mandava o substituído para a fila sem ninguém pedir. A única troca que
+       fica é titular ⇄ reserva dentro do mesmo time.                        */
     if(!pool.includes(out)&&!pool.includes(inn)){
       const ti=s===0?c.a:c.b,t=lv.teams[ti];
       const jOut=t.ids.indexOf(out),jIn=t.ids.indexOf(inn);
       if(jIn>=0&&jOut>=0){const tmp=t.ids[jOut];t.ids[jOut]=t.ids[jIn];t.ids[jIn]=tmp}   // titular ⇄ reserva
-      else{
-        if(jOut>=0)t.ids[jOut]=inn;else t.ids.push(inn);
-        lv.teams.forEach((tt,i)=>{if(i!==ti){const q=tt.ids.indexOf(inn);if(q>=0)tt.ids.splice(q,1)}});
-      }
     }
     if(c.gks[s]===out)c.gks[s]=pool.includes(inn)?inn:null;
     c.events.push({t:Date.now(),type:'sub',side:s,out,in:inn,gks:[...c.gks]});
