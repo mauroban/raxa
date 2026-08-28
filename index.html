@@ -500,10 +500,19 @@ const stepMin=s=>BASE+s*STEP;
 const stepMid=s=>Math.round(BASE+(s+.5)*STEP);
 const patOf=s=>Math.floor(s/3);
 const divOf=s=>DIVS[s%3];
+/* Dentro do nível, a divisão muda o brilho: 1 um pouco mais fechada, 2 a cor
+   do metal, 3 um pouco mais clara. Sutil de propósito — o número continua
+   sendo a leitura principal, a cor só acompanha.                            */
+function mixHex(hex,alvo,t){
+  const h=hex.replace('#',''),c=i=>parseInt(h.substr(i,2),16);
+  const m=v=>Math.round(v+(alvo-v)*t).toString(16).padStart(2,'0');
+  return '#'+m(c(0))+m(c(2))+m(c(4));
+}
+const patColor=s=>{const base=PATC[patOf(s)],d=s%3;return d===0?mixHex(base,0,.18):d===2?mixHex(base,255,.22):base};
 const patName=(liga,s)=>liga.cfg.patNames[patOf(s)];
 const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
-const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''}" style="--pc:${PATC[patOf(s)]}">${esc(patName(liga,s))} <b>${divOf(s)}</b></span>`;
-const patBadgeShort=(liga,s)=>`<span class="pat" style="--pc:${PATC[patOf(s)]}">${PATSHORT[patOf(s)]} <b>${divOf(s)}</b></span>`;
+const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''}" style="--pc:${patColor(s)}">${esc(patName(liga,s))} <b>${divOf(s)}</b></span>`;
+const patBadgeShort=(liga,s)=>`<span class="pat" style="--pc:${patColor(s)}">${PATSHORT[patOf(s)]} <b>${divOf(s)}</b></span>`;
 
 /* ---------- estado ---------- */
 function defCfg(){return{
@@ -1304,7 +1313,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'lateGk','startJogo','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
-const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${PATC[patOf(step)]}"></span>`:'';
+const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
 /* Aproveitamento do time no racha de hoje — sem destaque, só para dar contexto. */
 function teamRecord(liga,lv,ti){
@@ -1847,7 +1856,7 @@ function viewEscada(liga){
       lastPat=pt;
     }
     html+=`<div class="rank" data-a="pSheet" data-id="${p.id}">
-      <span class="pat" style="--pc:${PATC[pt]};min-width:34px;justify-content:center"><b>${divOf(tr.rank)}</b></span>
+      <span class="pat" style="--pc:${patColor(tr.rank)};min-width:34px;justify-content:center"><b>${divOf(tr.rank)}</b></span>
       <div style="min-width:0;flex:1">
         <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
         <div class="meta">
@@ -1961,7 +1970,7 @@ function viewStats(liga){
 
   <div class="card">
     <div class="hero">
-      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(p,'L')?PATC[patOf(p.L.rank)]:'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
@@ -2963,7 +2972,7 @@ const A={
         <div><b>${ups.length}</b><span>mudanças de nível</span></div>
       </div>
       ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p)return '';
-        const tr=rt(p,role);return `<div class="promo" style="--pc:${PATC[patOf(tr.rank)]}">
+        const tr=rt(p,role);return `<div class="promo" style="--pc:${patColor(tr.rank)}">
         <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
         <div class="tiny muted">agora é ${esc(rankLabel(l,tr.rank))}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
       <button class="btn wide pri" data-a="closeSheet">Fechar</button>`);
