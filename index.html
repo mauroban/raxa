@@ -120,6 +120,8 @@ label.f .k{display:block;margin-bottom:6px}
 .pchip{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);
   background:rgba(255,255,255,.03);cursor:pointer;text-align:left;color:var(--chalk);transition:.12s}
 .pchip:active{transform:scale(.97)}
+.pchip,.gktog{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+body.painting{touch-action:none;overflow:hidden}
 .pchip.on{background:linear-gradient(180deg,rgba(203,255,77,.2),rgba(203,255,77,.07));border-color:var(--lime);
   box-shadow:0 8px 20px -16px var(--lime)}
 .pchip .nm{font-weight:600;font-size:15px;line-height:1.15;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1405,7 +1407,7 @@ function viewPresenca(liga,lv){
   <div class="card">
     <div class="row"><div class="k">Quem chegou</div>
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
-    <div class="tiny muted" style="margin-top:2px">Toque no nome de quem chegou e no <b>🧤</b> de quem veio para ser goleiro hoje<span id="gkcount">${gks?' — '+gks+' no gol':''}</span>. Dá para mudar durante o racha.</div>
+    <div class="tiny muted" style="margin-top:2px">Toque no nome de quem chegou e no <b>🧤</b> de quem veio para ser goleiro hoje<span id="gkcount">${gks?' — '+gks+' no gol':''}</span>. <b>Segure e arraste</b> para marcar vários de uma vez. Dá para mudar durante o racha.</div>
     <div style="height:10px"></div>
     <input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
     <div style="height:10px"></div>
@@ -3097,6 +3099,68 @@ function showScorer(side){
   clearTimeout(showScorer._t);
   showScorer._t=setTimeout(()=>{const s=$('#scorer');if(s)s.innerHTML=''},6000);
 }
+/* ==========================================================================
+   PINTAR PRESENÇA — segurar num nome e arrastar marca (ou desmarca) todo
+   mundo por onde o dedo passa. O primeiro nome decide: se ele acendeu, o
+   arraste acende; se apagou, apaga. No mouse basta clicar e arrastar.
+   Toque: precisa do "segurar" (180 ms) para não brigar com a rolagem —
+   depois disso o touchmove é cancelado e a página não rola.
+   ========================================================================== */
+let paint=null;
+function paintChipAt(x,y){
+  const el=document.elementFromPoint(x,y),chip=el&&el.closest?el.closest('#plist .pchip'):null;
+  if(!chip||paint.done.has(chip.dataset.id))return;
+  paint.done.add(chip.dataset.id);
+  if(chip.classList.contains('on')!==paint.on)A.pres(chip);
+}
+function beginPaint(chip){
+  const l=L();
+  if(!l||!l.live||!podeLancar(l)){paint=null;return}
+  A.pres(chip);                                   // o primeiro nome vira e dita o resto
+  paint.on=chip.classList.contains('on');paint.done.add(chip.dataset.id);paint.active=true;
+  document.body.classList.add('painting');buzz(10);
+}
+function endPaint(){
+  if(!paint)return;
+  if(paint.timer)clearTimeout(paint.timer);
+  const foi=paint.active;paint=null;
+  document.body.classList.remove('painting');
+  if(foi){suppressClick=true;setTimeout(()=>suppressClick=false,320)}
+}
+document.addEventListener('touchstart',e=>{
+  const chip=e.target.closest&&e.target.closest('#plist .pchip');if(!chip||e.touches.length!==1)return;
+  endPaint();
+  const t=e.touches[0];
+  paint={chip,x0:t.clientX,y0:t.clientY,active:false,done:new Set(),timer:null};
+  paint.timer=setTimeout(()=>{if(paint&&!paint.active)beginPaint(chip)},180);
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!paint)return;
+  const t=e.touches[0];
+  if(!paint.active){                              // mexeu antes de segurar: é rolagem
+    if(Math.hypot(t.clientX-paint.x0,t.clientY-paint.y0)>12)endPaint();
+    return;
+  }
+  e.preventDefault();
+  paintChipAt(t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchend',endPaint);
+document.addEventListener('touchcancel',endPaint);
+document.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  const chip=e.target.closest&&e.target.closest('#plist .pchip');if(!chip)return;
+  paint={chip,x0:e.clientX,y0:e.clientY,active:false,done:new Set(),timer:null};
+});
+document.addEventListener('mousemove',e=>{
+  if(!paint)return;
+  if(!paint.active){
+    if(Math.hypot(e.clientX-paint.x0,e.clientY-paint.y0)<6)return;
+    beginPaint(paint.chip);if(!paint)return;
+  }
+  paintChipAt(e.clientX,e.clientY);
+});
+document.addEventListener('mouseup',endPaint);
+
 /* ==========================================================================
    ARRASTAR — segurar e arrastar um nome sobre outro. O toque continua
    funcionando igual; o arraste é só um caminho mais direto.

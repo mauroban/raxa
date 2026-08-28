@@ -468,6 +468,9 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 ## 8. Estado do protótipo (`index.html`)
 
+**Presença em lote.** Na tela "Quem chegou", segurar um nome e arrastar marca todo mundo por onde o dedo passa (ou desmarca, se o primeiro nome apagou). No computador é clicar e arrastar. O "segurar" existe para não brigar com a rolagem da lista.
+
+
 **Funciona de verdade, hoje:**
 
 - Múltiplas Ligas isoladas, cada uma com patentes, jogadores, ajustes e histórico próprios
