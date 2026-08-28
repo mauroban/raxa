@@ -487,8 +487,10 @@ const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.c
    com 400 pontos para cada lado. Dentro do nível, número maior é melhor:
    Ouro 3 é o topo, Ouro 1 o primeiro degrau.                              */
 /* ferro · bronze · prata · ouro */
-const PATC_ESCURO=['#8C98A4','#D08A55','#D6DEE4','#FFC53D'];
-const PATC_CLARO =['#4F5B66','#9A5626','#66747E','#8A5B00'];
+/* ferro enferrujado (marrom-avermelhado opaco) fica longe da prata, que é
+   clara e fria, quase branca — no escuro e no claro.                        */
+const PATC_ESCURO=['#A8705A','#D08A55','#EEF3F8','#FFC53D'];
+const PATC_CLARO =['#7A4A38','#9A5626','#5B6B7A','#8A5B00'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
 const PATSHORT=['FER','BRO','PRA','OUR'];
 const DIVS=['1','2','3'];
