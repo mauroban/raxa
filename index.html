@@ -1304,7 +1304,7 @@ function logAdd(liga,a,extra){
 }
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
-  delPlayer:'removeu jogador',newPlayer:'cadastrou jogador'};
+  delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador'};
 /* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
 const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
@@ -1313,7 +1313,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','renamePlayer','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
@@ -3027,7 +3027,18 @@ const A={
           .map(x=>`<button class="btn sm ${p.role===x[0]?'pri':'ghost'}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
       </div>`:`<div class="tiny muted">${{admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'}[p.role]||'Jogador'} — só o admin muda permissões.</div>`}
       <div class="hr"></div>
+      ${souEditor(l)?`<button class="btn wide ghost" data-a="renamePlayer" data-id="${p.id}" style="margin-bottom:8px">Renomear</button>`:''}
       <button class="btn wide danger" data-a="delPlayer" data-id="${p.id}">Remover jogador</button>`);
+  },
+  renamePlayer(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souEditor(l))return toast('Só admin ou editor renomeia');
+    const n=prompt('Novo nome:',p.name);if(n===null)return;
+    const nome=n.trim();if(!nome)return toast('Digite o nome');
+    if(nome===p.name)return;
+    if(l.players.some(x=>x.id!==p.id&&x.name.toLowerCase()===nome.toLowerCase()))return toast('Já existe alguém com esse nome');
+    logAdd(l,'rename',{pid:p.id,from:p.name,to:nome});
+    p.name=nome;save();render();A.pSheet({dataset:{id:p.id}});toast('Renomeado');
   },
   setRank(el){
     const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L',s=+el.dataset.s,target=stepMid(s);
@@ -4054,6 +4065,7 @@ function logCard(liga){
     else if(e.a==='role')o+=` de ${esc(nome(e.pid))}: ${PAPEL[e.from]||'Jogador'} → ${PAPEL[e.to]||'Jogador'}`;
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
+    else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='delMatch'&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
     return `<div class="tiny" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="muted num">${new Date(e.ts).toLocaleDateString('pt-BR')} · @${esc(e.by||'?')}</span><br>${o}</div>`;
   };
