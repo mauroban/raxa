@@ -305,17 +305,17 @@ ok(Math.abs(pt.stints[0].w+pt.stints[1].w-1)<0.01,'e continuam somando uma parti
   liga.cfg.matchMode='curtas';
 }
 {
-  /* p1 jogou 10 + 5 = 15 de 50 min (30%): conta. Um figurante de 3 min nao. */
+  /* Um figurante de 2 min (abaixo do minimo de 3) nao conta nada. */
   liga.matches.length=0;rebuildAll(liga);liga.cfg.matchMode='unica';
   const c1={a:0,b:1,startedAt:CLOCK+=60*MIN,score:[1,0],events:[],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],startGks:[null,null]};
-  c1.events=[{t:c1.startedAt+44*MIN,type:'sub',side:0,out:'p1',in:'p6'},{t:c1.startedAt+47*MIN,type:'sub',side:0,out:'p6',in:'p1'}];
+  c1.events=[{t:c1.startedAt+45*MIN,type:'sub',side:0,out:'p1',in:'p6'},{t:c1.startedAt+47*MIN,type:'sub',side:0,out:'p6',in:'p1'}];
   const st1=splitStints(c1,c1.startedAt+50*MIN,liga.cfg,'unica');
   const m1={id:'mu2',ts:c1.startedAt+50*MIN,startedAt:c1.startedAt,endedAt:c1.startedAt+50*MIN,sessionId:'su2',mode:'unica',
     names:['A','B'],teamIdx:[0,1],lineups:[[...A5],[...B5]],startLineups:[[...A5],[...B5]],gks:[null,null],stints:st1,score:[1,0],result:0,goals:[],disputes:[],voided:false};
   applyMatch(liga,m1);liga.matches.push(m1);
-  ok(P(liga,'p6').L.games===0,'quem jogou 3 de 50 min nao recebe a partida (nem vitoria, nem contagem)');
-  ok(P(liga,'p6').L.elo===P(liga,'p6').L.base,'e o trecho de 3 min (abaixo do minimo) nem mexe no rating dele');
-  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'quem jogou 47 de 50 leva a vitoria');
+  ok(P(liga,'p6').L.games===0,'quem jogou 2 de 50 min nao recebe a partida (nem vitoria, nem contagem)');
+  ok(P(liga,'p6').L.elo===P(liga,'p6').L.base,'e o trecho de 2 min (abaixo do minimo de 3) nem mexe no rating dele');
+  ok(P(liga,'p1').L.games===1&&P(liga,'p1').L.w===1,'quem jogou 48 de 50 leva a vitoria');
   liga.cfg.matchMode='curtas';liga.matches.length=0;rebuildAll(liga);
 }
 
