@@ -286,7 +286,7 @@ Cronômetro grande, dois blocos coloridos e os slots de goleiro:
   - o confronto `Time A VS Time C`, com a **chance de cada lado** e o retrospecto de hoje;
   - **as duas escalações que vão entrar**, editáveis ali mesmo: toque num nome e depois no outro para trocar de lugar (ou arraste), inclusive puxando alguém de um time que está esperando ou de fora;
   - quem está de fora, agrupado por time, e o rodízio de goleiros da vez;
-  - `＋ Chegou agora`, `⚖ Reequilibrar` e `Refazer times`.
+  - `＋ Chegou agora`, `🚑 Foi embora` e `Refazer times` (reequilibrar é refazer os times — não há botão separado).
 - **Quem entra é sugestão, não regra.** Tocar em qualquer um dos dois lados troca aquele time por outro. O app sugere seguindo "vencedor fica" e a fila de quem está esperando, mas você decide — inclusive repetir o mesmo confronto ou pular a vez de alguém. Só depois de conferir tudo é que você toca em **▶ Começar partida**.
 - **Substituição: arraste ou toque.** Arraste o nome de quem está fora sobre quem está em quadra e a troca acontece (no celular: segure o nome por um instante e arraste; no computador, arraste direto). Se preferir, o toque continua funcionando: toca em quem sai → escolhe quem entra, ou toca em quem está fora → escolhe quem sai. Trocar titular por reserva do mesmo time só inverte os dois.
 - **Toda troca fecha um trecho** e a tela avisa em letra pequena: `Trecho 2 desde a última troca · 1-0 em 3'20`. O placar do trecho novo é o que vale para quem entrou (seção 3.4).
