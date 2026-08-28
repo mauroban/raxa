@@ -43,7 +43,7 @@ create index if not exists league_members_user_idx on public.league_members(user
 
 -- ------------------------------------------------ conta nova => perfil -----
 -- O username vem no metadata do signUp. Sem verificação, sem e-mail real: o
--- cliente monta <username>@raxa.local só porque o Auth exige formato de e-mail.
+-- cliente monta <username>@raxa.app só porque o Auth exige formato de e-mail.
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $fn$
 begin

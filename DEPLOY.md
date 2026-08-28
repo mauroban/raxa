@@ -85,7 +85,7 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
 
 É um ambiente de **teste**, e algumas coisas são propositalmente frouxas:
 
-- **Sem verificação de conta.** Usuário e senha viram `usuario@raxa.local` internamente.
+- **Sem verificação de conta.** Usuário e senha viram `usuario@raxa.app` internamente (domínio fictício; precisa ter TLD real porque o Supabase recusa `.local`).
   Não existe recuperação de senha: senha perdida, conta perdida.
 - **Permissão de papel só na interface.** Os papéis (admin, editor, lançador,
   jogador) mudam o que a tela oferece, mas no banco **qualquer membro da liga

@@ -2986,8 +2986,10 @@ const sb=CONFIGURADO?window.supabase.createClient(CFG.url,CFG.anonKey,
   {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}):null;
 
 /* O Auth exige formato de e-mail; o racha usa usuário e senha. O domínio é
-   fictício de propósito — não existe caixa de entrada, nada é enviado. */
-const MAILDOM='@raxa.local';
+   fictício de propósito — não existe caixa de entrada, nada é enviado.
+   Precisa ter um TLD real: o Supabase passou a recusar ".local" e afins
+   (email_address_invalid). Trocar isto depois de existir conta = ninguém entra. */
+const MAILDOM='@raxa.app';
 const userMail=u=>String(u).trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')+MAILDOM;
 
 let ME=null;                       // {id, username}

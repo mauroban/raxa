@@ -1,12 +1,12 @@
 /* ==========================================================================
    Raxa — ligação com o backend.
-   Preencha com os dados do seu projeto Supabase:
-   Dashboard -> Project Settings -> API
-     url     = "Project URL"
-     anonKey = "anon public"  (chave pública, pode ir para o navegador:
-                               quem protege os dados é a RLS, não o segredo)
+   Dados do projeto Supabase (Dashboard -> Project Settings):
+     url     = Data API -> "Project URL"
+     anonKey = API Keys -> "Publishable key" (ou a "anon public" legada).
+               É pública de propósito, pode ir para o navegador:
+               quem protege os dados é a RLS, não o segredo.
    ========================================================================== */
 window.RAXA_CFG = {
-  url:     "COLE_AQUI_A_PROJECT_URL",
-  anonKey: "COLE_AQUI_A_ANON_KEY"
+  url:     "https://dehhozmewuhtuspwkwdg.supabase.co",
+  anonKey: "sb_publishable_3r_zNTxur39uWvZKmr3p6w_ityikAWW"
 };
