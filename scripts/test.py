@@ -215,6 +215,18 @@ ok(vitLiq>=3&&vitLiq<=5,'meia noite boa (3 a 5 vitorias liquidas) vale uma divis
   console.log('  Ferro 1 vencendo 7 seguidas: '+rankLabel(liga,r0)+' -> '+rankLabel(liga,f.L.rank)+' ('+Math.round(f.L.elo-stepMid(0))+' pts)');
   ok(f.L.rank-r0>=2,'7 vitorias seguidas em times parelhos sobem pelo menos 2 divisoes (antes: 1)');
   ok(streakK(f.L)===STREAK_K,'sequencia de 4+ liga o acelerador de K');
+  ok(streakK({form:['V','E','V','V','D','V','E','V','V','V']})===STREAK_K,'7V-1D em 10 (com empates no meio) tambem liga o acelerador');
+  ok(streakK({form:['V','D','V','E','D','V','D','V','D','E']})===1,'forma misturada nao liga');
+  const km=KMODE.curtas;
+  ok(kFor(km,{games:20})===km.base&&kFor(km,{games:60})===km.base,'ate 60 partidas o K e cheio');
+  ok(kFor(km,{games:120})<km.base&&kFor(km,{games:120})>km.min,'com 120 partidas o K ja caiu, mas nao no piso');
+  ok(kFor(km,{games:400})===km.min,'veterano de 400 partidas fica no piso (24)');
+  /* veterano mal calibrado: K no piso, mas o acelerador o tira de la */
+  const v=mk('Vet',stepMid(0),0);v.L.games=400;v.L.sessions=60;v.L.def=true;v.L.rank=0;liga.players.push(v);
+  const meu2=[v.id,...par.slice(0,4)];
+  for(let i=0;i<7;i++){par.forEach(id=>{const q=P(liga,id);q.L.elo=stepMid(0)});lanca(meu2,eles,0,{sid:'noite-vet'})}
+  console.log('  veterano (400 partidas) vencendo 7 seguidas: '+rankLabel(liga,0)+' -> '+rankLabel(liga,v.L.rank)+' ('+Math.round(v.L.elo-stepMid(0))+' pts)');
+  ok(v.L.rank>=1,'veterano preso la embaixo sobe pelo menos 1 divisao numa noite perfeita');
 }
 
 console.log('\n[5] trechos: cada formacao em campo e uma partida');

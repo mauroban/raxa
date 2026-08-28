@@ -522,15 +522,27 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    vitórias para subir 3 divisões, e o racha ficava desequilibrado esse tempo
    todo. Com 36 (e o acelerador de sequência abaixo) uma noite perfeita vale
    ~2 divisões; uma noite normal, meia.                                       */
-const KMODE={curtas:{cal:60,base:36},unica:{cal:70,base:44}};
-/* Sequência longa (4+ do mesmo resultado) é sinal de nível errado, não de
-   sorte: o K sobe 50% até a sequência quebrar. Vale para cima e para baixo. */
-const STREAK_MIN=4, STREAK_K=1.5;
+const KMODE={curtas:{cal:60,base:36,min:24},unica:{cal:70,base:44,min:30}};
+/* K que decai com histórico (à la Glicko): quem tem muitas partidas já provou
+   onde está e balança menos; quem está chegando anda rápido. Até K_FULL
+   partidas vale `base`; depois cai com a raiz do histórico até `min`.      */
+const K_FULL=60;
+function kFor(km,tr){
+  const g=tr.games||0;
+  if(g<=K_FULL)return km.base;
+  return Math.max(km.min,km.base*Math.sqrt(K_FULL/g));
+}
+/* Acelerador: sinal de nível ERRADO, não de sorte — e é o que impede alguém
+   calibrado em times ruins de ficar preso lá embaixo com K pequeno.
+   Dispara com 4+ resultados iguais seguidos OU saldo de ±6 nas últimas 10
+   (7 vitórias e 1 derrota com empates no meio também conta). Vale nos dois
+   sentidos, e multiplica o K por 1,5 enquanto o sinal durar.               */
+const STREAK_MIN=4, STREAK_K=1.5, FORM_GAP=6;
 function streakK(tr){
-  const f=tr.form||[];if(f.length<STREAK_MIN)return 1;
-  const r=f[0];if(r==='E')return 1;
-  for(let i=0;i<STREAK_MIN;i++)if(f[i]!==r)return 1;
-  return STREAK_K;
+  const f=tr.form||[];
+  if(f.length>=STREAK_MIN&&f[0]!=='E'){let run=true;for(let i=0;i<STREAK_MIN;i++)if(f[i]!==f[0]){run=false;break}if(run)return STREAK_K}
+  if(f.length>=8){let v=0,d=0;f.slice(0,10).forEach(x=>{if(x==='V')v++;else if(x==='D')d++});if(Math.abs(v-d)>=FORM_GAP)return STREAK_K}
+  return 1;
 }
 /* Por que esses números: times equilibrados fazem todo confronto valer ~50%, e
    um jogo 50/50 carrega pouca informação. Com K=16 um nível (200 pts) levava
@@ -811,7 +823,7 @@ function computeElo(liga,part,result,mode,weight){
     const tr=rt(p,part[pid].role);
     pre[pid]=tr.elo;
     const km=KMODE[mode]||KMODE[cfg.matchMode]||KMODE.curtas;
-    const K=(calibrando(liga,p,tr)?km.cal:km.base)*streakK(tr);
+    const K=(calibrando(liga,p,tr)?km.cal:kFor(km,tr))*streakK(tr);
     deltas[pid]=Math.round(K*(Sc[part[pid].side]-E[part[pid].side])*part[pid].w*W);
   }
   return {avg,exp:E,deltas,pre};

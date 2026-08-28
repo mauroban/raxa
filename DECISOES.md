@@ -362,6 +362,19 @@ a histerese/proteção (D-?) já seguram o ioiô — não precisa de K pequeno p
 por desvio da média do time (não distingue quem carrega de quem é carregado).
 **Onde:** `KMODE`, `streakK`, `computeElo`, `viewProxima` (`escalCom`).
 
+### D-34 · K decai com histórico; acelerador também por saldo de forma
+**28/08/2026.** `kFor`: K cheio (36/44) até 60 partidas na trilha, depois `base·√(60/partidas)`
+com piso 24/30. `streakK` passa a disparar também com saldo de ±6 nas últimas 10 (além dos 4+
+iguais seguidos).
+**Por quê:** num racha parelho o Elo por time tem puxão de volta diluído por 5, e um K fixo de 36
+deixa um jogador mediano espalhar ±2 divisões só de sorte ao longo dos meses. O decaimento é o que
+o Glicko faz com a incerteza: veterano balança ±1,5 divisão, novato converge em 1–2 noites. O
+risco do K baixo — alguém calibrado em times ruins preso lá embaixo — é coberto pelo acelerador,
+que agora também enxerga 7V-1D com empates no meio (sequência pura de 4 era estreita demais).
+**Descartado:** K fixo alto (oscila sem parar); regressão à média por temporada (apaga histórico
+real); ajuste individual por desvio da média do time (não separa quem carrega de quem é carregado).
+**Onde:** `KMODE.min`, `K_FULL`, `kFor`, `FORM_GAP`, `streakK`, `computeElo`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
