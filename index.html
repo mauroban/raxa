@@ -1999,7 +1999,6 @@ function viewStats(liga){
   const nRachas=Object.keys(rachas).length;
   const golsTot=ms.reduce((a,m)=>a+(m.score||[0,0])[0]+(m.score||[0,0])[1],0);
   const empates=ms.filter(m=>m.result==='draw').length;
-  const goleada=ms.reduce((g,m)=>{const d=Math.abs((m.score||[0,0])[0]-(m.score||[0,0])[1]);return d>g.d?{d,m}:g},{d:0,m:null});
 
   /* --- duelos e parcerias da pessoa --- */
   const duelos=Object.keys(DU[who]||{}).map(id=>Object.assign({pid:id},DU[who][id])).sort((a,b)=>b.n-a.n||b.d-a.d);
@@ -2139,12 +2138,7 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachas?Math.round(ms.length/nRachas):'—'}</b><span>partidas por racha</span></div>
     </div>
-    ${goleada.m?`<div class="k2">🔥 Maior goleada · ${DIA(goleada.m.ts)}</div>
-    <div class="mini" style="margin-top:0">
-      <div class="tm ${goleada.m.result===0?'win':''}">${esc(goleada.m.names[0])}</div>
-      <div class="sc num">${goleada.m.score[0]}<span class="muted" style="margin:0 5px">–</span>${goleada.m.score[1]}</div>
-      <div class="tm r ${goleada.m.result===1?'win':''}">${esc(goleada.m.names[1])}</div>
-    </div>`:''}
+
   </div>
 
   <div class="card">
