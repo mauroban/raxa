@@ -2052,7 +2052,10 @@ function viewStats(liga){
           ${me.ultimos.length?formaDots(me.ultimos):''}
         </div>
       </div>
-      <button class="btn sm ghost" data-a="statsWho" style="width:auto;padding:9px 11px">Trocar</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="btn sm ghost" data-a="statsWho" style="width:auto;padding:9px 11px">Trocar</button>
+        ${eu&&who!==eu?`<button class="btn sm pri" data-a="setStatsWho" data-id="${eu}" style="width:auto;padding:9px 11px">Ver o meu</button>`:''}
+      </div>
     </div>
     <div class="herogrid">
       <div class="ring">
