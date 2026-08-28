@@ -455,12 +455,12 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 |---|---|
 | **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, corrigir patente, dar papéis |
 | **Editor** | Cadastrar jogadores, montar times e corrigir o resultado de partidas (corrigir nível, anular, revisar contestação e apagar são só do admin) |
-| **Lançador** | Criar rachas e lançar resultados (padrão de todo mundo) |
-| **Jogador** | Visualiza ranking, histórico e as próprias estatísticas; pode contestar |
+| **Lançador** | Conduzir o racha: presença, times, partidas, gols, cadastrar jogador |
+| **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar. Não lança nada |
 
-O padrão de uma Liga nova é **todo mundo Lançador** — na prática quem está com o celular na mão é quem lança. O admin restringe só se der problema.
+O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a quem conduz o racha (quem está com o celular na mão). Conta ainda sem perfil vinculado também é tratada como Jogador.
 
-**Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin). Lançador e Jogador são, por enquanto, só rótulos — todo mundo lança.
+**Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).
 
 **Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Membros** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
 

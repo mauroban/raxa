@@ -265,6 +265,18 @@ se um grupo grande sentir falta, vira ajuste da liga.
 **Onde:** `join_league` (devolve `{status}`), `my_requests`, `approve_request`/`reject_request`,
 `league_accounts` (coluna `pending`), `PEND`, `A.doJoin`/`accApprove`/`accReject`, `watch()`.
 
+### D-27 · Quem entra é Jogador; Lançador é dado pelo admin
+**28/08/2026.** Papel padrão de jogador novo (e de conta sem perfil vinculado) passa de Lançador para
+**Jogador** — só leitura, contestação e vincular o próprio perfil. O admin promove a Lançador quem
+conduz o racha. Editor continua corrigindo resultado; Ajustes são só do admin.
+**Por quê:** com entrada por código e aprovação, a liga vai ter gente que só quer ver o próprio nível.
+Todo mundo podendo mexer em presença, times e placar é convite para bagunça acidental — e "lançar"
+é responsabilidade de quem está com o celular na quadra, não de quem entrou.
+**Como:** a checagem é uma só, no despachante de cliques (`ACOES_LANCAR`, `ACOES_ADMIN`): botão
+aparece, mas para Jogador responde com um aviso. Liga nova sem vínculo continua com todo mundo admin.
+Jogadores já existentes com papel Lançador não mudam.
+**Onde:** `meuPapel`, `podeLancar`, `mkPlayer`/`migPlayer`, despachante de `click`/`change`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

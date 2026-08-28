@@ -544,7 +544,7 @@ function fixTrack(t,e){
 function migPlayer(liga,p){
   const e=typeof p.elo==='number'?p.elo:liga.cfg.startElo;
   const q=Object.assign({id:uid(),name:'?',gk:false,goals:0,sessions:0,lastSession:null,
-    owner:null,role:'lancador',created:Date.now()},p);
+    owner:null,role:'jogador',created:Date.now()},p);
   if(!q.L||!q.G){        /* versão antiga: nível único. Quem era goleiro leva o histórico para a trilha do gol. */
     const velha=fixTrack({elo:e,base:p.base,rank:p.rank,peak:p.peakRank,protect:p.protect,
       games:p.games,w:p.w,l:p.l,d:p.d,sessions:p.sessions,lastSession:p.lastSession,form:p.form},e);
@@ -1270,12 +1270,22 @@ function renderHome(){
    esconder de verdade — a checagem de papel é a mesma que o servidor fará.  */
 function meuPapel(liga){
   const meu=liga.players.find(p=>p.owner&&p.owner===S.me.name);
-  if(meu)return meu.role||'lancador';
-  return liga.players.some(p=>p.owner)?'lancador':'admin';
+  if(meu)return meu.role||'jogador';
+  /* conta sem perfil vinculado só olha; o admin vincula e dá o papel. Enquanto
+     ninguém vinculou nada (liga recém-criada), todo mundo é admin. */
+  return liga.players.some(p=>p.owner)?'jogador':'admin';
 }
 const souAdmin=liga=>meuPapel(liga)==='admin';
 /* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
 const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
+/* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
+   Jogador só olha, vincula o próprio perfil e contesta. */
+const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
+const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
+  'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
+  'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
+  'lateGk','startMatch','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${PATC[patOf(step)]}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -2139,13 +2149,13 @@ let membrosCard=function(liga){
   return `<div class="card">
     <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
       <div class="sp tiny muted num">${comConta.length} com conta · ${semConta.length} só no cadastro</div></div>
-    <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Lançador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
-      ${adm?'Toque num membro para mudar a permissão dele.':'Só o admin muda permissões e revisa partidas.'}
+    <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Jogador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
+      ${adm?'Toque num membro para mudar a permissão dele. Quem entra é Jogador (só olha); dê Lançador a quem conduz o racha.':'Só o admin muda permissões e revisa partidas.'}
       ${liga.players.some(p=>p.owner)?'':'<br>Enquanto ninguém vincular um perfil, todo mundo é admin.'}</div>
     ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'8px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
         <div class="meta"><span class="tiny muted">@${esc(p.owner)}</span></div></div>
-      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Lançador'}</span>
+      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Jogador'}</span>
       <div style="color:var(--mute);font-size:18px">›</div></div>`).join('')}</div>`
       :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Aqui embaixo, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
     ${semConta.length?`<div class="tiny muted">${semConta.length} jogador${semConta.length===1?'':'es'} sem conta — alguém lança por ele${semConta.length===1?'':'s'}. Estão na escada abaixo; a ficha diz quem é.</div>`:''}
@@ -2311,7 +2321,7 @@ function mkPlayer(liga,name,elo,gk){
      outra nasce SEM PATENTE e só existe quando ela jogar naquela posição —
      até lá, se precisar entrar na conta, entra no nível de entrada padrão. */
   return{id:uid(),name,gk:!!gk,L:newTrack(gk?pad:e,!gk),G:newTrack(gk?e:pad,!!gk),goals:0,
-    sessions:0,lastSession:null,owner:null,role:'lancador',created:Date.now()};
+    sessions:0,lastSession:null,owner:null,role:'jogador',created:Date.now()};
 }
 
 /* ==========================================================================
@@ -2958,7 +2968,7 @@ const A={
       ${souAdmin(l)?`<div class="row" style="gap:5px;flex-wrap:wrap">
         ${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
           .map(x=>`<button class="btn sm ${p.role===x[0]?'pri':'ghost'}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
-      </div>`:`<div class="tiny muted">${{admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'}[p.role]||'Lançador'} — só o admin muda permissões.</div>`}
+      </div>`:`<div class="tiny muted">${{admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'}[p.role]||'Jogador'} — só o admin muda permissões.</div>`}
       <div class="hr"></div>
       <button class="btn wide danger" data-a="delPlayer" data-id="${p.id}">Remover jogador</button>`);
   },
@@ -3188,10 +3198,15 @@ document.addEventListener('click',e=>{
   if(suppressClick)return;
   const el=e.target.closest('[data-a]');if(!el)return;
   const fn=A[el.dataset.a];if(!fn)return;
-  e.stopPropagation();fn(el);
+  e.stopPropagation();
+  const lg=L();
+  if(lg&&ACOES_LANCAR.has(el.dataset.a)&&!podeLancar(lg))return toast('Você é Jogador nesta liga — peça ao admin para virar Lançador');
+  if(lg&&ACOES_ADMIN.has(el.dataset.a)&&!souAdmin(lg))return toast('Só o admin mexe nos ajustes da liga');
+  fn(el);
 });
 document.addEventListener('change',e=>{
   const el=e.target,l=L();if(!l)return;
+  if((el.dataset.cfg||el.dataset.pat!==undefined)&&!souAdmin(l)){render();return toast('Só o admin mexe nos ajustes da liga')}
   if(el.dataset.cfg){
     /* campo numérico vazio ou negativo não pode virar NaN no motor: volta ao que estava */
     const LIM={targetGoals:[0,99],targetMin:[1,180],stintMin:[0,60],disputeThreshold:[1,50]};
@@ -3705,7 +3720,7 @@ membrosCard=function(liga){
     return p?`<div class="rank" data-a="pSheet" data-id="${p.id}">
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
         <div class="meta"><span class="tiny muted">@${esc(a.username)}${a.is_owner?' · dono':''}</span></div></div>
-      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Lançador'}</span>
+      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Jogador'}</span>
       <div style="color:var(--mute);font-size:18px">›</div></div>`
     :`<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
       <div style="min-width:0;flex:1"><div class="nm">@${esc(a.username)}${a.user_id===ME.id?' <span class="tiny muted">(você)</span>':''}</div>
@@ -3737,7 +3752,7 @@ Object.assign(A,{
     openSheet(`<h2>@${esc(a.username)}</h2>
       <div class="tiny muted" style="margin-bottom:12px">${a.is_owner?'Dono da liga · ':''}entrou em ${new Date(a.joined_at).toLocaleDateString('pt-BR')}</div>
       <div class="k" style="margin-bottom:8px">Jogador</div>
-      ${p?`<div class="tiny" style="margin-bottom:10px">Vinculada a <b>${esc(p.name)}</b> (${PAPEL[p.role]||'Lançador'})
+      ${p?`<div class="tiny" style="margin-bottom:10px">Vinculada a <b>${esc(p.name)}</b> (${PAPEL[p.role]||'Jogador'})
           <button class="btn sm ghost" style="margin-left:8px" data-a="pSheet" data-id="${p.id}">abrir ficha</button>
           <button class="btn sm ghost" style="margin-left:4px" data-a="accUnlink" data-id="${p.id}">desvincular</button></div>`
         :`<div class="tiny muted" style="margin-bottom:10px">Essa conta ainda não é nenhum jogador. Escolha o perfil dela na lista, ou crie um novo com o nome da conta.</div>
