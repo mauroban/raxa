@@ -2336,6 +2336,8 @@ function viewStats(liga){
       t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++})});
     const times=Object.values(T).sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
     const todos=Object.keys(J).map(id=>J[id]);
+    /* quem mais ganhou é a estatística da noite: vitórias, desempate por menos derrotas e mais partidas */
+    const venc=[...todos].filter(x=>x.v).sort((a,b)=>b.v-a.v||a.d-b.d||b.jogos-a.jogos).slice(0,3);
     const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,3);
     const tempo=[...todos].sort((a,b)=>b.min-a.min).slice(0,3);
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
@@ -2360,6 +2362,7 @@ function viewStats(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
+    ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${venc.map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D em ${pl(x.jogos,'partida')}</small></div><span class="val">${x.v}<small>V</small> · ${pctDe(x.v,x.jogos)}%</span></div>`).join('')}</div>`:''}
     ${art.length?`<div class="sec"><div class="k2">⚽ Artilheiro</div>${art.map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2">📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></div>${rendeu.map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${tempo.map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')}</div>`:''}
