@@ -399,7 +399,8 @@ button.rk2{cursor:pointer} button.rk2:active{opacity:.65}
 .esc2 .pl.empty{border-style:dashed;color:var(--mute);background:transparent;font-weight:400}
 .esc2 .pl .ic{font-size:11px;color:var(--mute);flex:0 0 auto}
 .esc2 .pl .ic.sub{opacity:.7}
-.esc2 .pl.sel{background:var(--chalk);color:#0B0F0D;border-color:var(--chalk)}
+.esc2 .pl.sel{background:linear-gradient(165deg,var(--lime),var(--lime2));color:#08110A;border-color:transparent}
+.esc2 .pl.sel .ic,.esc2 .pl.sel .nm{color:#08110A}
 .esc2 .col .teamtag{margin-bottom:6px;display:block}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
@@ -1680,7 +1681,7 @@ function viewTimes(liga,lv){
 }
 function selBar(liga,lv){
   if(!lv.sel)return '';
-  return `<div class="selbar">Trocando <b>&nbsp;${esc(nameOf(liga,lv.sel))}</b>
+  return `<div class="selbar" style="margin-top:8px">Trocando <b>&nbsp;${esc(nameOf(liga,lv.sel))}</b> — toque em quem entra no lugar
     <button class="btn sm ghost sp" data-a="clearSel">Cancelar</button></div>`;
 }
 /* ---------- completar o time menor ----------
@@ -1786,7 +1787,7 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const pool=lv.gkPool||[];extra=extra||{};
   const linha=ids.filter(id=>id!==gk);
   const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
-  const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="substituto: não é do time">⇄</span>':'';
+  const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="entrou depois: substituto / completando">⇄</span>':'';
   const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
     :`<button class="pl ${cls} empty" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
   let h=gk?`<button class="pl gk" ${act?act.gk:''}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
@@ -1849,7 +1850,6 @@ function viewProxima(liga,lv){
   const soltos=filaDe(lv);
   const equilibrio=ex?(Math.abs(ex[0]-.5)<.06?'Confronto parelho':'Favorito: '+lv.teams[pair[ex[0]>ex[1]?0:1]].name):'';
   return `
-  ${selBar(liga,lv)}
   <div class="card">
     <div class="row"><div class="k">Próxima partida</div>
       <div class="sp tiny muted">${outros.length?'toque no time para trocar':'só dois times'}</div></div>
@@ -1861,7 +1861,7 @@ function viewProxima(liga,lv){
     </div>
     <div class="esc2">
       ${[0,1].map(sd=>{const ti=pair[sd],t=lv.teams[ti],res=t.ids.slice(per);
-        return escCol(liga,lv,escalCom[sd],gkDe(sd),per,t.ids,
+        return escCol(liga,lv,escalCom[sd],gkDe(sd),per,(t.orig||t.ids).concat(gkDe(sd)?[gkDe(sd)]:[]),
           {gk:`data-a="preGk" data-sd="${sd}"`,
            pl:id=>compl[sd].includes(id)?`data-a="fillDel" data-sd="${sd}" data-id="${id}" title="tirar quem completa"`
                  :`data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}"`,
@@ -1870,11 +1870,13 @@ function viewProxima(liga,lv){
            head:`<div class="teamtag ${TEAMBG[ti]}">${esc(t.name)}${gp.fica[sd]?' <span style="opacity:.75;font-weight:400">· goleiro fica</span>':''}</div>`,
            foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false)).join('')}</div></div>`:''})}).join('')}
     </div>
-    <div class="tiny muted" style="margin-top:8px">🧤 toque para trocar o goleiro${pool.length?' · ↻ rodízio':''} · ⇄ não é do time · toque num nome e depois no outro para trocar, ou arraste${pool.length>1?` · esperando no rodízio: ${pool.filter(id=>!gp.gks.includes(id)).map(id=>esc(nameOf(liga,id))).join(', ')||'ninguém'}`:''}</div>
-    ${ex?`<div class="tiny muted" style="margin-top:6px">${esc(equilibrio)} — chance esperada pelo nível de quem entra em quadra.</div>`:''}
+    ${selBar(liga,lv)}
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
-      return rs.length?`<div class="tiny muted" style="margin-top:6px">Hoje: ${rs.map(x=>esc(x.n)+' '+x.r.w+'V'+(x.r.d?' '+x.r.d+'E':'')+' '+x.r.l+'D').join(' · ')}</div>`:''})()}
-    ${outros.length?`<div class="tiny muted" style="margin-top:6px">Esperando: ${outros.map(i=>esc(lv.teams[i].name)).join(', ')}${liga.cfg.winnerStays?' · vencedor fica, empate os dois saem':''}</div>`:''}
+      const partes=[];
+      if(rs.length)partes.push('Hoje: '+rs.map(x=>esc(x.n)+' '+x.r.w+'V'+(x.r.d?' '+x.r.d+'E':'')+' '+x.r.l+'D').join(' · '));
+      if(outros.length)partes.push('Esperando: '+outros.map(i=>esc(lv.teams[i].name)).join(', '));
+      if(pool.length>1){const esp=pool.filter(id=>!gp.gks.includes(id));if(esp.length)partes.push('🧤 rodízio: '+esp.map(id=>esc(nameOf(liga,id))).join(', '))}
+      return partes.length?`<div class="tiny muted" style="margin-top:8px">${partes.join(' · ')}</div>`:''})()}
   </div>
   ${cardCompletar(liga,lv,pair)}
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
@@ -1948,12 +1950,12 @@ function viewJogo(liga,lv){
         ${c.score[s]?`<button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button>`:''}
       </div>`}).join('<div class="vs">VS</div>')}
   </div>
+  <div id="scorer"></div>
   <div class="esc2">
-    ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,lv.teams[s===0?c.a:c.b].ids,
+    ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
       {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
   </div>
-  <div class="tiny muted" style="margin-top:6px">Toque num nome para substituir · ⇄ substituto · ↻ goleiro do rodízio</div>
-  <div id="scorer"></div>
+  <div class="tiny muted" style="margin-top:6px">Toque num nome para substituir</div>
   ${golsCard(liga,lv,c)}
   <div class="card" style="margin-top:10px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
@@ -2985,6 +2987,7 @@ const A={
     if(!Array.isArray(lv.queue))lv.queue=[];
     lv.stage='jogo';lv.cur=null;
     lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
+    lv.teams.forEach(t=>{t.orig=t.ids.slice()});      // composição original: é contra ela que o ⇄ é marcado
     lv.nextPair=suggestPair(l,lv);resetFill(lv);
     save();render();
   },

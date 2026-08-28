@@ -242,6 +242,12 @@ step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos
   const st=splitStints(c,Date.now()+60000,L().cfg);
   if(st[st.length-1].lineups[1].includes(id))throw new Error('o trecho seguinte ainda conta com ele');
 });
+step('quem nao e do time original leva o icone de substituto',()=>{
+  const lv=L().live,c=lv.cur;if(!c)return;render();
+  const ti=c.a,orig=lv.teams[ti].orig||[];
+  const estranho=c.lineups[0].find(id=>!orig.includes(id)&&id!==c.gks[0]);
+  if(estranho&&!/⇄/.test(els['#app'].innerHTML))throw new Error('substituto sem o icone ⇄');
+});
 step('substituir tocando em quem esta fora',()=>{
   const fora=benchList(L(),L().live);
   if(fora.length){A.inPick({dataset:{id:fora[0].id}});
