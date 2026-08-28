@@ -204,7 +204,18 @@ ok(KMODE.curtas.base>12,'racha curto (10 a 15 partidas por noite) pesa mais que 
 const divisao=stepMin(1)-stepMin(0);
 const vitLiq=divisao/(KMODE.curtas.base/2);
 console.log('  K='+KMODE.curtas.base+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
-ok(vitLiq>=6&&vitLiq<=10,'uma noite muito boa (10 a 15 partidas) vale mais ou menos uma divisao');
+ok(vitLiq>=3&&vitLiq<=5,'meia noite boa (3 a 5 vitorias liquidas) vale uma divisao');
+{ /* Ferro 1 estabelecido (fora da calibracao) que vence 7 seguidas em times parelhos: tem que subir 2 divisoes na noite */
+  const f=mk('Ferro1',stepMid(0),0);f.L.games=40;f.L.sessions=8;f.L.def=true;f.L.rank=0;liga.players.push(f);
+  const par=[];for(let i=0;i<9;i++){const q=mk('Par'+i,stepMid(0),0);q.L.games=40;q.L.sessions=8;q.L.rank=0;liga.players.push(q);par.push(q.id)}
+  const meu=[f.id,...par.slice(0,4)],eles=par.slice(4,9);
+  const r0=f.L.rank;
+  /* o balanceador remonta os times a cada partida para ficar ~50/50: aqui os outros voltam ao nivel de origem */
+  for(let i=0;i<7;i++){par.forEach(id=>{const q=P(liga,id);q.L.elo=stepMid(0)});lanca(meu,eles,0,{sid:'noite-ferro'})}
+  console.log('  Ferro 1 vencendo 7 seguidas: '+rankLabel(liga,r0)+' -> '+rankLabel(liga,f.L.rank)+' ('+Math.round(f.L.elo-stepMid(0))+' pts)');
+  ok(f.L.rank-r0>=2,'7 vitorias seguidas em times parelhos sobem pelo menos 2 divisoes (antes: 1)');
+  ok(streakK(f.L)===STREAK_K,'sequencia de 4+ liga o acelerador de K');
+}
 
 console.log('\n[5] trechos: cada formacao em campo e uma partida');
 let pt=partida(A5,B5,{dur:8*MIN,events:[{at:4*MIN,type:'sub',side:0,out:'p1',in:'p6'}],fimA:['p6','p2','p3','p4','p5']});

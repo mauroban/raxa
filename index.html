@@ -518,7 +518,20 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    histórico, e cada partida guarda o formato dela.
    Racha curto (2 gols ou 7 min) rende 10 a 15 partidas por noite — não 25 —
    então cada uma precisa pesar mais do que pesava.                            */
-const KMODE={curtas:{cal:60,base:22},unica:{cal:70,base:30}};
+/* K por partida. base=22 era lento demais: um Ferro 1 vencendo tudo levava 18
+   vitórias para subir 3 divisões, e o racha ficava desequilibrado esse tempo
+   todo. Com 36 (e o acelerador de sequência abaixo) uma noite perfeita vale
+   ~2 divisões; uma noite normal, meia.                                       */
+const KMODE={curtas:{cal:60,base:36},unica:{cal:70,base:44}};
+/* Sequência longa (4+ do mesmo resultado) é sinal de nível errado, não de
+   sorte: o K sobe 50% até a sequência quebrar. Vale para cima e para baixo. */
+const STREAK_MIN=4, STREAK_K=1.5;
+function streakK(tr){
+  const f=tr.form||[];if(f.length<STREAK_MIN)return 1;
+  const r=f[0];if(r==='E')return 1;
+  for(let i=0;i<STREAK_MIN;i++)if(f[i]!==r)return 1;
+  return STREAK_K;
+}
 /* Por que esses números: times equilibrados fazem todo confronto valer ~50%, e
    um jogo 50/50 carrega pouca informação. Com K=16 um nível (200 pts) levava
    ~100 partidas — o palpite do cadastro mandava por meses. Com 22 no racha
@@ -798,7 +811,7 @@ function computeElo(liga,part,result,mode,weight){
     const tr=rt(p,part[pid].role);
     pre[pid]=tr.elo;
     const km=KMODE[mode]||KMODE[cfg.matchMode]||KMODE.curtas;
-    const K=calibrando(liga,p,tr)?km.cal:km.base;
+    const K=(calibrando(liga,p,tr)?km.cal:km.base)*streakK(tr);
     deltas[pid]=Math.round(K*(Sc[part[pid].side]-E[part[pid].side])*part[pid].w*W);
   }
   return {avg,exp:E,deltas,pre};
@@ -1748,7 +1761,10 @@ function viewProxima(liga,lv){
   const escal=[0,1].map(sd=>lv.teams[pair[sd]].ids.slice(0,per).concat(compl[sd]));
   const gp=planGks(liga,lv,pair);
   const gkDe=sd=>gp.gks[sd]||escal[sd].find(id=>ehGkHoje(lv,id))||null;
-  const ex=chanceDeLineups(liga,lv,escal,[0,1].map(gkDe));
+  /* o goleiro do rodízio entra em quadra além dos de linha (é assim que startMatch monta):
+     a chance aqui tem que ser a mesma que a partida ao vivo vai mostrar */
+  const escalCom=[0,1].map(sd=>{const g=gkDe(sd);return g&&!escal[sd].includes(g)?escal[sd].concat([g]):escal[sd]});
+  const ex=chanceDeLineups(liga,lv,escalCom,[0,1].map(gkDe));
   const outros=lv.teams.map((_,i)=>i).filter(i=>i!==pair[0]&&i!==pair[1]);
   const pool=lv.gkPool||[];
   const soltos=filaDe(lv);

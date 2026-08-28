@@ -123,7 +123,7 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 | **Várias curtas** *(padrão)* | 60 | 22 | 10–15 partidas por noite — é o número real de um racha de 2 gols ou 7 min |
 | **Partida única** | 70 | 30 | uma partida por noite — ela precisa valer alguma coisa |
 
-> **Por que 22 e não 16 (28/08/2026).** Times equilibrados fazem todo confronto valer ~50%, e um jogo 50/50 carrega pouca informação. Com K=16, uma patente inteira (200 pontos) levava ~100 partidas: o palpite do cadastro mandava por meses. Com 22, quem ganha 60% sobe uma patente em ~45 partidas — quatro sábados. A estabilidade continua vindo da histerese e da proteção (3.5), não de um K pequeno.
+> **Por que 36 e não 22 (28/08/2026, revisto no mesmo dia).** Com 22, um Ferro 1 estabelecido vencendo tudo levou 18 vitórias seguidas para subir 3 divisões — duas noites inteiras com o racha desequilibrado. Com 36 e o acelerador de sequência (abaixo), 7 vitórias seguidas sobem 2 divisões na noite. Antes disso: Times equilibrados fazem todo confronto valer ~50%, e um jogo 50/50 carrega pouca informação. Com K=16, uma patente inteira (200 pontos) levava ~100 partidas: o palpite do cadastro mandava por meses. Com 22, quem ganha 60% sobe uma patente em ~45 partidas — quatro sábados. A estabilidade continua vindo da histerese e da proteção (3.5), não de um K pequeno.
 
 > **Por que 16 e não 12.** A calibragem antiga supunha 20 a 30 partidas por noite. Um racha de 2 gols ou 7 minutos, com troca de time, fila e conversa no meio, entrega **10 a 15**. Com metade das partidas, cada uma tem que pesar cerca do dobro para que uma noite continue significando a mesma coisa.
 
@@ -143,13 +143,13 @@ Alternar entre duas patentes toda semana destrói a graça do sistema. Três mec
 
 Os valores são **fixos e iguais em toda liga**: margem **13** e proteção de **3 trechos** (banda efetiva de ~93 pontos, pouco mais de um degrau). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
 
-Ordem de grandeza no padrão de racha curto (K=22, times parelhos): mover uma **divisão** exige cerca de **10 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — uma noite muito boa em um racha de 12 partidas; uma **patente** inteira, cerca de 25 — três noites dessas. No modo de partida única (K=24) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
+Ordem de grandeza no padrão de racha curto (K=36, times parelhos): mover uma **divisão** exige cerca de **4 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — meia noite boa; uma **patente** inteira, cerca de 12 — duas noites muito boas. **Acelerador de sequência:** 4 ou mais resultados iguais seguidos (só vitórias ou só derrotas; empate quebra) são sinal de nível errado, não de sorte — o K sobe 50 % até a sequência quebrar, nos dois sentidos. No modo de partida única (K=44) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
 
 ### 3.6 Entrada de um jogador novo
 
 Quem cadastra escolhe **a patente percebida** (um toque: Ferro … Ouro, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
 
-O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é quase o triplo (60 no lugar de 22 no racha curto, 70 no lugar de 30 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
+O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é maior (60 no lugar de 36 no racha curto, 70 no lugar de 44 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
 
 A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
 

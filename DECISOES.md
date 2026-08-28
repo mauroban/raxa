@@ -348,6 +348,20 @@ partida. Os botões de girar eram atalho para um caso raro e confundiam com a su
 **Onde:** `planGks`/`commitGks`, `finish` (`lv.lastGks`), `viewProxima` (card "No gol"),
 `A.preGk`/`setPreGk`, `A.leaveSheet`.
 
+### D-33 · K 36/44 e acelerador de sequência; chance igual na pré-partida e ao vivo
+**28/08/2026.** K base sobe de 22 para **36** (racha curto) e de 30 para **44** (partida única);
+calibração continua 60/70. Novo: `streakK` — 4+ resultados iguais seguidos multiplicam o K por 1,5
+até a sequência quebrar (empate quebra), para cima e para baixo. Bug corrigido: a chance na
+pré-partida não contava o goleiro do rodízio na escalação, e a partida ao vivo contava — os dois
+números eram diferentes; agora a pré-partida monta a escalação como `startMatch`.
+**Por quê:** um Ferro 1 estabelecido venceu 18 seguidas para subir 3 divisões (7 na primeira noite =
+Ferro 2). Times parelhos dão 50 % de expectativa e 11 pontos por vitória com K=22; o racha ficava
+desequilibrado por semanas. Sequência longa é o sinal mais claro de nível errado que o app tem, e
+a histerese/proteção (D-?) já seguram o ioiô — não precisa de K pequeno para isso.
+**Descartado:** só subir o K para 50+ (uma noite de sorte viraria uma patente); ajuste individual
+por desvio da média do time (não distingue quem carrega de quem é carregado).
+**Onde:** `KMODE`, `streakK`, `computeElo`, `viewProxima` (`escalCom`).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
