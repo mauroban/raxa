@@ -141,7 +141,7 @@ Cada requisito traz uma **meta verificável**. Onde a meta não é atingível na
 |---|---|---|
 | RNF-10.1 | O motor de patentes e de estatísticas é isolado do DOM e testável fora do navegador | funções puras: `splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`, `buildTeams`, `pairCounts`, `statsLiga`, `encontros`, `statsAnos` |
 | RNF-10.2 | O motor pode ir para o servidor sem reescrita | mesma função roda em Node — **é assim que os testes rodam hoje** |
-| RNF-10.3 | Regras de negócio configuráveis por Liga, sem alterar código | alvo (gols/minutos), trecho mínimo, estabilidade, limite e efeito da contestação, visibilidade das patentes, nomes das patentes, formato (NvN) e modo padrão do racha |
+| RNF-10.3 | Regras de negócio configuráveis por Liga, sem alterar código | alvo (gols/minutos), trecho mínimo, limite e efeito da contestação, visibilidade das patentes, nomes das patentes, formato (NvN) e modo padrão do racha |
 | RNF-10.4 | Mudança de esquema de dados não quebra ligas antigas | versão no estado + normalização na carga — **feito** |
 | RNF-10.5 | Suíte de testes executável em um comando | `python scripts/test.py` (motor) e `python scripts/smoke.py` (todas as telas em DOM falso) — ambos extraem o código do próprio `index.html` |
 | RNF-10.5b | Regressão visual automatizada: nenhum elemento estourando a tela, sobreposto ou com alvo de toque menor que 32px, verificado em navegador real | `python scripts/visual.py` em 9 telas × 2 larguras (360 px simulado e 500 px) |

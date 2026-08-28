@@ -33,11 +33,18 @@ causa de uma decisão de quadra.
 poderiam contar na mesma partida, e qualquer substituição antes dos 3 min descartava meia partida.
 **Onde:** DOCUMENTACAO §3.4 · RF-03.3c · teste `[5]`.
 
-### D-04 · A margem de histerese é calibrada pelo degrau, não pela patente
-**18/08/2026.** Estabilidade **Baixa 7 · Média 13 · Alta 20** (antes 10/20/34).
-**Por quê:** a margem é aplicada em todo degrau, e um degrau é ~67 pontos, não 200. Com margem 34 a
-banda efetiva virava ~135 — duas divisões — e o preset "Alta" travava a progressão em vez de estabilizar.
-**Onde:** DOCUMENTACAO §3.5 · `STAB`, `updateRank` · teste `[7]`.
+### D-04 · A variação de patente é fixa e igual em toda liga
+**28/08/2026** (reescreve a de 18/08). Margem **13**, proteção **3 trechos**, calibração **5 rachas ou
+25 partidas**, K **22/60** no racha curto e **30/70** na partida única. **Não existe opção de
+"estabilidade"** — nem Baixa/Média/Alta, nem campo de calibração.
+**Por quê:** (1) a opção era uma pergunta que nenhum admin sabia responder, e ligas diferentes com
+escadas que significam coisas diferentes matam a comparação; (2) com K=16 e times equilibrados
+(todo confronto ~50%), uma patente levava ~100 partidas — o palpite do cadastro mandava por meses, e a
+calibração de 15 partidas a K=34 corrigia pouco mais de uma divisão. Agora um cadastro errado se
+corrige em uma ou duas noites, e subir uma patente com 60% de vitórias leva ~4 sábados.
+**Descartado:** presets Baixa 7/2 · Média 13/3 · Alta 20/5 (18/08); antes disso 10/20/34. Liga antiga
+com preset gravado volta ao padrão na carga.
+**Onde:** DOCUMENTACAO §3.4–3.6 · `KMODE`, `RANK_MARGIN`, `PROTECT`, `CAL_*`, `normalize` · testes `[6]` `[7]`.
 
 ### D-05 · Patente por valência só existe se a pessoa jogou nela
 **18/08/2026.** Quem nunca jogou na linha, ou nunca pegou no gol, **não tem patente ali**: fica fora
@@ -196,6 +203,27 @@ em ordem. Toda correção, anulação ou exclusão dispara o recálculo integral
 **Onde:** BANCO-DE-DADOS §1 e §8 · RNF-04.2/04.6 · teste `[8]`.
 
 ---
+
+### D-22 · Revisar é do admin; o primeiro perfil vinculado é o admin
+**28/08/2026.** Corrigir resultado, anular, apagar partida do histórico, corrigir patente e mudar
+permissão são ações **só de admin**. Contestar continua aberto a todo membro. Desfazer a última
+partida do racha em andamento continua de quem está lançando.
+Enquanto **ninguém** vinculou um perfil, todo mundo é admin (senão a liga nasce trancada). O **primeiro**
+a vincular vira admin automaticamente, e a liga **nunca fica sem admin**: o último não pode ser rebaixado.
+**Por quê:** revisão aberta a qualquer membro fazia duas pessoas anularem uma partida e qualquer um
+reescrever o resultado. Sem a regra do primeiro, o criador da liga virava "lançador" ao se vincular e
+ninguém mais tinha poder de revisão.
+**Limite conhecido:** a checagem é na interface; no banco qualquer membro ainda grava a liga inteira
+(ver README "Estado" e BANCO-DE-DADOS.md).
+**Onde:** `souAdmin`, `A.claim`, `A.setRole`, `A.review`… · Ajustes → **Membros** · smoke "assumir perfil".
+
+### D-23 · Stats é a segunda aba, e Membros mora nos Ajustes
+**28/08/2026.** A aba **Números** virou **📊 Stats**, logo depois de Racha: é a tela que a galera abre
+entre uma semana e outra, e o nome antigo não dizia nada. Ganhou o retrato da liga no período (rachas,
+partidas, gols, média, empates, maior goleada), forma recente e sequência de vitórias do jogador, e
+rankings de sequência, goleiro menos vazado e melhor dupla. **Membros** (quem tem conta, com que papel)
+vive no topo dos Ajustes, onde está o código de convite — é a mesma pergunta: "quem está aqui?".
+**Onde:** `viewStats`, `statsLiga` (seq/best/ultimos/sofridos), `membrosCard`.
 
 ## Como registrar uma decisão nova
 

@@ -122,8 +122,10 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 | Modo do racha | K calibrando | K normal | Por quê |
 |---|---|---|---|
-| **Várias curtas** *(padrão)* | 34 | 16 | 10–15 partidas por noite — é o número real de um racha de 2 gols ou 7 min |
-| **Partida única** | 44 | 24 | uma partida por noite — ela precisa valer alguma coisa |
+| **Várias curtas** *(padrão)* | 60 | 22 | 10–15 partidas por noite — é o número real de um racha de 2 gols ou 7 min |
+| **Partida única** | 70 | 30 | uma partida por noite — ela precisa valer alguma coisa |
+
+> **Por que 22 e não 16 (28/08/2026).** Times equilibrados fazem todo confronto valer ~50%, e um jogo 50/50 carrega pouca informação. Com K=16, uma patente inteira (200 pontos) levava ~100 partidas: o palpite do cadastro mandava por meses. Com 22, quem ganha 60% sobe uma patente em ~45 partidas — quatro sábados. A estabilidade continua vindo da histerese e da proteção (3.5), não de um K pequeno.
 
 > **Por que 16 e não 12.** A calibragem antiga supunha 20 a 30 partidas por noite. Um racha de 2 gols ou 7 minutos, com troca de time, fila e conversa no meio, entrega **10 a 15**. Com metade das partidas, cada uma tem que pesar cerca do dobro para que uma noite continue significando a mesma coisa.
 
@@ -141,19 +143,19 @@ Alternar entre duas patentes toda semana destrói a graça do sistema. Três mec
 2. **Proteção pós-promoção.** Quem acabou de subir não pode cair nos **3 trechos seguintes** (a unidade do motor, seção 3.4). Noite ruim logo depois de subir não desfaz a conquista.
 3. **A patente é um estado, não um cálculo.** Ela fica guardada no jogador e só muda quando as condições acima são satisfeitas — não é recalculada do rating a cada tela.
 
-Isso é configurável em um único controle, **Estabilidade**: Baixa (margem 7, proteção 2) · Média (13 / 3) · Alta (20 / 5). Mesmo na Alta a banda fica em ~107 — abaixo de dois degraus, que é onde a escada deixaria de se mexer.
+Os valores são **fixos e iguais em toda liga**: margem **13** e proteção de **3 trechos** (banda efetiva de ~93 pontos, pouco mais de um degrau). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
 
-Ordem de grandeza no padrão de racha curto (K=16, times parelhos): mover uma **divisão** exige cerca de **10 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — uma noite muito boa em um racha de 12 partidas; uma **patente** inteira, cerca de 25 — três noites dessas. No modo de partida única (K=24) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
+Ordem de grandeza no padrão de racha curto (K=22, times parelhos): mover uma **divisão** exige cerca de **10 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — uma noite muito boa em um racha de 12 partidas; uma **patente** inteira, cerca de 25 — três noites dessas. No modo de partida única (K=24) cada partida vale bem mais, porque são poucas por noite. Em qualquer dos dois, subir é possível e sentido, mas nunca gratuito.
 
 ### 3.6 Entrada de um jogador novo
 
 Quem cadastra escolhe **a patente percebida** (um toque: Iniciante … Craque, sempre na divisão 2). O app converte para o rating do meio daquele degrau.
 
-O jogador fica **calibrando** até completar **4 rachas ou 15 partidas — o que vier primeiro**. Nesse período o K é cerca do dobro (34 no lugar de 16 no racha curto, 44 no lugar de 24 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
+O jogador fica **calibrando** até completar **5 rachas ou 25 partidas — o que vier primeiro**. Nesse período o K é quase o triplo (60 no lugar de 22 no racha curto, 70 no lugar de 30 na partida única) e as margens de histerese não valem, então ele anda rápido até achar o lugar dele. A UI mostra o selo `CALIBRANDO`, e a ficha dele mostra o quanto falta de cada lado.
 
 A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
 
-A regra tem duas pontas de propósito: num racha de **partida única** ele levaria 15 semanas para calibrar se dependesse só de partidas — então 4 rachas resolvem; num racha de **várias curtas** ele joga de 10 a 15 partidas na primeira noite — então 15 partidas resolvem em uma noite, antes que uma sequência atípica defina a patente dele para sempre.
+A regra tem duas pontas de propósito: num racha de **partida única** ele levaria 25 semanas para calibrar se dependesse só de partidas — então 5 rachas resolvem; num racha de **várias curtas** ele joga de 10 a 15 partidas na primeira noite — então 25 partidas resolvem em uma noite, antes que uma sequência atípica defina a patente dele para sempre.
 
 O palpite inicial de quem conhece o jogador **já é melhor que sorteio no olho** e a calibração corrige o palpite em poucas partidas. Esperar "dados suficientes" para ser útil é o mesmo que não ter app.
 
@@ -296,9 +298,9 @@ Ao encerrar: partidas jogadas, artilheiro da noite e **a lista de quem subiu e q
 
 ---
 
-## 5. Números: o racha, você e os outros
+## 5. Stats: o racha, você e os outros
 
-O ranking responde "quem é o melhor". O que ninguém consegue responder no fim do ano é o resto: *quantas vezes eu joguei contra o Rodrigo? Quem me ganha sempre? Com quem eu ganho mais? Quantos rachas eu peguei esse ano?* A aba **Números** existe para isso — e ela é sobre você **e** sobre todo mundo, porque metade da graça é comparar.
+O ranking responde "quem é o melhor". O que ninguém consegue responder no fim do ano é o resto: *quantas vezes eu joguei contra o Rodrigo? Quem me ganha sempre? Com quem eu ganho mais? Quantos rachas eu peguei esse ano?* A aba **Stats** existe para isso — e ela é sobre você **e** sobre todo mundo, porque metade da graça é comparar.
 
 ### 5.1 A unidade: quem estava em quadra
 
@@ -542,7 +544,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 6. **Gol não move patente.** Só vitória, empate e derrota — é o que reflete o racha. Gol é estatística de vitrine.
 7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Craque na linha e Promessa no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
 8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
-9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **4 rachas ou 15 partidas**, o que vier primeiro, e vale separado para cada uma das duas patentes.
+9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **5 rachas ou 25 partidas**, o que vier primeiro, e vale separado para cada uma das duas patentes.
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
 11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
 12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.

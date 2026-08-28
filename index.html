@@ -232,6 +232,13 @@ label.f .k{display:block;margin-bottom:6px}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .tp[data-drag]{touch-action:manipulation}
+/* Celular na quadra: segurar um nome para arrastar não pode abrir o menu de
+   copiar nem selecionar texto; toque duplo no placar não pode dar zoom; e
+   puxar a lista para baixo no meio da partida não pode recarregar a página. */
+.tp,.pchip,.gktog,.side,.btn,.tabs button,.slot,.rank,.rachaRow,.rkbtn,.iconbtn,.grab{
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+html{overscroll-behavior-y:contain}
+.sheet .grab{cursor:grab;touch-action:none;padding:6px 0;margin:-6px 0 6px}
 .tp.dragging{opacity:.35}
 .dragghost{position:fixed!important;pointer-events:none;z-index:300}
 .dropok{outline:2px dashed var(--lime);outline-offset:3px;border-radius:10px}
@@ -407,10 +414,19 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    histórico, e cada partida guarda o formato dela.
    Racha curto (2 gols ou 7 min) rende 10 a 15 partidas por noite — não 25 —
    então cada uma precisa pesar mais do que pesava.                            */
-const KMODE={curtas:{cal:34,base:16},unica:{cal:44,base:24}};
-/* Margem de histerese por degrau. Um degrau tem ~67 pontos, entao margem alta
-   demais trava a subida em vez de estabilizar: 20 ja deixa a banda em ~107. */
-const STAB={baixa:[7,2],media:[13,3],alta:[20,5]};
+const KMODE={curtas:{cal:60,base:22},unica:{cal:70,base:30}};
+/* Por que esses números: times equilibrados fazem todo confronto valer ~50%, e
+   um jogo 50/50 carrega pouca informação. Com K=16 uma patente (200 pts) levava
+   ~100 partidas — o palpite do cadastro mandava por meses. Com 22 no racha
+   curto, quem ganha 60% sobe uma patente em ~45 partidas (4 sábados); e a
+   calibração com K=60 por 25 partidas corrige um cadastro errado em uma ou
+   duas noites, em vez de deixar o cara mal escalado por um mês.              */
+/* Histerese fixa: promove ao passar do corte + 13, rebaixa ao cair abaixo do
+   corte − 13, e quem subiu fica 3 partidas protegido. Um degrau tem ~67
+   pontos, então a banda fica em ~93: segura o ioiô sem travar a subida.
+   Não é opção da liga de propósito — patente tem que variar igual em todo
+   racha, senão a mesma escada significa coisas diferentes.                  */
+const RANK_MARGIN=13, PROTECT=3, CAL_GAMES=25, CAL_RACHAS=5;
 const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.cfg.matchMode:'curtas');
 
 /* ---------- escada de patentes ----------
@@ -437,9 +453,9 @@ const patBadgeShort=(liga,s)=>`<span class="pat" style="--pc:${PATC[patOf(s)]}">
 
 /* ---------- estado ---------- */
 function defCfg(){return{
-  startElo:1500, calGames:15, calRachas:4,
+  startElo:1500, calGames:CAL_GAMES, calRachas:CAL_RACHAS,
   patNames:['Iniciante','Promessa','Titular','Destaque','Craque'],
-  rankMargin:13, protectMatches:3, stability:'media',
+  rankMargin:RANK_MARGIN, protectMatches:PROTECT,
   format:5, matchMode:'curtas',   /* só o padrão para o próximo racha */ targetGoals:2, targetMin:7, winnerStays:true, askScorer:true, teamCount:2,
   stintMin:4,                     /* trecho cortado por substituição só conta a partir daqui (min) */
   avoidRepeat:true,               /* evitar repetir quem já jogou junto em outros rachas */
@@ -507,7 +523,11 @@ function normalize(st){
     const d=defCfg();
     l.cfg=Object.assign({},d,l.cfg||{});
     if(!Array.isArray(l.cfg.patNames)||l.cfg.patNames.length!==5)l.cfg.patNames=d.patNames.slice();
-    if(STAB[l.cfg.stability]){l.cfg.rankMargin=STAB[l.cfg.stability][0];l.cfg.protectMatches=STAB[l.cfg.stability][1]}
+    /* a variação de patente é a mesma em toda liga: liga antiga com "estabilidade"
+       ou calibração própria volta ao padrão (o recálculo do zero reaplica tudo) */
+    l.cfg.rankMargin=RANK_MARGIN;l.cfg.protectMatches=PROTECT;
+    l.cfg.calGames=CAL_GAMES;l.cfg.calRachas=CAL_RACHAS;
+    delete l.cfg.stability;
     delete l.cfg.tiers;delete l.cfg.tierNames;delete l.cfg.gkOutOfElo;delete l.cfg.gkOutOfRank;
     l.players=(l.players||[]).map(p=>migPlayer(l,p));
     l.matches=(l.matches||[]).map(m=>Object.assign({goals:[],moves:[],gks:[],disputes:[],voided:false,
@@ -960,9 +980,12 @@ function pctDe(v,n){return n?Math.round(v/n*100):0}
 
 function statsLiga(liga,periodo){
   const J={},DU={},PA={};
-  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,ultimo:0});
+  /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
+     best: maior sequência do período · ultimos: últimos 5 resultados, do mais
+     novo para o mais velho · sofridos: gols levados enquanto estava no gol      */
+  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,ultimos:[]});
   const par=(o,a,b)=>{const m=o[a]||(o[a]={});return m[b]||(m[b]={n:0,v:0,e:0,d:0})};
-  (liga.matches||[]).forEach(m=>{
+  [...(liga.matches||[])].sort((a,b)=>a.ts-b.ts).forEach(m=>{   // em ordem: sequência depende dela
     if(m.voided||!noPeriodo(m,periodo))return;
     const sid=m.sessionId||m.id;
     matchStints(liga,m).forEach(st=>{
@@ -975,7 +998,9 @@ function statsLiga(liga,periodo){
         meu.forEach(pid=>{
           const x=j(pid);
           x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
-          if(part[pid].role==='G')x.gk++;
+          if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq)}else if(res==='d')x.seq=0;
+          x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
+          if(part[pid].role==='G'){x.gk++;x.sofridos+=((st.score||[0,0])[s===0?1:0])||0}
           if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
           meu.forEach(o=>{if(o===pid)return;const y=par(PA,pid,o);y.n++;y[res]++});
           deles.forEach(o=>{const y=par(DU,pid,o);y.n++;y[res]++});
@@ -1145,13 +1170,14 @@ function drawApp(){
     </div>
     <div class="tabs">
       <button class="${tab==='racha'?'on':''}" data-a="tab" data-v="racha">Racha</button>
+      <button class="${tab==='stats'?'on':''}" data-a="tab" data-v="stats">📊 Stats</button>
       <button class="${tab==='ranking'?'on':''}" data-a="tab" data-v="ranking">Patentes</button>
-      <button class="${tab==='stats'?'on':''}" data-a="tab" data-v="stats">Números</button>
       <button class="${tab==='hist'?'on':''}" data-a="tab" data-v="hist">Jogos</button>
       <button class="${tab==='cfg'?'on':''}" data-a="tab" data-v="cfg">Ajustes</button>
     </div>${body}`;
   $('#bar').innerHTML=barFor(liga);
   tickClock();
+  if(typeof cuidaWake==='function')cuidaWake();
 }
 function renderHome(){
   $('#app').innerHTML=`
@@ -1777,8 +1803,16 @@ function viewStats(liga){
   if(!liga.matches.length)return `<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
-  const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0};
+  const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0};
   const rot=per==='ano'?'em '+ANO_ATUAL():'desde o começo';
+
+  /* --- a liga no período: o retrato de uma olhada --- */
+  const ms=liga.matches.filter(m=>!m.voided&&noPeriodo(m,per));
+  const rachas={};ms.forEach(m=>rachas[m.sessionId||m.id]=1);
+  const golsTot=ms.reduce((a,m)=>a+(m.score||[0,0])[0]+(m.score||[0,0])[1],0);
+  const empates=ms.filter(m=>m.result==='draw').length;
+  const goleada=ms.reduce((g,m)=>{const d=Math.abs((m.score||[0,0])[0]-(m.score||[0,0])[1]);return d>g.d?{d,m}:g},{d:0,m:null});
+  const nRachas=Object.keys(rachas).length;
 
   /* --- duelos e parcerias da pessoa escolhida --- */
   const duelos=Object.keys(DU[who]||{}).map(id=>Object.assign({pid:id},DU[who][id]))
@@ -1797,7 +1831,15 @@ function viewStats(liga){
   const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,5);
   const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>pctDe(b.v,b.jogos)-pctDe(a.v,a.jogos)||b.jogos-a.jogos).slice(0,5);
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,5);
+  const rkSeq=[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v).slice(0,5);
+  const rkGk=todos.filter(x=>x.gk>=5).sort((a,b)=>a.sofridos/a.gk-b.sofridos/b.gk||b.gk-a.gk).slice(0,5);
+  /* melhor dupla da liga: cada par uma vez, mínimo de jogos juntos */
+  const duplas=[];const vistos={};
+  Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
+    const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,pct:pctDe(y.v,y.n)})}));
+  duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
   const anos=who?statsAnos(liga,who):[];
+  const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
   return `
   <div class="card">
@@ -1809,11 +1851,32 @@ function viewStats(liga){
   </div>
 
   <div class="card">
+    <div class="k" style="margin-bottom:8px">O racha ${rot}</div>
+    <div class="stat">
+      <div><b class="num">${nRachas}</b><span>racha${nRachas===1?'':'s'}</span></div>
+      <div><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
+      <div><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
+    </div>
+    <div style="height:8px"></div>
+    <div class="stat">
+      <div><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
+      <div><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
+      <div><b class="num">${nRachas?Math.round(ms.length/nRachas):'—'}</b><span>partidas por racha</span></div>
+    </div>
+    ${goleada.m?`<div class="tiny muted" style="margin-top:8px">🔥 Maior goleada: <b>${esc(goleada.m.names[0])} ${goleada.m.score[0]}-${goleada.m.score[1]} ${esc(goleada.m.names[1])}</b> · ${DIA(goleada.m.ts)}</div>`:''}
+  </div>
+
+  <div class="card">
     <div class="row" style="margin-bottom:4px">
       <div class="k">${who===eu?'Você':'Jogador'}</div>
       <button class="btn sm ghost sp" data-a="statsWho">Trocar jogador</button>
     </div>
     <h2 style="font-size:22px;margin:2px 0 8px">${esc(p?p.name:'—')}</h2>
+    ${me.ultimos.length?`<div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="tiny muted">últimas</span>${formaDots(me.ultimos)}
+      ${me.seq>=2?`<span class="tiny" style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas</span>`:''}
+      ${me.best>=3?`<span class="tiny muted">· melhor sequência: ${me.best}</span>`:''}
+    </div>`:''}
     ${vePat(liga)&&p?`<div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap">
       ${temPatente(p,'L')?patBadge(liga,p.L.rank,'solid')+'<span class="tiny muted">linha</span>':''}
       ${temPatente(p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤 gol</span>'
@@ -1875,13 +1938,23 @@ function viewStats(liga){
   </div>
 
   <div class="card">
-    <div class="k" style="margin-bottom:2px">O racha ${rot}</div>
-    <div class="tiny muted" style="margin-bottom:10px">${liga.matches.filter(m=>!m.voided&&noPeriodo(m,per)).length} partidas registradas.</div>
+    <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
+    <div class="tiny muted" style="margin-bottom:10px">Só histórico: nada aqui usa patente.</div>
     <div class="k2">Mais presenças</div>${listaRank(liga,rkRachas,x=>pl(x.nR,'racha'))}
     <div class="k2">Mais vitórias</div>${listaRank(liga,rkVit,x=>x.v+'V')}
     <div class="k2">Maior aproveitamento <span class="tiny muted">(mín. ${MIN_JOGOS} partidas)</span></div>
     ${listaRank(liga,rkPct,x=>pctDe(x.v,x.jogos)+'%','Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.')}
     <div class="k2">Artilharia</div>${listaRank(liga,rkGols,x=>x.gols+' gols','Nenhum gol com autor marcado.')}
+    <div class="k2">Maior sequência de vitórias <span class="tiny muted">(3 ou mais)</span></div>
+    ${listaRank(liga,rkSeq,x=>x.best+' seguidas','Ninguém emendou 3 ainda.')}
+    <div class="k2">🧤 Menos vazado <span class="tiny muted">(mín. 5 partidas no gol)</span></div>
+    ${listaRank(liga,rkGk,x=>(x.sofridos/x.gk).toFixed(1).replace('.',',')+' por partida','Ninguém com 5 partidas no gol ainda.')}
+    <div class="k2">⭐ Melhor dupla <span class="tiny muted">(mín. ${MIN_JOGOS} partidas juntos)</span></div>
+    ${duplas.length?duplas.slice(0,5).map((x,i)=>`<div class="rk">
+      <span class="pos num">${i+1}</span>
+      <span class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}</span>
+      <span class="val num">${x.pct}% <span class="tiny muted">em ${x.n}</span></span>
+    </div>`).join(''):`<div class="tiny muted" style="padding:8px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}
   </div>`;
 }
 
@@ -1904,7 +1977,7 @@ function mrow(liga,m,compact,eu){
       ${!compact&&(m.moves||[]).length?' · '+m.moves.length+' mudança(s) de patente':''}</div>
     ${compact?'':`<div class="row" style="gap:6px;margin-top:7px">
       <button class="btn sm ghost" data-a="contest" data-id="${m.id}">⚑ Contestar</button>
-      <button class="btn sm ghost" data-a="review" data-id="${m.id}">Revisar</button></div>`}
+      ${souAdmin(liga)?`<button class="btn sm ghost" data-a="review" data-id="${m.id}">Revisar</button>`:''}</div>`}
   </div>`;
 }
 /* O histórico é por RACHA, não por partida: uma noite de 12 partidas em uma
@@ -1973,11 +2046,38 @@ function viewHist(liga){
       :'<div class="empty">Nenhuma partida sua ainda.</div>'}</div>`;
 }
 
+/* ---------- membros e papéis ----------
+   Quem está na liga, com que conta e com que permissão. Jogador sem conta é
+   só um nome no cadastro — alguém lança por ele. Tocar abre a ficha, onde o
+   admin muda o papel.                                                        */
+const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
+const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
+function membrosCard(liga){
+  const eu=euId(liga),meu=meuPapel(liga),adm=souAdmin(liga);
+  const comConta=liga.players.filter(p=>p.owner),semConta=liga.players.filter(p=>!p.owner);
+  const ord=[...comConta].sort((a,b)=>(PAPEL_ORD[a.role]??2)-(PAPEL_ORD[b.role]??2)||a.name.localeCompare(b.name));
+  return `<div class="card">
+    <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
+      <div class="sp tiny muted num">${comConta.length} com conta · ${semConta.length} só no cadastro</div></div>
+    <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Lançador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
+      ${adm?'Toque num membro para mudar a permissão dele.':'Só o admin muda permissões e revisa partidas.'}
+      ${liga.players.some(p=>p.owner)?'':'<br>Enquanto ninguém vincular um perfil, todo mundo é admin.'}</div>
+    ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'10px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
+      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
+        <div class="meta"><span class="tiny muted">@${esc(p.owner)}</span></div></div>
+      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Lançador'}</span>
+      <div style="color:var(--mute);font-size:18px">›</div></div>`).join('')}</div>`
+      :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Em <b>Patentes</b>, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
+    ${semConta.length?`<div class="k2" style="margin-top:0">Sem conta (${semConta.length})</div>
+      <div class="chips">${semConta.map(p=>`<button class="tp" data-a="pSheet" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>`:''}
+  </div>`;
+}
+
 /* ---------- ajustes ---------- */
 function viewCfg(liga){
   const c=liga.cfg;
-  const stabLab={baixa:'Sobe e desce mais fácil',media:'Equilibrado',alta:'Patente bem estável'};
   return `
+  ${membrosCard(liga)}
   <div class="card">
     <div class="k" style="margin-bottom:8px">Tamanho do time (padrão)</div>
     <div class="row" style="gap:6px">
@@ -1985,13 +2085,9 @@ function viewCfg(liga){
     </div>
   </div>
   <div class="card">
-    <div class="k" style="margin-bottom:6px">Estabilidade das patentes</div>
-    <div class="row" style="gap:6px;margin-bottom:4px">
-      ${Object.keys(stabLab).map(k=>`<button class="btn sm ${c.stability===k?'pri':'ghost'}" data-a="setStab" data-v="${k}" style="flex:1">${k==='baixa'?'Baixa':k==='media'?'Média':'Alta'}</button>`).join('')}
-    </div>
-    <div class="tiny muted" style="margin-bottom:14px">${stabLab[c.stability]} — margem de promoção/rebaixamento e proteção depois de subir.</div>
-    <div class="k" style="margin-bottom:6px">Calibração de quem chega</div>
-    <div class="tiny muted">Quem é novo anda rápido até completar <b>${c.calRachas} rachas</b> ou <b>${c.calGames} partidas</b> — o que vier primeiro. Vale separado para a patente de linha e a de goleiro: quem nunca pegou no gol calibra do zero na primeira vez que for para lá.</div>
+    <div class="k" style="margin-bottom:6px">Como a patente anda</div>
+    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: quem sobe fica <b>${c.protectMatches} partidas</b> protegido, e só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
+      Quem é novo anda rápido até completar <b>${c.calRachas} rachas</b> ou <b>${c.calGames} partidas</b>, o que vier primeiro — um cadastro errado se corrige em uma ou duas noites. Vale separado para a patente de linha e a de goleiro.</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:8px">Quem vê as patentes</div>
@@ -2096,6 +2192,21 @@ function tickClock(){
   };
   upd();
   if(!c.paused)clockTimer=setInterval(upd,1000);
+}
+/* A tela não pode apagar com o cronômetro rodando — o celular fica no chão
+   da quadra e ninguém quer digitar senha para marcar um gol. Só durante a
+   partida: fora dela, solta e deixa o aparelho economizar bateria.          */
+let wake=null;
+async function manterAcesa(sim){
+  try{
+    if(!navigator.wakeLock)return;
+    if(sim&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>{wake=null})}
+    else if(!sim&&wake){await wake.release();wake=null}
+  }catch(e){}
+}
+function cuidaWake(){
+  const liga=L(),c=liga&&liga.live&&liga.live.cur;
+  manterAcesa(!!(c&&!c.paused)&&document.visibilityState==='visible');
 }
 
 /* ---------- helpers de UI ---------- */
@@ -2642,6 +2753,7 @@ const A={
   },
   review(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
     const d=m.disputes||[];
     openSheet(`<h2>Revisar partida</h2>
       <div class="tiny muted" style="margin-bottom:12px">${esc(m.names[0])} ${m.score[0]} - ${m.score[1]} ${esc(m.names[1])}
@@ -2662,6 +2774,7 @@ const A={
   },
   fixResult(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin corrige resultado');
     m.result=el.dataset.r==='draw'?'draw':+el.dataset.r;
     /* a correcao vale para o trecho que fechou a partida — os trechos anteriores
        ja tinham vencedor proprio, cada um com o seu placar                     */
@@ -2674,17 +2787,23 @@ const A={
   },
   voidMatch(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin anula partida');
     m.voided=!m.voided;if(!m.voided)m.disputes=[];
     rebuildAll(l);closeSheet();save();render();toast(m.voided?'Partida anulada':'Partida reativada');
   },
   clearDisputes(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
+    if(!souAdmin(l))return toast('Só o admin encerra contestação');
     m.disputes=[];if(m.voided){m.voided=false;rebuildAll(l)}
     closeSheet();save();render();toast('Resultado mantido');
   },
   delMatch(el){
     const l=L(),i=l.matches.findIndex(m=>m.id===el.dataset.id);if(i<0)return;
     const m=l.matches[i];
+    /* desfazer a última partida do racha em andamento é de quem está lançando;
+       apagar qualquer outra é revisão, e revisão é do admin */
+    const ultimaDoRacha=!!(l.live&&l.live.matchIds.length&&l.live.matchIds[l.live.matchIds.length-1]===m.id);
+    if(!ultimaDoRacha&&!souAdmin(l))return toast('Só o admin apaga partida do histórico');
     if(i!==l.matches.length-1&&!confirm('Apagar esta partida? As patentes são recalculadas do zero.'))return;
     l.matches.splice(i,1);rebuildAll(l);
     if(l.live)l.live.matchIds=l.live.matchIds.filter(x=>x!==m.id);
@@ -2737,7 +2856,7 @@ const A={
       </div>
       <div class="tiny muted" style="margin-bottom:14px">Linha: ${p.L.w}V · ${p.L.d}E · ${p.L.l}D em ${p.L.games} · Gol: ${p.G.w}V · ${p.G.d}E · ${p.G.l}D em ${p.G.games}
         · ${p.sessions||0} racha(s)${ver?' · melhor: '+esc(rankLabel(l,Math.max(p.L.peak||0,p.L.rank)))+' na linha':''}</div>
-      ${ver?`<div class="k" style="margin-bottom:8px">Corrigir patente (admin)</div>
+      ${ver&&souAdmin(l)?`<div class="k" style="margin-bottom:8px">Corrigir patente (admin)</div>
       <div class="row" style="gap:6px;margin-bottom:8px">
         <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="pSheet" data-id="${p.id}" data-r="L" style="flex:1">Linha</button>
         <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="pSheet" data-id="${p.id}" data-r="G" style="flex:1">🧤 Goleiro</button>
@@ -2758,21 +2877,23 @@ const A={
           <button class="btn sm ghost" style="margin-left:8px" data-a="unclaim" data-id="${p.id}">desvincular</button></div>`
         :`<button class="btn sm wide ghost" data-a="claim" data-id="${p.id}" style="margin-bottom:10px">Este perfil sou eu</button>`}
       <div class="k" style="margin:12px 0 8px">Permissão</div>
-      <div class="row" style="gap:5px;flex-wrap:wrap">
+      ${souAdmin(l)?`<div class="row" style="gap:5px;flex-wrap:wrap">
         ${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
           .map(x=>`<button class="btn sm ${p.role===x[0]?'pri':'ghost'}" data-a="setRole" data-id="${p.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
-      </div>
+      </div>`:`<div class="tiny muted">${{admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'}[p.role]||'Lançador'} — só o admin muda permissões.</div>`}
       <div class="hr"></div>
       <button class="btn wide danger" data-a="delPlayer" data-id="${p.id}">Remover jogador</button>`);
   },
   setRank(el){
     const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L',s=+el.dataset.s,target=stepMid(s);
+    if(!souAdmin(l))return toast('Só o admin corrige patente');
     const tr=rt(p,role);
     tr.base+=target-tr.elo;tr.elo=target;tr.rank=s;tr.protect=l.cfg.protectMatches;tr.def=true;
     save();render();A.pSheet({dataset:{id:p.id,r:role}});toast('Agora é '+rankLabel(l,s)+(role==='G'?' no gol':''));
   },
   bumpRank(el){
     const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L';
+    if(!souAdmin(l))return toast('Só o admin corrige patente');
     const tr=rt(p,role),s=clamp(tr.rank+(+el.dataset.d),0,TOP),target=stepMid(s);
     tr.base+=target-tr.elo;tr.elo=target;tr.rank=s;tr.protect=l.cfg.protectMatches;tr.def=true;
     save();render();A.pSheet({dataset:{id:p.id,r:role}});
@@ -2784,7 +2905,13 @@ const A={
     p.owner=S.me.name;closeSheet();save();render();toast('Perfil vinculado a você');
   },
   unclaim(el){const p=P(L(),el.dataset.id);p.owner=null;closeSheet();save();render()},
-  setRole(el){const p=P(L(),el.dataset.id);p.role=el.dataset.r;save();A.pSheet(el)},
+  setRole(el){
+    const l=L(),p=P(l,el.dataset.id);
+    if(!souAdmin(l))return toast('Só o admin muda permissão');
+    const outrosAdmins=l.players.some(x=>x.id!==p.id&&x.owner&&x.role==='admin');
+    if(p.role==='admin'&&el.dataset.r!=='admin'&&p.owner&&!outrosAdmins)return toast('A liga precisa de pelo menos um admin');
+    p.role=el.dataset.r;save();A.pSheet(el);
+  },
   delPlayer(el){
     if(!confirm('Remover jogador? O histórico das partidas continua.'))return;
     const l=L(),id=el.dataset.id;
@@ -2839,11 +2966,6 @@ const A={
   toggleDispute(){const l=L();l.cfg.disputeMode=l.cfg.disputeMode==='suspend'?'flag':'suspend';save();render()},
 
   setTheme(el){S.ui.theme=el.dataset.v;save();render()},
-  setStab(el){
-    const l=L(),v=el.dataset.v,map=STAB;
-    l.cfg.stability=v;l.cfg.rankMargin=map[v][0];l.cfg.protectMatches=map[v][1];
-    rebuildAll(l);save();render();
-  },
   export(){
     const l=L(),data=JSON.stringify(l);
     try{
@@ -2964,6 +3086,24 @@ document.addEventListener('pointerup',e=>{
   onDrop(from,t);
 });
 document.addEventListener('pointercancel',()=>endDrag(false));
+
+/* Folha de baixo: puxar a alça para baixo fecha, como em qualquer app de celular. */
+let sheetDrag=null;
+document.addEventListener('pointerdown',e=>{
+  const g=e.target.closest&&e.target.closest('#sheet .grab');if(!g)return;
+  sheetDrag={y0:e.clientY,pid:e.pointerId};
+});
+document.addEventListener('pointermove',e=>{
+  if(!sheetDrag||e.pointerId!==sheetDrag.pid)return;
+  const dy=Math.max(0,e.clientY-sheetDrag.y0);
+  $('#sheet').style.transform='translateY('+dy+'px)';
+},{passive:true});
+document.addEventListener('pointerup',e=>{
+  if(!sheetDrag||e.pointerId!==sheetDrag.pid)return;
+  const dy=e.clientY-sheetDrag.y0;sheetDrag=null;
+  const sh=$('#sheet');sh.style.transform='';
+  if(dy>70)closeSheet();
+});
 
 /* ---------- delegação de eventos ---------- */
 document.addEventListener('click',e=>{
@@ -3391,10 +3531,14 @@ Object.assign(A,{
 
   /* O perfil é vinculado à conta logada — nada de digitar nome à mão. */
   claim(el){
-    const p=P(L(),el.dataset.id);
+    const l=L(),p=P(l,el.dataset.id);
     const quem=ME?ME.username:(S.me.name||'eu');
     p.owner=quem;S.me.name=quem;
-    closeSheet();save();render();toast('Perfil vinculado a você');
+    /* a liga nunca pode ficar sem admin: o primeiro a vincular um perfil vira
+       admin (é quem criou a liga, na prática) e depois nomeia os outros */
+    const temAdmin=l.players.some(x=>x.owner&&x.role==='admin');
+    if(!temAdmin)p.role='admin';
+    closeSheet();save();render();toast(temAdmin?'Perfil vinculado a você':'Perfil vinculado — você é o admin da liga');
   },
 
   doImport(){

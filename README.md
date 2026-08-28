@@ -27,7 +27,7 @@ Na primeira tela (ou no rodapé da lista de ligas), **"Carregar o racha de sába
 - **Partida ao vivo**: gol em um toque, lista de gols com autor e remoção individual, substituição arrastando (ou tocando), pausar e cancelar (com confirmação), "chegou agora" para o atrasado, e **encerrar em 1 toque** com o resultado do placar — 0-0 vira empate, e com 3+ times o empate tira os dois de quadra.
 - **Tela de próxima partida** entre um jogo e outro: qual é o confronto, a chance de cada lado e as duas escalações, editáveis ali mesmo antes do apito. Mudança de patente não aparece entre partidas — só no resumo do fim do racha.
 - **Destaques do mês** na tela do racha: os três que mais venceram **além do esperado** nos últimos 30 dias (a conta desconta o nível dos dois times), artilheiro quando os gols têm dono, goleiro menos vazado e quem mais apareceu.
-- **Números**: painel com duelos (quem te ganha mais, quem você ganha mais), parcerias, ano a ano, e os rankings do racha no período. Suas partidas ficam marcadas no histórico.
+- **Stats**: painel com duelos (quem te ganha mais, quem você ganha mais), parcerias, ano a ano, e os rankings do racha no período. Suas partidas ficam marcadas no histórico.
 - **Contestação**: qualquer um pode contestar uma partida; admin corrige, anula ou mantém — e a liga inteira é recalculada do zero, sem resíduo.
 
 ## Documentação

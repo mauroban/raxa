@@ -240,12 +240,19 @@ const rn=computeElo(liga,partN,0);
 ok(Math.abs(rn.deltas[novato.id])>Math.abs(rn.deltas['p2']),'novato anda mais rapido ('+rn.deltas[novato.id]+' vs '+rn.deltas['p2']+')');
 const cal=mk('Cal',1500,0);
 ok(calibrando(liga,cal,cal.L),'quem chega esta calibrando');
-cal.L.games=14;cal.L.sessions=3;
-ok(calibrando(liga,cal,cal.L),'14 partidas em 3 rachas: ainda calibrando');
-cal.L.games=15;
-ok(!calibrando(liga,cal,cal.L),'15 partidas encerra a calibracao');
-cal.L.games=6;cal.L.sessions=4;
-ok(!calibrando(liga,cal,cal.L),'4 rachas encerra a calibracao mesmo com poucas partidas');
+const CG=liga.cfg.calGames,CR=liga.cfg.calRachas;
+ok(CG===CAL_GAMES&&CR===CAL_RACHAS,'calibracao e fixa: '+CG+' partidas ou '+CR+' rachas, sem opcao por liga');
+cal.L.games=CG-1;cal.L.sessions=CR-1;
+ok(calibrando(liga,cal,cal.L),(CG-1)+' partidas em '+(CR-1)+' rachas: ainda calibrando');
+cal.L.games=CG;
+ok(!calibrando(liga,cal,cal.L),CG+' partidas encerra a calibracao');
+cal.L.games=6;cal.L.sessions=CR;
+ok(!calibrando(liga,cal,cal.L),CR+' rachas encerra a calibracao mesmo com poucas partidas');
+/* a calibracao precisa corrigir um cadastro errado em uma ou duas noites */
+const errado=mk('Errado',1500,0);liga.players.push(errado);
+let ganho=0;for(let i=0;i<12;i++){const r=computeElo(liga,stintPart({lineups:[[errado.id,'p2','p3'],['p10','p11','p12']],gks:[null,null]}),0,'curtas');ganho+=r.deltas[errado.id]}
+liga.players.pop();
+ok(ganho>=STEP*2,'12 vitorias em calibracao ja sobem mais de duas divisoes ('+Math.round(ganho)+' pts)');
 ok(calibrando(liga,cal,cal.G),'a patente de goleiro dele continua calibrando — sao trilhas separadas');
 liga.players.forEach(p=>{['L','G'].forEach(k=>{p[k].games=0;p[k].sessions=0})});
 

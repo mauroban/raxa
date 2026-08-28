@@ -251,7 +251,26 @@ step('recomecar partida',()=>A.startMatch());
 step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
 step('corrigir patente',()=>A.setRank({dataset:{id:L().players[0].id,s:'10'}}));
-step('assumir perfil',()=>A.claim({dataset:{id:L().players[0].id}}));
+step('assumir perfil: o primeiro vinculado vira admin',()=>{
+  A.claim({dataset:{id:L().players[0].id}});
+  if(L().players[0].role!=='admin')throw new Error('primeiro perfil vinculado deveria ser admin, veio '+L().players[0].role);
+  if(!souAdmin(L()))throw new Error('souAdmin deveria ser true');
+});
+step('nao da para tirar o ultimo admin',()=>{
+  A.setRole({dataset:{id:L().players[0].id,r:'jogador'}});
+  if(L().players[0].role!=='admin')throw new Error('o ultimo admin foi rebaixado');
+});
+step('quem nao e admin nao revisa nem corrige patente',()=>{
+  const l=L(),m=l.matches[0];const eu=l.players[0];
+  eu.role='lancador';l.players[1].owner='outro';l.players[1].role='admin';   // agora o admin e outra pessoa
+  if(souAdmin(l))throw new Error('ainda admin');
+  const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
+  if(m.result!==antes)throw new Error('lancador corrigiu resultado');
+  const r0=eu.L.rank;A.bumpRank({dataset:{id:eu.id,r:'L',d:'1'}});
+  if(eu.L.rank!==r0)throw new Error('lancador mexeu na propria patente');
+  S.ui.tab='hist';render();if(/data-a="review"/.test(document.querySelector('#app').innerHTML))throw new Error('botao Revisar aparece para lancador');
+  eu.role='admin';l.players[1].owner=null;l.players[1].role='lancador';S.ui.tab='racha';render();
+});
 step('aba numeros',()=>{S.ui.tab='stats';render()});
 step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:'ano'}})});
 step('numeros: trocar de jogador',()=>{A.statsWho();A.setStatsWho({dataset:{id:L().players[3].id}})});
@@ -294,7 +313,11 @@ step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('reativar partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('aba ajustes',()=>{S.ui.tab='cfg';render()});
 step('partida unica nao aceita 3 times',()=>{A.setMatchMode({dataset:{v:'unica'}});const antes=L().live.teams.length;A.nteams({dataset:{v:'3'}});if(L().live.teams.length!==antes)throw new Error('mexeu nos times na partida unica');L().live.stage='times';A.setMatchMode({dataset:{v:'unica'}});if(L().live.teams.length!==2)throw new Error('ao montar times na partida unica deveria dar 2, deu '+L().live.teams.length);A.setMatchMode({dataset:{v:'curtas'}});L().live.stage='jogo';});
-step('mudar estabilidade',()=>A.setStab({dataset:{v:'alta'}}));
+step('estabilidade nao e mais opcao da liga',()=>{
+  if(A.setStab)throw new Error('setStab ainda existe');
+  if(L().cfg.stability!==undefined)throw new Error('cfg.stability ainda existe');
+  if(L().cfg.rankMargin!==RANK_MARGIN||L().cfg.protectMatches!==PROTECT)throw new Error('margem/protecao fora do padrao fixo');
+});
 step('alternar contestacao',()=>A.toggleDispute());
 step('ranking de goleiro',()=>{S.ui.tab='ranking';A.rankRole({dataset:{v:'G'}});render();A.rankRole({dataset:{v:'L'}})});
 step('patentes so para o admin',()=>{

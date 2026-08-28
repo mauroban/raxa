@@ -59,11 +59,11 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-03.4 | Gols, assistências e defesas não influenciam a patente | P0 | ✅ v1 |
 | RF-03.5 | Promoção exige ultrapassar o corte com margem; rebaixamento exige cair abaixo do corte com margem (histerese). A margem vale em todo degrau — de divisão e de patente | P0 | ✅ v1 |
 | RF-03.6 | Quem sobe de degrau fica protegido de queda por N **trechos** — a mesma unidade do resto do motor | P0 | ✅ v1 |
-| RF-03.7 | Jogador novo fica em calibração até 4 rachas ou 15 partidas (o que vier primeiro; as partidas são contadas em trechos), com movimento acelerado e sem margem | P0 | ✅ v1 |
+| RF-03.7 | Jogador novo fica em calibração até 5 rachas ou 25 partidas (o que vier primeiro; as partidas são contadas em trechos), com movimento acelerado e sem margem | P0 | ✅ v1 |
 | RF-03.7b | A calibração vale **por patente**: veterano de linha que vai ao gol pela primeira vez calibra a patente de goleiro do zero | P1 | ✅ v1 |
 | RF-03.8 | Quem entra ou sai no meio da partida só é afetado pelos trechos que jogou — o que o time fez com ele no banco não conta | P0 | ✅ v1 |
 | RF-03.9 | Goleiro ganha e perde patente como todo mundo, pelo lado que defendeu, **na escada de goleiro**. Não existe interruptor de "goleiro fora do ranking" | P1 | ✅ v1 |
-| RF-03.10 | O peso de cada partida sai automaticamente do modo do racha; a Liga só configura a estabilidade (margem e proteção), sem lidar com números de rating | P1 | ✅ v1 |
+| RF-03.10 | O peso de cada partida sai automaticamente do modo do racha; margem, proteção e calibração são fixas e iguais em toda liga — ninguém configura rating | P1 | ✅ v1 |
 | RF-03.11 | Os nomes das 5 patentes são editáveis por Liga | P2 | ✅ v1 |
 | RF-03.12 | Mudança de patente **não** é exibida entre partidas: aparece só no resumo do fim do racha | P1 | ✅ v1 |
 | RF-03.13 | Temporadas com reset parcial de patente | P2 | ⬜ v2 |
