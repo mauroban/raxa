@@ -409,11 +409,13 @@ step('4 times: quem espera ha mais tempo joga antes (A×B, A×C, C×D, ...)',()=
   if(par.join()!=='3,1')throw new Error('depois de C×D (D ganhou) esperava D×B, veio '+par.join('x'));
   }finally{S=salvo;render()}
 });
-step('girar a fila na mao (empate, cansaco, o que o pessoal combinar)',()=>{
-  const lv=L().live,antes=lv.teams[1].ids.slice();
-  A.giraFila({dataset:{i:'1'}});
-  if(lv.teams[1].ids.join()===antes.join())throw new Error('a fila nao girou');
-  if(lv.teams[1].ids.length!==5)throw new Error('o time ficou torto depois de girar');
+step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>{
+  const lv=L().live;render();
+  if(/Girar no/.test(els['#app'].innerHTML))throw new Error('botao de girar ainda aparece');
+  const fila=filaDe(lv),tit=lv.teams[1].ids[0];
+  if(fila.length){onDrop(fila[0],{dataset:{dropPlayer:tit}});
+    if(!lv.teams[1].ids.includes(fila[0]))throw new Error('arrastar da fila sobre um titular nao trocou');
+    onDrop(tit,{dataset:{dropPlayer:fila[0]}});}
 });
 step('alguem vai embora e o time fica curto',()=>{
   const lv=L().live,x=lv.teams[1].ids[0];

@@ -336,6 +336,18 @@ e na pré-partida (`fillPick`: completa só aquela partida; o emprestado aparece
 resolvia a pré-partida mas a montagem não tinha caminho direto. A vaga é o próprio convite.
 **Onde:** `timeCard` (vagas/emprestados), `A.slotPick`/`slotSet`, `viewProxima`.
 
+### D-32 · Goleiro do vencedor fica; escolha manual antes do apito; sem "girar"
+**28/08/2026.** O rodízio de goleiros deixa de alternar lados a cada partida: **o goleiro do time que
+venceu fica com o time** (quando "vencedor fica" está ligado); o outro lado recebe quem está há mais
+tempo na fila do rodízio (`gkPool` é a fila; quem vai ao gol vai para o fim). A pré-partida mostra
+os dois goleiros e deixa trocar na mão (`lv.nextGks`, válido só para aquele par de times). Sai o
+botão "↻ Girar no time X" — troca fora do automático é toque/arraste. "Foi embora" vira botão da
+pré-partida (`leaveSheet`), não da substituição.
+**Por quê:** o critério da quadra é esse, e o app sugerindo outra coisa gerava correção a cada
+partida. Os botões de girar eram atalho para um caso raro e confundiam com a substituição.
+**Onde:** `planGks`/`commitGks`, `finish` (`lv.lastGks`), `viewProxima` (card "No gol"),
+`A.preGk`/`setPreGk`, `A.leaveSheet`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

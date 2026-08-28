@@ -165,10 +165,25 @@ ok(r3.pl.n===2&&r3.tam.every(x=>x===8),'partida unica: todo mundo dividido em 2 
 ok(r3.pl.per===5,'5 em quadra por time, o resto e reserva');
 liga.cfg.matchMode='curtas';
 
-const lvGk={gkPool:[...gk2],gkFlip:0};
-const g1=assignGks(lvGk),g2=assignGks(lvGk);
-console.log('  partida 1: '+g1.map(x=>nameOf(liga,x)).join(' x ')+' | partida 2: '+g2.map(x=>nameOf(liga,x)).join(' x '));
-ok(g1[0]===g2[1]&&g1[1]===g2[0],'goleiros trocam de lado a cada partida');
+{
+  const lvGk={gkPool:[...gk2],gkFlip:0,teams:[{ids:[]},{ids:[]},{ids:[]}],lastWinner:null,lastGks:{},nextGks:null};
+  liga.cfg.winnerStays=true;
+  const g1=commitGks(liga,lvGk,[0,1]);
+  console.log('  partida 1: '+g1.map(x=>nameOf(liga,x)).join(' x '));
+  ok(g1[0]===gk2[0]&&g1[1]===gk2[1],'2 goleiros no rodizio: um para cada lado');
+  lvGk.lastWinner=0;lvGk.lastGks={0:g1[0],1:g1[1]};             // time 0 venceu com g1[0] no gol
+  const p2=planGks(liga,lvGk,[0,2]);
+  ok(p2.gks[0]===g1[0]&&p2.fica[0],'o goleiro do time que venceu fica com ele');
+  ok(p2.gks[1]===g1[1],'com 2 goleiros, o outro lado fica com o segundo');
+  const lv3={gkPool:['gA','gB','gC'],gkFlip:0,teams:[{ids:[]},{ids:[]},{ids:[]}],lastWinner:null,lastGks:{},nextGks:null};
+  const h1=commitGks(liga,lv3,[0,1]);                            // gA x gB; fila vira gC,gA,gB
+  lv3.lastWinner=1;lv3.lastGks={0:h1[0],1:h1[1]};
+  const h2=planGks(liga,lv3,[1,2]);
+  ok(h2.gks[0]==='gB'&&h2.fica[0]&&h2.gks[1]==='gC','3 goleiros: o do vencedor fica, o lado que troca recebe quem esperava (gC)');
+  lv3.nextGks={pair:[1,2],gks:['gB','gA']};
+  ok(planGks(liga,lv3,[1,2]).gks[1]==='gA'&&planGks(liga,lv3,[1,2]).manual,'escolha manual na pre-partida vence a sugestao');
+  ok(!planGks(liga,lv3,[2,1]).manual,'a escolha manual so vale para aquele confronto');
+}
 liga.cfg.format=7;
 ok(planTeams(liga,[...linha.slice(0,12),...gk2]).n===2,'7v7 com 12 de linha da 2 times');
 liga.cfg.format=5;

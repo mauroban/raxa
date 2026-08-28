@@ -1082,14 +1082,36 @@ function suggestPair(liga,lv){
   const order=[...all.filter(i=>fila.indexOf(i)<0),...fila];
   return [order[0],order[1]];
 }
-function assignGks(lv){
+/* Goleiros da próxima partida. Regra do racha: o goleiro do time que VENCEU
+   fica com o time; só o outro lado troca, e troca para quem está há mais
+   tempo esperando no rodízio (gkPool é a fila). O lançador pode trocar na
+   mão antes do apito (lv.nextGks) — o critério da quadra manda.
+   planGks só olha; commitGks aplica na largada e gira a fila.              */
+function planGks(liga,lv,pair){
   const pool=lv.gkPool||[];
-  if(!pool.length)return [null,null];
+  const manual=lv.nextGks&&lv.nextGks.pair&&lv.nextGks.pair[0]===pair[0]&&lv.nextGks.pair[1]===pair[1]?lv.nextGks.gks:null;
+  if(manual)return {gks:manual.slice(),fica:[false,false],manual:true};
+  if(!pool.length)return {gks:[null,null],fica:[false,false],manual:false};
+  const last=lv.lastGks||{};
+  const gks=[null,null],fica=[false,false];
+  [0,1].forEach(sd=>{
+    const t=pair[sd],g=last[t];
+    if(liga.cfg.winnerStays&&lv.lastWinner===t&&g&&pool.includes(g)){gks[sd]=g;fica[sd]=true}
+  });
+  const livres=pool.filter(id=>!gks.includes(id));
+  if(pool.length===1&&!gks[0]&&!gks[1]){                  // um goleiro só: alterna o lado
+    const sd=(lv.gkFlip||0)%2?1:0;gks[sd]=pool[0];
+  }else[0,1].forEach(sd=>{if(!gks[sd]&&livres.length)gks[sd]=livres.shift()});
+  return {gks,fica,manual:false};
+}
+function commitGks(liga,lv,pair){
+  const plan=planGks(liga,lv,pair),pool=lv.gkPool||[];
   lv.gkFlip=(lv.gkFlip||0)+1;
-  if(pool.length===1)return lv.gkFlip%2?[pool[0],null]:[null,pool[0]];
-  const a=pool[0],b=pool[1];
-  if(pool.length>2)lv.gkPool=[...pool.slice(2),a,b];      // rodízio justo entre 3+ goleiros
-  return lv.gkFlip%2?[a,b]:[b,a];                          // alterna os lados a cada partida
+  /* quem foi para o gol vai para o fim da fila do rodízio; quem ficou esperando sobe */
+  const usados=plan.gks.filter(id=>id&&pool.includes(id));
+  lv.gkPool=pool.filter(id=>!usados.includes(id)).concat(usados);
+  lv.nextGks=null;
+  return plan.gks;
 }
 
 /* ---------- estatísticas: duelos, parcerias e números da liga ----------
@@ -1369,7 +1391,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','slotPick','slotSet','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot" style="--pc:${patColor(step)}"></span>`:'';
@@ -1724,7 +1746,9 @@ function viewProxima(liga,lv){
   const per=lv.per||perTeamSize(liga,(lv.gkPool||[]).length>0);
   const compl=fillDe(liga,lv,pair);            // quem entra emprestado para fechar os dois lados
   const escal=[0,1].map(sd=>lv.teams[pair[sd]].ids.slice(0,per).concat(compl[sd]));
-  const ex=chanceDeLineups(liga,lv,escal,[0,1].map(sd=>escal[sd].find(id=>ehGkHoje(lv,id))||null));
+  const gp=planGks(liga,lv,pair);
+  const gkDe=sd=>gp.gks[sd]||escal[sd].find(id=>ehGkHoje(lv,id))||null;
+  const ex=chanceDeLineups(liga,lv,escal,[0,1].map(gkDe));
   const outros=lv.teams.map((_,i)=>i).filter(i=>i!==pair[0]&&i!==pair[1]);
   const pool=lv.gkPool||[];
   const soltos=filaDe(lv);
@@ -1744,8 +1768,18 @@ function viewProxima(liga,lv){
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
       return rs.length?`<div class="tiny muted" style="margin-top:6px">Hoje: ${rs.map(x=>esc(x.n)+' '+x.r.w+'V'+(x.r.d?' '+x.r.d+'E':'')+' '+x.r.l+'D').join(' · ')}</div>`:''})()}
     ${outros.length?`<div class="tiny muted" style="margin-top:6px">Esperando: ${outros.map(i=>esc(lv.teams[i].name)).join(', ')}${liga.cfg.winnerStays?' · vencedor fica, empate os dois saem':''}</div>`:''}
-    ${pool.length?`<div class="tiny muted" style="margin-top:6px">🧤 Rodízio: ${pool.map(id=>esc(nameOf(liga,id))).join(', ')} — o app escala um para cada lado e alterna a cada partida.</div>`:''}
   </div>
+  ${pool.length||gkDe(0)||gkDe(1)?`<div class="card" style="margin-top:10px">
+    <div class="row"><div class="k">🧤 No gol</div><div class="sp tiny muted">${gp.manual?'escolhido na mão':pool.length?'goleiro do time que venceu fica; o outro lado troca':'goleiro fixo do time'}</div></div>
+    <div class="row" style="gap:8px;margin-top:8px">
+      ${[0,1].map(sd=>{const g=gkDe(sd);return `<button class="slot ${TEAMCLASS[pair[sd]]}" data-a="preGk" data-sd="${sd}" style="flex:1;padding:9px 10px">
+        <div class="tiny" style="opacity:.75">${esc(lv.teams[pair[sd]].name)}</div>
+        <div class="nm" style="font-size:15px">${g?'🧤 '+esc(nameOf(liga,g)):'sem goleiro'}</div>
+        <div class="sub">${gp.fica[sd]?'fica — o time venceu':gp.manual?'toque para trocar':g&&pool.includes(g)?'do rodízio':g?'do time':'toque para escolher'}</div>
+      </button>`}).join('')}
+    </div>
+    ${pool.length>1?`<div class="tiny muted" style="margin-top:8px">Esperando no rodízio: ${pool.filter(id=>!gp.gks.includes(id)).map(id=>esc(nameOf(liga,id))).join(', ')||'ninguém'}</div>`:''}
+  </div>`:''}
   ${cardCompletar(liga,lv,pair)}
   <div class="teamwrap" style="margin-top:10px">
     ${[0,1].map(sd=>timeCard(liga,lv,pair[sd],per,compl[sd],sd)).join('')}
@@ -1761,16 +1795,14 @@ function viewProxima(liga,lv){
       <div class="row" style="margin-bottom:6px"><div class="k">Fila — os próximos a entrar</div>
         <div class="sp tiny muted">entram no lugar de quem sair</div></div>
       <div class="chips">${soltos.map((id,i)=>`<span class="filapos">${i+1}</span>${tpChip(liga,lv,id,true)}`).join('')}</div>
-      <div class="row" style="gap:6px;margin-top:9px;flex-wrap:wrap">
-        ${lv.teams.map((t,i)=>`<button class="btn sm ghost" data-a="giraFila" data-i="${i}">↻ Girar no ${esc(t.name)}</button>`).join('')}
-      </div>
-      <div class="tiny muted" style="margin-top:7px">Normalmente a fila gira sozinha: quem perde sai e a fila entra no lugar. Use os botões se o pessoal combinar outra coisa — empate, alguém cansado, alguém que chegou.</div></div>`:''}
+      <div class="tiny muted" style="margin-top:7px">A fila gira sozinha: quem perde sai e a fila entra no lugar. Para trocar alguém na mão, toque num nome e depois no outro — ou arraste.</div></div>`:''}
     ${!outros.length&&!soltos.length?'<div class="tiny muted" style="margin-top:8px">Todo mundo entra nesta partida.</div>':''}
   </div>
   <div class="tiny muted" style="text-align:center;padding:10px 20px;line-height:1.5">
     Toque num nome e depois no outro para trocar de lugar — ou arraste. Dentro do time, os primeiros são os titulares.</div>
-  <div class="row" style="gap:6px;margin-top:2px">
+  <div class="row" style="gap:6px;margin-top:2px;flex-wrap:wrap">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
+    <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
     <button class="btn sm ghost" data-a="balance">⚖ Reequilibrar</button>
     <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
   </div>
@@ -1865,6 +1897,7 @@ function viewJogo(liga,lv){
       Toda troca fecha um trecho: o placar do trecho novo vale para quem entrou.</div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
+      <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
       <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
     </div>
   </div>
@@ -2554,7 +2587,7 @@ const A={
     const outro=sd===0?1:0;
     if(pair[outro]===i)pair[outro]=pair[sd];    // trocaram de lado
     pair[sd]=i;
-    lv.nextPair=pair;lv.lastWinner=null;resetFill(lv);
+    lv.nextPair=pair;lv.lastWinner=null;resetFill(lv);lv.nextGks=null;
     closeSheet();save();render();
   },
   endMatch(){                         // encerra com o resultado que está no placar: 1 toque, sem perguntar nada
@@ -2718,6 +2751,31 @@ const A={
     lv.sel=null;save();render();
   },
 
+  /* goleiro da próxima partida, escolhido na mão */
+  preGk(el){
+    const l=L(),lv=l.live,sd=+el.dataset.sd;
+    const pair=(lv.nextPair||suggestPair(l,lv)).slice(),per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
+    const compl=fillDe(l,lv,pair),escal=lv.teams[pair[sd]].ids.slice(0,per).concat(compl[sd]);
+    const gp=planGks(l,lv,pair),atual=gp.gks[sd],pool=(lv.gkPool||[]).filter(id=>id!==atual);
+    openSheet(`<h2>Goleiro — ${esc(lv.teams[pair[sd]].name)}</h2>
+      ${pool.length?`<div class="k" style="margin-bottom:8px">No rodízio</div>
+        <div class="chips" style="margin-bottom:14px">${pool.map(id=>`<button class="tp big" data-a="setPreGk" data-sd="${sd}" data-id="${id}">🧤 ${esc(nameOf(l,id))}${id===gp.gks[sd===0?1:0]?' <small>do outro lado</small>':''}</button>`).join('')}</div>`:''}
+      <div class="k" style="margin-bottom:8px">Alguém do time</div>
+      <div class="chips" style="margin-bottom:14px">${escal.filter(id=>id!==atual).map(id=>`<button class="tp" data-a="setPreGk" data-sd="${sd}" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')||'<span class="tiny muted">—</span>'}</div>
+      <button class="btn wide ghost" data-a="setPreGk" data-sd="${sd}" data-id="">Sem goleiro definido</button>
+      ${gp.manual?`<button class="btn wide ghost" data-a="setPreGk" data-sd="${sd}" data-id="auto" style="margin-top:8px">Voltar à sugestão do app</button>`:''}
+      <div class="tiny muted" style="margin-top:10px;line-height:1.5">Sugestão do app: o goleiro do time que venceu fica; o outro lado recebe quem está há mais tempo esperando no rodízio. Aqui você muda para o critério da quadra.</div>`);
+  },
+  setPreGk(el){
+    const l=L(),lv=l.live,sd=+el.dataset.sd,id=el.dataset.id;
+    const pair=(lv.nextPair||suggestPair(l,lv)).slice();
+    if(id==='auto'){lv.nextGks=null;closeSheet();save();render();return}
+    const gp=planGks(l,lv,pair),gks=gp.gks.slice(),other=sd===0?1:0;
+    if(id&&gks[other]===id)gks[other]=null;              // trocou de lado: libera o outro
+    gks[sd]=id||null;
+    lv.nextGks={pair,gks};
+    closeSheet();save();render();
+  },
   /* vaga na montagem: quem está na fila ou na reserva de outro time entra neste */
   slotPick(el){
     const l=L(),lv=l.live,i=+el.dataset.i,t=lv.teams[i];if(!t)return;
@@ -2745,11 +2803,15 @@ const A={
           ${temPatente(p,'L')?patDot(l,p.L.rank):''}${esc(p.name)}${p.gk?' 🧤':''}</button>`).join('')
           :'<span class="tiny muted">Todo mundo do cadastro já está presente.</span>'}
       </div>
-      <button class="btn wide ghost" data-a="addPlayer">+ Cadastrar jogador novo</button>
-      <div class="hr"></div>
-      <div class="k" style="margin-bottom:6px">Alguém foi embora?</div>
-      <div class="tiny muted" style="margin-bottom:8px">Machucou, precisou sair: toque no nome e ele sai da presença, do time e da fila. As partidas que jogou continuam valendo.</div>
-      <div class="chips">${lv.presentIds.map(id=>`<button class="tp" data-a="leaveRacha" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}</div>`);
+      <button class="btn wide ghost" data-a="addPlayer">+ Cadastrar jogador novo</button>`);
+  },
+  /* quem foi embora / machucou: lista de presentes, na pré-partida */
+  leaveSheet(){
+    const l=L(),lv=l.live;
+    const emQuadra=lv.cur?[...lv.cur.lineups[0],...lv.cur.lineups[1]]:[];
+    openSheet(`<h2>Quem foi embora?</h2>
+      <div class="tiny muted" style="margin-bottom:10px">Machucou, precisou sair: toque no nome e a pessoa sai da presença, do time, da fila e do rodízio. As partidas que já jogou continuam valendo.</div>
+      <div class="chips">${lv.presentIds.map(id=>`<button class="tp big" data-a="leaveRacha" data-id="${id}">${esc(nameOf(l,id))}${emQuadra.includes(id)?' <small>em quadra</small>':''}</button>`).join('')}</div>`);
   },
   /* Sai do racha no meio: presença, time, fila, rodízio de goleiro — e, se
      estava em quadra, sai da partida sem ninguém no lugar (o trecho seguinte
@@ -2847,7 +2909,7 @@ const A={
     const f=fillDe(l,lv,[a,b]);
     const esc0=[lv.teams[a].ids.slice(0,lv.per).concat(f[0]),lv.teams[b].ids.slice(0,lv.per).concat(f[1])];
     const per=Math.min(lv.per,esc0[0].length,esc0[1].length);
-    const gks=assignGks(lv);
+    const gks=commitGks(l,lv,[a,b]);
     lv.cur={a,b,startedAt:Date.now(),score:[0,0],events:[],paused:false,
       lineups:[esc0[0].slice(0,per),esc0[1].slice(0,per)],gks,
       fill:[f[0].slice(),f[1].slice()]};
@@ -2945,9 +3007,7 @@ const A={
         ?opts.map(o=>`<button class="tp big" data-a="doSub" data-s="${s}" data-out="${out}" data-id="${o.id}">
           ${esc(nameOf(l,o.id))}${o.from?' <small>'+esc(o.from)+'</small>':''}</button>`).join('')
         :'<span class="tiny muted">Ninguém no banco. Use “chegou agora” ou marque mais gente na presença.</span>'}</div>
-      <div style="height:12px"></div>
-      <button class="btn wide ghost" data-a="leaveRacha" data-id="${out}" style="margin-bottom:8px">🚑 Foi embora / machucou — sai sem substituto</button>
-      <button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
+      <div style="height:12px"></div><button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
   },
   inPick(el){                       // toquei em quem está fora
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
@@ -3001,6 +3061,7 @@ const A={
       disputes:[],voided:false};
     applyMatch(l,m);
     l.matches.push(m);lv.matchIds.push(m.id);
+    lv.lastGks={};lv.lastGks[c.a]=c.gks[0]||null;lv.lastGks[c.b]=c.gks[1]||null;   // para o goleiro do vencedor ficar
     const saiu=[];
     if(lv.teams.length>2){
       if(result==='draw'||!l.cfg.winnerStays){        // empate com 3 ou 4 times: os dois saem
