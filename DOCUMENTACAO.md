@@ -132,7 +132,7 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 > **Por que 16 e não 12.** A calibragem antiga supunha 20 a 30 partidas por noite. Um racha de 2 gols ou 7 minutos, com troca de time, fila e conversa no meio, entrega **10 a 15**. Com metade das partidas, cada uma tem que pesar cerca do dobro para que uma noite continue significando a mesma coisa.
 
-> **O modo é do racha, não da liga.** A mesma liga pode ter quinta de partida única e sábado de várias curtas, e as duas coisas convivem no mesmo histórico e no mesmo ranking. Cada partida **guarda o modo do racha em que foi jogada**, e o recálculo usa esse valor gravado. Consequência prática: mudar o padrão da liga nos ajustes **não mexe em nenhuma patente já conquistada** — só vale para o próximo racha.
+> **Formato e modo são da liga (D-44).** Tamanho do time (5v5, 6v6, 7v7, 11v11) e modo (várias curtas ou partida única) se escolhem na criação da liga e não mudam depois — grupo que muda de formato cria outra liga. Cada partida ainda **guarda** o modo com que foi jogada (o histórico antigo, de quando o modo era do racha, continua valendo).
 
 **Em lançamento retroativo** (partida digitada depois, sem cronômetro) não há trechos: a partida entra inteira, com peso 1. Na prática é o que acontece com qualquer partida encerrada com menos de **45 segundos** de relógio — o app entende que o cronômetro não foi usado.
 
@@ -578,7 +578,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
 11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
 12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.
-13. **O modo é do racha, não da liga.** Uma liga mistura rachas curtos e longos no mesmo histórico; cada partida carrega o próprio peso. Mudar o padrão nunca reescreve o passado. (O *formato* — 5v5, 6v6, 7v7, 11v11 — é outra coisa, e essa é da liga.)
+13. **Formato e modo são da liga, definidos na criação.** Uma liga é um grupo, um tamanho de time e um modo. Nível de 5v5 não se compara com nível de 11v11, e uma noite de partida única não se compara com uma de dez curtas — então quem muda de formato começa outra liga. Cada partida guarda o próprio modo.
 14. **Equilíbrio primeiro, panelinha depois.** O app tenta separar quem sempre joga junto — mas só quando isso não custa equilíbrio. Times equilibrados são o produto; misturar as duplas é o que faz a patente convergir para a pessoa em vez de para o time.
 15. **A fila é sugestão, não regra.** O app propõe o próximo confronto pelo "vencedor fica", mas trocar qualquer um dos dois times custa 2 toques. Racha real não obedece fila.
 16. **Número maior é melhor dentro da patente.** Diamante 3 é o topo, Diamante 1 é o primeiro degrau — e os nomes (Ferro → Bronze → Prata → Ouro → Diamante) se leem sem ninguém explicar.

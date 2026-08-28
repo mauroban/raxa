@@ -497,6 +497,18 @@ conversa: juntar trechos com o mesmo confronto, pontuar um pouco por gol).
 **Onde:** `plusMinus`, `applyMatch` (`p.pm`), `statsLiga`/`statsAnos` (`pm`), `viewStats`, `pSheet` ·
 `test.py` "+/-".
 
+### D-44 · Formato e modo são da liga, escolhidos na criação
+**28/08/2026.** A folha "Nova liga" pede nome, **tamanho do time** e **modo** (várias curtas /
+partida única). Saem os seletores da tela de presença e de Ajustes; Ajustes mostra o formato só
+de leitura ("definido na criação; para outro formato, crie outra liga"). O racha herda
+`cfg.matchMode`; `m.mode` continua gravado por partida (histórico antigo com modos mistos segue
+valendo). As ações `setFormat`/`setMatchMode` continuam existindo para os testes, sem botão.
+**Por quê:** nível e estatística só fazem sentido dentro de um formato; trocar no meio da vida
+da liga mistura réguas. Substitui a decisão 13 antiga ("o modo é do racha").
+**Descartado:** permitir mudar em Ajustes com aviso — ninguém lê aviso na quadra.
+**Onde:** `newLiga`/`novaSheet`/`novaOpt`/`saveLiga`, `cfgNova`, `viewPresenca`, `viewCfg` ·
+DOCUMENTACAO §9 (decisão 13) · smoke "nova liga escolhe formato e modo na criacao".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

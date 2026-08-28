@@ -70,6 +70,13 @@ step('lista real: 19 presentes no 5v5 viram 4 times de 4 + 3 goleiros no rodizio
   if(lv.teams.length!==4)throw new Error('esperava 4 times, veio '+lv.teams.length);
   if(!lv.teams.every(t=>t.ids.length===4))throw new Error('times de '+lv.teams.map(t=>t.ids.length).join('/'));
 });
+step('nova liga escolhe formato e modo na criacao',()=>{
+  A.newLiga();A.novaOpt({dataset:{k:'format',v:'7'}});A.novaOpt({dataset:{k:'modo',v:'unica'}});NOVA.nome='Sete';
+  const antes=S.ligas.length;A.saveLiga();
+  if(S.ligas.length!==antes+1)throw new Error('liga nao foi criada');
+  const l=L();if(l.cfg.format!==7||l.cfg.matchMode!=='unica'||l.cfg.targetGoals!==0)throw new Error('cfg da liga nova nao respeitou a folha: '+JSON.stringify(l.cfg));
+  S.ligas.pop();S.active=S.ligas[S.ligas.length-1].id;render();
+});
 step('trocar formato para 7v7',()=>A.setFormat({dataset:{v:'7'}}));
 step('forcar 3 times: com 16 na linha no 7v7 so cabem 2 cheios',()=>{
   A.nteams({dataset:{v:'3'}});

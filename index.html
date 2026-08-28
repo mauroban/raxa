@@ -613,6 +613,13 @@ function defCfg(){return{
   rankVisibility:'todos',         /* 'todos' | 'admin' */
   disputeThreshold:2, disputeMode:'flag'
 };}
+/* escolhas da folha "Nova liga" (formato e modo entram no cfg da liga) */
+let NOVA={format:5,modo:'curtas',nome:''};
+function cfgNova(){
+  const c=defCfg();c.format=NOVA.format;c.matchMode=NOVA.modo;
+  if(NOVA.modo==='unica'){c.targetGoals=0;c.targetMin=50;c.winnerStays=false}
+  return c;
+}
 function defState(){return{v:2,me:{id:uid(),name:''},ligas:[],active:null,ui:{tab:'racha',rankRole:'L'}};}
 
 /* ---------- duas trilhas de nível: linha e goleiro ----------
@@ -1636,22 +1643,6 @@ function viewPresenca(liga,lv){
   const gks=lv.presentIds.filter(id=>ehGkHoje(lv,id)).length;
   return `
   <div class="card">
-    <div class="k" style="margin-bottom:8px">Tamanho do time</div>
-    <div class="row" style="gap:6px">
-      ${FORMATS.map(f=>`<button class="btn sm ${liga.cfg.format===f.n?'pri':'ghost'}" data-a="setFormat" data-v="${f.n}"
-        style="flex:1;flex-direction:column;line-height:1.15;padding:9px 4px">${f.l}<span style="font-size:9px;opacity:.65">${f.d}</span></button>`).join('')}
-    </div>
-    <div class="k" style="margin:14px 0 8px">Modo deste racha</div>
-    <div class="row" style="gap:6px">
-      <button class="btn sm ${(lv.mode||liga.cfg.matchMode)==='curtas'?'pri':'ghost'}" data-a="setMatchMode" data-v="curtas"
-        style="flex:1;flex-direction:column;line-height:1.2;padding:10px 6px">Várias curtas
-        <span style="font-size:9px;opacity:.65">time de fora esperando</span></button>
-      <button class="btn sm ${(lv.mode||liga.cfg.matchMode)==='unica'?'pri':'ghost'}" data-a="setMatchMode" data-v="unica"
-        style="flex:1;flex-direction:column;line-height:1.2;padding:10px 6px">Partida única
-        <span style="font-size:9px;opacity:.65">times fixos com reservas</span></button>
-    </div>
-  </div>
-  <div class="card">
     <div class="row"><div class="k">Quem chegou</div>
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
     <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span></div>
@@ -2526,10 +2517,9 @@ function viewCfg(liga){
   const c=liga.cfg;
   return `
   <div class="card">
-    <div class="k" style="margin-bottom:8px">Tamanho do time (padrão)</div>
-    <div class="row" style="gap:6px">
-      ${FORMATS.map(f=>`<button class="btn sm ${c.format===f.n?'pri':'ghost'}" data-a="setFormat" data-v="${f.n}" style="flex:1">${f.l}</button>`).join('')}
-    </div>
+    <div class="k" style="margin-bottom:6px">Formato da liga</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}</div>
+    <div class="tiny muted" style="margin-top:4px">Definido na criação. Para outro formato ou modo, crie outra liga.</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
@@ -2561,15 +2551,6 @@ function viewCfg(liga){
     </div>
     <div class="tiny muted" style="margin-bottom:14px">Claro é o padrão: é o que se lê no sol, em quadra descoberta. Para racha à noite, o escuro cansa menos a vista. Vale só neste aparelho.</div>
     <div class="hr"></div>
-    <div class="k" style="margin-bottom:8px">Modo padrão de um racha novo</div>
-    <div class="row" style="gap:6px;margin-bottom:8px">
-      <button class="btn sm ${c.matchMode==='curtas'?'pri':'ghost'}" data-a="setMatchMode" data-v="curtas" style="flex:1">Várias curtas</button>
-      <button class="btn sm ${c.matchMode==='unica'?'pri':'ghost'}" data-a="setMatchMode" data-v="unica" style="flex:1">Partida única</button>
-    </div>
-    <div class="tiny muted" style="margin-bottom:12px">${c.matchMode==='unica'
-      ?'Uma partida longa, times fixos com reservas. Como são poucas partidas, cada uma pesa bem mais no nível.'
-      :'Várias partidas curtas com time de fora esperando — 10 a 15 por racha. Como são muitas, cada uma pesa pouco.'}
-      <br>Cada racha escolhe o seu modo na hora — a liga pode ter uns curtos e outros longos no mesmo histórico, e cada partida guarda o peso do racha em que foi jogada.</div>
     <div class="k" style="margin-bottom:10px">Alvo (0 gols = sem alvo de gols)</div>
     <div class="row" style="gap:8px">
       <label class="f" style="flex:1;margin:0"><span class="k">Gols</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals"></label>
@@ -2697,14 +2678,37 @@ const A={
   tab(el){S.ui.tab=el.dataset.v;save();render()},
   closeSheet,
   newLiga(){
-    openSheet(`<h2>Nova liga</h2>
-      <div class="tiny muted" style="margin-bottom:12px;line-height:1.5">Uma liga = um grupo com níveis próprios. Se a galera é praticamente a mesma, use a mesma liga para todos os rachas.</div>
-      <label class="f"><span class="k">Nome</span><input id="ln" placeholder="Ex.: Fut de quinta"></label>
-      <button class="btn wide pri" data-a="saveLiga">Criar</button>`);
+    NOVA={format:5,modo:'curtas',nome:''};
+    A.novaSheet();
     setTimeout(()=>$('#ln')&&$('#ln').focus(),120);
   },
+  /* Formato e modo são da LIGA e se escolhem na criação (D-44): nada de
+     mudar no meio do caminho — formato diferente é outra liga.             */
+  novaSheet(){
+    openSheet(`<h2>Nova liga</h2>
+      <div class="tiny muted" style="margin-bottom:12px">Uma liga = um grupo com níveis próprios, um formato e um modo. Outro formato é outra liga.</div>
+      <label class="f"><span class="k">Nome</span><input id="ln" placeholder="Ex.: Fut de quinta" value="${esc(NOVA.nome)}" oninput="NOVA.nome=this.value"></label>
+      <div class="k" style="margin-bottom:8px">Tamanho do time</div>
+      <div class="row" style="gap:6px">
+        ${FORMATS.map(f=>`<button class="btn sm ${NOVA.format===f.n?'pri':'ghost'}" data-a="novaOpt" data-k="format" data-v="${f.n}"
+          style="flex:1;flex-direction:column;line-height:1.15;padding:9px 4px">${f.l}<span style="font-size:9px;opacity:.65">${f.d}</span></button>`).join('')}
+      </div>
+      <div class="k" style="margin:14px 0 8px">Modo</div>
+      <div class="row" style="gap:6px">
+        <button class="btn sm ${NOVA.modo==='curtas'?'pri':'ghost'}" data-a="novaOpt" data-k="modo" data-v="curtas"
+          style="flex:1;flex-direction:column;line-height:1.2;padding:10px 6px">Várias curtas<span style="font-size:9px;opacity:.65">time de fora esperando</span></button>
+        <button class="btn sm ${NOVA.modo==='unica'?'pri':'ghost'}" data-a="novaOpt" data-k="modo" data-v="unica"
+          style="flex:1;flex-direction:column;line-height:1.2;padding:10px 6px">Partida única<span style="font-size:9px;opacity:.65">times fixos com reservas</span></button>
+      </div>
+      <div style="height:16px"></div>
+      <button class="btn wide pri" data-a="saveLiga">Criar</button>`);
+  },
+  novaOpt(el){
+    if(el.dataset.k==='format')NOVA.format=+el.dataset.v;else NOVA.modo=el.dataset.v;
+    A.novaSheet();
+  },
   saveLiga(){
-    const l={id:uid(),name:$('#ln').value.trim()||'Meu racha',createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
+    const l={id:uid(),name:(NOVA.nome||'').trim()||'Meu racha',createdAt:Date.now(),cfg:cfgNova(),players:[],matches:[],sessions:[],live:null};
     S.ligas.push(l);S.active=l.id;S.ui.tab='racha';closeSheet();save();render();
   },
   delLiga(){if(!confirm('Apagar esta liga e todo o histórico?'))return;S.ligas=S.ligas.filter(l=>l.id!==S.active);S.active=null;save();render()},
@@ -4362,8 +4366,8 @@ Object.assign(A,{
 
   /* ----- criar / entrar / sair de liga ----- */
   saveLiga(){
-    const name=($('#ln')&&$('#ln').value.trim())||'Meu racha';
-    closeSheet();createLeague(name,{});
+    const name=(NOVA.nome||'').trim()||'Meu racha';
+    closeSheet();createLeague(name,{cfg:cfgNova()});
   },
 
   demo(){
