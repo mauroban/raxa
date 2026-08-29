@@ -1558,7 +1558,7 @@ function logAdd(liga,a,extra){
   if(liga.log.length>2000)liga.log=liga.log.slice(-2000);
 }
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
-  keep:'manteve resultado',delMatch:'apagou partida',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
+  keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
   delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol'};
 /* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
 const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
@@ -1568,7 +1568,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','endRacha','togGkP','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','togGkP','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="--pc:${patColor(step)}"></span>`:'';
@@ -2072,8 +2072,11 @@ function golsCard(liga,lv,c){
 }
 function todayBlock(liga,lv){
   const ult=lv.matchIds[lv.matchIds.length-1];
+  /* o Fim foi sem querer: enquanto a próxima não começa, a última tem volta */
+  const volta=!lv.cur&&lv.lastEnd&&lv.lastEnd.mid===ult;
   return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="k">Partidas de hoje (${lv.matchIds.length})</div>
       ${ult?`<button class="btn sm ghost sp" data-a="delMatch" data-id="${ult}">↶ Desfazer a última</button>`:''}</div>
+    ${volta?`<button class="btn sm ghost" data-a="voltarPartida" style="width:100%;margin-bottom:8px">↩ Voltar a partida — o Fim foi sem querer</button>`:''}
     ${lv.matchIds.slice(-5).reverse().map(id=>{const m=liga.matches.find(x=>x.id===id);return m?mrow(liga,m,true,euId(liga)):''}).join('')}</div>`;
 }
 
@@ -2837,6 +2840,26 @@ const A={
     const r=c.score[0]>c.score[1]?0:c.score[1]>c.score[0]?1:'draw';
     A.finish({dataset:{r:String(r)}});
   },
+  /* O Fim foi sem querer: apaga o registro e devolve a partida ao relógio, com
+     gols, times, fila e goleiros como estavam. O intervalo entre o Fim e a
+     volta entra como pausa — o relógio não conta esse tempo.                 */
+  voltarPartida(){
+    const l=L(),lv=l.live,le=lv&&lv.lastEnd;if(!le)return;
+    if(lv.cur)return toast('Há uma partida em andamento');
+    const i=l.matches.findIndex(m=>m.id===le.mid);
+    if(i<0){lv.lastEnd=null;save();render();return toast('A partida não está mais no histórico')}
+    const m=l.matches[i];
+    logAdd(l,'backMatch',{mid:m.id,ts0:m.ts,score:m.score,result:m.result,names:m.names});
+    l.matches.splice(i,1);rebuildAll(l);
+    lv.matchIds=lv.matchIds.filter(x=>x!==le.mid);
+    le.teams.forEach((ids,k)=>{if(lv.teams[k])lv.teams[k].ids=[...ids]});
+    lv.queue=[...le.queue];lv.lastWinner=le.lastWinner;lv.lastStay=le.lastStay;lv.lastGks=le.lastGks;
+    lv.nextPair=le.nextPair;
+    const c=le.cur;
+    c.events.push({t:le.endedAt,type:'pause'},{t:Date.now(),type:'resume'});
+    lv.cur=c;lv.lastEnd=null;
+    save();render();toast('Partida de volta ao relógio');
+  },
   /* Pausar e cancelar: o racha para o tempo todo (bola na rua, discussão, chuva). */
   pauseMatch(){
     const l=L(),c=l.live.cur;if(!c)return;
@@ -3150,6 +3173,7 @@ const A={
     const fila=(lv.queue||[]).filter(i=>all.includes(i)&&i!==a&&i!==b);
     lv.queue=fila.concat(all.filter(i=>i!==a&&i!==b&&!fila.includes(i)));
     lv.nextPair=null;
+    lv.lastEnd=null;               // partida nova no relógio: a anterior não tem mais volta
     lv.stage='jogo';
     lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
     // ninguém joga com mais gente que o adversário: o time menor é completado
@@ -3319,6 +3343,14 @@ const A={
       disputes:[],voided:false};
     applyMatch(l,m);
     l.matches.push(m);lv.matchIds.push(m.id);
+    /* instantâneo para "Voltar a partida": o Fim sem querer tem volta — guarda a
+       partida e o estado da rodada ANTES do giro (times, fila, vencedor, goleiros) */
+    lv.lastEnd={mid:m.id,endedAt,cur:JSON.parse(JSON.stringify(c)),
+      teams:lv.teams.map(t=>[...t.ids]),queue:[...lv.queue],
+      lastWinner:lv.lastWinner===undefined?null:lv.lastWinner,
+      lastStay:Array.isArray(lv.lastStay)?[...lv.lastStay]:null,
+      lastGks:lv.lastGks?Object.assign({},lv.lastGks):null,
+      nextPair:Array.isArray(lv.nextPair)?[...lv.nextPair]:null};
     lv.lastGks={};lv.lastGks[c.a]=c.gks[0]||null;lv.lastGks[c.b]=c.gks[1]||null;   // para o goleiro do vencedor ficar
     const saiu=[];
     /* lastStay: quem FICA em quadra — é com esse time que o goleiro fica */
@@ -3458,6 +3490,7 @@ const A={
     logAdd(l,'delMatch',{mid:m.id,ts0:m.ts,score:m.score,result:m.result,names:m.names,ultimaDoRacha});
     l.matches.splice(i,1);rebuildAll(l);
     if(l.live)l.live.matchIds=l.live.matchIds.filter(x=>x!==m.id);
+    if(l.live&&l.live.lastEnd&&l.live.lastEnd.mid===m.id)l.live.lastEnd=null;
     closeSheet();save();render();toast('Partida apagada');
   },
 
@@ -4655,7 +4688,7 @@ function logCard(liga){
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='goal')o+=`: ${e.from?esc(nome(e.from))+(e.fromOwn?' (contra)':''):'sem autor'} → ${e.to?esc(nome(e.to))+(e.toOwn?' (contra)':''):'sem autor'}`;
-    else if(e.a==='delMatch'&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
+    else if((e.a==='delMatch'||e.a==='backMatch')&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
     return `<div class="tiny" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="muted num">${new Date(e.ts).toLocaleDateString('pt-BR')} · @${esc(e.by||'?')}</span><br>${o}</div>`;
   };
   const sz=SIZE[liga.id];

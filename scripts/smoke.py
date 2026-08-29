@@ -176,6 +176,26 @@ step('encerrar pelo placar (1 toque)',()=>{
   if(m.goals.length!==gols)throw new Error('gol sem autor sumiu do registro: '+m.goals.length+' de '+gols);
   if(m.goals.some(g=>g.pid===undefined))throw new Error('gol sem autor precisa ter pid nulo, nao undefined');
 });
+step('o fim foi sem querer: voltar a partida devolve relogio, gols e times',()=>{
+  const l=L(),lv=l.live;
+  const n=l.matches.length,mid=lv.matchIds[lv.matchIds.length-1];
+  if(!lv.lastEnd||lv.lastEnd.mid!==mid)throw new Error('o fim nao deixou instantaneo');
+  if(!/Voltar a partida/.test(els['#app'].innerHTML))throw new Error('botao de voltar nao apareceu');
+  const golsAntes=lv.lastEnd.cur.events.filter(e=>e.type==='goal').length;
+  const timesAntes=JSON.stringify(lv.lastEnd.teams);
+  A.voltarPartida();
+  if(!lv.cur)throw new Error('a partida nao voltou ao relogio');
+  if(l.matches.length!==n-1)throw new Error('o registro nao foi apagado');
+  if(lv.matchIds.includes(mid))throw new Error('a partida ainda esta na lista de hoje');
+  if(lv.cur.events.filter(e=>e.type==='goal').length!==golsAntes)throw new Error('gols se perderam na volta');
+  if(JSON.stringify(lv.teams.map(t=>t.ids))!==timesAntes)throw new Error('times nao voltaram como estavam');
+  const evs=lv.cur.events;
+  if(evs[evs.length-2].type!=='pause'||evs[evs.length-1].type!=='resume')throw new Error('o intervalo do fim devia entrar como pausa');
+  if(lv.cur.paused)throw new Error('devia voltar rodando');
+  A.endMatch();                        // registra de novo para o fluxo seguir
+  if(lv.cur)throw new Error('nao encerrou de novo');
+  if(l.matches.length!==n)throw new Error('o novo fim nao registrou');
+});
 step('nada de modal de patente entre partidas',()=>{
   if(typeof showResult!=='undefined')throw new Error('o modal de fim de partida deveria ter sumido');
   if(L().live.cur)throw new Error('devia estar entre partidas');

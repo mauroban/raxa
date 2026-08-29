@@ -557,6 +557,23 @@ está (o ⇄ e o nome na linha continuavam aparecendo para quem já tinha feito 
 `test.py` [11] (troca de gol no meio, evento antigo sem `mv`) · `smoke.py` (trocar o goleiro de
 um time pelo do outro; troca gravada pela versão antiga) · DOCUMENTACAO §4.3.
 
+### D-48 · Fim sem querer tem volta: "Voltar a partida"
+**29/08/2026.** O Fim continua 1 toque sem confirmação, mas agora deixa um instantâneo
+(`lv.lastEnd`: cópia da partida e do estado da rodada **antes do giro** — times, fila, vencedor,
+goleiros). Enquanto a próxima não começa, o bloco de partidas de hoje mostra **"↩ Voltar a
+partida"** (`voltarPartida`): apaga o registro, recalcula os níveis do zero e devolve a partida
+ao relógio com tudo no lugar; o intervalo entre o Fim e a volta entra como par pausa/retomada,
+então o relógio não conta esse tempo. Começar outra partida (ou apagar a registrada) descarta o
+instantâneo.
+**Por quê:** o Fim é 1 toque por design — confirmar atrasaria toda partida por causa do caso
+raro. Mas o toque errado só tinha o "Desfazer a última", que apaga o registro e perde o relógio
+e os gols, além de não desfazer o giro da fila (quem entrou da fila já tinha entrado no time).
+**Descartado:** confirmação no Fim; manter o instantâneo depois que outra partida começa (fila e
+rodízio de goleiros já giraram de novo — a volta deixaria o estado inconsistente).
+**Onde:** `finish` (instantâneo), `voltarPartida`, `todayBlock`, `startMatch`/`delMatch`
+(descarte), `backMatch` no registro de correções · `smoke.py` ("o fim foi sem querer") ·
+DOCUMENTACAO §4.3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
