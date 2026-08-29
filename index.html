@@ -1325,7 +1325,9 @@ function statsLiga(liga,periodo,semGk){
    mesmos pontos, então convergem para o mesmo nível — não importa quão bom
    cada um é. Quando uma dupla tem quase todo o histórico em comum, o app
    avisa: o remédio é separá-los na montagem por algumas noites.           */
-const JUNTOS_MIN=35, JUNTOS_PCT=.8;
+/* 20 partidas ≈ 3 rachas sempre juntos (com as ~7 partidas por pessoa por
+   noite do racha real) — proporcional à calibração de 15 (D-53/D-56).      */
+const JUNTOS_MIN=20, JUNTOS_PCT=.8;
 function inseparaveis(liga,st){
   const {J,PA}=st||statsLiga(liga,'sempre'),out=[],vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{

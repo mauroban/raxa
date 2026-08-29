@@ -530,11 +530,12 @@ console.log('\n[14] gol contra');
 
 console.log('\n[15] dupla inseparavel');
 {
+  ok(JUNTOS_MIN===20,'o piso do aviso e 20 partidas (~3 rachas sempre juntos), proporcional a calibracao de 15');
   const x=mk('Cola1',stepMid(6),0),y=mk('Cola2',stepMid(6),0);liga.players.push(x,y);
   const outros=[];for(let i=0;i<8;i++){const q=mk('Out'+i,stepMid(6),0);liga.players.push(q);outros.push(q.id)}
-  for(let i=0;i<38;i++)lanca([x.id,y.id,...outros.slice(0,3)],outros.slice(3,8),i%2,{sid:'s-cola'+Math.floor(i/8)});
+  for(let i=0;i<22;i++)lanca([x.id,y.id,...outros.slice(0,3)],outros.slice(3,8),i%2,{sid:'s-cola'+Math.floor(i/8)});
   const j=inseparaveis(liga);
-  ok(j.some(d=>(d.a===x.id&&d.b===y.id)||(d.a===y.id&&d.b===x.id)),'38 partidas sempre juntos: a dupla e apontada');
+  ok(j.some(d=>(d.a===x.id&&d.b===y.id)||(d.a===y.id&&d.b===x.id)),'22 partidas sempre juntos (~3 rachas): a dupla e apontada');
   ok(x.L.elo===y.L.elo,'e de fato os dois tem o mesmo elo — o motivo do aviso');
   ok(!j.some(d=>d.a===outros[0]&&d.b===outros[1]&&d.pct<JUNTOS_PCT),'quem tambem jogou separado nao e apontado');
 }

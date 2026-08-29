@@ -672,6 +672,16 @@ manter margem 13 com K 32 (ioiô matematicamente garantido no corte).
 **Onde:** `KMODE`, `RANK_MARGIN` · `test.py` [4] (K de time, +16 parelho, margem > K/2), [7]
 (histerese) · DOCUMENTACAO §3.4 (tabela e nota D-55), §3.5, §3.6.
 
+### D-56 · Dupla inseparável: aviso a partir de 20 partidas juntos
+**29/08/2026.** `JUNTOS_MIN` 35 → **20** (o critério de 80 % do histórico em comum não muda).
+Com as ~7 partidas por pessoa por noite do racha real, 35 eram ~5 rachas sempre juntos antes do
+aviso; 20 são ~3 — proporcional ao encurtamento da calibração (D-53) e ao K mais rápido (D-55):
+se o nível converge em 2 rachas, a dupla colada precisa ser apontada na mesma escala, antes de os
+dois Elos se fundirem por construção.
+**Descartado:** baixar também os 80 % (quem joga separado às vezes já dá sinal ao motor); piso em
+rachas em vez de partidas (a parceria é contada por partida no histórico).
+**Onde:** `JUNTOS_MIN` · `test.py` [15] · DOCUMENTACAO §8 (duplas inseparáveis).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
