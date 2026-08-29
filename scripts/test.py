@@ -240,7 +240,7 @@ ok(Math.abs(rn.deltas[novato.id])>Math.abs(rn.deltas['p2']),'novato anda mais ra
 const cal=mk('Cal',1500,0);
 ok(calibrando(liga,cal,cal.L),'quem chega esta calibrando');
 const CG=liga.cfg.calGames,CR=liga.cfg.calRachas;
-ok(CG===25&&CR===3,'calibracao e fixa: 25 partidas no racha curto, 3 rachas na partida unica');
+ok(CG===15&&CR===3,'calibracao e fixa: 15 partidas no racha curto (~2 rachas), 3 rachas na partida unica');
 cal.L.games=CG-1;cal.L.sessions=CR-1;
 ok(calibrando(liga,cal,cal.L),(CG-1)+' partidas em '+(CR-1)+' rachas: ainda calibrando');
 cal.L.games=CG;

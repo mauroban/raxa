@@ -529,8 +529,9 @@ cinco 1-0); +/- em destaque em toda liga.
 **28/08/2026.** `KMODE` vira 40 calibrando / 20 depois nos dois modos; `kFor` devolve K constante
 e `streakK` devolve 1 (sem acelerador de sequência, sem decaimento por histórico). `PROTECT=0`:
 sai a proteção pós-promoção (o campo `protect` continua no dado, sempre zero). Calibração por
-modo da liga: **25 partidas** no racha curto, **3 rachas** na partida única (`calibrando`,
-`calMeta`, `calTxt`); os textos de "calibrando · x/25 partidas" ou "x/3 rachas" seguem o modo.
+modo da liga: partidas no racha curto (25 aqui; **15 desde a D-53**), **3 rachas** na partida
+única (`calibrando`, `calMeta`, `calTxt`); os textos de "calibrando · x/N partidas" ou "x/3
+rachas" seguem o modo.
 **Por quê:** o usuário: "Elo já é muito bem testado e já sabemos o que funciona" — os números da
 FIDE em vez de uma calibragem própria; e a proteção de 3 partidas num racha de 10–15 nem se
 percebia. Substitui as calibragens de K das decisões anteriores (36/22, acelerador ×1,5).
@@ -623,6 +624,34 @@ linguagem do racha — patente continua sendo a única língua pública.
 para lançadores (quem conduz o racha não precisa do número para nada).
 **Onde:** `viewEscada` (`souAdmin`) · `smoke.py` ("admin ve o elo cru"; não-admin não vê) ·
 DOCUMENTACAO §3.1, §3.8, §9.1.
+
+### D-53 · Calibração do racha curto: 15 partidas (o nível aparece em ~2 rachas)
+**29/08/2026** (ajusta o número da D-46; o K 40/20 não muda). `CAL_GAMES` 25 → **15**. No
+primeiro racha real, o máximo que alguém jogou foi **7 partidas** — com 25, quem entra sem
+palpite ficaria ~4 rachas (um mês de racha semanal) sem patente, e o K de calibração duraria o
+mesmo tanto. Com 15, o nível aparece em ~2 rachas e o K cai para 20 no mesmo ponto.
+**Por quê:** a calibração tem duas funções acopladas — quando a patente APARECE e até quando o K
+anda dobrado — e as duas estavam dimensionadas para "10 a 15 partidas por pessoa por noite", que
+o racha real desmentiu (rodízio de 4 times ≈ metade das partidas para cada um). Mexer aqui
+preserva o Elo clássico (D-46); mexer no K não.
+**Descartado:** subir o K pós-calibração (só com 3–4 rachas de dados, se a escada parecer
+congelada); separar o portão da patente do fim do K (duas regras para explicar, ganho pequeno);
+encerrar calibração por rachas no racha curto (partida é a unidade natural dele, D-46).
+**Onde:** `CAL_GAMES` · `test.py` [6] ("calibracao e fixa: 15 partidas") · DOCUMENTACAO §3.2,
+§3.6, §9.9.
+
+### D-54 · Rankings da noite abrem até 10, e existe "quem mais perdeu"
+**29/08/2026.** Nos destaques do último racha, cada ranking (melhor +/−, quem mais ganhou,
+artilheiro, rendeu acima, tempo em quadra, menos vazado) mostra 3 e abre até **10** com o mesmo
+"▾ ver até N" dos rankings de temporada (`corta`/`mais`, chaves próprias em `S.ui.statsOpen`).
+Entram também **"😵 Quem mais perdeu"** na noite e **"😵 Mais derrotas"** nos rankings de
+temporada — derrotas, desempate por menos vitórias e mais partidas.
+**Por quê:** pedido pós-primeiro racha: com 15+ presentes, o top 3 esconde o meio da tabela; e a
+zoeira do "quem mais perdeu" é metade da graça do racha.
+**Descartado:** listas sempre completas (parede de lista; o padrão 3+abrir já existia na
+temporada).
+**Onde:** `cardsUmRacha`, `rkDer`/seção "Mais derrotas" em `viewStats` · `smoke.py` ("rankings da
+noite abrem ate 10") · DOCUMENTACAO §5.2.
 
 ## Como registrar uma decisão nova
 

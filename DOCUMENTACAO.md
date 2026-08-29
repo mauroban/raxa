@@ -79,7 +79,7 @@ Então:
 - **Cada patente = 200 pontos de rating.** Diferença de uma patente ≈ 75% de vitória esperada. Diferença de duas ≈ 91%.
 - **Cada divisão = ~67 pontos.** Diferença de uma divisão ≈ 60% de vitória esperada — perceptível, mas não gritante.
 - A escada cobre 1000–1999, **centrada em 1500**. Como o Elo é soma zero, a média da liga fica sempre perto do valor de entrada — então o meio da escada precisa ser a média, ou um nível enche e o outro fica vazio. O valor de entrada padrão (1500) cai em **Prata 2**: o degrau do meio, com dois níveis inteiros para cada lado.
-- **Zerar o nível.** Na ficha, o admin pode tirar o nível dado à mão de quem ainda **não jogou** naquela valência ("Tirar o nível — calibrar do zero"): o jogador volta ao rating de entrada e fica sem nível até completar a calibração. Fica no registro de correções. **Sem nível até calibrar.** Quem entra sem um nível dado à mão (cadastro ou admin) não recebe rótulo enquanto calibra (5 rachas ou 25 partidas): o rating existe por baixo — monta time, entra na conta dos outros — mas a escada mostra a pessoa em "Sem nível ainda", com o progresso da calibração.
+- **Zerar o nível.** Na ficha, o admin pode tirar o nível dado à mão de quem ainda **não jogou** naquela valência ("Tirar o nível — calibrar do zero"): o jogador volta ao rating de entrada e fica sem nível até completar a calibração. Fica no registro de correções. **Sem nível até calibrar.** Quem entra sem um nível dado à mão (cadastro ou admin) não recebe rótulo enquanto calibra (15 partidas no racha curto; 3 rachas na partida única): o rating existe por baixo — monta time, entra na conta dos outros — mas a escada mostra a pessoa em "Sem nível ainda", com o progresso da calibração.
 
 | Patente | Faixa interna de rating |
 |---|---|
@@ -152,13 +152,13 @@ Ordem de grandeza no racha curto (K=20, times parelhos): mover uma **divisão** 
 
 ### 3.6 Entrada de um jogador novo
 
-O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (25 partidas no racha curto; 3 rachas na partida única), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
+O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (15 partidas no racha curto; 3 rachas na partida única), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
 
-O jogador fica **calibrando** até completar **25 partidas** (liga de várias curtas) ou **3 rachas** (liga de partida única). Nesse período o K é o dobro (40 no lugar de 20) e as margens de histerese não valem, então ele anda rápido e acha o lugar dele em uma ou duas noites.
+O jogador fica **calibrando** até completar **15 partidas** (liga de várias curtas) ou **3 rachas** (liga de partida única). Nesse período o K é o dobro (40 no lugar de 20) e as margens de histerese não valem, então ele anda rápido e acha o lugar dele em uma ou duas noites.
 
 A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
 
-A regra é por modo de propósito: numa liga de **partida única** ele levaria 25 semanas para calibrar se dependesse de partidas — então são 3 rachas; numa de **várias curtas** ele joga de 10 a 15 partidas por noite — então são 25 partidas, duas noites.
+A regra é por modo de propósito: numa liga de **partida única** ele levaria semanas para calibrar se dependesse de partidas — então são 3 rachas; numa de **várias curtas** cada pessoa joga de 5 a 10 partidas por noite (no primeiro racha real o máximo foi 7) — então são 15 partidas, cerca de duas noites (D-53; era 25, que segurava a patente por um mês).
 
 O palpite inicial de quem conhece o jogador **já é melhor que sorteio no olho** e a calibração corrige o palpite em poucas partidas. Esperar "dados suficientes" para ser útil é o mesmo que não ter app.
 
@@ -334,6 +334,7 @@ Duas consequências que importam:
 **No período "Último" (um racha):**
 - **Presentes** conta quem esteve no racha **desde o começo** — quem foi embora antes do fim continua contando (a sessão guarda a união de quem passou por lá, e rachas antigos são completados por quem aparece nas partidas).
 - **Times do racha**: tocar num time abre **a escalação original da montagem** (com o rodízio de goleiros à parte). Racha gravado antes dessa versão mostra a escalação da primeira partida, que era o que ficou registrado.
+- **Cada ranking da noite** (melhor +/−, quem mais ganhou, artilheiro, rendeu acima, tempo em quadra, menos vazado) mostra 3 e abre **até 10** com o "▾ ver até N" — o mesmo padrão da temporada. E há o ranking de **😵 quem mais perdeu**, com o irmão **Mais derrotas** nos rankings de temporada.
 
 ### 5.3 Destaques do mês — e por que não é aproveitamento
 
@@ -582,7 +583,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 6. **Gol não move patente.** Só vitória, empate e derrota — é o que reflete o racha. Gol é estatística de vitrine.
 7. **Duas patentes por pessoa: linha e goleiro.** Dá para ser Ouro na linha e Prata no gol; medir os dois no mesmo número não descreve ninguém. Foi isso que aposentou o interruptor "goleiro fora do ranking" — o problema não era o goleiro pontuar, era pontuar na escada errada.
 8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
-9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **25 partidas** (várias curtas) ou **3 rachas** (partida única), e vale separado para cada uma das duas patentes.
+9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **15 partidas** (várias curtas) ou **3 rachas** (partida única), e vale separado para cada uma das duas patentes.
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
 11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
 12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.

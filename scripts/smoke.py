@@ -484,6 +484,15 @@ step('times do racha: toque abre a escalacao original',()=>{
   if(sh.indexOf(esc(nameOf(l,t.ids[0])))<0)throw new Error('escalacao original nao apareceu na folha');
   A.closeSheet();
 });
+step('rankings da noite abrem ate 10 e tem quem mais perdeu',()=>{
+  A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
+  const h=els['#app'].innerHTML;
+  if(h.indexOf('Quem mais perdeu')<0)throw new Error('faltou o ranking de quem mais perdeu na noite');
+  if(h.indexOf('Melhor +/−')<0)throw new Error('o +/- da noite tem que aparecer tambem no racha curto (depois das vitorias)');
+  if(h.indexOf('ver até')>=0){A.statsSec({dataset:{k:'rvenc'}});A.statsSec({dataset:{k:'rvenc'}})}
+  A.statsPer({dataset:{v:'sempre'}});
+  if(els['#app'].innerHTML.indexOf('Mais derrotas')<0)throw new Error('faltou Mais derrotas nos rankings de temporada');
+});
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');
