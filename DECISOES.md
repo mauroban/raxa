@@ -682,6 +682,25 @@ dois Elos se fundirem por construção.
 rachas em vez de partidas (a parceria é contada por partida no histórico).
 **Onde:** `JUNTOS_MIN` · `test.py` [15] · DOCUMENTACAO §8 (duplas inseparáveis).
 
+### D-57 · Na aba Jogadores, o admin vê a escada ordenada por Elo
+**29/08/2026.** Dentro de cada divisão, a lista da aba Jogadores passa a ser ordenada por **Elo
+decrescente** — mas **só para o admin**. Para todos os outros papéis a ordem continua degrau →
+aproveitamento → nome. Motivo: a divisão só muda com histerese (margem 21, D-55), então dois do
+mesmo degrau podem estar a mais de um degrau de distância em Elo; para quem monta os times, a
+ordem verdadeira é informação de trabalho — e o admin já enxerga o Elo cru na própria linha, então
+ordenar por ele não revela nada novo. Para os outros a ordem neutra segue valendo: a posição na
+lista não pode denunciar o rating de ninguém.
+**Descartado:** ordenar por Elo para todo mundo (transformaria a lista num ranking numérico
+implícito — é exatamente o que a ordem por aproveitamento existia para evitar); ordenar por Elo
+ignorando o degrau (as seções de patente se repetiriam na tela, porque a histerese quebra a
+monotonia entre degrau e Elo); mudar também "Os melhores do racha" (card que todo mundo abre
+junto no racha — lá a ordem neutra vale para o admin também); deixar o bloco "Sem nível ainda"
+sempre por partidas (quem calibra é justamente de quem o admin menos sabe o nível — é ali que a
+ordem verdadeira ajuda mais a montar os times; para os outros continua por partidas, que é o
+progresso que a linha mostra).
+**Onde:** `viewEscada` (`porElo`, usado na escada e no bloco "Sem nível ainda") · sem teste novo (é ordem de tela; `smoke.py` cobre a
+renderização) · DOCUMENTACAO §3.8 (ordem dentro do degrau) e §7 (nota no card dos melhores).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

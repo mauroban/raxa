@@ -2120,13 +2120,26 @@ function viewEscada(liga){
   }
   const role=S.ui.rankRole==='G'?'G':'L';
   const lista=liga.players.filter(p=>temPatente(p,role));   // sem nível na valência, fora da escada
+  /* Ordem dentro do degrau: para o admin — que já vê o Elo cru na linha — manda
+     o Elo, que é o desempate honesto (a divisão só muda com histerese, então dois
+     do mesmo degrau podem estar longe um do outro). Para os outros continua
+     aproveitamento, para a posição não denunciar o rating de ninguém (D-57).
+     O degrau é sempre o critério de cima, senão as seções se repetiriam.       */
+  const porElo=souAdmin(liga);
   const ps=[...lista].sort((a,b)=>{const x=rt(a,role),y=rt(b,role);
-    return y.rank-x.rank||(y.games?y.w/y.games:0)-(x.games?x.w/x.games:0)||a.name.localeCompare(b.name)});
+    return y.rank-x.rank
+      ||(porElo?y.elo-x.elo:(y.games?y.w/y.games:0)-(x.games?x.w/x.games:0))
+      ||a.name.localeCompare(b.name)});
   let html=`<div class="row" style="gap:6px;margin:12px 0 10px">
     <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="rankRole" data-v="L" style="flex:1">Linha</button>
     <button class="btn sm ${role==='G'?'pri':'ghost'}" data-a="rankRole" data-v="G" style="flex:1">Goleiro</button>
   </div>`;
-  const semNivel=liga.players.filter(p=>!temPatente(p,role)&&(rt(p,role).games>0||role==='L')).sort((a,b)=>rt(b,role).games-rt(a,role).games||a.name.localeCompare(b.name));
+  /* Quem calibra segue a mesma regra: Elo para o admin (quem monta os times
+     precisa da ordem verdadeira antes de o rótulo existir), quantidade de
+     partidas para os outros — que é o que a linha mostra ali. Quem ainda não
+     jogou está todo no Elo de entrada, e aí o desempate é o nome.            */
+  const semNivel=liga.players.filter(p=>!temPatente(p,role)&&(rt(p,role).games>0||role==='L'))
+    .sort((a,b)=>(porElo?rt(b,role).elo-rt(a,role).elo:rt(b,role).games-rt(a,role).games)||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>

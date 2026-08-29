@@ -187,6 +187,8 @@ A escada é motivação para uns e constrangimento para outros. Então a Liga es
 
 O rating numérico é quase invisível: na aba Jogadores, **só o admin** vê o Elo cru de cada um, num número pequeno e apagado no canto da linha (com a dica "Elo — só o admin vê"). Para todo o resto — e para todos os outros papéis — o número não existe: a linguagem pública é a patente.
 
+**A ordem dentro do degrau também muda com quem olha.** A escada é sempre agrupada por patente e divisão. Dentro de uma divisão, o **admin** vê a lista ordenada por **Elo** (do maior para o menor) — é a ordem verdadeira, e ele já enxerga o número mesmo. Para todos os outros a ordem continua sendo **aproveitamento, depois nome**, para a posição na lista não denunciar o rating de ninguém. O bloco "Sem nível ainda" segue a mesma regra: Elo para o admin, e número de partidas — quem está mais perto de sair da calibração — para os outros.
+
 ---
 
 ## 4. Fluxo de uso
@@ -343,9 +345,10 @@ inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. São d
 
 1. **Os melhores do racha** — a maior patente **entre quem apareceu no período**. É a escada, filtrada por
    presença: quem some do racha some do pódio. Cada um entra pela **valência que mais jogou no mês** — quem
-   passou metade do período no gol aparece com a patente de goleiro. A ordem é a mesma do ranking (degrau,
-   depois aproveitamento, depois nome), justamente para a posição não denunciar quem está na frente dentro
-   da mesma divisão.
+   passou metade do período no gol aparece com a patente de goleiro. A ordem é degrau, depois aproveitamento,
+   depois nome — para qualquer papel, inclusive o admin: este card é a tela que todo mundo abre junto no
+   racha, então a posição não denuncia quem está na frente dentro da mesma divisão. (A ordem por Elo do
+   admin vale só na aba Jogadores — §3.8.)
 2. **Quem mais rendeu além do esperado** — o critério explicado abaixo.
 3. **Artilheiro** e **goleiro menos vazado**, lado a lado, mais **quem mais apareceu**.
 
