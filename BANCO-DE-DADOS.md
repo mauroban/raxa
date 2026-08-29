@@ -221,7 +221,9 @@ create table sessions (
   modo        modo_racha not null,
   formato     smallint not null,              -- 5, 6, 7, 11 (o NvN)
   aberta      boolean not null default true,
-  estado      jsonb,                          -- racha em andamento: times, FILA, partida em quadra
+  estado      jsonb,                          -- racha em andamento: times, FILA, partida em quadra;
+                                              -- fechada guarda a presença DESDE O COMEÇO (quem saiu
+                                              -- no meio conta) e os times como montados (D-49/D-50)
   criado_por  uuid references profiles(id),
   criado_em   timestamptz not null default now()
 );

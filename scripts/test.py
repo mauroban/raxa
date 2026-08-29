@@ -417,6 +417,21 @@ liga.matches.length=0;rebuildAll(liga);
   ok(p2[gB].side===0&&p2[gA].side===1,'evento antigo sem mv tambem reconstroi cada goleiro no lado novo');
 }
 
+/* opcao "sem goleiros" dos numeros: o trecho no gol nao conta pelo time */
+liga.matches.length=0;rebuildAll(liga);
+lanca(A5.concat('p7'),B5.concat('p8'),0,{gks:['p7','p8']});
+{
+  const com=statsLiga(liga,'sempre'),sem=statsLiga(liga,'sempre',true);
+  ok(com.J['p7'].jogos===1&&com.J['p7'].v===1,'com goleiros: o goleiro conta jogo e vitoria pelo lado');
+  ok(!sem.J['p7']||!sem.J['p7'].jogos,'sem goleiros: quem so esteve no gol nao conta jogo nem V/E/D');
+  ok(sem.J['p7']&&sem.J['p7'].minGk>0,'mas o tempo no gol continua contando');
+  ok(sem.J['p8'].sofridos===com.J['p8'].sofridos,'e os gols sofridos tambem');
+  ok(!sem.PA['p1']||!sem.PA['p1']['p7'],'sem goleiros: o goleiro sai das parcerias');
+  ok(!sem.DU['p1']||!sem.DU['p1']['p8'],'e dos duelos');
+  ok(sem.J['p1'].jogos===1&&sem.J['p1'].v===1,'os de linha seguem contando normalmente');
+  ok((sem.J['p7'].pm||0)===0&&com.J['p7'].pm!==0,'sem goleiros: o +/- do goleiro nao anda');
+}
+
 liga.matches.length=0;rebuildAll(liga);
 lanca(A5,B5,0,{sid:'novo'});
 const velho=lanca(A5,B5,1,{sid:'velho'});

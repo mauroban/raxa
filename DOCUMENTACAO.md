@@ -42,9 +42,9 @@ A regra de ouro do produto:
 
 ## 3. Patentes — o coração do produto
 
-### 3.1 O princípio inegociável: o número não existe para o usuário
+### 3.1 O princípio inegociável: o número não existe para o jogador
 
-Por baixo há um rating numérico (Elo). **Ele nunca aparece em nenhuma tela do app — nem para o admin.** Não aparece o valor, não aparece a distância para o próximo corte, não aparece quantos pontos a partida rendeu. Fora das telas ele existe em um lugar só: o export em JSON, que é backup técnico.
+Por baixo há um rating numérico (Elo). **Ele nunca aparece para quem joga.** Não aparece o valor, não aparece a distância para o próximo corte, não aparece quantos pontos a partida rendeu. A única exceção é o **admin** (D-52): na aba Jogadores ele vê o Elo cru num número pequeno e apagado no canto de cada linha — ferramenta de gestão para conferir a montagem e a convergência, não linguagem do racha.
 
 Por quê:
 
@@ -52,7 +52,7 @@ Por quê:
 - **O corte exposto vira jogo.** Se as pessoas sabem que faltam 12 pontos, elas passam a escolher partida em vez de jogar.
 - **Patente é aspiracional, ponto é contábil.** O que faz alguém querer voltar na quinta é subir de patente, não somar pontos.
 
-O que o app mostra é sempre: **patente + divisão**, forma recente (V/D/E), vitórias, gols, e o momento em que alguém sobe ou cai. O rating só existe no backup/servidor, como dado técnico.
+O que o app mostra a todo mundo é sempre: **patente + divisão**, forma recente (V/D/E), vitórias, gols, e o momento em que alguém sobe ou cai. Fora da linha discreta do admin, o rating só existe no backup/servidor, como dado técnico.
 
 ### 3.2 A escada
 
@@ -185,7 +185,7 @@ A escada é motivação para uns e constrangimento para outros. Então a Liga es
 - **Todo mundo vê** *(padrão)* — a aba Jogadores mostra a escada completa para qualquer um.
 - **Só o admin vê** — para os outros, a aba Jogadores vira uma lista de estatísticas (rachas, partidas, gols) sem patente nenhuma, e as patentes somem também da presença, dos times e do resumo do fim do racha. O equilíbrio continua funcionando igual: o app segue montando os times pelo nível, só não conta a ninguém qual é.
 
-O rating numérico continua invisível para todos nos dois modos — inclusive para o admin.
+O rating numérico é quase invisível: na aba Jogadores, **só o admin** vê o Elo cru de cada um, num número pequeno e apagado no canto da linha (com a dica "Elo — só o admin vê"). Para todo o resto — e para todos os outros papéis — o número não existe: a linguagem pública é a patente.
 
 ---
 
@@ -328,6 +328,12 @@ Duas consequências que importam:
 | **O racha no período** | mais presenças, mais vitórias, maior aproveitamento e artilharia, top 5 em cada |
 
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga — dá para conferir o carrasco do outro também.
+
+**🧤 Sem goleiros** (chip ao lado do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
+
+**No período "Último" (um racha):**
+- **Presentes** conta quem esteve no racha **desde o começo** — quem foi embora antes do fim continua contando (a sessão guarda a união de quem passou por lá, e rachas antigos são completados por quem aparece nas partidas).
+- **Times do racha**: tocar num time abre **a escalação original da montagem** (com o rodízio de goleiros à parte). Racha gravado antes dessa versão mostra a escalação da primeira partida, que era o que ficou registrado.
 
 ### 5.3 Destaques do mês — e por que não é aproveitamento
 
@@ -568,7 +574,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 
 > Os princípios estão aqui; o **registro datado** de cada decisão, com alternativas descartadas e onde ela vive no código e nos testes, está em [DECISOES.md](DECISOES.md).
 
-1. **O número não existe para o usuário.** Patente é identidade; ponto é contabilidade. Expor o ponto muda o comportamento das pessoas dentro da quadra — inclusive o corte entre patentes, que também é secreto. E se a liga preferir, nem a patente aparece: só o admin vê. A **única** porcentagem que o app mostra é a chance esperada **do confronto** — ela descreve quão parelho está o jogo, não o nível de ninguém em particular, e desaparece quando as patentes estão fechadas.
+1. **O número não existe para o jogador.** Patente é identidade; ponto é contabilidade. Expor o ponto muda o comportamento das pessoas dentro da quadra — inclusive o corte entre patentes, que também é secreto. O **admin** é a exceção (D-52): vê o Elo cru discreto na aba Jogadores, como ferramenta de gestão. E se a liga preferir, nem a patente aparece aos demais: só o admin vê. A **única** porcentagem que o app mostra é a chance esperada **do confronto** — ela descreve quão parelho está o jogo, não o nível de ninguém em particular, e desaparece quando as patentes estão fechadas.
 2. **Patente é assunto de fim de racha.** Entre partidas o app não anuncia promoção nem queda: encerrar cai direto na tela da próxima partida. Quem subiu e quem caiu sai tudo junto no resumo do fim.
 3. **Ninguém precisa apontar o vencedor.** Marcar os gols já diz quem ganhou; encerrar é 1 toque e grava o placar, 0-0 incluído (empate). Um toque a menos por partida, doze vezes por noite.
 4. **A unidade de medida é o trecho, não a partida.** Substituição muda o nível dos dois lados, então cada formação em campo conta como uma partida própria — como o +/- da NBA. O que o seu time fez enquanto você estava no banco não é problema seu. Trecho de menos de 3 minutos cortado por troca é descartado em vez de virar ruído.

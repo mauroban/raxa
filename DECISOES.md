@@ -574,6 +574,56 @@ rodízio de goleiros já giraram de novo — a volta deixaria o estado inconsist
 (descarte), `backMatch` no registro de correções · `smoke.py` ("o fim foi sem querer") ·
 DOCUMENTACAO §4.3.
 
+### D-49 · Presença do racha conta desde o começo, não a foto do fim
+**29/08/2026** (aprendizado do primeiro racha real). Quem foi embora no meio continua contando
+como presente: `leaveRacha` registra em `lv.leftIds`, e a sessão grava a **união** de quem passou
+pelo racha. O tile "presentes" do período "Último" usa sessão ∪ quem jogou nas partidas — o que
+também cura racha antigo, cuja sessão só fotografou o fim.
+**Por quê:** a lista de presença era mutável (sair removia), então "presentes" encolhia ao longo
+da noite — no primeiro racha real o número do fim não batia com quem de fato apareceu.
+**Descartado:** nunca remover da presença (quebra fila, montagem e "foi embora"); contar só quem
+jogou (quem veio e não entrou também esteve lá).
+**Onde:** `leaveRacha`, `endRacha`, `cardsUmRacha` (tile presentes) · `smoke.py` ("sessao guarda
+presenca desde o comeco", "presentes do ultimo racha") · DOCUMENTACAO §5.2.
+
+### D-50 · A sessão guarda os times como foram montados; tocar no time mostra a escalação
+**29/08/2026.** `endRacha` grava em cada sessão `teams` (nome + ids da montagem original,
+`t.orig`) e `gkPool`. Na aba Números, período "Último", tocar num time de "Times do racha" abre a
+escalação original (com o rodízio à parte); cada nome leva à ficha. Racha gravado antes disso cai
+no fallback: a escalação da primeira partida daquele time.
+**Por quê:** pedido do primeiro racha real — "quem eram os jogadores de cada time?" não tinha
+resposta no app: as partidas guardam escalações por partida, mas a montagem da noite não ficava
+em lugar nenhum.
+**Descartado:** derivar sempre das partidas (substituições e empréstimos poluem; a montagem é um
+fato próprio).
+**Onde:** `endRacha`, `rachaTime`, `cardsUmRacha` · `smoke.py` ("times do racha: toque abre a
+escalacao original") · DOCUMENTACAO §5.2.
+
+### D-51 · Números com a opção "sem goleiros"
+**29/08/2026.** Chip 🧤 na aba Números (`S.ui.statsSemGk`): quando ligado, o trecho em que a
+pessoa estava **no gol** sai das contas de time — jogos, V/E/D, +/−, tempo em quadra, sequência,
+duelos e parcerias (`statsLiga(liga, per, semGk)`). Os números *de goleiro* (menos vazado,
+sofridos, tempo no gol) continuam, e gol marcado por goleiro segue na artilharia.
+**Por quê:** o goleiro do rodízio troca de lado sem escolher time — a vitória "dele" é do acaso
+do rodízio, e misturá-la com a de linha distorce aproveitamento, +/− e duplas.
+**Descartado:** excluir os goleiros por completo (o menos vazado sumiria); um filtro por pessoa
+(o papel é do trecho, não da pessoa — o improvisado conta como linha no resto da partida).
+**Onde:** `statsLiga`, `plusMinus` (papel no callback), `viewStats` (chip), `statsSemGk` ·
+`test.py` [11] ("sem goleiros") · `smoke.py` ("numeros sem goleiros") · DOCUMENTACAO §5.2.
+
+### D-52 · O admin vê o Elo cru, discreto, na aba Jogadores
+**29/08/2026** (reescreve o "nem para o admin" da D-histórica de 3.1). Na escada, cada linha
+mostra ao **admin** o Elo arredondado num número pequeno e apagado (opacidade 0,4, fonte 10px,
+title "Elo — só o admin vê") — inclusive no bloco "sem nível ainda". Para lançador, editor e
+jogador, nada muda: o número continua inexistente.
+**Por quê:** pedido do usuário após o primeiro racha real: o admin precisa conferir montagem e
+convergência do rating sem abrir o export JSON. Sutil de propósito: é ferramenta de gestão, não
+linguagem do racha — patente continua sendo a única língua pública.
+**Descartado:** mostrar a distância para o próximo corte (reintroduz o jogo de pontos); expor
+para lançadores (quem conduz o racha não precisa do número para nada).
+**Onde:** `viewEscada` (`souAdmin`) · `smoke.py` ("admin ve o elo cru"; não-admin não vê) ·
+DOCUMENTACAO §3.1, §3.8, §9.1.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

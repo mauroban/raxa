@@ -841,7 +841,7 @@ const contaPartida=(liga,m,dur,total)=>modoDe(liga,m)!=='unica'||(total>0&&dur/t
    curto. É a estatística que sobrevive à partida longa, onde V/E/D é uma só. */
 function plusMinus(liga,m,acc){
   matchStints(liga,m).forEach(st=>{const part=stintPart(st),sc=st.score||[0,0];
-    for(const pid in part){const sd=part[pid].side;acc(pid,sc[sd]-sc[1-sd])}});
+    for(const pid in part){const sd=part[pid].side;acc(pid,sc[sd]-sc[1-sd],part[pid].role)}});
 }
 const pmTxt=v=>(v>0?'+':v<0?'−':'')+Math.abs(v||0);
 /* Quem estava em campo no trecho e em que papel — goleiro move o nível de
@@ -1256,7 +1256,7 @@ function noPeriodo(m,p){
 const MIN_JOGOS=10;          // piso para entrar em ranking de aproveitamento
 function pctDe(v,n){return n?Math.round(v/n*100):0}
 
-function statsLiga(liga,periodo){
+function statsLiga(liga,periodo,semGk){
   const J={},DU={},PA={};
   /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
      best: maior sequência do período · ultimos: últimos 5 resultados, do mais
@@ -1275,13 +1275,21 @@ function statsLiga(liga,periodo){
       for(const pid in part)lados[part[pid].side].push(pid);
       [0,1].forEach(s=>{
         const meu=lados[s],deles=lados[s===0?1:0];
+        /* "sem goleiros": o trecho no gol não conta pelo time (jogos, V/E/D,
+           tempo, duelos, parcerias) — só alimenta os números de goleiro.
+           Justo para o rodízio, que troca de lado sem escolher o time.       */
+        const meuL=semGk?meu.filter(q=>part[q].role!=='G'):meu;
+        const delesL=semGk?deles.filter(q=>part[q].role!=='G'):deles;
         meu.forEach(pid=>{
-          const x=j(pid),e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{},dur:0});
+          const x=j(pid),ehG=part[pid].role==='G';
+          if(ehG){x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
+          if(semGk&&ehG)return;
+          const e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{},dur:0});
           e.side=s;e.dur+=st.dur||0;
           x.min+=st.dur||0;                                        // tempo de jogo (ms), pausas já descontadas
-          if(part[pid].role==='G'){e.gk=true;x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
-          meu.forEach(o=>{if(o!==pid)e.com[o]=1});
-          deles.forEach(o=>{e.contra[o]=1});
+          if(ehG)e.gk=true;
+          meuL.forEach(o=>{if(o!==pid)e.com[o]=1});
+          delesL.forEach(o=>{e.contra[o]=1});
         });
       });
     });
@@ -1297,7 +1305,7 @@ function statsLiga(liga,periodo){
       for(const o in e.com){const y=par(PA,pid,o);y.n++;y[res]++}
       for(const o in e.contra){const y=par(DU,pid,o);y.n++;y[res]++}
     }
-    plusMinus(liga,m,(pid,d)=>{j(pid).pm+=d});
+    plusMinus(liga,m,(pid,d,role)=>{if(semGk&&role==='G')return;j(pid).pm+=d});
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)j(g.pid).gols++});
   });
   return{J,DU,PA};
@@ -2111,7 +2119,7 @@ function viewEscada(liga){
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
-        <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${calTxt(liga,tr)}</span></div></div>
+        <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${calTxt(liga,tr)}</span>${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}</div></div>
       </div>`}).join('')}</div>
     <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
   if(!ps.length)return html+(semNivel.length?blocoSem:`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`);
@@ -2132,6 +2140,7 @@ function viewEscada(liga){
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${role==='L'&&p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
+          ${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}
           <span class="form">${tr.form.slice(0,6).map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>
         </div>
       </div>
@@ -2169,7 +2178,7 @@ function viewStats(liga){
   const per=statsPeriodo(liga);
   const tab=S.ui.statsTab==='racha'?'racha':'jogador';
   const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
-  const {J,DU,PA}=statsLiga(liga,per);
+  const {J,DU,PA}=statsLiga(liga,per,!!S.ui.statsSemGk);
   const who=statsWhoId(liga,J);
   const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
   const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?'no último racha':'em '+anoSel;
@@ -2185,6 +2194,10 @@ function viewStats(liga){
       <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">30 dias</button>
       ${anosLiga.map(y=>`<button class="tp ${anoSel===y?'sel':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
       <button class="tp ${per==='sempre'?'sel':''}" data-a="statsPer" data-v="sempre">Sempre</button>
+    </div>
+    <div class="chips perfil" style="gap:6px;margin-top:6px">
+      <button class="tp ${S.ui.statsSemGk?'sel':''}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua">🧤 sem goleiros</button>
+      ${S.ui.statsSemGk?'<span class="tiny muted" style="align-self:center">tempo no gol fora de jogos, V/E/D, +/− e duplas</span>':''}
     </div>`;
   if(!liga.matches.length)return `<div class="card">${seg}</div><div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
@@ -2342,7 +2355,9 @@ function viewStats(liga){
     const sid=per.slice(6),sess=(liga.sessions||[]).find(x=>x.id===sid);
     const ini=Math.min(...ms.map(m=>m.startedAt||m.ts)),fim=Math.max(...ms.map(m=>m.endedAt||m.ts));
     const jogo=ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.counted?(st.dur||0):0),0),0);
-    const presentes=sess?sess.presentIds.length:Object.keys(J).length;
+    /* presença do racha: quem esteve (sessão) ∪ quem jogou (partidas) — conta
+       desde o começo e cobre sessão antiga que só fotografou o fim */
+    const presentes=new Set([...(sess?sess.presentIds:[]),...Object.keys(J)]).size;
     /* times da noite: por nome, com V/E/D e gols */
     const T={};ms.forEach(m=>{[0,1].forEach(s=>{const n=m.names[s],t=T[n]||(T[n]={n,v:0,e:0,d:0,gp:0,gc:0});
       t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++})});
@@ -2371,8 +2386,8 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
-    ${times.length?`<div class="sec"><div class="k2">Times do racha</div>
-      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} gols feitos · ${t.gc} sofridos</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
+    ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver a escalação</span></div>
+      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} gols feitos · ${t.gc} sofridos</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
@@ -3101,6 +3116,8 @@ const A={
       if(Array.isArray(c.fill))c.fill=c.fill.map(x=>(x||[]).filter(x=>x!==id));
     }
     lv.teams.forEach(t=>{t.ids=t.ids.filter(x=>x!==id)});
+    /* saiu, mas ESTEVE: a presença do racha conta desde o começo, não a foto do fim */
+    lv.leftIds=lv.leftIds||[];if(!lv.leftIds.includes(id))lv.leftIds.push(id);
     lv.presentIds=lv.presentIds.filter(x=>x!==id);
     lv.gkToday=(lv.gkToday||[]).filter(x=>x!==id);
     lv.gkPool=(lv.gkPool||[]).filter(x=>x!==id);
@@ -3505,7 +3522,12 @@ const A={
       (m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');net[k]=(net[k]||0)+x.dir})});
     const top=Object.entries(gols).sort((a,b)=>b[1]-a[1])[0];
     const ups=Object.entries(net).filter(x=>x[1]!==0);
-    l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],presentIds:[...lv.presentIds]});
+    /* a presença da sessão é quem ESTEVE no racha (inclui quem foi embora antes
+       do fim); os times ficam guardados como foram montados, para consulta */
+    l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],
+      presentIds:[...new Set([...lv.presentIds,...(lv.leftIds||[])])],
+      teams:lv.teams.map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids)]})),
+      gkPool:[...(lv.gkPool||[])]});
     l.live=null;save();render();
     openSheet(`<h2>Racha encerrado</h2>
       <div class="stat" style="margin-bottom:14px">
@@ -3711,6 +3733,26 @@ const A={
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
   statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
+  statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
+  /* Times do racha (aba Números): toque no time mostra quem eram os jogadores */
+  rachaTime(el){
+    const l=L(),sid=el.dataset.sid,nome=el.dataset.n;
+    const sess=(l.sessions||[]).find(x=>x.id===sid);
+    const t=sess&&Array.isArray(sess.teams)?sess.teams.find(x=>x.name===nome):null;
+    let ids=t?t.ids.slice():null,daMontagem=!!t;
+    if(!ids){    // racha gravado antes de a sessão guardar os times: vale a primeira partida
+      const ms=(l.matches||[]).filter(m=>!m.voided&&(m.sessionId||m.id)===sid).sort((a,b)=>a.ts-b.ts);
+      for(const m of ms){const s=(m.names||[]).indexOf(nome);
+        if(s>=0){ids=((m.startLineups||m.lineups)[s]||[]).slice();break}}
+    }
+    if(!ids||!ids.length)return toast('Não achei a escalação desse time');
+    const gks=daMontagem&&sess&&Array.isArray(sess.gkPool)?sess.gkPool:[];
+    openSheet(`<h2>${esc(nome)}</h2>
+      <div class="tiny muted" style="margin-bottom:10px">${daMontagem?'Como o time foi montado no racha.':'Escalação da primeira partida (racha antigo: a montagem não ficou gravada).'}</div>
+      <div class="chips">${ids.map(id=>`<button class="tp big" data-a="pSheet" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}</div>
+      ${gks.length?`<div class="k" style="margin:12px 0 6px">🧤 Rodízio do racha</div>
+        <div class="chips">${gks.map(id=>`<button class="tp" data-a="pSheet" data-id="${id}">🧤 ${esc(nameOf(l,id))}</button>`).join('')}</div>`:''}`);
+  },
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
   histRacha(el){S.ui.histRacha=el.dataset.id||null;save();render()},

@@ -44,6 +44,7 @@ global.alert=()=>{};
 smoke = r"""
 /* -------- smoke -------- */
 let fails=0;
+let saiuNoMeio=null;
 function step(label,fn){
   try{fn();console.log('  ok: '+label)}
   catch(e){fails++;console.log('  QUEBROU em "'+label+'": '+e.message+'\n    '+String(e.stack).split('\n')[1])}
@@ -300,9 +301,11 @@ step('substituicao nao mexe no time: quem entrou emprestado nao vira titular',()
 step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;
   const id=c.lineups[1][c.lineups[1].length-1],antes=c.lineups[1].length,tam=lv.presentIds.length;
+  saiuNoMeio=id;
   A.leaveRacha({dataset:{id}});
   if(c.lineups[1].length!==antes-1)throw new Error('deveria ter saido da quadra');
   if(lv.presentIds.length!==tam-1||lv.presentIds.includes(id))throw new Error('deveria ter saido da presenca');
+  if(!(lv.leftIds||[]).includes(id))throw new Error('quem saiu deveria ficar registrado como presente do racha');
   if(lv.teams.some(t=>t.ids.includes(id)))throw new Error('deveria ter saido do time');
   const st=splitStints(c,Date.now()+60000,L().cfg);
   if(st[st.length-1].lineups[1].includes(id))throw new Error('o trecho seguinte ainda conta com ele');
@@ -354,10 +357,14 @@ step('nao da para tirar o ultimo admin',()=>{
   A.setRole({dataset:{id:L().players[0].id,r:'jogador'}});
   if(L().players[0].role!=='admin')throw new Error('o ultimo admin foi rebaixado');
 });
+step('admin ve o elo cru, discreto, na escada',()=>{
+  if(viewEscada(L()).indexOf('Elo — só o admin vê')<0)throw new Error('elo sutil nao apareceu para o admin');
+});
 step('quem nao e admin nao revisa nem corrige patente',()=>{
   const l=L(),m=l.matches[0];const eu=l.players[0];
   eu.role='lancador';l.players[1].owner='outro';l.players[1].role='admin';   // agora o admin e outra pessoa
   if(souAdmin(l))throw new Error('ainda admin');
+  if(viewEscada(l).indexOf('Elo — só o admin vê')>=0)throw new Error('quem nao e admin nao pode ver o elo cru');
   const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
   if(m.result!==antes)throw new Error('lancador corrigiu resultado');
   const r0=eu.L.rank;A.bumpRank({dataset:{id:eu.id,r:'L',d:'1'}});
@@ -455,6 +462,36 @@ step('patentes so para o admin',()=>{
 step('evitar repetir dupla pode ser desligado',()=>{S.ui.tab='cfg';A.toggleCfg({dataset:{k:'avoidRepeat'}});A.toggleCfg({dataset:{k:'avoidRepeat'}})});
 step('voltar para o racha',()=>{S.ui.tab='racha';render()});
 step('encerrar racha',()=>A.endRacha());
+step('sessao guarda presenca desde o comeco e os times como montados',()=>{
+  const l=L(),sess=l.sessions[l.sessions.length-1];
+  if(!sess)throw new Error('sessao nao gravada');
+  if(saiuNoMeio&&!sess.presentIds.includes(saiuNoMeio))throw new Error('quem foi embora no meio sumiu da presenca do racha');
+  if(!Array.isArray(sess.teams)||!sess.teams.length)throw new Error('sessao sem os times do racha');
+  if(!sess.teams.every(t=>t.name&&Array.isArray(t.ids)&&t.ids.length))throw new Error('time gravado sem nome ou sem escalacao');
+});
+step('numeros: presentes do ultimo racha contam quem saiu no meio',()=>{
+  S.ui.tab='stats';A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
+  const l=L(),sess=l.sessions[l.sessions.length-1];
+  const J=statsLiga(l,'racha:'+sess.id).J;
+  const esperado=new Set([...sess.presentIds,...Object.keys(J)]).size;
+  if(!new RegExp('<b class="num">'+esperado+'</b><span>presentes</span>').test(els['#app'].innerHTML))
+    throw new Error('tile de presentes nao mostra '+esperado);
+});
+step('times do racha: toque abre a escalacao original',()=>{
+  const l=L(),sess=l.sessions[l.sessions.length-1],t=sess.teams[0];
+  A.rachaTime({dataset:{sid:sess.id,n:t.name}});
+  const sh=els['#sheet'].innerHTML;
+  if(sh.indexOf(esc(nameOf(l,t.ids[0])))<0)throw new Error('escalacao original nao apareceu na folha');
+  A.closeSheet();
+});
+step('numeros sem goleiros: liga, redesenha e desliga',()=>{
+  A.statsSemGk();
+  if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');
+  if(!/sem goleiros/.test(els['#app'].innerHTML))throw new Error('chip do toggle sumiu');
+  A.statsPer({dataset:{v:'sempre'}});
+  A.statsSemGk();
+  if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
+});
 step('voltar para home',()=>A.home());
 
 /* estado salvo pela versao antiga (schema v1) sendo lido pela versao nova */
