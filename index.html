@@ -2199,7 +2199,6 @@ function viewStats(liga){
     </div>
     <div class="chips perfil" style="gap:6px;margin-top:6px">
       <button class="tp ${S.ui.statsSemGk?'sel':''}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua">🧤 sem goleiros</button>
-      ${S.ui.statsSemGk?'<span class="tiny muted" style="align-self:center">tempo no gol fora de jogos, V/E/D, +/− e duplas</span>':''}
     </div>`;
   if(!liga.matches.length)return `<div class="card">${seg}</div><div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
