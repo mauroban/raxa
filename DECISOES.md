@@ -548,11 +548,14 @@ movimentos (`mv`), que a reconstrução dos trechos (`splitStints`, via `aplicaM
 goleiro de um lado **e** jogador de linha do outro, contava na estatística pelo time errado e nem
 aparecia na lista de autor quando fazia gol pelo time novo. E o comportamento antigo ("libera o
 outro lado") não era o que o usuário esperava: na quadra, os goleiros **trocam de lugar**.
-**Descartado:** normalizar escalações antigas na reconstrução (evento antigo não diz a intenção —
-só eventos novos carregam `mv`); mandar o goleiro substituído para fora de quadra.
-**Onde:** `movesGk`, `aplicaMv`, `setGk`, `setPreGk`, `splitStints`, `undo` · `test.py` [11]
-(troca de gol no meio) · `smoke.py` (trocar o goleiro de um time pelo do outro) ·
-DOCUMENTACAO §4.3.
+O que a versão com o bug deixou para trás também é curado: evento `gk` **sem** `mv` é
+normalizado na reconstrução (quem defende um gol joga daquele lado — isso é fato físico, não
+intenção) e `normalize` conserta a partida ao vivo gravada com a escalação errada ao carregar.
+**Descartado:** mandar o goleiro substituído para fora de quadra; deixar o estado antigo como
+está (o ⇄ e o nome na linha continuavam aparecendo para quem já tinha feito a troca).
+**Onde:** `movesGk`, `aplicaMv`, `setGk`, `setPreGk`, `splitStints`, `undo`, `normalize` ·
+`test.py` [11] (troca de gol no meio, evento antigo sem `mv`) · `smoke.py` (trocar o goleiro de
+um time pelo do outro; troca gravada pela versão antiga) · DOCUMENTACAO §4.3.
 
 ## Como registrar uma decisão nova
 

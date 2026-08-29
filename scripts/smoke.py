@@ -125,6 +125,18 @@ step('trocar o goleiro de um time pelo do outro: os dois trocam de lugar',()=>{
   if(!c.lineups[0].includes(a)||!c.lineups[1].includes(b)||c.lineups[0].includes(b)||c.lineups[1].includes(a))
     throw new Error('undo nao devolveu as escalacoes');
 });
+step('troca gravada pela versao antiga (sem mover escalacao) e curada ao recarregar',()=>{
+  const c=L().live.cur,a=c.gks[0],b=c.gks[1];
+  c.gks=[b,a];c.events.push({t:Date.now(),type:'gk',side:0,id:b,gks:[b,a]});   // como a versao antiga gravava
+  normalize(S);
+  const c2=L().live.cur;
+  if(!c2.lineups[0].includes(b)||!c2.lineups[1].includes(a)||c2.lineups[0].includes(a)||c2.lineups[1].includes(b))
+    throw new Error('normalize nao curou a escalacao');
+  A.undo();                                       // desfazer o evento antigo tambem volta os lados
+  const c3=L().live.cur;
+  if(c3.gks[0]!==a||c3.gks[1]!==b||!c3.lineups[0].includes(a)||!c3.lineups[1].includes(b))
+    throw new Error('undo do evento antigo nao devolveu os lados');
+});
 step('abrir substituicao (toque em quem esta em quadra)',()=>A.outPick({dataset:{s:'0',id:L().live.cur.lineups[0][0]}}));
 step('abrir substituicao (toque em quem esta fora)',()=>{
   const b=benchList(L(),L().live);if(b.length)A.inPick({dataset:{id:b[0].id}});

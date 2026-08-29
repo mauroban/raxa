@@ -704,6 +704,9 @@ function normalize(st){
         if(!Array.isArray(c.startGks))c.startGks=[...c.gks];
         if(!Array.isArray(c.events))c.events=[];
         c.paused=!!c.paused;
+        /* partida gravada pela versão que trocava o gol sem mover a escalação:
+           cada goleiro volta a jogar do lado em que defende */
+        aplicaMv(c.lineups,movesGk(c.lineups,c.gks));
       }
     }
   });
@@ -801,7 +804,8 @@ function splitStints(c,endedAt,cfg,mode){
     if(Array.isArray(ev.gks))gks=ev.gks.slice();
     else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
     else if(ev.type==='sub'&&gks[ev.side]===ev.out)gks[ev.side]=null;
-    if(ev.type==='gk')aplicaMv(lin,ev.mv);       // goleiro que trocou de gol joga o resto do lado novo
+    if(ev.type==='gk')aplicaMv(lin,ev.mv||movesGk(lin,gks));   // goleiro que trocou de gol joga o resto do lado
+                                                               // novo (evento antigo sem mv: quem defende, defende lá)
   }
   fecha(endedAt,'apito');
   /* Com mais de um trecho: trecho curto (menos de 20% da partida) SEM gol não
@@ -3243,6 +3247,7 @@ const A={
       for(let i=c.events.length-1;i>=0;i--){const e=c.events[i];
         if(Array.isArray(e.gks)){ant=e.gks;break}}
       c.gks=ant?[...ant]:[...(c.startGks||c.gks)];
+      if(ev.type==='gk'&&!ev.mv)aplicaMv(c.lineups,movesGk(c.lineups,c.gks));  // evento da versão antiga
     }
     save();render();toast('Desfeito');
   },

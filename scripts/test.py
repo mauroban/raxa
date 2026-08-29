@@ -409,6 +409,12 @@ liga.matches.length=0;rebuildAll(liga);
   ok(dep.lineups[1].includes(gA)&&!dep.lineups[1].includes(gB),'e o goleiro antigo vai para o lado de la');
   ok(part[gB]&&part[gB].side===0&&part[gB].role==='G','no trecho novo ele conta como goleiro do lado novo');
   ok(part[gA]&&part[gA].side===1&&part[gA].role==='G','e o outro como goleiro do outro lado');
+  /* evento gravado pela versao antiga (sem mv): quem defende um gol joga daquele lado */
+  const ev2={at:5*MIN,type:'gk',side:0,id:gB,gks:[gB,gA]};
+  const st2=partida(A5.concat(gA),B5.concat(gB),{dur:10*MIN,gks:[gA,gB],events:[ev2],
+    fimA:A5.concat(gB),fimB:B5.concat(gA)}).stints;
+  const p2=stintPart(st2[1]);
+  ok(p2[gB].side===0&&p2[gA].side===1,'evento antigo sem mv tambem reconstroi cada goleiro no lado novo');
 }
 
 liga.matches.length=0;rebuildAll(liga);
