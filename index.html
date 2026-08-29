@@ -524,21 +524,29 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    vitórias para subir 3 divisões, e o racha ficava desequilibrado esse tempo
    todo. Com 36 (e o acelerador de sequência abaixo) uma noite perfeita vale
    ~2 divisões; uma noite normal, meia.                                       */
-/* Elo como já se usa há décadas (FIDE): K=40 enquanto calibra, K=20 depois.
-   Sem acelerador de sequência e sem decaimento por histórico — o que separa o
+/* K de jogo de TIME, não de xadrez (D-55). O 40/20 da FIDE assume sinal
+   direto (1×1); em time equilibrado a expectativa é a média dos dez, então o
+   sinal individual dilui e o K precisa ser maior. Referência testada em
+   escala: o Elo do Faceit (CS2) — K fixo ≈50 (±25 por vitória parelha) com
+   níveis de ~200 pontos, como a nossa patente. Aqui: base 32 (o K padrão
+   fora da FIDE — USCF/online), dobrado para 64 na calibração de 15 partidas
+   (D-53) — ±16 e ±32 por vitória parelha, a mesma banda do Faceit. Sem
+   acelerador de sequência e sem decaimento por histórico — o que separa o
    racha curto da partida única é o peso da unidade (1/n × K contra fatia de
-   tempo × K), não o K. Ver D-46.                                            */
-const KMODE={curtas:{cal:40,base:20,min:20},unica:{cal:40,base:20,min:20}};
+   tempo × K), não o K.                                                      */
+const KMODE={curtas:{cal:64,base:32,min:32},unica:{cal:64,base:32,min:32}};
 function kFor(km,tr){return km.base}
 const streakK=tr=>1;
-/* Histerese fixa: promove ao passar do corte + 13, rebaixa ao cair abaixo do
-   corte − 13, e quem subiu fica 3 partidas protegido. Um degrau tem ~67
-   pontos, então a banda fica em ~93: segura o ioiô sem travar a subida.
-   Não é opção da liga de propósito — nível tem que variar igual em todo
-   racha, senão a mesma escada significa coisas diferentes.                  */
+/* Histerese fixa: promove ao passar do corte + 21, rebaixa ao cair abaixo do
+   corte − 21, sem proteção pós-promoção. A margem acompanha o K: precisa ser
+   maior que meia vitória parelha (K/2 = 16), senão V-D-V-D em volta do corte
+   vira ioiô. Um degrau tem ~67 pontos, então a banda fica em ~109: segura o
+   ioiô sem travar a subida. Não é opção da liga de propósito — nível tem que
+   variar igual em todo racha, senão a mesma escada significa coisas
+   diferentes.                                                               */
 /* CAL_GAMES=15: com ~7 partidas por pessoa por racha, o nível aparece em ~2
-   rachas — 25 segurava a patente por um mês (D-53). K 40/20 continua igual. */
-const RANK_MARGIN=13, PROTECT=0, CAL_GAMES=15, CAL_RACHAS=3;   // PROTECT=0: sem proteção pós-promoção (D-46)
+   rachas — 25 segurava a patente por um mês (D-53).                         */
+const RANK_MARGIN=21, PROTECT=0, CAL_GAMES=15, CAL_RACHAS=3;   // PROTECT=0: sem proteção pós-promoção (D-46)
 const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.cfg.matchMode:'curtas');
 
 /* ---------- escada de níveis ----------

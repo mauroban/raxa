@@ -526,7 +526,7 @@ cinco 1-0); +/- em destaque em toda liga.
 `test.py` (confronto juntado, margem, 0-0 contra time pior) · DOCUMENTACAO §3.
 
 ### D-46 · Elo clássico: K 40/20, sem acelerador, sem proteção; calibração por modo
-**28/08/2026.** `KMODE` vira 40 calibrando / 20 depois nos dois modos; `kFor` devolve K constante
+**28/08/2026** (K reescrito pela **D-55**: 64/32; calibração pela **D-53**: 15 partidas). `KMODE` vira 40 calibrando / 20 depois nos dois modos; `kFor` devolve K constante
 e `streakK` devolve 1 (sem acelerador de sequência, sem decaimento por histórico). `PROTECT=0`:
 sai a proteção pós-promoção (o campo `protect` continua no dado, sempre zero). Calibração por
 modo da liga: partidas no racha curto (25 aqui; **15 desde a D-53**), **3 rachas** na partida
@@ -652,6 +652,25 @@ zoeira do "quem mais perdeu" é metade da graça do racha.
 temporada).
 **Onde:** `cardsUmRacha`, `rkDer`/seção "Mais derrotas" em `viewStats` · `smoke.py` ("rankings da
 noite abrem ate 10") · DOCUMENTACAO §5.2.
+
+### D-55 · K de jogo de time: 64 calibrando / 32 depois; margem de histerese 21
+**29/08/2026** (reescreve o K da D-46 e a margem da D-04). `KMODE` vira **64/32** nos dois modos;
+`RANK_MARGIN` 13 → **21**. Por vitória parelha: ±32 calibrando, ±16 depois — uma divisão (~67
+pts) pede ~4 vitórias líquidas (um racha bom), uma patente ~13.
+**Por quê:** o 40/20 da FIDE assume o sinal direto do 1×1; em time equilibrado a expectativa é a
+média dos dez, o sinal individual dilui e o Elo converge devagar demais — com a calibração
+encurtada para 15 partidas (D-53), o usuário pediu o que é aceito em sistemas de time testados
+("tipo CS2"). Referência: o Elo do Faceit (CS2), K fixo ≈50 (±25 por vitória parelha) com níveis
+de ~200 pontos como a nossa patente — o 64/32 fica na mesma banda mantendo o desenho FIDE de
+"dobro enquanto calibra" e um K base clássico (32 = padrão USCF/online). A margem acompanha o K
+por obrigação: precisa ser maior que meia vitória parelha (16), senão V-D-V-D em volta do corte
+vira ioiô — 21 mantém a proporção da margem 13 sobre o ±10 antigo (banda ~109).
+**Descartado:** K fixo ≈50 sem fase de calibração (a margem teria de passar de 25 e a banda
+engoliria meia divisão); Glicko/TrueSkill (incerteza explícita é mais fiel, mas quebra a
+simplicidade "Elo que todo mundo conhece" — fica para quando houver dados de vários rachas);
+manter margem 13 com K 32 (ioiô matematicamente garantido no corte).
+**Onde:** `KMODE`, `RANK_MARGIN` · `test.py` [4] (K de time, +16 parelho, margem > K/2), [7]
+(histerese) · DOCUMENTACAO §3.4 (tabela e nota D-55), §3.5, §3.6.
 
 ## Como registrar uma decisão nova
 

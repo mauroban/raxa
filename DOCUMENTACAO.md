@@ -125,10 +125,10 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 | Modo da liga | K calibrando | K normal | Unidade e peso |
 |---|---|---|---|
-| **Várias curtas** *(padrão)* | 40 | 20 | trecho; K/n por partida (D-37) |
-| **Partida única** | 40 | 20 | confronto; K × fatia de tempo, placar por margem (D-45) |
+| **Várias curtas** *(padrão)* | 64 | 32 | trecho; K/n por partida (D-37) |
+| **Partida única** | 64 | 32 | confronto; K × fatia de tempo, placar por margem (D-45) |
 
-> **Elo clássico (D-46, 28/08/2026).** K = 40 enquanto calibra e 20 depois — os números da FIDE, testados há décadas. Sem acelerador de sequência e sem decaimento por histórico (valores anteriores: 36/22 com acelerador ×1,5; ficam só no histórico do repositório). O que separa os dois modos não é o K, é a unidade e o peso.
+> **K de jogo de time (D-55, 29/08/2026; reescreve os números da D-46).** Em time equilibrado a expectativa é a média dos dez em quadra — o sinal individual dilui, e o 40/20 da FIDE (feito para 1×1) converge devagar demais. A referência testada em escala para jogo de time é o Elo do Faceit (CS2): K fixo ≈50 (±25 por vitória parelha) com níveis de ~200 pontos, como a nossa patente. Aqui: **base 32** (o K padrão fora da FIDE — USCF/online) e **64 na calibração** — ±16 e ±32 por vitória parelha, a mesma banda do Faceit, mantendo o desenho "dobro enquanto calibra". Continua sem acelerador de sequência e sem decaimento por histórico. O que separa os dois modos não é o K, é a unidade e o peso.
 
 > **Formato e modo são da liga (D-44).** Tamanho do time (5v5, 6v6, 7v7, 11v11) e modo (várias curtas ou partida única) se escolhem na criação da liga e não mudam depois — grupo que muda de formato cria outra liga. Cada partida ainda **guarda** o modo com que foi jogada (o histórico antigo, de quando o modo era do racha, continua valendo).
 
@@ -142,19 +142,19 @@ S  = 1 vitória | 0,5 empate | 0 derrota    ← pelo placar DO TRECHO
 
 Alternar entre duas patentes toda semana destrói a graça do sistema. Três mecanismos, todos testados:
 
-1. **Margem de promoção/rebaixamento (histerese).** Passar do corte não basta: é preciso passar **do corte + margem** para subir, e cair **abaixo do corte − margem** para descer. A margem vale em **todo degrau**, e o degrau que importa é a divisão: ~67 pontos. Por isso ela é calibrada contra esse número, e não contra os 200 da patente — margem grande demais não estabiliza, trava. Com a margem padrão de **13 pontos**, quem fica oscilando ±12 pontos em volta de um corte **não muda de degrau**, e a banda efetiva fica em ~93 no lugar de 67 (40% mais larga).
+1. **Margem de promoção/rebaixamento (histerese).** Passar do corte não basta: é preciso passar **do corte + margem** para subir, e cair **abaixo do corte − margem** para descer. A margem vale em **todo degrau**, e o degrau que importa é a divisão: ~67 pontos. Por isso ela é calibrada contra esse número, e não contra os 200 da patente — margem grande demais não estabiliza, trava. E ela acompanha o K: precisa ser **maior que meia vitória parelha** (K/2 = 16), senão alternar V-D-V-D em volta de um corte viraria ioiô. Com a margem padrão de **21 pontos** (D-55), quem oscila menos que isso em volta de um corte **não muda de degrau**, e a banda efetiva fica em ~109 no lugar de 67.
 2. ~~Proteção pós-promoção~~ — **removida (D-46)**: com 10 a 15 partidas por racha, 3 trechos de proteção nem se percebiam.
 3. **A patente é um estado, não um cálculo.** Ela fica guardada no jogador e só muda quando as condições acima são satisfeitas — não é recalculada do rating a cada tela.
 
-Os valores são **fixos e iguais em toda liga**: margem **13** (banda efetiva de ~93 pontos, pouco mais de um degrau). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
+Os valores são **fixos e iguais em toda liga**: margem **21** (banda efetiva de ~109 pontos, pouco mais de um degrau e meio). Não existe controle de "estabilidade" de propósito: se cada liga pudesse escolher, a mesma escada significaria coisas diferentes em lugares diferentes — e a opção era, na prática, uma pergunta que ninguém sabia responder.
 
-Ordem de grandeza no racha curto (K=20, times parelhos): mover uma **divisão** exige cerca de **7 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — metade de um racha bom; uma **patente** inteira, cerca de 20. Calibrando (K=40), a metade disso.
+Ordem de grandeza no racha curto (K=32, times parelhos): mover uma **divisão** exige cerca de **4 vitórias líquidas** (vitórias menos derrotas, já contando a margem) — um racha bom; uma **patente** inteira, cerca de 13. Calibrando (K=64), a metade disso.
 
 ### 3.6 Entrada de um jogador novo
 
 O padrão do cadastro é **sem nível**: o jogador entra no rating de entrada e o app descobre o nível dele na calibração (15 partidas no racha curto; 3 rachas na partida única), sem rótulo até lá. Quem conhece pode dar **o palpite** (um toque: Ferro … Diamante, só o nível — entra sempre na divisão 2); o app converte para o rating do meio daquele degrau e o nível aparece desde o início.
 
-O jogador fica **calibrando** até completar **15 partidas** (liga de várias curtas) ou **3 rachas** (liga de partida única). Nesse período o K é o dobro (40 no lugar de 20) e as margens de histerese não valem, então ele anda rápido e acha o lugar dele em uma ou duas noites.
+O jogador fica **calibrando** até completar **15 partidas** (liga de várias curtas) ou **3 rachas** (liga de partida única). Nesse período o K é o dobro (64 no lugar de 32) e as margens de histerese não valem, então ele anda rápido e acha o lugar dele em uma ou duas noites.
 
 A calibração vale **por patente**: quem tem 200 partidas de linha e vai para o gol pela primeira vez começa **calibrando no gol**, e a patente de goleiro dele acha o lugar em poucas partidas em vez de levar meses.
 

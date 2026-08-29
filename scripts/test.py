@@ -216,19 +216,20 @@ const rU=computeElo(liga,part,1);
 ok(Math.abs(rU.deltas['p10'])>Math.abs(dA),'zebra rende mais que o favorito confirmar');
 const rd=computeElo(liga,part,'draw');
 ok(rd.deltas['p1']<0&&rd.deltas['p10']>0,'empate: favorito perde, azarao ganha');
-ok(KMODE.curtas.base===20&&KMODE.curtas.cal===40&&KMODE.unica.base===20,'K classico: 40 calibrando, 20 depois, nos dois modos');
+ok(KMODE.curtas.base===32&&KMODE.curtas.cal===64&&KMODE.unica.base===32,'K de time (D-55): 64 calibrando, 32 depois, nos dois modos');
 const divisao=stepMin(1)-stepMin(0);
 const vitLiq=divisao/(KMODE.curtas.base/2);
 console.log('  K='+KMODE.curtas.base+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
-ok(vitLiq>=6&&vitLiq<=7,'com K=20 uma divisao pede 6 a 7 vitorias liquidas (metade de um racha bom)');
-{ /* Elo classico: K constante depois da calibracao, sem acelerador nem decaimento */
+ok(vitLiq>=4&&vitLiq<=4.5,'com K=32 uma divisao pede ~4 vitorias liquidas (um racha bom)');
+{ /* K constante depois da calibracao, sem acelerador nem decaimento */
   const km=KMODE.curtas;
-  ok(kFor(km,{games:20})===20&&kFor(km,{games:400})===20,'K nao decai com o historico');
+  ok(kFor(km,{games:20})===32&&kFor(km,{games:400})===32,'K nao decai com o historico');
   ok(streakK({form:['V','V','V','V','V','V']})===1,'sequencia nao acelera o K');
   liga.matches.length=0;rebuildAll(liga);
   liga.players.forEach(p=>{p.L.games=CAL_GAMES;p.L.elo=1500});
   const dv=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
-  ok(dv===10,'vitoria em jogo parelho, calibrado: +10 (K=20 x 0,5), deu '+dv);
+  ok(dv===16,'vitoria em jogo parelho, calibrado: +16 (K=32 x 0,5), deu '+dv);
+  ok(RANK_MARGIN>KMODE.curtas.base/2,'a margem de histerese e maior que meia vitoria parelha — sem ioio V-D-V-D no corte');
   liga.matches.length=0;rebuildAll(liga);
 }
 console.log('\n[6] calibracao');
@@ -257,7 +258,7 @@ const errado=mk('Errado',1500,0);liga.players.push(errado);
 const par=['p2','p3','p10','p11','p12'].map(id=>P(liga,id));const eloAntes=par.map(x=>x.L.elo);par.forEach(x=>x.L.elo=1500);
 let ganho=0;for(let i=0;i<12;i++){const r=computeElo(liga,stintPart({lineups:[[errado.id,'p2','p3'],['p10','p11','p12']],gks:[null,null]}),0,'curtas');ganho+=r.deltas[errado.id]}
 par.forEach((x,i)=>x.L.elo=eloAntes[i]);liga.players.pop();
-ok(ganho>=STEP*2,'12 vitorias parelhas em calibracao (K=40) sobem mais de duas divisoes ('+Math.round(ganho)+' pts)');
+ok(ganho>=STEP*2,'12 vitorias parelhas em calibracao (K=64) sobem mais de duas divisoes ('+Math.round(ganho)+' pts)');
 ok(calibrando(liga,cal,cal.G),'a patente de goleiro dele continua calibrando — sao trilhas separadas');
 liga.players.forEach(p=>{['L','G'].forEach(k=>{p[k].games=0;p[k].sessions=0})});
 
@@ -266,7 +267,7 @@ const cut=stepMin(8);
 const h=mk('Limite',Math.round(cut)-5,0);h.L.games=30;h.L.sessions=9;liga.players.push(h);h.L.rank=7;
 h.L.elo=Math.round(cut)+10; updateRank(liga,h,h.L);
 ok(h.L.rank===7,'passar o corte por pouco (menos que a margem) NAO promove');
-h.L.elo=Math.round(cut)+25; updateRank(liga,h,h.L);
+h.L.elo=Math.round(cut)+30; updateRank(liga,h,h.L);
 ok(h.L.rank===8,'passar o corte com folga promove');
 ok(h.L.protect===liga.cfg.protectMatches,'quem sobe ganha protecao de '+liga.cfg.protectMatches+' partidas');
 h.L.elo=Math.round(cut)-40;
