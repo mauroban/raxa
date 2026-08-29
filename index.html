@@ -743,6 +743,27 @@ function pausedUntil(c,t){
 const gameTime=(c,t)=>Math.max(0,t-c.startedAt-pausedUntil(c,t));
 function stintResult(sc){return sc[0]>sc[1]?0:sc[1]>sc[0]?1:'draw'}
 
+/* Goleiro que muda de gol no meio da partida muda TAMBÉM de escalação — senão
+   ele segue contando (e aparecendo) como jogador de linha do time antigo e
+   nem entra na lista de autor do gol do time novo. `movesGk` calcula as
+   mudanças de lado; `aplicaMv` aplica (ou desfaz, no undo); o evento 'gk'
+   guarda `mv` para a reconstrução dos trechos refazer o mesmo caminho.      */
+function movesGk(lineups,gks){
+  const mv=[];
+  [0,1].forEach(sd=>{const g=gks[sd];if(!g)return;const o=sd===0?1:0;
+    if(lineups[o].includes(g))mv.push({id:g,de:o,para:sd});
+    else if(!lineups[sd].includes(g))mv.push({id:g,de:-1,para:sd});
+  });
+  return mv;
+}
+function aplicaMv(lineups,mv,rev){
+  (mv||[]).forEach(m=>{
+    const de=rev?m.para:m.de,para=rev?m.de:m.para;
+    if(de>=0){const k=lineups[de].indexOf(m.id);if(k>=0)lineups[de].splice(k,1)}
+    if(para>=0&&!lineups[para].includes(m.id))lineups[para].push(m.id);
+  });
+}
+
 function splitStints(c,endedAt,cfg,mode){
   cfg=cfg||defCfg();mode=KMODE[mode]?mode:(KMODE[cfg.matchMode]?cfg.matchMode:'curtas');
   const total=gameTime(c,endedAt);
@@ -780,6 +801,7 @@ function splitStints(c,endedAt,cfg,mode){
     if(Array.isArray(ev.gks))gks=ev.gks.slice();
     else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
     else if(ev.type==='sub'&&gks[ev.side]===ev.out)gks[ev.side]=null;
+    if(ev.type==='gk')aplicaMv(lin,ev.mv);       // goleiro que trocou de gol joga o resto do lado novo
   }
   fecha(endedAt,'apito');
   /* Com mais de um trecho: trecho curto (menos de 20% da partida) SEM gol não
@@ -2992,7 +3014,7 @@ const A={
     const pair=(lv.nextPair||suggestPair(l,lv)).slice();
     if(id==='auto'){lv.nextGks=null;closeSheet();save();render();return}
     const gp=planGks(l,lv,pair),gks=gp.gks.slice(),other=sd===0?1:0;
-    if(id&&gks[other]===id)gks[other]=null;              // trocou de lado: libera o outro
+    if(id&&gks[other]===id)gks[other]=gks[sd]||null;     // veio do gol do outro lado: os dois trocam de lugar
     gks[sd]=id||null;
     lv.nextGks={pair,gks};
     closeSheet();save();render();
@@ -3181,7 +3203,7 @@ const A={
     const pool=(lv.gkPool||[]).filter(id=>id!==c.gks[s]);
     openSheet(`<h2>Goleiro — ${esc(lv.teams[s===0?c.a:c.b].name)}</h2>
       ${pool.length?`<div class="k" style="margin-bottom:8px">No rodízio</div>
-        <div class="chips" style="margin-bottom:14px">${pool.map(id=>`<button class="tp" data-a="setGk" data-s="${s}" data-id="${id}">🧤 ${esc(nameOf(l,id))}</button>`).join('')}</div>`:''}
+        <div class="chips" style="margin-bottom:14px">${pool.map(id=>`<button class="tp" data-a="setGk" data-s="${s}" data-id="${id}">🧤 ${esc(nameOf(l,id))}${id===c.gks[s===0?1:0]?' <small>do outro lado</small>':''}</button>`).join('')}</div>`:''}
       <div class="k" style="margin-bottom:8px">Improvisar alguém do time</div>
       <div class="chips" style="margin-bottom:14px">
         ${c.lineups[s].map(id=>`<button class="tp" data-a="setGk" data-s="${s}" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}
@@ -3192,10 +3214,11 @@ const A={
   setGk(el){
     const l=L(),lv=l.live,c=lv.cur,s=+el.dataset.s,id=el.dataset.id||null;
     const other=s===0?1:0;
-    if(id&&c.gks[other]===id)c.gks[other]=null;      // trocou de lado: libera o outro
+    if(id&&c.gks[other]===id)c.gks[other]=c.gks[s]||null;   // veio do gol do outro time: os dois trocam de lugar
     c.gks[s]=id;
+    const mv=movesGk(c.lineups,c.gks);aplicaMv(c.lineups,mv);   // cada goleiro joga (e conta) do lado novo
     /* trocar quem está no gol muda o nível dos dois lados: fecha o trecho */
-    c.events.push({t:Date.now(),type:'gk',side:s,id,gks:[...c.gks]});
+    c.events.push({t:Date.now(),type:'gk',side:s,id,gks:[...c.gks],mv});
     closeSheet();save();render();
   },
   undo(){
@@ -3214,6 +3237,7 @@ const A={
     }
     if(ev.type==='pause')c.paused=false;
     if(ev.type==='resume')c.paused=true;
+    if(ev.type==='gk')aplicaMv(c.lineups,ev.mv,true); // quem trocou de lado volta para a escalação de antes
     if(ev.type==='sub'||ev.type==='gk'){              // volta os goleiros para o estado anterior
       let ant=null;
       for(let i=c.events.length-1;i>=0;i--){const e=c.events[i];

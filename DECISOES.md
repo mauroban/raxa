@@ -538,6 +538,22 @@ percebia. Substitui as calibragens de K das decisões anteriores (36/22, acelera
 **Onde:** `KMODE`, `kFor`, `streakK`, `PROTECT`, `calibrando`, `calMeta` · DOCUMENTACAO §3.4–3.6,
 §9 (decisão 9) · RF-03.6/03.7/03.10 · `test.py` [5]–[6], [8c].
 
+### D-47 · Trocar o goleiro pelo do outro lado é troca de lugar — gol E escalação
+**29/08/2026.** Escolher para um gol o goleiro que estava no gol do outro time faz os **dois
+trocarem de lado por inteiro**: cada um passa para o gol E para a escalação (`lineups`) do lado
+novo, na partida ao vivo (`setGk`) e na pré-partida (`setPreGk`). O evento `gk` grava os
+movimentos (`mv`), que a reconstrução dos trechos (`splitStints`, via `aplicaMv`) reaplica e o
+`↶` desfaz. Goleiro do rodízio escolhido de fora de quadra também entra na escalação do lado dele.
+**Por quê:** antes só `gks` mudava e a escalação ficava para trás: cada goleiro aparecia como
+goleiro de um lado **e** jogador de linha do outro, contava na estatística pelo time errado e nem
+aparecia na lista de autor quando fazia gol pelo time novo. E o comportamento antigo ("libera o
+outro lado") não era o que o usuário esperava: na quadra, os goleiros **trocam de lugar**.
+**Descartado:** normalizar escalações antigas na reconstrução (evento antigo não diz a intenção —
+só eventos novos carregam `mv`); mandar o goleiro substituído para fora de quadra.
+**Onde:** `movesGk`, `aplicaMv`, `setGk`, `setPreGk`, `splitStints`, `undo` · `test.py` [11]
+(troca de gol no meio) · `smoke.py` (trocar o goleiro de um time pelo do outro) ·
+DOCUMENTACAO §4.3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

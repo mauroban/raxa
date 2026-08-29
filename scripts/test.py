@@ -396,6 +396,21 @@ ok(comSub.DU['p6']['p10'].n===1,'quem entrou tambem conta o duelo da partida');
 ok(comSub.DU['p1']['p10'].v===comSub.DU['p6']['p10'].v,'e os dois levam o MESMO resultado: o da partida, nao o do trecho');
 ok(!comSub.PA['p1']['p6'],'quem se substituiu nunca esteve em quadra junto');
 
+/* goleiros que trocam de gol no meio da partida trocam tambem de escalacao */
+liga.matches.length=0;rebuildAll(liga);
+{
+  const gA='p7',gB='p8';
+  const ev={at:5*MIN,type:'gk',side:0,id:gB,gks:[gB,gA],mv:[{id:gB,de:1,para:0},{id:gA,de:0,para:1}]};
+  const {stints}=partida(A5.concat(gA),B5.concat(gB),{dur:10*MIN,gks:[gA,gB],events:[ev],
+    fimA:A5.concat(gB),fimB:B5.concat(gA)});
+  ok(stints.length===2,'a troca de goleiro fecha o trecho');
+  const dep=stints[1],part=stintPart(dep);
+  ok(dep.lineups[0].includes(gB)&&!dep.lineups[0].includes(gA),'quem veio do outro gol entra na escalacao de ca');
+  ok(dep.lineups[1].includes(gA)&&!dep.lineups[1].includes(gB),'e o goleiro antigo vai para o lado de la');
+  ok(part[gB]&&part[gB].side===0&&part[gB].role==='G','no trecho novo ele conta como goleiro do lado novo');
+  ok(part[gA]&&part[gA].side===1&&part[gA].role==='G','e o outro como goleiro do outro lado');
+}
+
 liga.matches.length=0;rebuildAll(liga);
 lanca(A5,B5,0,{sid:'novo'});
 const velho=lanca(A5,B5,1,{sid:'velho'});

@@ -109,6 +109,22 @@ step('gol do time B',()=>A.goal({dataset:{s:'1'}}));
 step('remover gol do time B',()=>A.ungoal({dataset:{s:'1'}}));
 step('abrir troca de goleiro',()=>A.gkSheet({dataset:{s:'0'}}));
 step('definir goleiro improvisado',()=>A.setGk({dataset:{s:'0',id:L().live.cur.lineups[0][1]}}));
+step('trocar o goleiro de um time pelo do outro: os dois trocam de lugar',()=>{
+  const c=L().live.cur,a=c.gks[0],b=c.gks[1];
+  A.setGk({dataset:{s:'0',id:b}});
+  if(c.gks[0]!==b||c.gks[1]!==a)throw new Error('goleiros nao trocaram: '+c.gks);
+  if(!c.lineups[0].includes(b)||c.lineups[1].includes(b))throw new Error('goleiro novo nao mudou de escalacao');
+  if(!c.lineups[1].includes(a)||c.lineups[0].includes(a))throw new Error('goleiro antigo nao foi para o outro lado');
+  A.goal({dataset:{s:'0'}});
+  A.scorer({dataset:{id:b}});                     // agora ele e do time: da para marcar o gol dele
+  const g=[...c.events].reverse().find(e=>e.type==='goal');
+  if(g.pid!==b)throw new Error('gol do goleiro trocado nao foi atribuido');
+  A.delGoal({dataset:{t:String(g.t)}});
+  A.undo();                                       // desfaz a troca: cada um volta ao seu lado
+  if(c.gks[0]!==a||c.gks[1]!==b)throw new Error('undo nao devolveu os goleiros: '+c.gks);
+  if(!c.lineups[0].includes(a)||!c.lineups[1].includes(b)||c.lineups[0].includes(b)||c.lineups[1].includes(a))
+    throw new Error('undo nao devolveu as escalacoes');
+});
 step('abrir substituicao (toque em quem esta em quadra)',()=>A.outPick({dataset:{s:'0',id:L().live.cur.lineups[0][0]}}));
 step('abrir substituicao (toque em quem esta fora)',()=>{
   const b=benchList(L(),L().live);if(b.length)A.inPick({dataset:{id:b[0].id}});
