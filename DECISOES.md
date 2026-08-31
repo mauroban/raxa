@@ -1198,6 +1198,24 @@ cor, nada carrega); mostrar o delta de Elo cru (número não aparece para ningu�
 descrevia "quem subiu/caiu de nível" sem prescrever a forma).
 
 
+### D-79 · Divisão 3 finalmente parece rara: o "polido" prometido virou CSS de verdade
+**31/08/2026.** A intenção sempre esteve escrita no código — "1 fosca → 2 metal → 3 POLIDA
+(reflexo + halo)", e o comentário do motor registra que **clarear a cor foi testado e rejeitado**
+("lavava a cor, parecia transparente") — mas o CSS entregava menos que a promessa: a d3 tinha só um
+halo quase invisível e o reflexo não existia; os fundos 9%→15%→22% não contavam história nenhuma.
+Agora a rampa grita "quanto maior, mais raro": **d1** apagada (fundo 6%, borda rala, número a 55%),
+**d2** o metal, **d3** a única com brilho — **banda de luz diagonal** (o reflexo do metal polido),
+borda na cor cheia, halo externo + interno e o número com glow. A mesma rampa vale em TODOS os
+lugares onde a patente aparece: badges (`.pat`, longos e curtos), pontinhos (`.pdot`), chips de
+nível dos slots (`.tp.lv`), os **cards de promoção do fim de racha** (`.promo`, que só tinham a
+cor) e os **avatares** da ficha e do painel (d3 ganha o halo).
+**Descartado (de novo):** clarear a cor por divisão (já reprovado antes, o registro no comentário
+segurou a recaída); número de estrelas/pips (o número da divisão continua sendo a leitura
+principal — princípio de sempre); animação no brilho (bateria de celular na quadra).
+**Onde:** CSS `.pat.d1/.d2/.d3`, `.pdot`, `.tp.lv`, `.promo.d1/.d3`, `.avatar.d3` e as classes
+`divCls` em `endRacha`/avatares (`index.html`) · conferido no claro e no escuro pelo `visual.py`.
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -153,17 +153,27 @@ label.f .k{display:block;margin-bottom:6px}
   background:color-mix(in srgb,var(--pc) 12%,transparent)}
 .pat b{font-weight:800;opacity:.75;font-size:11px}
 .pat.big{font-size:15px;padding:6px 11px;border-radius:9px}
-/* divisões: 1 fosca → 2 metal → 3 polida. Passos pequenos, mesma direção. */
-.pat.d1{border-color:color-mix(in srgb,var(--pc) 42%,transparent);background:color-mix(in srgb,var(--pc) 9%,transparent)}
-.pat.d1 b{opacity:.6}
-.pat.d2{border-color:color-mix(in srgb,var(--pc) 60%,transparent);background:color-mix(in srgb,var(--pc) 15%,transparent)}
+/* divisões: 1 fosca → 2 metal → 3 POLIDA. A rampa tem que gritar "quanto
+   maior, mais raro": a 1 é apagada (sem preenchimento, borda rala), a 2 é o
+   metal, e a 3 é a única com brilho — banda de luz diagonal (o reflexo do
+   metal polido), borda cheia e halo. Clarear a cor foi testado e lavava. */
+.pat.d1{border-color:color-mix(in srgb,var(--pc) 34%,transparent);background:color-mix(in srgb,var(--pc) 6%,transparent)}
+.pat.d1 b{opacity:.55}
+.pat.d2{border-color:color-mix(in srgb,var(--pc) 62%,transparent);background:color-mix(in srgb,var(--pc) 16%,transparent)}
 .pat.d2 b{opacity:.85}
-.pat.d3{border-color:color-mix(in srgb,var(--pc) 85%,transparent);background:color-mix(in srgb,var(--pc) 22%,transparent);
-  box-shadow:0 0 6px -2px color-mix(in srgb,var(--pc) 45%,transparent)}
-.pat.d3 b{opacity:1}
+.pat.d3{border-color:var(--pc);
+  background:linear-gradient(115deg,
+    color-mix(in srgb,var(--pc) 30%,transparent) 0%,
+    color-mix(in srgb,var(--pc) 14%,transparent) 34%,
+    color-mix(in srgb,var(--pc) 44%,transparent) 50%,
+    color-mix(in srgb,var(--pc) 16%,transparent) 64%,
+    color-mix(in srgb,var(--pc) 28%,transparent) 100%);
+  box-shadow:0 0 10px -1px color-mix(in srgb,var(--pc) 60%,transparent),
+    inset 0 0 6px color-mix(in srgb,var(--pc) 28%,transparent)}
+.pat.d3 b{opacity:1;text-shadow:0 0 6px color-mix(in srgb,var(--pc) 70%,transparent)}
 .pdot{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
-.pdot.d1{opacity:.7}
-.pdot.d3{box-shadow:0 0 4px color-mix(in srgb,var(--pc) 70%,transparent)}
+.pdot.d1{opacity:.5}
+.pdot.d3{box-shadow:0 0 7px color-mix(in srgb,var(--pc) 90%,transparent),0 0 2px color-mix(in srgb,var(--pc) 95%,transparent)}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
 .gk{font-size:11px;color:var(--cyan)}
 
@@ -197,8 +207,10 @@ body.painting{touch-action:none;overflow:hidden}
 .tp small{font-size:10px;opacity:.6;font-family:var(--body);letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .tp.big{font-size:15px;padding:0 13px;min-height:46px}
 .tp.lv{background:color-mix(in srgb,var(--pc) 12%,var(--panel));border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
-.tp.lv.d1{background:color-mix(in srgb,var(--pc) 9%,var(--panel));border-color:color-mix(in srgb,var(--pc) 32%,var(--line))}
-.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 55%,var(--line));background:color-mix(in srgb,var(--pc) 18%,var(--panel))}
+.tp.lv.d1{background:color-mix(in srgb,var(--pc) 6%,var(--panel));border-color:color-mix(in srgb,var(--pc) 26%,var(--line))}
+.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 75%,var(--line));
+  background:linear-gradient(115deg,color-mix(in srgb,var(--pc) 24%,var(--panel)) 0%,color-mix(in srgb,var(--pc) 12%,var(--panel)) 40%,color-mix(in srgb,var(--pc) 30%,var(--panel)) 54%,color-mix(in srgb,var(--pc) 14%,var(--panel)) 100%);
+  box-shadow:0 0 8px -2px color-mix(in srgb,var(--pc) 50%,transparent)}
 .tp.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
 .tp.vaga{border-style:dashed;border-color:var(--line2);color:var(--mute);background:transparent}
 .tp.emp{border-style:dashed;border-color:var(--line2)}
@@ -313,6 +325,9 @@ body.painting{touch-action:none;overflow:hidden}
 .form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
 .promo{border:1px solid var(--pc);border-radius:13px;padding:12px;margin-bottom:8px;background:color-mix(in srgb,var(--pc) 6%,var(--panel))}
 .promo .t{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--pc);text-transform:uppercase}
+.promo.d1{border-color:color-mix(in srgb,var(--pc) 45%,transparent)}
+.promo.d3{background:linear-gradient(115deg,color-mix(in srgb,var(--pc) 16%,var(--panel)) 0%,color-mix(in srgb,var(--pc) 7%,var(--panel)) 40%,color-mix(in srgb,var(--pc) 19%,var(--panel)) 54%,color-mix(in srgb,var(--pc) 8%,var(--panel)) 100%);
+  box-shadow:0 0 12px -3px color-mix(in srgb,var(--pc) 55%,transparent)}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 
 /* ---------- histórico ---------- */
@@ -388,6 +403,7 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .rkbtn:active{opacity:.65}
 .avatar{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:26px;
   background:var(--pc,var(--chalk));color:var(--onink);flex:0 0 auto}
+.avatar.d3{box-shadow:0 0 12px -2px color-mix(in srgb,var(--pc) 65%,transparent)}
 .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:13px;
   background:var(--panel2);border:1px solid var(--line);color:var(--chalk);flex:0 0 auto}
 .hero{display:flex;align-items:center;gap:12px}
@@ -2561,7 +2577,7 @@ function viewStats(liga){
   const cardsJogador=`
   <div class="card">
     <div class="hero">
-      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(liga,p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,'L')?divCls(p.L.rank):''}" style="--pc:${vePat(liga)&&p&&temPatente(liga,p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
@@ -4322,7 +4338,7 @@ const A={
         <div><b>${ups.length}</b><span>mudanças de nível</span></div>
       </div>
       ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(l,p,role))return '';
-        const tr=rt(p,role);return `<div class="promo" style="--pc:${patColor(tr.rank)}">
+        const tr=rt(p,role);return `<div class="promo ${divCls(tr.rank)}" style="--pc:${patColor(tr.rank)}">
         <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
         <div class="tiny muted">agora é ${esc(rankLabel(l,tr.rank))}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
       <button class="btn wide pri" data-a="closeSheet">Fechar</button>`);
@@ -4345,6 +4361,7 @@ const A={
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
     const corAv=ver&&temPatente(l,p,'L')?patColor(rankDe('L')):ver&&temPatente(l,p,'G')?patColor(rankDe('G')):'var(--mute)';
+    const divAv=ver&&temPatente(l,p,'L')?divCls(rankDe('L')):ver&&temPatente(l,p,'G')?divCls(rankDe('G')):'';
     const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=(temPatente(l,p,r)||PD.rank[r]!==null)&&!zerado(r);
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
         <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
@@ -4358,7 +4375,7 @@ const A={
     const jt=inseparaveis(l,stTudo).filter(x=>x.a===p.id||x.b===p.id);
     openSheet(`
       <div class="ps-hd">
-        <div class="avatar" style="--pc:${corAv}">${esc(iniciais(PD.name||p.name))}</div>
+        <div class="avatar ${divAv}" style="--pc:${corAv}">${esc(iniciais(PD.name||p.name))}</div>
         <div style="min-width:0;flex:1">
           ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value" placeholder="Nome" aria-label="nome do jogador"
               style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`
