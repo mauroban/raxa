@@ -1005,7 +1005,8 @@ BANCO-DE-DADOS.md · `.gitignore` (exemplo_partida_real.json, dados reais, fora 
 **31/08/2026.** Três mudanças na leitura dos números. **(1) Aproveitamento passa a ser pontos, como
 o futebol conta:** (3·V + E) / (3·partidas), via `aprDe` no motor. A % de vitórias pura tratava
 empate como derrota — e racha empata muito. Vale em todo lugar que diz "aproveitamento": o anel do
-painel (que ganhou a linha `X de Y pontos (V=3, E=1)` para a conta ser legível), o ranking "Maior
+painel (a linha `X de Y pontos` que explicava a conta foi testada e removida no mesmo dia — poluía
+mais do que explicava; a fórmula fica na doc e no título do ranking), o ranking "Maior
 aproveitamento", os sub-rótulos de vitórias/derrotas, duelos, parcerias, melhor dupla, a folha do
 confronto, o ano a ano, a ficha do jogador (antes rotulada "% vitórias") e o desempate dentro do
 degrau da escada (para quem não é admin — o critério continua não denunciando o rating, D-57).
@@ -1026,6 +1027,28 @@ ordem resolve sem tirar informação).
 `viewStats` (anel + pontos, duelos, parcerias, duplas, ano a ano, SECS com ordem por filtro),
 `pSheet`, folha do duelo em `index.html` · DOCUMENTACAO §5.3/5.4 (definição, piso, ordem) ·
 RF-08.9, RF-11.1, RNF-04.9 · `test.py` (aprDe e o bloco novo do piso OU).
+
+
+### D-70 · Cada ranking tem uma setinha — e vira o próprio ranking do fim
+**31/08/2026.** Todo ranking da aba Stats → Racha (presenças, tempo, vitórias, derrotas, +/−,
+aproveitamento, artilharia, ritmo, menos vazado, sequência e melhor dupla) ganhou uma **setinha de
+ordem** no cabeçalho: **↓** é o padrão (do melhor para o pior) e **↑** lê a MESMA lista inteira do
+fim — quem está pior naquele número. Não é o top 10 de cabeça para baixo: as listas deixaram de ser
+cortadas na origem (o corte para 3/10 desceu para o `rkBars`), então inverter mostra o outro
+extremo de todo mundo que entra no ranking (respeitando os pisos — o pior aproveitamento continua
+exigindo as 10 partidas). A posição volta a contar do 1, porque é outro pódio. A escolha fica por
+ranking em `S.ui.statsInv`, preferência do aparelho (localStorage), como aba e tema.
+**Por quê:** "quem mais perdeu" já existia como espelho de "quem mais ganhou" no card da noite —
+a pergunta espelhada é natural em todo ranking ("quem menos aparece?", "qual goleiro mais sofre?"),
+e uma setinha custa menos que onze rankings-espelho.
+**Descartado:** inverter só o top 10 visível (mostraria o 10º como "pior" da liga, mentira);
+títulos que trocam de texto quando invertidos ("Menos presenças…") — a seta e o title do botão já
+dizem, e onze títulos duplicados envelheceriam mal; setinha nos cards do último racha (lá
+ganhou/perdeu já são as duas leituras, e as listas são da noite). No mesmo dia saiu a linha
+`X de Y pontos` do anel (D-69): poluía mais do que explicava.
+**Onde:** `inv`/`ordBtn`/`rkBars` e a ação `statsInv` em `index.html` · CSS `.k2 .ord` ·
+DOCUMENTACAO §5 (parágrafo dos rankings) · RF-11.8 · `smoke.py` ("inverter um ranking pela setinha
+e voltar", e `statsInv` na lista de ações livres).
 
 
 ## Como registrar uma decisão nova

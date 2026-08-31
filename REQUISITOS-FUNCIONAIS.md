@@ -280,7 +280,7 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 | RF-11.5 | Histórico de um duelo, encontro a encontro: data, placar, formato (5v5, 3v2…) e resultado | P1 | ✅ v1 |
 | RF-11.6 | **Parcerias**: quantas vezes jogou do lado de cada pessoa, com V/E/D, e o histórico ao toque | P1 | ✅ v1 |
 | RF-11.7 | Destaques: **maior carrasco**, **freguês**, **mais jogou junto** e **melhor dupla** | P1 | ✅ v1 |
-| RF-11.8 | Rankings do racha no período: mais presenças, mais vitórias, maior aproveitamento e artilharia | P1 | ✅ v1 |
+| RF-11.8 | Rankings do racha no período: presenças, campanha, artilharia, ritmo, goleiro, sequência, dupla — cada um **inversível por uma setinha** no cabeçalho (↓ melhor primeiro · ↑ lido do fim), lembrada por aparelho | P1 | ✅ v1 |
 | RF-11.9 | O ranking de aproveitamento exige um mínimo de partidas no período (10), escrito na tela | P1 | ✅ v1 |
 | RF-11.9b | Os destaques pessoais (carrasco, freguês, melhor dupla) têm piso próprio: 10 ou 10% das partidas da pessoa, o que for menor, nunca abaixo de 3 | P1 | ✅ v1 |
 | RF-11.10 | Ver os números de qualquer jogador da liga, não só os próprios | P2 | ✅ v1 |

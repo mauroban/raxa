@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
-    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
@@ -404,6 +404,14 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
 });
 step('aba numeros',()=>{S.ui.tab='stats';render()});
 step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:String(new Date().getFullYear())}});A.statsPer({dataset:{v:'2019'}});A.statsPer({dataset:{v:'ano'}})});
+step('inverter um ranking pela setinha e voltar',()=>{
+  S.ui.statsTab='racha';A.statsPer({dataset:{v:'sempre'}});
+  A.statsInv({dataset:{k:'vit'}});
+  if(!S.ui.statsInv.vit)throw new Error('statsInv nao marcou');
+  if(document.querySelector('#app').innerHTML.indexOf('↑')<0)throw new Error('setinha invertida nao apareceu');
+  A.statsInv({dataset:{k:'vit'}});
+  if(S.ui.statsInv.vit)throw new Error('statsInv nao desmarcou');
+});
 step('numeros: ultimo racha e ultimo mes',()=>{
   A.statsTab({dataset:{v:'racha'}});
   A.statsPer({dataset:{v:'racha'}});

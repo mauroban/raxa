@@ -435,7 +435,10 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2 .val{font-family:var(--disp);font-weight:800;font-size:16px;white-space:nowrap;text-align:right}
 .rk2 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:11px;font-family:var(--body)}
 .sec{margin-top:14px}
-.sec .k2{display:flex;align-items:center;justify-content:space-between;margin-top:0}
+.sec .k2{display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:8px}
+.k2 .ord{border:1px solid var(--line);background:none;color:var(--mute);border-radius:7px;
+  font:inherit;font-size:12px;line-height:1;padding:4px 9px;cursor:pointer;flex:0 0 auto}
+.k2 .ord.on{color:var(--chalk);border-color:var(--mute)}
 /* a regra do ranking (mínimo, unidade) é nota, não título: menor, sem caixa alta, e nunca empurra o título para a linha de baixo */
 .sec .k2 .tiny{font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:500;text-align:right;white-space:nowrap;margin-left:8px;flex:0 0 auto}
 .sec .k2>:first-child{white-space:nowrap}
@@ -2470,18 +2473,20 @@ function viewStats(liga){
   /* --- top 5 --- */
   const todos=Object.keys(J).map(id=>J[id]);
   const TOPN=10;
-  const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos).slice(0,TOPN);
-  const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v).slice(0,TOPN);
-  const secPm=()=>`<div class="sec"><div class="k2">📊 Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>`;
-  const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,TOPN);
-  const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos).slice(0,TOPN);
-  const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos).slice(0,TOPN);
-  const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,TOPN);
-  const rkMin=[...todos].filter(x=>x.min>0).sort((a,b)=>b.min-a.min).slice(0,TOPN);
+  /* listas inteiras, ja ordenadas do melhor para o pior; o rkBars corta em
+     3/10 e, com a setinha invertida, le a MESMA lista do fim (o outro top). */
+  const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos);
+  const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
+  const secPm=()=>`<div class="sec"><div class="k2"><span>📊 Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></span>${ordBtn('pm')}</div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>`;
+  const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos);
+  const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos);
+  const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos);
+  const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
+  const rkMin=[...todos].filter(x=>x.min>0).sort((a,b)=>b.min-a.min);
   const MIN_RITMO=60*60000;                          // ritmo só com 1 h em quadra: menos que isso é sorte
-  const rkRitmo=todos.filter(x=>x.min>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/b.min-a.gols/a.min).slice(0,TOPN);
-  const rkSeq=[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v).slice(0,TOPN);
-  const rkGk=todos.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk).slice(0,TOPN);
+  const rkRitmo=todos.filter(x=>x.min>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/b.min-a.gols/a.min);
+  const rkSeq=[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v);
+  const rkGk=todos.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk);
   const duplas=[];const vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
     const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,e:y.e,pct:aprDe(y.v,y.e,y.n)})}));
@@ -2492,14 +2497,20 @@ function viewStats(liga){
   /* Ranking compacto: 3 linhas de uma vez, "ver mais" abre até 10 com o
      detalhe. Menos parede de lista para quem só quer bater o olho. */
   const aberto=S.ui.statsOpen||{};
+  /* Setinha de ordem por ranking: ↓ = do melhor para o pior (padrão); ↑ = a
+     mesma lista lida do fim — quem está pior naquele número. A posição volta
+     a contar do 1 porque é outro pódio, não o mesmo de cabeça para baixo.  */
+  const inv=k=>!!(S.ui.statsInv||{})[k];
+  const ordBtn=k=>`<button class="ord${inv(k)?' on':''}" data-a="statsInv" data-k="${k}" aria-label="inverter a ordem" title="${inv(k)?'do pior para o melhor — toque para voltar':'do melhor para o pior — toque para inverter'}">${inv(k)?'↑':'↓'}</button>`;
   const rkBars=(itens,num,fmt,sub,vazio,key)=>{
     if(!itens.length)return `<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div>`;
-    const full=!!aberto[key],lista=full?itens:itens.slice(0,3);
+    const base=inv(key)?[...itens].reverse():itens;
+    const full=!!aberto[key],lista=base.slice(0,full?TOPN:3);
     return lista.map((x,i)=>{const sb=sub?sub(x):null;return `<div class="rk3 ${i===0?'top':''} ${x.pid===who?'me':''}">
       <span class="pos">${i+1}</span>
       <div class="nm">${esc(nameOf(liga,x.pid))}${full&&sb?`<small>${sb}</small>`:''}</div>
       <span class="val">${fmt(x)}</span></div>`}).join('')
-      +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+itens.length}</button>`:'');
+      +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+Math.min(TOPN,itens.length)}</button>`:'');
   };
   const C=2*Math.PI*43,aprMe=aprDe(me.v,me.e,me.jogos);   // pontos ganhos / disputados (V=3, E=1)
   const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
@@ -2545,7 +2556,6 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>
     </div>
     <div class="tiny" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px">
-      <span>🎯 <b class="num">${3*me.v+me.e}</b> <span class="muted">de ${3*me.jogos} pontos (V=3, E=1)</span></span>
       <span>⚽ <b class="num">${por10(me.gols,me.min)}</b> <span class="muted">gols a cada 10 min</span></span>
       ${me.gk?`<span>🧤 <b class="num">${por10(me.sofridos,me.minGk)}</b> <span class="muted">sofridos a cada 10 min · ${fmtMin(me.minGk)} no gol</span></span>`:''}
     </div>
@@ -2703,21 +2713,21 @@ ${cardJuntos}  <div class="card">
          porque lá V/E/D é um só por noite (D-45).                          */
       const SECS={
         pm:secPm(),
-        pres:`<div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>`,
-        min:`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>`,
-        vit:`<div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>`,
-        der:`<div class="sec"><div class="k2">😵 Mais derrotas</div>${rkBars(rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'der')}</div>`,
-        pct:`<div class="sec"><div class="k2">📈 Maior aproveitamento <span class="tiny muted">pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas</span></div>
+        pres:`<div class="sec"><div class="k2"><span>📅 Mais presenças</span>${ordBtn('pres')}</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>`,
+        min:`<div class="sec"><div class="k2"><span>⏱ Mais tempo em quadra</span>${ordBtn('min')}</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>`,
+        vit:`<div class="sec"><div class="k2"><span>🏆 Mais vitórias</span>${ordBtn('vit')}</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>`,
+        der:`<div class="sec"><div class="k2"><span>😵 Mais derrotas</span>${ordBtn('der')}</div>${rkBars(rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'der')}</div>`,
+        pct:`<div class="sec"><div class="k2"><span>📈 Maior aproveitamento <span class="tiny muted">pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('pct')}</div>
       ${rkBars(rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.','pct')}</div>`,
-        gols:`<div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>`,
-        ritmo:`<div class="sec"><div class="k2">⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></div>
+        gols:`<div class="sec"><div class="k2"><span>⚽ Artilharia</span>${ordBtn('gols')}</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>`,
+        ritmo:`<div class="sec"><div class="k2"><span>⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></span>${ordBtn('ritmo')}</div>
       ${rkBars(rkRitmo,x=>x.gols/x.min,x=>por10(x.gols,x.min),x=>x.gols+' gols em '+fmtMin(x.min),'Ninguém com 1 h em quadra e gol marcado ainda.','ritmo')}</div>`,
-        gk:`<div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></div>
+        gk:`<div class="sec"><div class="k2"><span>🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></span>${ordBtn('gk')}</div>
       ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>`,
-        seq:`<div class="sec"><div class="k2">🔥 Maior sequência <span class="tiny muted">3 ou mais</span></div>
+        seq:`<div class="sec"><div class="k2"><span>🔥 Maior sequência <span class="tiny muted">3 ou mais</span></span>${ordBtn('seq')}</div>
       ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>`,
-        duplas:`<div class="sec"><div class="k2">⭐ Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></div>
-      ${duplas.length?duplas.slice(0,aberto.duplas?10:3).map((x,i)=>`<div class="rk3 ${i===0?'top':''}">
+        duplas:`<div class="sec"><div class="k2"><span>⭐ Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('duplas')}</div>
+      ${duplas.length?(inv('duplas')?[...duplas].reverse():duplas).slice(0,aberto.duplas?10:3).map((x,i)=>`<div class="rk3 ${i===0?'top':''}">
         <span class="pos">${i+1}</span>
         <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}${aberto.duplas?`<small>${x.v}V ${x.e}E em ${pl(x.n,'partida')}</small>`:''}</div>
         <span class="val">${x.pct}%</span></div>`).join('')+(duplas.length>3?`<button class="more" data-a="statsSec" data-k="duplas">${aberto.duplas?'▴ menos':'▾ ver até '+Math.min(10,duplas.length)}</button>`:'')
@@ -4425,6 +4435,8 @@ const A={
         <div class="chips">${gks.map(id=>`<button class="tp" data-a="pSheet" data-id="${id}">🧤 ${esc(nameOf(l,id))}</button>`).join('')}</div>`:''}`);
   },
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
+  /* setinha dos rankings: ↓ melhor primeiro · ↑ lido do fim (preferência do aparelho) */
+  statsInv(el){S.ui.statsInv=S.ui.statsInv||{};S.ui.statsInv[el.dataset.k]=!S.ui.statsInv[el.dataset.k];save();render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
   histRacha(el){S.ui.histRacha=el.dataset.id||null;save();render()},
   statsWho(){
