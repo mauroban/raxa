@@ -322,6 +322,13 @@ body.painting{touch-action:none;overflow:hidden}
 .mrow .l1 .s{font-family:var(--disp);font-weight:900;font-size:20px}
 .mrow .l2{font-size:12px;color:var(--mute);margin-top:4px}
 .mrow.eu{border-left:3px solid var(--ok);padding-left:9px}
+/* time escrito com os nomes de quem jogou: fonte de texto, menor, e pode
+   quebrar em duas linhas — cortar nome no meio seria pior que descer a fonte */
+.mrow.nomes .l1{font-family:var(--body);font-weight:600;font-size:12.5px;text-transform:none;
+  letter-spacing:0;line-height:1.35;align-items:flex-start;gap:8px}
+.mrow.nomes .l1>span:first-child{flex:1;min-width:0}
+.mrow.nomes .l1 .s{font-family:var(--disp);font-weight:900;font-size:17px;line-height:1.1;flex:0 0 auto}
+.mrow.nomes .l1 .flag{flex:0 0 auto}
 .win{color:var(--ok)}
 .flag{font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:6px}
 .mine{font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:6px;border:1px solid currentColor}
@@ -2680,17 +2687,25 @@ ${tab==='jogador'?cardsJogador:cardsRacha}`;
 /* ---------- histórico ---------- */
 function mrow(liga,m,compact,eu){
   const w=m.result,d=(m.disputes||[]).length;
-  const nm=s=>`<span class="${w===s?'win':''}">${esc(m.names[s])}</span>`;
+  /* Até o 5v5 o time é a lista de quem entrou em quadra, não o apelido da cor
+     (mesmo motivo do card da noite, D-60): semanas depois ninguém lembra qual
+     time era o "Time A". O nome da cor continua na linha de baixo, no
+     "venceu ...", e o placar vira um número por lado.                       */
+  const ini=(m.startLineups||m.lineups||[[],[]]);
+  const porNome=liga.cfg.format<=5&&(ini[0]||[]).length&&(ini[1]||[]).length;
+  const nm=s=>`<span class="${w===s?'win':''}">${porNome?esc(nomesCurtos(liga,ini[s]).join(', ')):esc(m.names[s])}</span>`;
+  const gol=s=>`<span class="s num sp">${porNome?m.score[s]:m.score[0]+' - '+m.score[1]}</span>`;
   const tre=(m.stints||[]).filter(x=>x.counted).length;
   const lado=eu?ladoNaPartida(liga,m,eu):null;
   const meu=lado===null?'':(w==='draw'?'E':(w===lado?'V':'D'));
   const cor=meu==='V'?'var(--ok)':meu==='D'?'var(--bad)':'var(--mute)';
-  return `<div class="mrow${lado===null?'':' eu'}" ${m.voided?'style="opacity:.5"':''}>
+  return `<div class="mrow${porNome?' nomes':''}${lado===null?'':' eu'}" ${m.voided?'style="opacity:.5"':''}>
     <div class="l1">${nm(0)}${lado===0?' <span class="mine" style="color:'+cor+'">VOCÊ</span>':''}
-      <span class="s num sp">${m.score[0]} - ${m.score[1]}</span></div>
+      ${gol(0)}</div>
     <div class="l1" style="margin-top:2px">${nm(1)}${lado===1?' <span class="mine" style="color:'+cor+'">VOCÊ</span>':''}
       ${m.voided?'<span class="flag" style="color:var(--bad);border:1px solid rgba(255,93,93,.4)">ANULADA</span>'
-        :d?`<span class="flag" style="color:var(--gold);border:1px solid rgba(245,197,66,.45)">⚑ ${d}</span>`:''}</div>
+        :d?`<span class="flag" style="color:var(--gold);border:1px solid rgba(245,197,66,.45)">⚑ ${d}</span>`:''}
+      ${porNome?gol(1):''}</div>
     <div class="l2">${new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
       · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nos níveis':''}
       ${!compact&&(m.moves||[]).length?' · '+m.moves.length+' mudança(s) de nível':''}</div>

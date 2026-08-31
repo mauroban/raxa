@@ -438,6 +438,15 @@ step('abrir um racha mostra as partidas dele',()=>{
   const dentro=viewHist(l);
   if(dentro.indexOf('data-a="contest"')<0)throw new Error('nao abriu as partidas do racha');
   if(dentro.indexOf('Todos os rachas')<0)throw new Error('faltou o caminho de volta');
+  /* ate o 5v5 a partida e identificada por quem jogou; acima disso, pelo nome do time */
+  const fmt=l.cfg.format,m0=l.matches[l.matches.length-1];
+  const pri=esc(nomesCurtos(l,(m0.startLineups||m0.lineups)[0]).join(', '));
+  l.cfg.format=5;
+  if(viewHist(l).indexOf(pri)<0)throw new Error('no 5v5 o historico devia mostrar quem jogou');
+  l.cfg.format=11;
+  if(viewHist(l).indexOf(pri)>=0)throw new Error('acima do 5v5 a lista de nomes nao cabe no historico');
+  if(viewHist(l).indexOf(esc(m0.names[0]))<0)throw new Error('sem a lista, o historico precisa do nome do time');
+  l.cfg.format=fmt;
   A.histRacha({dataset:{id:''}});
   if(viewHist(l).indexOf('rachaRow')<0)throw new Error('nao voltou para a lista de rachas');
 });

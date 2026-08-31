@@ -754,7 +754,7 @@ de nível mede (D-01).
 `teamRecord`, `cardsUmRacha` · `smoke.py` ("vitoria e do time que jogou, nao do nome no placar" —
 partida normal, time trocado do começo, trocado no meio, uma substituição só e formação sem dono).
 
-### D-60 · No card da noite, o time é a lista de quem jogou (até 5v5)
+### D-60 · O time é a lista de quem jogou (até 5v5), no card da noite e no histórico
 **31/08/2026.** No "Times do racha", o título da linha passa a ser o **primeiro nome de cada
 jogador original** ("Vinashow, Maike, João, Halisson"); o nome do time vira nota na linha de baixo,
 com os gols em **8/3 G** — feitos em verde, sofridos em vermelho.
@@ -765,9 +765,15 @@ inteira para dois números.
 e é como se chamam em quadra); mostrar a lista em ligas maiores que 5v5 (7 nomes não cabem numa
 linha de celular — lá continua o nome do time); repetir o sobrenome inteiro (só a inicial, e só
 quando dois jogadores do mesmo time têm o mesmo primeiro nome).
-**Onde:** DOCUMENTACAO §7 · `nomesCurtos`, `rotuloTime` em `cardsUmRacha` · CSS `.rk3.time` (o
-rótulo pode ocupar duas linhas) · `smoke.py` (mesmo teste do D-59 confere que o jogador aparece no
-card).
+**31/08/2026, mesmo dia:** vale também para o **histórico**. Cada partida mostra os dois lados como
+a lista dos primeiros nomes da escalação de largada, com os gols de cada lado à direita; o nome do
+time fica no "venceu ..." da linha de baixo. A fonte cai para 12,5 px (texto, não display) para
+caber, e quebra em duas linhas se precisar — cortar nome no meio seria pior. Acima do 5v5 continua o
+nome do time com o placar `2 - 1`.
+**Onde:** DOCUMENTACAO §5.2 e §6 · `nomesCurtos`, `rotuloTime` em `cardsUmRacha`, `mrow` · CSS
+`.rk3.time` e `.mrow.nomes` (o rótulo pode ocupar duas linhas) · `smoke.py` (teste do D-59 no card
+da noite; "abrir um racha mostra as partidas dele" confere a lista no histórico e a volta ao nome
+do time acima do 5v5).
 
 
 ### D-61 · Escalação e trocas são corrigíveis depois — reescrevendo o que a partida gravou
