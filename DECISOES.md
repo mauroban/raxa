@@ -844,6 +844,10 @@ assumir o próprio perfil), e separar o que cada papel pode mudar exige validar 
 **Onde:** `supabase/schema.sql` (`is_league_admin`, `migrate_league`, drop `save_league`,
 `profiles_read`) · DEPLOY.md (§1.2 e "O que esperar") · sem teste novo: o Supabase falso de
 `sync.py` só emula o dono-como-admin, e a regra nova é SQL puro.
+**Correção no mesmo dia:** o script ainda guardava as versões superadas de `join_league` (retornava
+`leagues`) e `league_accounts` (sem `pending`) antes das definitivas — num banco já migrado o
+`create or replace` delas quebrava com `cannot change return type`, violando o "pode rodar de novo".
+Só a versão definitiva de cada uma fica no arquivo; a promessa de idempotência voltou a valer.
 
 
 ### D-63 · Sync sem derivado, sem log dobrado e sem RPC em rajada

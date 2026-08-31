@@ -131,17 +131,8 @@ begin
 end $fn$;
 
 -- -------------------------------------------------------------- entrar -----
-create or replace function public.join_league(p_code text)
-returns public.leagues language plpgsql security definer set search_path = public as $fn$
-declare l public.leagues;
-begin
-  if auth.uid() is null then raise exception 'nao autenticado'; end if;
-  select * into l from public.leagues where code = upper(trim(p_code));
-  if not found then raise exception 'codigo nao encontrado'; end if;
-  insert into public.league_members (league_id, user_id)
-  values (l.id, auth.uid()) on conflict do nothing;
-  return l;
-end $fn$;
+-- join_league vive na seção "pedidos de entrada", mais abaixo: o código gera
+-- um PEDIDO (jsonb), não entrada direta.
 
 -- --------------------------------------------------------------- gravar ----
 -- A gravação é só pelo save_parts (mais abaixo). O save_league do modelo de
@@ -172,7 +163,6 @@ begin
 end $do$;
 
 grant execute on function public.create_league(text, jsonb)       to authenticated;
-grant execute on function public.join_league(text)                to authenticated;
 grant execute on function public.leave_league(uuid)               to authenticated;
 
 -- ------------------------------------------------ contas da liga (admin) ---
@@ -203,16 +193,8 @@ begin
                    and p.data->>'owner' = me and p.data->>'role' = 'admin');
 end $fn$;
 
-create or replace function public.league_accounts(p_id uuid)
-returns table(user_id uuid, username text, joined_at timestamptz, is_owner boolean)
-language sql security definer stable set search_path = public as $fn$
-  select m.user_id, coalesce(pr.username, '?'), m.joined_at, (l.owner_id = m.user_id)
-  from public.league_members m
-  join public.leagues l on l.id = m.league_id
-  left join public.profiles pr on pr.id = m.user_id
-  where m.league_id = p_id and public.is_league_admin(p_id)
-  order by m.joined_at;
-$fn$;
+-- league_accounts vive na seção "pedidos de entrada", mais abaixo: a lista do
+-- admin traz também quem pediu para entrar (pending).
 
 -- Tira uma conta da liga. O jogador (e o histórico) fica; só o acesso sai.
 create or replace function public.remove_member(p_id uuid, p_user uuid)
@@ -226,7 +208,6 @@ begin
 end $fn$;
 
 grant execute on function public.is_league_admin(uuid)        to authenticated;
-grant execute on function public.league_accounts(uuid)        to authenticated;
 grant execute on function public.remove_member(uuid, uuid)    to authenticated;
 
 -- ------------------------------------------------ pedidos de entrada -------
