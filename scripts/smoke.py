@@ -554,6 +554,78 @@ step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
 });
+step('corrigir escalacao e trocas refaz os trechos e o nivel',()=>{
+  const l=L(),ps=l.players.map(p=>p.id);
+  /* partida de 10 min com uma troca aos 4: o relogio do smoke nao anda, entao
+     a partida do teste e montada na mao (mesma forma que o app grava)       */
+  const fim=Date.now(),ini=fim-600000;
+  const A0=ps.slice(0,5),B0=ps.slice(5,10),banco=ps[10];
+  const m={id:'edit1',ts:fim,startedAt:ini,endedAt:fim,sessionId:null,mode:'curtas',
+    names:['Verde','Preto'],teamIdx:[0,1],
+    startLineups:[A0.slice(),B0.slice()],lineups:[A0.slice(),B0.slice()],
+    startGks:[A0[4],B0[4]],gks:[A0[4],B0[4]],
+    events:[{t:ini+240000,type:'sub',side:0,out:A0[1],in:banco,gks:[A0[4],B0[4]]},
+            {t:ini+300000,type:'goal',side:0,pid:banco,own:false}],
+    goals:[{pid:banco,side:0,own:false,t:ini+300000,min:300000}],
+    score:[1,0],result:0,disputes:[],voided:false};
+  l.matches.push(m);recalcPartida(l,m);rebuildAll(l);
+  const nT=matchStints(l,m).length;
+  if(nT!==2)throw new Error('a partida de teste deveria ter 2 trechos, tem '+nT);
+  A.editEsc({dataset:{id:m.id}});
+  const h=els['#sheet'].innerHTML;
+  if(!/Começaram/.test(h)||!/nova troca/.test(h))throw new Error('tela de escalacao incompleta');
+  const cita=()=>JSON.stringify([m.startLineups,m.lineups,m.events,m.goals,m.stints]);
+  /* era outra pessoa: sai da partida inteira e entra a nova no lugar */
+  const alvo=A0[0],novo=l.players.find(p=>!genteDaPartida(m).has(p.id));
+  if(!novo)throw new Error('sem ninguem de fora para trocar');
+  A.escSwap({dataset:{id:m.id,s:'0',pid:alvo,por:novo.id}});
+  if(cita().indexOf(alvo)>=0)throw new Error('quem foi trocado ainda aparece na partida');
+  if(!emQuadraNo(l,m,0).has(novo.id))throw new Error('quem entrou no lugar nao aparece nos trechos');
+  /* troca nova no meio da partida vira mais um trecho */
+  A.novaTroca({dataset:{id:m.id}});
+  A.ntSet({dataset:{k:'side',v:'1'}});
+  const t=tDoMinuto(m,S.ui.nt.min),emq=escalaEm(l,m,t,1),livres=foraDeQuadra(l,m,t);
+  if(!emq.length||!livres.length)throw new Error('sem gente para montar a troca nova');
+  A.ntSet({dataset:{k:'out',v:emq[0]}});A.ntSet({dataset:{k:'in',v:livres[0]}});
+  A.ntOk({dataset:{id:m.id}});
+  if(matchStints(l,m).length!==nT+1)throw new Error('a troca nova nao virou trecho');
+  if(!emQuadraNo(l,m,1).has(livres[0]))throw new Error('quem entrou pela troca nova nao esta em quadra');
+  /* e apagar a troca devolve os trechos de antes */
+  const i=(m.events||[]).findIndex(e=>e.type==='sub'&&e.in===livres[0]);
+  A.evDel({dataset:{id:m.id,i:String(i)}});
+  if(matchStints(l,m).length!==nT)throw new Error('apagar a troca nao devolveu os trechos');
+  if(emQuadraNo(l,m,1).has(livres[0]))throw new Error('quem entrou pela troca apagada continua em quadra');
+  /* quem saiu numa troca: corrigir o "quem entrou" troca so o segundo trecho */
+  const iSub=(m.events||[]).findIndex(e=>e.type==='sub');
+  A.evSet({dataset:{id:m.id,i:String(iSub),k:'in',v:livres[0]}});
+  if(!matchStints(l,m)[1].lineups[0].includes(livres[0]))throw new Error('quem entrou corrigido nao entrou no trecho');
+  /* goleiro de largada corrigido vale desde o primeiro trecho */
+  const gk=m.startLineups[0][1];
+  A.escGk({dataset:{id:m.id,s:'0',pid:gk}});
+  if((matchStints(l,m)[0].gks||[])[0]!==gk)throw new Error('o goleiro corrigido nao valeu para o primeiro trecho');
+  if(stintPart(matchStints(l,m)[0])[gk].role!=='G')throw new Error('o goleiro corrigido nao conta como goleiro no trecho');
+  /* nao jogou: sai da escalacao, das trocas e perde a autoria dos gols */
+  const vitima=m.startLineups[1][0];
+  A.escDel({dataset:{id:m.id,s:'1',pid:vitima}});
+  if(emQuadraNo(l,m,1).has(vitima))throw new Error('quem saiu da escalacao continua em quadra');
+  const autor=(m.goals||[])[0].pid;
+  A.escDel({dataset:{id:m.id,s:'0',pid:autor}});
+  if((m.goals||[])[0].pid)throw new Error('gol de quem nao jogou continuou com autor');
+  if(!(l.log||[]).some(e=>e.a==='esc'))throw new Error('correcao de escalacao sem registro no log');
+  /* a liga continua batendo com o recalculo do zero */
+  const antes=l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',');
+  rebuildAll(l);
+  if(l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',')!==antes)throw new Error('o nivel nao bate com o recalculo do zero');
+  l.matches=l.matches.filter(x=>x.id!=='edit1');rebuildAll(l);   // o teste nao deixa resto
+});
+step('partida antiga nao aceita correcao de escalacao',()=>{
+  const l=L(),m={id:'velha',ts:Date.now(),names:['A','B'],score:[1,0],result:0,lineups:[[],[]]};
+  l.matches.push(m);
+  openSheet('<h2>outra folha</h2>');
+  A.editEsc({dataset:{id:'velha'}});
+  if(/Escalação e trocas/.test(els['#sheet'].innerHTML))throw new Error('abriu a tela para partida sem cronometro');
+  l.matches.pop();
+});
 step('voltar para home',()=>A.home());
 
 /* estado salvo pela versao antiga (schema v1) sendo lido pela versao nova */

@@ -766,6 +766,39 @@ rótulo pode ocupar duas linhas) · `smoke.py` (mesmo teste do D-59 confere que 
 card).
 
 
+### D-61 · Escalação e trocas são corrigíveis depois — reescrevendo o que a partida gravou
+**31/08/2026.** A revisão ganha a tela **"Escalação e trocas"** (só admin): quem começou de cada
+lado, com o goleiro de largada, e a lista das trocas. Dá para trocar uma pessoa por outra (vale para
+a partida inteira, gols inclusive), pôr quem faltou, tirar quem não jogou (as trocas dele somem e
+os gols dele ficam sem autor), marcar o goleiro de largada, corrigir *quem saiu* / *quem entrou* de
+uma troca, apagá-la, ou criar uma troca nova — minuto (passo de 30 s), time e as duas pontas — e
+também uma troca de goleiro. Toda correção chama `recalcPartida`, que roda o **mesmo `splitStints`
+do apito final** sobre a escalação de largada + o log de eventos, e depois `rebuildAll`.
+**Por quê:** a revisão já mostrava tudo (D-58), e a resposta natural de quem olha era "mas não foi
+isso que aconteceu". Faltava o inverso do mostrar. E como trecho é a unidade de nível (D-01), errar
+quem estava em quadra erra o nível de todo mundo daquela partida — era o único erro grande que o
+app não deixava consertar.
+**Como fica consistente:** os trechos são sempre **derivados**, nunca editados à mão; a partida passa
+a gravar `startGks` (antes só existia no ao vivo, e a reconstrução dependia dele); o instantâneo de
+goleiro que cada evento carrega (`ev.gks`) é corrigido até o próximo evento de goleiro daquele lado
+(`ajustaGksEventos`), senão a partida "voltava" para o goleiro antigo na primeira troca; o minuto
+digitado vira hora de parede somando o tempo pausado (`tDoMinuto`); e quem pode entrar numa troca é
+só quem não está em quadra **dos dois lados** naquele minuto.
+**Descartado:** editar os trechos direto (viraria duas fontes de verdade — o log de eventos deixaria
+de mandar); recalcular só a partida (correção antiga tem que percorrer a liga inteira, D-07);
+apagar `ev.gks` de todos os eventos ao corrigir (perderia o goleiro que assumiu as luvas numa
+substituição); deixar o admin escrever o minuto num campo de texto (passo de 30 s resolve e não
+abre teclado no celular); permitir corrigir partida gravada sem cronômetro (sem `startedAt`/eventos
+não há o que reconstruir — a tela avisa e não abre).
+**Onde:** DOCUMENTACAO §6 e §8 · `recalcPartida`, `gksIni`, `podeCorrigirEsc`, `escalaEm`,
+`genteDaPartida`, `foraDeQuadra`, `ajustaGksEventos`, `tDoMinuto`, `aplicaCorrecaoEsc`,
+`viewEditEsc`, `viewNovaTroca`, ações `editEsc`/`escPick`/`escGk`/`escDel`/`escSwap`/`escAdd`/
+`escAddDo`/`evPick`/`evSet`/`evDel`/`novaTroca`/`ntSet`/`ntOk` · log `esc` · `smoke.py`
+("corrigir escalacao e trocas refaz os trechos e o nivel" — partida de 10 min montada à mão, com
+troca, goleiro, gol e conferência de que o nível bate com o recálculo do zero; "partida antiga nao
+aceita correcao de escalacao") · `layout.py` (4 snapshots novos).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
