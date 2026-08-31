@@ -2550,7 +2550,7 @@ function viewStats(liga){
       </div>
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
-    ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best}</span>`:''}</div>`:''}
+    ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best} vitórias</span>`:''}</div>`:''}
     <div class="tiles ${longa?'five':'four'}" style="margin-top:16px">
       ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
@@ -2728,7 +2728,7 @@ ${cardJuntos}  <div class="card">
         gk:`<div class="sec"><div class="k2"><span>🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></span>${ordBtn('gk')}</div>
       ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>`,
         seq:`<div class="sec"><div class="k2"><span>🔥 Maior sequência <span class="tiny muted">3 ou mais</span></span>${ordBtn('seq')}</div>
-      ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>`,
+      ${rkBars(rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.','seq')}</div>`,
         duplas:`<div class="sec"><div class="k2"><span>⭐ Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('duplas')}</div>
       ${duplas.length?(inv('duplas')?[...duplas].reverse():duplas).slice(0,aberto.duplas?10:3).map((x,i)=>`<div class="rk3 ${i===0?'top':''}">
         <span class="pos">${i+1}</span>
