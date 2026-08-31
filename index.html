@@ -2711,13 +2711,12 @@ function fichaPartida(liga,m){
   const sts=matchStints(liga,m),J={},ult=sts.length-1;
   const rel=t=>(m.startedAt&&Array.isArray(m.events))?gameTime(m,t):Math.max(0,(t||0)-(m.startedAt||m.ts));
   sts.forEach((st,i)=>{
-    const part=stintPart(st),sc=st.score||[0,0];
+    const part=stintPart(st);
     for(const pid in part){
       const x=part[pid];
-      const j=J[pid]||(J[pid]={pid,side:x.side,min:0,minGk:0,gols:0,contra:0,pm:0,trechos:0,iDe:i,iAte:i,gk:false});
+      const j=J[pid]||(J[pid]={pid,side:x.side,min:0,minGk:0,gols:0,contra:0,trechos:0,iDe:i,iAte:i,gk:false});
       j.side=x.side;j.min+=st.dur||0;j.trechos++;j.iAte=i;
       if(x.role==='G'){j.gk=true;j.minGk+=st.dur||0}
-      j.pm+=(sc[x.side]||0)-(sc[1-x.side]||0);
     }
   });
   (m.goals||[]).forEach(g=>{const j=J[g.pid];if(!j)return;if(g.own)j.contra++;else j.gols++});
@@ -2730,7 +2729,7 @@ function fichaPartida(liga,m){
     j.delta=(m.deltas||{})[pid];
     out.push(j);
   }
-  return out.sort((x,y)=>x.side-y.side||y.min-x.min||y.pm-x.pm);
+  return out.sort((x,y)=>x.side-y.side||y.min-x.min||nameOf(liga,x.pid).localeCompare(nameOf(liga,y.pid)));
 }
 /* Uma linha por jogador: tempo em quadra, papel, gols e o que aconteceu com
    ele na partida (entrou tarde, saiu antes, voltou depois).                 */
@@ -2743,9 +2742,10 @@ function fichaLinha(liga,m,j){
   if(j.de)t.push('entrou '+mmss(j.de));
   if(j.ate!==null&&j.ate!==undefined)t.push('saiu '+mmss(j.ate));
   if(j.volta)t.push('voltou depois');
+  /* sem número solto na ponta da linha: o +/− tem lugar próprio nos rankings,
+     aqui ele só aparecia sem rótulo e ninguém sabia o que era               */
   return `<div class="rk3"><span class="pos">${j.gk?'🧤':'·'}</span>
-    <div class="nm">${esc(nameOf(liga,j.pid))}${t.length?`<small>${t.join(' · ')}</small>`:''}</div>
-    <span class="val num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</span></div>`;
+    <div class="nm">${esc(nameOf(liga,j.pid))}${t.length?`<small>${t.join(' · ')}</small>`:''}</div></div>`;
 }
 /* Linha do tempo: o log bruto da partida em português. Gol é botão para o
    admin trocar o autor sem sair do contexto em que o gol aconteceu.         */

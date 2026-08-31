@@ -704,7 +704,7 @@ renderização) · DOCUMENTACAO §3.8 (ordem dentro do degrau) e §7 (nota no ca
 ### D-58 · Revisar é abrir a partida inteira, não só o placar
 **31/08/2026.** A revisão passa a mostrar **tudo o que a partida guardou**, antes dos botões de
 correção: resumo (minutos de jogo, quantas pessoas jogaram, gols, trechos que contam); **quem jogou
-de cada lado**, com tempo em quadra, 🧤 e tempo no gol, gols, gols contra, +/− e o que aconteceu com
+de cada lado**, com tempo em quadra, 🧤 e tempo no gol, gols, gols contra e o que aconteceu com
 a pessoa (entrou aos 4'30, saiu aos 7'00, saiu e voltou); a **linha do tempo** com cada gol,
 substituição, troca de goleiro e pausa, no minuto de jogo e com o placar corrido; os **trechos**,
 com escalação dos dois lados, placar, se conta e com que peso; e o **efeito no nível**. A correção
@@ -721,9 +721,13 @@ rolagem: linha do tempo abre por padrão, trechos e nível abrem com um toque); 
 para todo mundo no histórico (é tela de decisão do admin, e mostra Elo cru — a ficha pública de
 partida fica para depois, se pedirem); recalcular qualquer coisa para a tela (a revisão só lê o que
 a partida gravou; nada de estatística nova por baixo).
+**31/08/2026, mesmo dia:** o +/− saiu dessa lista. Sem rótulo, na ponta da linha do nome, ele lia
+como um número solto ("o que é esse −2?") — e +/− já tem lugar próprio, com título e explicação,
+nos rankings da noite e da temporada. A ficha ficou com o que se explica sozinho: tempo, papel,
+gols e o que aconteceu com a pessoa.
 **Onde:** DOCUMENTACAO §6 e §8 · `fichaPartida`, `fichaLinha`, `revTempo`, `revTrechos`, `revNivel`,
 `revDetalhe`, `corTime`, `A.review`, `A.revSec` · `smoke.py` ("revisar partida mostra a partida
-inteira", "ficha da partida conta tempo, gols e +/- de quem jogou" — o +/− da ficha é conferido
+inteira", "ficha da partida conta tempo e gols de quem jogou" — o +/− da ficha é conferido
 contra `plusMinus`, o motor) · `layout.py` (snapshots com trechos e nível abertos).
 
 

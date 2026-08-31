@@ -464,15 +464,18 @@ step('revisar partida mostra a partida inteira',()=>{
   if(/toque para corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('linha do tempo nao fechou');
   A.revSec({dataset:{k:'tempo',id:m.id}});
 });
-step('ficha da partida conta tempo, gols e +/- de quem jogou',()=>{
+step('ficha da partida conta tempo e gols de quem jogou',()=>{
   const l=L(),m=[...l.matches].reverse().find(x=>(x.events||[]).some(e=>e.type==='sub'))||l.matches[0];
   const ficha=fichaPartida(l,m);
   const gols=ficha.reduce((a,j)=>a+j.gols+j.contra,0);
   const comDono=(m.goals||[]).filter(g=>g.pid).length;
   if(gols!==comDono)throw new Error('gols com autor na ficha ('+gols+') nao batem com a partida ('+comDono+')');
   ficha.forEach(j=>{if(j.min<0||j.trechos<1)throw new Error('tempo em quadra invalido para '+nameOf(l,j.pid))});
-  const pm={};plusMinus(l,m,(pid,d)=>pm[pid]=(pm[pid]||0)+d);
-  ficha.forEach(j=>{if((pm[j.pid]||0)!==j.pm)throw new Error('+/- da ficha diverge do motor para '+nameOf(l,j.pid))});
+  /* numero solto na ponta da linha nao volta: o +/- tem lugar proprio nos rankings.
+     (o delta de nivel continua valendo — ele mora na secao "Efeito no nivel") */
+  A.review({dataset:{id:m.id}});
+  const quemJogou=els['#sheet'].innerHTML.split('Linha do tempo')[0];
+  if(/class="val/.test(quemJogou))throw new Error('voltou numero sem rotulo na ficha de quem jogou');
 });
 step('corrigir resultado',()=>A.fixResult({dataset:{id:L().matches[0].id,r:'draw'}}));
 step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
