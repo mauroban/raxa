@@ -223,7 +223,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-08.8 | Tela do racha mostra os **destaques dos últimos 30 dias**, e não o topo histórico da liga | P1 | ✅ v1 |
 | RF-08.8b | Primeiro destaque: **os melhores do racha** — maior patente entre quem apareceu no período, cada um pela valência que mais jogou, na mesma ordem do ranking | P1 | ✅ v1 |
 | RF-08.8c | Cada linha do pódio diz o que cada número é: rachas, partidas e % de vitórias no período | P1 | ✅ v1 |
-| RF-08.9 | O destaque é o **saldo acima do esperado** (resultado menos a chance do confronto, por trecho), com piso de **2 rachas e 20 partidas** no período — não aproveitamento nem vitória pura | P1 | ✅ v1 |
+| RF-08.9 | O destaque é o **saldo acima do esperado** (resultado menos a chance do confronto, por trecho), com piso de **2 rachas ou 15 partidas** no período (D-69) — não aproveitamento nem vitória pura | P1 | ✅ v1 |
 | RF-08.10 | **Artilheiro do período** só aparece se metade ou mais dos gols tiverem autor; senão o card diz quantos ficaram sem dono | P1 | ✅ v1 |
 | RF-08.11 | **Goleiro menos vazado**: gols sofridos por partida nos trechos em que a pessoa estava no gol | P1 | ✅ v1 |
 | RF-08.12 | Com as patentes fechadas, o destaque cai para vitórias no período | P1 | ✅ v1 |
@@ -273,7 +273,7 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 
 | # | Requisito | Pri | Status |
 |---|---|---|---|
-| RF-11.1 | Painel de números de uma pessoa: rachas, partidas, aproveitamento, vitórias, gols e partidas no gol | P1 | ✅ v1 |
+| RF-11.1 | Painel de números de uma pessoa: rachas, partidas, aproveitamento (pontos: V=3, E=1 — D-69), vitórias, gols e partidas no gol | P1 | ✅ v1 |
 | RF-11.2 | Filtrar o painel por período: **ano atual** ou **desde sempre** | P1 | ✅ v1 |
 | RF-11.3 | Quebra **ano a ano** (rachas, partidas, gols, aproveitamento por temporada) | P2 | ✅ v1 |
 | RF-11.4 | **Duelos**: quantas vezes enfrentou cada pessoa, com V/E/D e aproveitamento | P1 | ✅ v1 |

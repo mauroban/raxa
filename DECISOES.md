@@ -1001,6 +1001,33 @@ REQUISITOS-FUNCIONAIS.md · REQUISITOS-NAO-FUNCIONAIS.md · README.md · CLAUDE.
 BANCO-DE-DADOS.md · `.gitignore` (exemplo_partida_real.json, dados reais, fora do repositório).
 
 
+### D-69 · Aproveitamento vira pontos (V=3, E=1) — e cada filtro de Stats responde à própria pergunta
+**31/08/2026.** Três mudanças na leitura dos números. **(1) Aproveitamento passa a ser pontos, como
+o futebol conta:** (3·V + E) / (3·partidas), via `aprDe` no motor. A % de vitórias pura tratava
+empate como derrota — e racha empata muito. Vale em todo lugar que diz "aproveitamento": o anel do
+painel (que ganhou a linha `X de Y pontos (V=3, E=1)` para a conta ser legível), o ranking "Maior
+aproveitamento", os sub-rótulos de vitórias/derrotas, duelos, parcerias, melhor dupla, a folha do
+confronto, o ano a ano, a ficha do jogador (antes rotulada "% vitórias") e o desempate dentro do
+degrau da escada (para quem não é admin — o critério continua não denunciando o rating, D-57).
+**(2) O piso dos destaques vira 2 rachas OU 15 partidas** (era E com 20): duas noites já mostram
+constância; uma noite inteira — 15 partidas, o tamanho da calibração — já mostra volume. O OU também
+elimina o caso especial da partida única (D-65): lá 2 rachas bastam. **(3) A ordem dos rankings da
+aba Stats → Racha segue a pergunta do filtro:** *30 dias* pergunta FORMA (aproveitamento, vitórias,
+sequência, artilharia abrem); um *ano* pergunta TEMPORADA (presenças e campanha primeiro); *Sempre*
+pergunta CARREIRA (volume: presenças, tempo em quadra). Na partida única o +/− abre em qualquer
+filtro (D-45). As seções são as mesmas; só a ordem muda com o filtro.
+**Por quê:** "aproveitamento" com outra fórmula que não a dos pontos surpreende qualquer pessoa de
+futebol; e uma lista fixa de rankings obrigava quem filtra "30 dias" a rolar por presenças de
+carreira antes de chegar na forma.
+**Descartado:** trocar TODA % por pontos (a "% de empates" da liga e a chance esperada do confronto
+são frações de outra coisa e ficam como estão); piso configurável; esconder seções por filtro (a
+ordem resolve sem tirar informação).
+**Onde:** `aprDe`, `destaques` (piso e desempate), `linhaDestaque`, `viewRanking` (desempate),
+`viewStats` (anel + pontos, duelos, parcerias, duplas, ano a ano, SECS com ordem por filtro),
+`pSheet`, folha do duelo em `index.html` · DOCUMENTACAO §5.3/5.4 (definição, piso, ordem) ·
+RF-08.9, RF-11.1, RNF-04.9 · `test.py` (aprDe e o bloco novo do piso OU).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

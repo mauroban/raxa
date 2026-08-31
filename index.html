@@ -1386,6 +1386,10 @@ function noPeriodo(m,p){
 }
 const MIN_JOGOS=10;          // piso para entrar em ranking de aproveitamento
 function pctDe(v,n){return n?Math.round(v/n*100):0}
+/* Aproveitamento como o futebol conta: pontos ganhos sobre pontos disputados
+   (V=3, E=1 — D-69). 100% é só vitória; empatar tudo dá 33%. A % de vitórias
+   pura tratava empate como derrota, e racha empata muito.                   */
+function aprDe(v,e,n){return n?Math.round((3*v+(e||0))/(3*n)*100):0}
 
 function statsLiga(liga,periodo,semGk){
   const J={},DU={},PA={};
@@ -1503,12 +1507,12 @@ function destaques(liga,dias){
   /* A valência que a pessoa mais jogou no período é a que representa ela aqui:
      quem passou a métade do mês no gol aparece pelo nível de goleiro.       */
   gente.forEach(x=>{x.val=x.jogosG>x.jogos/2?'G':'L'});
-  /* Piso duplo: quem so apareceu uma vez, ou jogou pouco, nao vira destaque do
-     mes por causa de uma noite boa. O piso de jogos segue a cadencia do modo:
-     no racha curto ~7 partidas por noite; na partida unica cada racha E uma
-     partida (exigir 20 jogos seria exigir 20 rachas — ninguem seria destaque). */
-  const piso=liga.cfg.matchMode==='unica'?{rachas:2,jogos:2}:{rachas:2,jogos:20};
-  const elegiveis=gente.filter(x=>x.nR>=piso.rachas&&x.jogos>=piso.jogos);
+  /* Piso: 2 rachas OU 15 partidas no periodo (D-69). Quem veio duas noites
+     ja mostrou constancia; quem jogou uma noite inteira (15 partidas ~ a
+     calibracao) ja mostrou volume. O OU tambem resolve a partida unica sem
+     caso especial: la 2 rachas bastam.                                      */
+  const piso={rachas:2,jogos:15};
+  const elegiveis=gente.filter(x=>x.nR>=piso.rachas||x.jogos>=piso.jogos);
   const top=elegiveis.slice().sort((a,b)=>b.over-a.over||b.v-a.v||b.jogos-a.jogos).slice(0,3);
   const artilheiro=gols&&comDono/gols>=.5
     ? gente.slice().sort((a,b)=>b.gols-a.gols)[0] : null;
@@ -1522,7 +1526,7 @@ function destaques(liga,dias){
   const melhores=gente.filter(x=>{const p=P(liga,x.pid);return p&&temPatente(liga,p,x.val)})
     .sort((a,b)=>{const pa=P(liga,a.pid),pb=P(liga,b.pid);
       return rt(pb,b.val).rank-rt(pa,a.val).rank
-        ||pctDe(b.v,b.jogos)-pctDe(a.v,a.jogos)
+        ||aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)
         ||nameOf(liga,a.pid).localeCompare(nameOf(liga,b.pid))}).slice(0,3);
   return{gente,melhores,top,artilheiro:artilheiro&&artilheiro.gols?artilheiro:null,goleiro,presenca,
     partidas,gols,comDono,nR,piso,desde};
@@ -1854,7 +1858,7 @@ function linhaDestaque(liga,x,i,badge){
     <span class="pos">${MEDALHA[i]}</span>
     <div class="who">
       <div class="nm">${esc(nameOf(liga,x.pid))}${x.val==='G'?' 🧤':''}</div>
-      <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${pctDe(x.v,x.jogos)}% de vitórias</div>
+      <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</div>
     </div>
     ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
   </div>`;
@@ -1875,7 +1879,7 @@ function statsBlock(liga){
   const ver=vePat(liga);
   /* Com os níveis fechados, a escada some daqui também, e "acima do esperado"
      junto — ele nasce do nível de quem estava em quadra. Sobra contagem pura. */
-  const rendeu=ver?d.top:d.gente.filter(x=>x.nR>=d.piso.rachas&&x.jogos>=d.piso.jogos)
+  const rendeu=ver?d.top:d.gente.filter(x=>x.nR>=d.piso.rachas||x.jogos>=d.piso.jogos)
     .sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,3);
   return `<div class="card">
     <div class="row" style="margin-bottom:10px"><div class="k">Destaques · últimos 30 dias</div>
@@ -1886,7 +1890,7 @@ function statsBlock(liga){
       :'<div class="tiny muted">Ninguém com nível no período ainda.</div>'}`:''}
 
     <div class="k2">Quem mais rendeu além do esperado</div>
-    <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas e ${d.piso.jogos} partidas.</div>
+    <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas ou ${d.piso.jogos} partidas.</div>
     ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false)).join('')
       :`<div class="tiny muted">Ainda sem gente suficiente no período.</div>`}
     <div class="hr"></div>
@@ -2346,7 +2350,7 @@ function viewEscada(liga){
   const porElo=souAdmin(liga);
   const ps=[...lista].sort((a,b)=>{const x=rt(a,role),y=rt(b,role);
     return y.rank-x.rank
-      ||(porElo?y.elo-x.elo:(y.games?y.w/y.games:0)-(x.games?x.w/x.games:0))
+      ||(porElo?y.elo-x.elo:(y.games?(3*y.w+y.d)/y.games:0)-(x.games?(3*x.w+x.d)/x.games:0))
       ||a.name.localeCompare(b.name)});
   let html=`<div class="row" style="gap:6px;margin:12px 0 10px">
     <button class="btn sm ${role==='L'?'pri':'ghost'}" data-a="rankRole" data-v="L" style="flex:1">Linha</button>
@@ -2460,7 +2464,7 @@ function viewStats(liga){
   const comMin=arr=>arr.filter(x=>x.n>=Math.min(MIN_JOGOS,Math.max(3,Math.round(me.jogos/10))));
   const carrasco=[...comMin(duelos)].sort((a,b)=>(b.d-b.v)-(a.d-a.v)||b.d-a.d)[0];
   const fregues=[...comMin(duelos)].sort((a,b)=>(b.v-b.d)-(a.v-a.d)||b.v-a.v)[0];
-  const dupla=[...comMin(parcerias)].sort((a,b)=>pctDe(b.v,b.n)-pctDe(a.v,a.n)||b.n-a.n)[0];
+  const dupla=[...comMin(parcerias)].sort((a,b)=>aprDe(b.v,b.e,b.n)-aprDe(a.v,a.e,a.n)||b.n-a.n)[0];
   const parceiro=parcerias[0];
 
   /* --- top 5 --- */
@@ -2471,7 +2475,7 @@ function viewStats(liga){
   const secPm=()=>`<div class="sec"><div class="k2">📊 Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>`;
   const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,TOPN);
   const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos).slice(0,TOPN);
-  const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>pctDe(b.v,b.jogos)-pctDe(a.v,a.jogos)||b.jogos-a.jogos).slice(0,TOPN);
+  const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos).slice(0,TOPN);
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols).slice(0,TOPN);
   const rkMin=[...todos].filter(x=>x.min>0).sort((a,b)=>b.min-a.min).slice(0,TOPN);
   const MIN_RITMO=60*60000;                          // ritmo só com 1 h em quadra: menos que isso é sorte
@@ -2480,7 +2484,7 @@ function viewStats(liga){
   const rkGk=todos.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk).slice(0,TOPN);
   const duplas=[];const vistos={};
   Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
-    const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,pct:pctDe(y.v,y.n)})}));
+    const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,e:y.e,pct:aprDe(y.v,y.e,y.n)})}));
   duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
   const anos=who?statsAnos(liga,who):[];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
@@ -2497,12 +2501,12 @@ function viewStats(liga){
       <span class="val">${fmt(x)}</span></div>`}).join('')
       +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+itens.length}</button>`:'');
   };
-  const C=2*Math.PI*43,pctMe=pctDe(me.v,me.jogos);   // pct() e a funcao global de %
+  const C=2*Math.PI*43,aprMe=aprDe(me.v,me.e,me.jogos);   // pontos ganhos / disputados (V=3, E=1)
   const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
   const listaDuelo=(arr,m)=>arr.slice(0,aberto[m?'parc':'duel']?arr.length:5).map(x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
       <span class="pos" style="font-size:12px;color:${x.v>x.d?'var(--ok)':x.d>x.v?'var(--bad)':'var(--mute2)'}">${x.v>x.d?'▲':x.d>x.v?'▼':'='}</span>${av(x.pid)}
       <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.pid))}</div>
-        <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${pctDe(x.v,x.n)}% de vitória</div>${vedBar(x)}</div>
+        <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${aprDe(x.v,x.e,x.n)}% de aproveitamento</div>${vedBar(x)}</div>
       <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`).join('');
   const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
 
@@ -2527,8 +2531,8 @@ function viewStats(liga){
     <div class="herogrid">
       <div class="ring">
         <svg viewBox="0 0 104 104"><circle class="tr" cx="52" cy="52" r="43"/>
-          <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(pctMe/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
-        <div class="rv num">${pctMe}%</div><div class="rl">aproveitamento</div>
+          <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(aprMe/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
+        <div class="rv num">${aprMe}%</div><div class="rl">aproveitamento</div>
       </div>
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
@@ -2541,6 +2545,7 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>
     </div>
     <div class="tiny" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px">
+      <span>🎯 <b class="num">${3*me.v+me.e}</b> <span class="muted">de ${3*me.jogos} pontos (V=3, E=1)</span></span>
       <span>⚽ <b class="num">${por10(me.gols,me.min)}</b> <span class="muted">gols a cada 10 min</span></span>
       ${me.gk?`<span>🧤 <b class="num">${por10(me.sofridos,me.minGk)}</b> <span class="muted">sofridos a cada 10 min · ${fmtMin(me.minGk)} no gol</span></span>`:''}
     </div>
@@ -2548,7 +2553,7 @@ function viewStats(liga){
       <div class="k2" style="margin-top:0">Ano a ano</div>
       ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
         <span class="tiny muted">${pl(a.nR,'racha')} · ${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
-        <span class="val num">${pctDe(a.v,a.jogos)}%</span></div>`).join('')}`:''}
+        <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
   <div class="card">
@@ -2571,10 +2576,10 @@ function viewStats(liga){
     ${parceiro?`<div class="duo">
       <div class="hl"><div class="t">🤝 Mais jogou junto</div>
         <div class="n">${esc(nameOf(liga,parceiro.pid))}</div>
-        <div class="s">${pl(parceiro.n,'partida')} juntos · ${pctDe(parceiro.v,parceiro.n)}% de vitória</div></div>
+        <div class="s">${pl(parceiro.n,'partida')} juntos · ${aprDe(parceiro.v,parceiro.e,parceiro.n)}% de aproveitamento</div></div>
       ${dupla?`<div class="hl ok"><div class="t">⭐ Melhor dupla</div>
         <div class="n">${esc(nameOf(liga,dupla.pid))}</div>
-        <div class="s">${pctDe(dupla.v,dupla.n)}% em ${pl(dupla.n,'partida')} juntos</div></div>`:''}
+        <div class="s">${aprDe(dupla.v,dupla.e,dupla.n)}% de aproveitamento em ${pl(dupla.n,'partida')} juntos</div></div>`:''}
     </div>`:''}
     ${parcerias.length?listaDuelo(parcerias,1):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
     ${parcerias.length>5?`<button class="more" data-a="statsSec" data-k="parc">${aberto.parc?'▴ menos':'▾ todas as '+parcerias.length}</button>`:''}
@@ -2657,9 +2662,9 @@ function viewStats(liga){
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
     ${pm.length&&longa?secPmRacha:''}
-    ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${corta(venc,'rvenc').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${pctDe(x.v,x.jogos)}% de vitórias</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')+mais(venc,'rvenc')}</div>`:''}
+    ${venc.length?`<div class="sec"><div class="k2">🏆 Quem mais ganhou</div>${corta(venc,'rvenc').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')+mais(venc,'rvenc')}</div>`:''}
     ${pm.length&&!longa?secPmRacha:''}
-    ${perdeu.length?`<div class="sec"><div class="k2">😵 Quem mais perdeu</div>${corta(perdeu,'rperdeu').map((x,i)=>`<div class="rk3"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E · ${pctDe(x.v,x.jogos)}% de vitórias</small></div><span class="val">${x.d}<small>D</small></span></div>`).join('')+mais(perdeu,'rperdeu')}</div>`:''}
+    ${perdeu.length?`<div class="sec"><div class="k2">😵 Quem mais perdeu</div>${corta(perdeu,'rperdeu').map((x,i)=>`<div class="rk3"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.d}<small>D</small></span></div>`).join('')+mais(perdeu,'rperdeu')}</div>`:''}
     ${art.length?`<div class="sec"><div class="k2">⚽ Artilheiro</div>${corta(art,'rart').map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')+mais(art,'rart')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2">📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
@@ -2690,27 +2695,39 @@ function viewStats(liga){
 
 ${cardJuntos}  <div class="card">
     <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
-    ${longa?secPm():''}
-    <div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>
-    <div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>
-    <div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>pctDe(x.v,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>
-    <div class="sec"><div class="k2">😵 Mais derrotas</div>${rkBars(rkDer,x=>x.d,x=>x.d+'D',x=>pctDe(x.v,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'der')}</div>
-    ${longa?'':secPm()}
-    <div class="sec"><div class="k2">📈 Maior aproveitamento <span class="tiny muted">mín. ${MIN_JOGOS} partidas</span></div>
-      ${rkBars(rkPct,x=>pctDe(x.v,x.jogos),x=>pctDe(x.v,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.','pct')}</div>
-    <div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>
-    <div class="sec"><div class="k2">⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></div>
-      ${rkBars(rkRitmo,x=>x.gols/x.min,x=>por10(x.gols,x.min),x=>x.gols+' gols em '+fmtMin(x.min),'Ninguém com 1 h em quadra e gol marcado ainda.','ritmo')}</div>
-    <div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></div>
-      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>
-    <div class="sec"><div class="k2">🔥 Maior sequência <span class="tiny muted">3 ou mais</span></div>
-      ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>
-    <div class="sec"><div class="k2">⭐ Melhor dupla <span class="tiny muted">mín. ${MIN_JOGOS} partidas juntos</span></div>
+    ${(()=>{
+      /* Cada filtro faz uma pergunta, e a ordem dos rankings responde a ela:
+         30 dias pergunta FORMA (campanha recente primeiro), um ano pergunta
+         TEMPORADA (presença e campanha), "sempre" pergunta CARREIRA (volume
+         primeiro). Na partida única o +/- abre a lista em qualquer filtro,
+         porque lá V/E/D é um só por noite (D-45).                          */
+      const SECS={
+        pm:secPm(),
+        pres:`<div class="sec"><div class="k2">📅 Mais presenças</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>`,
+        min:`<div class="sec"><div class="k2">⏱ Mais tempo em quadra</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>`,
+        vit:`<div class="sec"><div class="k2">🏆 Mais vitórias</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>`,
+        der:`<div class="sec"><div class="k2">😵 Mais derrotas</div>${rkBars(rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'der')}</div>`,
+        pct:`<div class="sec"><div class="k2">📈 Maior aproveitamento <span class="tiny muted">pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas</span></div>
+      ${rkBars(rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.','pct')}</div>`,
+        gols:`<div class="sec"><div class="k2">⚽ Artilharia</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>`,
+        ritmo:`<div class="sec"><div class="k2">⚡ Gols a cada 10 min <span class="tiny muted">mín. 1 h em quadra</span></div>
+      ${rkBars(rkRitmo,x=>x.gols/x.min,x=>por10(x.gols,x.min),x=>x.gols+' gols em '+fmtMin(x.min),'Ninguém com 1 h em quadra e gol marcado ainda.','ritmo')}</div>`,
+        gk:`<div class="sec"><div class="k2">🧤 Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></div>
+      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>`,
+        seq:`<div class="sec"><div class="k2">🔥 Maior sequência <span class="tiny muted">3 ou mais</span></div>
+      ${rkBars(rkSeq,x=>x.best,x=>x.best+' seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq:null,'Ninguém emendou 3 ainda.','seq')}</div>`,
+        duplas:`<div class="sec"><div class="k2">⭐ Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></div>
       ${duplas.length?duplas.slice(0,aberto.duplas?10:3).map((x,i)=>`<div class="rk3 ${i===0?'top':''}">
         <span class="pos">${i+1}</span>
-        <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}${aberto.duplas?`<small>${x.v}V em ${pl(x.n,'partida')}</small>`:''}</div>
+        <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}${aberto.duplas?`<small>${x.v}V ${x.e}E em ${pl(x.n,'partida')}</small>`:''}</div>
         <span class="val">${x.pct}%</span></div>`).join('')+(duplas.length>3?`<button class="more" data-a="statsSec" data-k="duplas">${aberto.duplas?'▴ menos':'▾ ver até '+Math.min(10,duplas.length)}</button>`:'')
-        :`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>
+        :`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>`
+      };
+      const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','duplas']
+        :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','duplas']
+        :['pres','pct','vit','gols','seq','der','min','pm','ritmo','gk','duplas'];
+      return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
+    })()}
   </div>`;
   return `
   <div class="card">${seg}
@@ -4234,7 +4251,7 @@ const A={
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
     if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null}};
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
-    const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,adm=souAdmin(l),edt=souEditor(l);
+    const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
     const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
@@ -4264,7 +4281,7 @@ const A={
       ${(()=>{return `<div class="stat four">
         ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
         <div><b class="num">${tot}</b><span>partidas</span></div>
-        <div><b class="num">${tot?Math.round(vit/tot*100):0}%</b><span>vitórias</span></div>
+        <div><b class="num">${aprDe(vit,emp,tot)}%</b><span>aproveitamento</span></div>
         <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
         <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
       </div>
@@ -4430,7 +4447,7 @@ const A={
         · ${per==='ano'?ANO_ATUAL():'desde sempre'}</div>
       <div class="stat" style="margin-bottom:6px">
         <div><b class="num">${a.n}</b><span>${mesmo?'juntos':'confrontos'}</span></div>
-        <div><b class="num">${pctDe(a.v,a.n)}%</b><span>vitórias</span></div>
+        <div><b class="num">${aprDe(a.v,a.e,a.n)}%</b><span>aproveitamento</span></div>
         <div><b class="num">${a.v}-${a.e}-${a.d}</b><span>V-E-D</span></div>
       </div>
       ${vedBar(a)}

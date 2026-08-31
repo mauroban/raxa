@@ -63,7 +63,7 @@ Cada requisito traz uma **meta verificável**. Onde a meta ainda não é atingí
 | RNF-04.6 | O histórico é a fonte da verdade; patentes são derivadas dele | nenhum estado de patente sobrevive a um rebuild |
 | RNF-04.7 | Uma partida gravada é imutável quanto ao peso: ela carrega o modo do racha em que foi jogada | mudar configuração da liga não altera resultado passado — **coberto por teste** |
 | RNF-04.8 | O histórico é auto-suficiente para recalcular a liga inteira sem depender da configuração atual | modo, sessão, escalações, pesos e resultado ficam na própria partida |
-| RNF-04.9 | Estatísticas (duelos, parcerias, presenças, aproveitamento, destaques do mês) não são gravadas em lugar nenhum | calculadas do histórico a cada abertura da tela; a partida guarda só a saída do motor (deltas e acima do esperado), refeita por `rebuildAll` — **coberto por teste** |
+| RNF-04.9 | Estatísticas (duelos, parcerias, presenças, aproveitamento, destaques do mês) não são gravadas em lugar nenhum | calculadas do histórico a cada abertura da tela; a partida guarda só fatos — deltas e acima do esperado são refeitos por `rebuildAll` e nem sobem para o banco (D-63) — **coberto por teste** |
 
 **Estado atual:** suíte de testes cobrindo escada de patentes, equilíbrio, formato e goleiros, expectativa/simetria do rating, **trechos** (corte por substituição, descarte do trecho curto, peso proporcional, placar próprio), calibração por trilha, histerese, rebuild/anulação, **duas patentes por jogador** e **separação de duplas repetidas**; mais um smoke test que percorre todas as telas e falha se qualquer uma quebrar.
 

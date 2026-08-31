@@ -328,7 +328,7 @@ Duas consequências que importam:
 | **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, partidas no gol, barra V/E/D e as duas patentes |
 | **Duelos** | **Maior carrasco** e **Freguês** em destaque, e a lista de quem você mais enfrenta com V/E/D e barra. Tocar em um nome abre o histórico completo do confronto: data, placar, formato e resultado |
 | **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque |
-| **O racha no período** | mais presenças, mais vitórias, maior aproveitamento e artilharia, top 5 em cada |
+| **O racha no período** | rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — 3 linhas cada, abrindo até 10; **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
 
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga — dá para conferir o carrasco do outro também.
 
@@ -354,7 +354,7 @@ inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. São d
 2. **Quem mais rendeu além do esperado** — o critério explicado abaixo.
 3. **Artilheiro** e **goleiro menos vazado**, lado a lado, mais **quem mais apareceu**.
 
-Cada linha do pódio escreve o que cada número é: `4 rachas · 21 partidas · 62% de vitórias`.
+Cada linha do pódio escreve o que cada número é: `4 rachas · 21 partidas · 62% de aproveitamento`.
 
 **Na segunda lista, o critério não é aproveitamento, e não é vitória.** Num racha com times equilibrados, o aproveitamento de
 todo mundo tende a 50% — é justamente o que o app persegue. E contar vitória pura premia quem caiu no time
@@ -375,9 +375,9 @@ Por que isso funciona num racha:
 - **soma zero dentro da partida.** O que um lado ganha acima do esperado, o outro perde — ninguém infla o
   número jogando muito, só rendendo acima do que se esperava dele;
 - **respeita substituição**, porque a unidade é o trecho: o que o time fez com você no banco não entra;
-- **é acumulado, não média** — num racha, aparecer faz parte do mérito. E o piso é duplo: **2 rachas e 20
-  partidas no período** na liga de várias curtas (na de partida única, onde cada racha é uma partida,
-  o piso é 2 rachas — D-65), para uma noite sortuda não virar destaque do mês.
+- **é acumulado, não média** — num racha, aparecer faz parte do mérito. E o piso é **2 rachas ou 15
+  partidas no período** (D-69): duas noites já mostram constância, e uma noite inteira (15 partidas,
+  o tamanho da calibração) já mostra volume. Vale igual nos dois modos — na partida única, 2 rachas bastam.
 
 **Artilheiro** só aparece quando a maioria dos gols tem dono (metade ou mais). Autor de gol é opcional de
 propósito — e ranking de artilharia com metade dos gols sem dono é pior do que ranking nenhum. Quando falta
@@ -391,6 +391,11 @@ Com as **patentes fechadas** (seção 3.8) o destaque cai para vitórias no per�
 nível de quem estava em quadra, então sai de cena junto com as patentes.
 
 ### 5.4 Por que existe um mínimo de partidas
+
+**Aproveitamento é no idioma do futebol: pontos.** V vale 3, E vale 1, e o aproveitamento é a fração dos
+pontos disputados que a pessoa levou — (3·V + E) / (3·partidas) (D-69). 100% é só vitória; empatar tudo dá
+33%. A % de vitórias pura tratava empate como derrota, e racha empata muito. Vale em todo lugar que diz
+"aproveitamento": o anel do painel, os rankings, duelos, parcerias, duplas, a ficha e o desempate da escada.
 
 Aproveitamento com 3 jogos é ruído, e ruído no topo de um ranking destrói a credibilidade dele. Então:
 
@@ -507,7 +512,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 **+/-.** Na liga de partida única, a estatística principal de cada jogador (no racha curto ela existe, mas fica depois das vitórias): gols a favor menos gols contra enquanto ele estava em quadra, em todos os trechos. É o primeiro número do cartão do jogador (Stats e ficha) e o primeiro ranking do período e do último racha. Na partida longa, onde a noite tem uma partida só, é o que separa quem esteve dentro nos bons momentos de quem não esteve.
 
-**Minutos e ritmo.** Cada trecho guarda a duração de jogo (sem pausas), então minutos em quadra e no gol são somas exatas por jogador. A aba Stats mostra minutos, **gols a cada 10 min** e, para goleiros, **sofridos a cada 10 min** (rankings de ritmo e o destaque "Menos vazado" pedem 1 h em quadra/no gol; goleiro é sempre medido por tempo, nunca por partida). Stats tem duas abas — **Jogador** (a pessoa: aproveitamento, ano a ano, duelos, parcerias) e **Racha** (a liga no período e os rankings) — e o período (ano ou desde sempre) é filtro, não aba. Rankings mostram 3 linhas e abrem até 10. Os filtros de período (Último · 30 dias · ano · Sempre) dividem uma linha só. Além dos anos e de "desde sempre", o filtro tem **Último mês** (30 dias) e **Último racha**; neste, a aba Racha troca os rankings de temporada por uma leitura da noite — presentes, partidas, gols, minutos de jogo, os times da noite com V/E/D e gols, **quem mais ganhou** (vitórias; desempate por menos derrotas), artilheiro, quem rendeu acima do esperado, tempo em quadra, menos vazado (mín. 20 min no gol), gols contra e quem subiu/caiu de nível.
+**Minutos e ritmo.** Cada trecho guarda a duração de jogo (sem pausas), então minutos em quadra e no gol são somas exatas por jogador. A aba Stats mostra minutos, **gols a cada 10 min** e, para goleiros, **sofridos a cada 10 min** (rankings de ritmo e o destaque "Menos vazado" pedem 1 h em quadra/no gol; goleiro é sempre medido por tempo, nunca por partida). Stats tem duas abas — **Jogador** (a pessoa: aproveitamento, ano a ano, duelos, parcerias) e **Racha** (a liga no período e os rankings) — e o período (ano ou desde sempre) é filtro, não aba. Rankings mostram 3 linhas e abrem até 10, e **a ordem deles responde à pergunta do filtro**: em *30 dias* a forma abre a lista (aproveitamento, vitórias, sequência, artilharia); num *ano*, presenças e campanha; em *Sempre*, o volume de carreira (presenças, tempo em quadra) vem primeiro. Na partida única o +/− abre em qualquer filtro (D-45). Os filtros de período (Último · 30 dias · ano · Sempre) dividem uma linha só. Além dos anos e de "desde sempre", o filtro tem **Último mês** (30 dias) e **Último racha**; neste, a aba Racha troca os rankings de temporada por uma leitura da noite — presentes, partidas, gols, minutos de jogo, os times da noite com V/E/D e gols, **quem mais ganhou** (vitórias; desempate por menos derrotas), artilheiro, quem rendeu acima do esperado, tempo em quadra, menos vazado (mín. 20 min no gol), gols contra e quem subiu/caiu de nível.
 
 **No servidor, a liga vive em partes.** Cada jogador, partida, racha e entrada do log é uma linha própria (payload jsonb de fatos), mais uma linha `live` para o racha em andamento. O app grava só o que mudou (`save_parts`) e recebe só o que mudou desde a versão que conhece (`league_delta`); um gol é ~1 KB subindo e ~1 KB descendo em cada aparelho, independentemente do tamanho do histórico. Nível e estatística nunca vão para o banco.
 

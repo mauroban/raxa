@@ -479,13 +479,16 @@ console.log('  melhores: '+D.melhores.map(x=>P(liga,x.pid).name+' ('+rankLabel(l
 ok(degraus[0]>=degraus[1]&&degraus[1]>=degraus[2],'ordenados do maior degrau para o menor');
 ok(D.melhores.every(x=>temPatente(liga,P(liga,x.pid),x.val)),'ninguem sem patente na valencia entra na lista');
 
-/* piso duplo: uma noite boa nao faz destaque do mes */
+/* piso dos destaques: 2 rachas OU 15 partidas (D-69) */
+ok(aprDe(2,1,3)===78&&aprDe(0,3,3)===33&&aprDe(3,0,3)===100&&aprDe(0,0,0)===0,'aproveitamento em pontos: V=3, E=1 (D-69)');
 liga.matches.length=0;rebuildAll(liga);
-for(let i=0;i<19;i++)lanca(A5,B5,1,{sid:'q'+(i%2),goals:[]});
-ok(destaques(liga,5000).top.length===0,'com menos de 20 partidas no periodo, ninguem vira destaque');
+for(let i=0;i<14;i++)lanca(A5,B5,1,{sid:'so-um-racha',goals:[]});
+ok(destaques(liga,5000).top.length===0,'um racha so, com menos de 15 partidas: ninguem vira destaque');
+lanca(A5,B5,1,{sid:'so-um-racha',goals:[]});
+ok(destaques(liga,5000).top.length>0,'15 partidas bastam, mesmo num racha so');
 liga.matches.length=0;rebuildAll(liga);
-for(let i=0;i<30;i++)lanca(A5,B5,1,{sid:'so-um-racha',goals:[]});
-ok(destaques(liga,5000).top.length===0,'e 30 partidas em um racha so tambem nao valem');
+for(let i=0;i<8;i++)lanca(A5,B5,1,{sid:'q'+(i%2),goals:[]});
+ok(destaques(liga,5000).top.length>0,'2 rachas bastam, mesmo com poucas partidas');
 const overAntes=JSON.stringify(liga.matches.map(m=>m.over));
 rebuildAll(liga);
 ok(JSON.stringify(liga.matches.map(m=>m.over))===overAntes,'recalculo do zero devolve o mesmo acima do esperado');
