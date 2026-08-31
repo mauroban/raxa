@@ -1043,8 +1043,9 @@ a pergunta espelhada é natural em todo ranking ("quem menos aparece?", "qual go
 e uma setinha custa menos que onze rankings-espelho.
 **Descartado:** inverter só o top 10 visível (mostraria o 10º como "pior" da liga, mentira);
 títulos que trocam de texto quando invertidos ("Menos presenças…") — a seta e o title do botão já
-dizem, e onze títulos duplicados envelheceriam mal; setinha nos cards do último racha (lá
-ganhou/perdeu já são as duas leituras, e as listas são da noite). No mesmo dia saiu a linha
+dizem, e onze títulos duplicados envelheceriam mal; setinha nos cards do último racha —
+**revisto no dia seguinte, a pedido**: lá também é ranking, e a setinha entrou em ganhou/perdeu,
++/−, artilheiro, rendeu, tempo e menos vazado (gol contra e nível são listas, não rankings). No mesmo dia saiu a linha
 `X de Y pontos` do anel (D-69): poluía mais do que explicava.
 **Onde:** `inv`/`ordBtn`/`rkBars` e a ação `statsInv` em `index.html` · CSS `.k2 .ord` ·
 DOCUMENTACAO §5 (parágrafo dos rankings) · RF-11.8 · `smoke.py` ("inverter um ranking pela setinha
