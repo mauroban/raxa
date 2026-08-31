@@ -2646,7 +2646,6 @@ function viewStats(liga){
     const mais=(arr,k)=>arr.length>3?`<button class="more" data-a="statsSec" data-k="${k}">${aberto[k]?'▴ menos':'▾ ver até '+Math.min(10,arr.length)}</button>`:'';
     /* quem mais ganhou é a estatística da noite: vitórias, desempate por menos derrotas e mais partidas */
     const venc=[...todos].filter(x=>x.v).sort((a,b)=>b.v-a.v||a.d-b.d||b.jogos-a.jogos);
-    const perdeu=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos);
     const pm=[...todos].filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
     const secPmRacha=`<div class="sec"><div class="k2"><span>📊 Melhor +/−</span>${ordBtn('rpm')}</div>${corta(pm,'rpm').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D</small></div><span class="val num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span></div>`).join('')+mais(pm,'rpm')}</div>`;
     const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
@@ -2677,7 +2676,6 @@ function viewStats(liga){
     ${pm.length&&longa?secPmRacha:''}
     ${venc.length?`<div class="sec"><div class="k2"><span>🏆 Quem mais ganhou</span>${ordBtn('rvenc')}</div>${corta(venc,'rvenc').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')+mais(venc,'rvenc')}</div>`:''}
     ${pm.length&&!longa?secPmRacha:''}
-    ${perdeu.length?`<div class="sec"><div class="k2"><span>😵 Quem mais perdeu</span>${ordBtn('rperdeu')}</div>${corta(perdeu,'rperdeu').map((x,i)=>`<div class="rk3"><span class="pos">${i+1}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.d}<small>D</small></span></div>`).join('')+mais(perdeu,'rperdeu')}</div>`:''}
     ${art.length?`<div class="sec"><div class="k2"><span>⚽ Artilheiro</span>${ordBtn('rart')}</div>${corta(art,'rart').map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')+mais(art,'rart')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2"><span>📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></span>${ordBtn('rrendeu')}</div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2"><span>⏱ Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}

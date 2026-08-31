@@ -606,10 +606,10 @@ step('vitoria e do time que jogou, nao do nome no placar',()=>{
   l.cfg.format=fmt;
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
 });
-step('rankings da noite abrem ate 10 e tem quem mais perdeu',()=>{
+step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-72)',()=>{
   A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
-  if(h.indexOf('Quem mais perdeu')<0)throw new Error('faltou o ranking de quem mais perdeu na noite');
+  if(h.indexOf('Quem mais perdeu')>=0)throw new Error('quem mais perdeu saiu no D-72: a setinha do "quem mais ganhou" cobre a leitura');
   if(h.indexOf('Melhor +/−')<0)throw new Error('o +/- da noite tem que aparecer tambem no racha curto (depois das vitorias)');
   if(h.indexOf('ver até')>=0){A.statsSec({dataset:{k:'rvenc'}});A.statsSec({dataset:{k:'rvenc'}})}
   A.statsPer({dataset:{v:'sempre'}});
