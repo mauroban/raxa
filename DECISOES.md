@@ -727,6 +727,45 @@ inteira", "ficha da partida conta tempo, gols e +/- de quem jogou" — o +/− d
 contra `plusMinus`, o motor) · `layout.py` (snapshots com trechos e nível abertos).
 
 
+### D-59 · A vitória é do time que jogou — a composição, não o nome no placar
+**31/08/2026.** O V/E/D dos "Times do racha" (e o "Hoje: ..." da pré-partida) passa a ser atribuído
+por **composição**: um lado da partida só conta como o time X se **mais da metade dos jogadores
+originais de X** esteve em quadra em algum trecho. Se duas composições passam da metade — o time
+trocou inteiro no meio e a formação nova é a maioria de outro time da noite — leva **quem ficou
+mais tempo em quadra** (minutos-jogador dos originais); empatado nisso, quem cobriu maior parte do
+próprio time; e só então o time do nome. Formação que não é maioria de ninguém **não conta para
+time nenhum**, e o card diz quantas foram.
+**Por quê:** o nome do time (`m.names`/`m.teamIdx`) é só o rótulo de quem entrou em quadra naquele
+confronto. Com empréstimo, "completar" e substituição, dava para o Time A vencer com cinco pessoas
+que não são do Time A — e o ranking da noite premiava um time que não jogou. Presença em **algum
+trecho** (e não na partida inteira) é de propósito: substituição normal não pode custar a vitória a
+quem montou o time.
+**Descartado:** exigir maioria no trecho final (uma troca nos últimos segundos trocaria o dono da
+vitória); exigir maioria em todos os trechos (qualquer rodízio de goleiro derrubaria); atribuir
+sempre pelo maior tempo sem exigir maioria (dois desfalques bastariam para a vitória migrar); dar a
+vitória aos dois times quando as duas composições passam da metade (inflaria o V/E/D da noite);
+mexer no V/E/D **do jogador** — esse continua sendo de quem estava em quadra, que é o que o motor
+de nível mede (D-01).
+**Onde:** DOCUMENTACAO §7 (período "Último") · `emQuadraNo`, `timeDoLado`, `timesDoRacha`,
+`teamRecord`, `cardsUmRacha` · `smoke.py` ("vitoria e do time que jogou, nao do nome no placar" —
+partida normal, time trocado do começo, trocado no meio, uma substituição só e formação sem dono).
+
+### D-60 · No card da noite, o time é a lista de quem jogou (até 5v5)
+**31/08/2026.** No "Times do racha", o título da linha passa a ser o **primeiro nome de cada
+jogador original** ("Vinashow, Maike, João, Halisson"); o nome do time vira nota na linha de baixo,
+com os gols em **8/3 G** — feitos em verde, sofridos em vermelho.
+**Por quê:** "Time A" é a cor do colete, não o time — ninguém lembra qual era qual no dia seguinte.
+Quem lê o card quer saber *quem* ganhou a noite. E "8 gols feitos · 3 sofridos" gastava uma linha
+inteira para dois números.
+**Descartado:** trocar o nome do time em todo lugar (no placar e ao vivo o nome curto é o que cabe
+e é como se chamam em quadra); mostrar a lista em ligas maiores que 5v5 (7 nomes não cabem numa
+linha de celular — lá continua o nome do time); repetir o sobrenome inteiro (só a inicial, e só
+quando dois jogadores do mesmo time têm o mesmo primeiro nome).
+**Onde:** DOCUMENTACAO §7 · `nomesCurtos`, `rotuloTime` em `cardsUmRacha` · CSS `.rk3.time` (o
+rótulo pode ocupar duas linhas) · `smoke.py` (mesmo teste do D-59 confere que o jogador aparece no
+card).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

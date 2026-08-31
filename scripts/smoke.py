@@ -515,6 +515,28 @@ step('times do racha: toque abre a escalacao original',()=>{
   if(sh.indexOf(esc(nameOf(l,t.ids[0])))<0)throw new Error('escalacao original nao apareceu na folha');
   A.closeSheet();
 });
+step('vitoria e do time que jogou, nao do nome no placar',()=>{
+  const l=L();
+  const TA=['a1','a2','a3','a4','a5'],TB=['b1','b2','b3','b4','b5'],TC=['c1','c2','c3','c4','c5'];
+  const times=[{name:'Time A',ids:TA},{name:'Time B',ids:TB},{name:'Time C',ids:TC}];
+  const st=(dur,l0,l1)=>({dur,counted:true,w:1,lineups:[l0.slice(),l1.slice()],gks:[null,null],score:[1,0],result:0,ended:'apito'});
+  const part=sts=>({id:'x',ts:Date.now(),names:['Time A','Time B'],score:[1,0],result:0,stints:sts});
+  const dono=(m,s)=>(timeDoLado(l,m,s,times)||{name:null}).name;
+  if(dono(part([st(420000,TA,TB)]),0)!=='Time A')throw new Error('partida normal deveria contar para o time A');
+  if(dono(part([st(420000,TC,TB)]),0)!=='Time C')throw new Error('com o time inteiro trocado, a vitoria e de quem jogou');
+  if(dono(part([st(60000,TA,TB),st(540000,TC,TB)]),0)!=='Time C')throw new Error('trocou o time inteiro no meio: conta para quem ficou mais tempo');
+  const umaTroca=[TA[0],TA[1],TA[2],TA[3],'z9'];
+  if(dono(part([st(60000,TA,TB),st(540000,umaTroca,TB)]),0)!=='Time A')throw new Error('uma substituicao nao tira a vitoria do time');
+  const metade=[TA[0],TA[1],TC[0],TC[1],'z9'];
+  if(dono(part([st(600000,metade,TB)]),0)!==null)throw new Error('sem maioria de nenhum time, a partida nao conta para time nenhum');
+  /* o card da noite usa isso: nome do time some do titulo, entram os jogadores */
+  A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
+  const h=els['#app'].innerHTML,sess=l.sessions[l.sessions.length-1];
+  const t0=sess.teams[0],pri=esc(nameOf(l,t0.ids[0]).split(' ')[0]);
+  if(h.indexOf('Times do racha')<0)throw new Error('card dos times sumiu');
+  if(h.indexOf(pri)<0)throw new Error('o time deveria ser rotulado pelos jogadores originais no 5v5');
+  A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
+});
 step('rankings da noite abrem ate 10 e tem quem mais perdeu',()=>{
   A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;

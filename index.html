@@ -438,6 +438,10 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk3.top .pos{color:var(--gold)}
 .rk3 .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rk3 .nm small{font-weight:400;color:var(--mute);font-size:11px;margin-left:6px}
+/* time da noite: o rótulo é a escalação original, então pode ocupar duas linhas */
+.rk3.time{align-items:start;padding:9px 0}
+.rk3.time .nm{white-space:normal;overflow:visible;line-height:1.3}
+.rk3.time .nm small{display:block;margin:3px 0 0}
 .rk3 .val{font-family:var(--disp);font-weight:800;font-size:15px;white-space:nowrap}
 .rk3 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:10px;font-family:var(--body)}
 .more{display:block;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:10px 0 2px;cursor:pointer;text-align:left;min-height:36px}
@@ -1606,14 +1610,77 @@ const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','save
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="--pc:${patColor(step)}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
-/* Aproveitamento do time no racha de hoje — sem destaque, só para dar contexto. */
+/* ---------- de quem é a vitória do time ----------
+   Time da noite é a composição original, não o nome no placar. Um lado da
+   partida só conta como aquele time se MAIS DA METADE dos jogadores originais
+   dele esteve em quadra em algum trecho — time inteiro trocado não leva
+   vitória. Se duas composições passam da metade (o time trocou no meio e a
+   formação nova é a maioria de outro time), leva quem ficou mais tempo em
+   quadra; empatado nisso, quem cobriu maior parte do próprio time; e por
+   último o time do nome.                                                    */
+function emQuadraNo(liga,m,side){
+  const s=new Set();
+  matchStints(liga,m).forEach(st=>(((st.lineups||[])[side])||[]).forEach(id=>s.add(id)));
+  return s;
+}
+function timeDoLado(liga,m,side,times){
+  if(!times||!times.length)return null;
+  const sts=matchStints(liga,m),em=emQuadraNo(liga,m,side),nome=(m.names||[])[side];
+  /* melhor: mais tempo de quadra dos originais; depois maior parte do time; depois o nome */
+  const melhorQue=(a,b)=>!b||a.peso>b.peso+1
+    ||(Math.abs(a.peso-b.peso)<=1&&(a.parte>b.parte+1e-9
+      ||(Math.abs(a.parte-b.parte)<1e-9&&a.nome&&!b.nome)));
+  let melhor=null;
+  times.forEach(t=>{
+    const ids=(t.ids||[]).filter((id,i,a)=>a.indexOf(id)===i);
+    if(!ids.length)return;
+    const n=ids.filter(id=>em.has(id)).length;
+    if(n*2<=ids.length)return;                   // metade não basta: tem que ser maioria
+    let peso=0;                                  // minutos-jogador dos originais deste time neste lado
+    sts.forEach(st=>{const lin=((st.lineups||[])[side])||[];
+      peso+=(st.dur||0)*lin.filter(id=>ids.indexOf(id)>=0).length});
+    const cand={t,peso,parte:n/ids.length,nome:t.name===nome};
+    if(melhorQue(cand,melhor))melhor=cand;
+  });
+  return melhor?melhor.t:null;
+}
+/* Os times como foram montados no racha. Sessão antiga (que não guardou os
+   times): a escalação de largada da primeira partida em que o nome aparece
+   serve de composição original.                                             */
+function timesDoRacha(liga,ms,sess){
+  if(sess&&Array.isArray(sess.teams)&&sess.teams.length)
+    return sess.teams.map(t=>({name:t.name,ids:(t.ids||[]).slice()}));
+  const T={},ordem=[];
+  [...ms].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(m=>[0,1].forEach(s=>{
+    const n=(m.names||[])[s];if(!n||T[n])return;
+    T[n]={name:n,ids:((((m.startLineups||m.lineups))||[])[s]||[]).slice()};ordem.push(T[n]);
+  }));
+  return ordem;
+}
+/* Primeiro nome de cada um, com a inicial do sobrenome só quando dois se
+   chamam igual dentro do mesmo time.                                        */
+function nomesCurtos(liga,ids){
+  const partes=ids.map(id=>String(nameOf(liga,id)).trim().split(/\s+/));
+  return partes.map((w,i)=>{
+    const igual=partes.some((v,j)=>j!==i&&v[0].toLowerCase()===w[0].toLowerCase());
+    return w[0]+(igual&&w[1]?' '+w[1][0].toUpperCase()+'.':'');
+  });
+}
+/* Aproveitamento do time no racha de hoje — sem destaque, só para dar contexto.
+   Conta pela composição (`timeDoLado`), não pelo nome: time desfigurado por
+   substituição não leva a vitória, e quem virou maioria de outro time leva a
+   dele.                                                                     */
 function teamRecord(liga,lv,ti){
+  const orig=(lv.teams||[]).map((t,i)=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice(),i}));
   let w=0,d=0,l=0;
   (lv.matchIds||[]).forEach(id=>{
     const m=liga.matches.find(x=>x.id===id);
-    if(!m||!m.teamIdx||m.voided)return;
-    const s=m.teamIdx.indexOf(ti);if(s<0)return;
-    if(m.result==='draw')d++;else if(m.result===s)w++;else l++;
+    if(!m||m.voided)return;
+    [0,1].forEach(s=>{
+      const dono=timeDoLado(liga,m,s,orig);
+      if(!dono||dono.i!==ti)return;
+      if(m.result==='draw')d++;else if(m.result===s)w++;else l++;
+    });
   });
   const n=w+d+l;
   return{w,d,l,n,pct:n?Math.round(w/n*100):null};
@@ -2396,10 +2463,21 @@ function viewStats(liga){
     /* presença do racha: quem esteve (sessão) ∪ quem jogou (partidas) — conta
        desde o começo e cobre sessão antiga que só fotografou o fim */
     const presentes=new Set([...(sess?sess.presentIds:[]),...Object.keys(J)]).size;
-    /* times da noite: por nome, com V/E/D e gols */
-    const T={};ms.forEach(m=>{[0,1].forEach(s=>{const n=m.names[s],t=T[n]||(T[n]={n,v:0,e:0,d:0,gp:0,gc:0});
-      t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++})});
+    /* Times da noite: a partida conta para o time cuja MAIORIA original esteve
+       em quadra (D-59), não para o nome que estava no placar.                */
+    const orig=timesDoRacha(liga,ms,sess);
+    const T={};orig.forEach(t=>T[t.name]={n:t.name,ids:t.ids,v:0,e:0,d:0,gp:0,gc:0});
+    let semDono=0;
+    ms.forEach(m=>[0,1].forEach(s=>{
+      const dono=timeDoLado(liga,m,s,orig);
+      if(!dono){semDono++;return}
+      const t=T[dono.name]||(T[dono.name]={n:dono.name,ids:dono.ids,v:0,e:0,d:0,gp:0,gc:0});
+      t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++;
+    }));
     const times=Object.values(T).sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
+    /* Até o 5v5 o time é reconhecido pelos jogadores, não pelo apelido da cor:
+       "Vinashow, Maike, João, Halisson" diz muito mais que "Time A".        */
+    const rotuloTime=t=>(liga.cfg.format<=5&&(t.ids||[]).length)?esc(nomesCurtos(liga,t.ids).join(', ')):esc(t.n);
     const todos=Object.keys(J).map(id=>J[id]);
     /* cada ranking da noite mostra 3 e abre até 10 — mesmo padrão dos rankings de temporada */
     const corta=(arr,k)=>arr.slice(0,aberto[k]?10:3);
@@ -2429,7 +2507,8 @@ function viewStats(liga){
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
     ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver a escalação</span></div>
-      ${times.map((t,i)=>`<div class="rk3 ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${i+1}</span><div class="nm">${esc(t.n)}<small>${t.gp} gols feitos · ${t.gc} sofridos</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}</div>`:''}
+      ${times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${i+1}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}
+      ${semDono?`<div class="tiny muted" style="margin-top:7px">${pl(semDono,'formação','formações')} não ${semDono===1?'contou':'contaram'} para nenhum time: mais da metade do time original não estava em quadra.</div>`:''}</div>`:''}
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
