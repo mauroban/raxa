@@ -1308,7 +1308,7 @@ function applyPlan(liga,lv,force,modo){
   const pl=planTeams(liga,lv.presentIds,force,lv.mode,lv.gkToday);
   /* remontar os times invalida a partida que estava em campo */
   if(lv.cur&&(!lv.teams[lv.cur.a]||!lv.teams[lv.cur.b]||pl.n!==lv.teams.length))lv.cur=null;
-  lv.gkPool=pl.gkPool;lv.per=pl.per;lv.sel=null;lv.lastWinner=null;lv.nextPair=null;
+  lv.gkPool=pl.gkPool;lv.per=pl.per;lv.sel=null;lv.lastWinner=null;lv.lastSide=null;lv.nextPair=null;
   const curto=(lv.mode||liga.cfg.matchMode)!=='unica';   // reserva automatica so no modo longo
   lv.teams=modo==='shuffle'?shuffleTeams(liga,pl.ids,pl.n,pl.caps,curto)
     :buildTeams(liga,pl.ids,pl.n,pl.caps,pl.gkIds,curto);
@@ -1324,13 +1324,16 @@ const teamAvg=(liga,t,gkToday)=>{
 };
 
 /* Sugestão de quem entra — o usuário pode trocar à vontade. Empate com 4
-   times: os dois saem; com 3, fica o que entrou por último (D-39).          */
+   times: os dois saem; com 3, fica o que entrou por último (D-39). Quem
+   venceu (ou ficou no empate) continua do MESMO lado da quadra em que jogou
+   (lv.lastSide, D-71): trocar o lado de quem nem saiu confunde todo mundo.  */
 function suggestPair(liga,lv){
   const all=lv.teams.map((_,i)=>i);
   if(all.length<2)return [0,0];
   if(all.length===2)return [0,1];
   const fila=(lv.queue||[]).filter(i=>all.indexOf(i)>=0);
-  if(liga.cfg.winnerStays&&lv.lastWinner!=null&&fila.length)return [lv.lastWinner,fila[0]];
+  if(liga.cfg.winnerStays&&lv.lastWinner!=null&&fila.length)
+    return lv.lastSide===1?[fila[0],lv.lastWinner]:[lv.lastWinner,fila[0]];
   const order=[...all.filter(i=>fila.indexOf(i)<0),...fila];
   return [order[0],order[1]];
 }
@@ -3335,12 +3338,19 @@ const A={
     save();render();toast(lv.fillOff?'Sem completar: os dois lados entram iguais, com menos gente':'Completando o time menor');
   },
   pickSide(el){                       // trocar qual time entra em cada lado
-    const l=L(),lv=l.live,sd=+el.dataset.s;
+    const l=L(),lv=l.live;if(!lv)return;
+    const sd=+el.dataset.s;
     const pair=lv.nextPair||suggestPair(l,lv);
+    /* Até o 5v5 o time é a lista de quem joga, não o apelido da cor (D-60):
+       na hora de escolher o lado, quem decide é o nome das pessoas.        */
+    const porNome=l.cfg.format<=5;
     openSheet(`<h2>Quem joga deste lado?</h2>
       <div style="display:grid;gap:7px">
-        ${lv.teams.map((t,i)=>`<button class="btn wide ${pair[sd]===i?'pri':'ghost'}" data-a="setSide" data-s="${sd}" data-i="${i}">
-          ${esc(t.name)} <span class="tiny muted">(${t.ids.length})</span></button>`).join('')}
+        ${lv.teams.map((t,i)=>`<button class="btn wide ${pair[sd]===i?'pri':'ghost'}" data-a="setSide" data-s="${sd}" data-i="${i}"
+            ${porNome&&t.ids.length?'style="flex-direction:column;align-items:flex-start;gap:2px;line-height:1.3;white-space:normal;text-align:left;padding:10px 14px"':''}>
+          ${porNome&&t.ids.length?`<span style="font-size:13px">${esc(nomesCurtos(l,t.ids).join(', '))}</span>
+            <span class="tiny muted">${esc(t.name)} · ${pl(t.ids.length,'jogador','jogadores')}</span>`
+          :`${esc(t.name)} <span class="tiny muted">(${t.ids.length})</span>`}</button>`).join('')}
       </div>`);
   },
   setSide(el){
@@ -3370,7 +3380,7 @@ const A={
     l.matches.splice(i,1);rebuildAll(l);
     lv.matchIds=lv.matchIds.filter(x=>x!==le.mid);
     le.teams.forEach((ids,k)=>{if(lv.teams[k])lv.teams[k].ids=[...ids]});
-    lv.queue=[...le.queue];lv.lastWinner=le.lastWinner;lv.lastStay=le.lastStay;lv.lastGks=le.lastGks;
+    lv.queue=[...le.queue];lv.lastWinner=le.lastWinner;lv.lastSide=le.lastSide===undefined?null:le.lastSide;lv.lastStay=le.lastStay;lv.lastGks=le.lastGks;
     lv.nextPair=le.nextPair;
     if(le.fila)lv.fila=[...le.fila];   // a fila de pessoas volta como estava antes do giro
     const c=le.cur;
@@ -3880,6 +3890,7 @@ const A={
       teams:lv.teams.map(t=>[...t.ids]),queue:[...lv.queue],
       fila:Array.isArray(lv.fila)?[...lv.fila]:null,
       lastWinner:lv.lastWinner===undefined?null:lv.lastWinner,
+      lastSide:lv.lastSide===undefined?null:lv.lastSide,
       lastStay:Array.isArray(lv.lastStay)?[...lv.lastStay]:null,
       lastGks:lv.lastGks?Object.assign({},lv.lastGks):null,
       nextPair:Array.isArray(lv.nextPair)?[...lv.nextPair]:null};
@@ -3888,17 +3899,17 @@ const A={
     /* lastStay: quem FICA em quadra — é com esse time que o goleiro fica */
     if(lv.teams.length>2){
       if(!l.cfg.winnerStays||(result==='draw'&&lv.teams.length>3)){   // 4 times e empate: os dois saem
-        lv.lastWinner=null;lv.lastStay=[];lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
+        lv.lastWinner=null;lv.lastSide=null;lv.lastStay=[];lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
       }else if(result==='draw'){
         /* 3 times e empate: um fica — o que entrou por último (o outro já estava, e sai) */
         const fica=(lv.lastWinner===c.a)?c.b:(lv.lastWinner===c.b)?c.a:c.b,sai=fica===c.a?c.b:c.a;
-        lv.lastWinner=fica;lv.lastStay=[fica];lv.queue.push(sai);saiu.push(sai);
+        lv.lastWinner=fica;lv.lastSide=fica===c.a?0:1;lv.lastStay=[fica];lv.queue.push(sai);saiu.push(sai);
       }else{
         const winner=result===0?c.a:c.b,perdedor=winner===c.a?c.b:c.a;
-        lv.lastWinner=winner;lv.lastStay=[winner];lv.queue.push(perdedor);saiu.push(perdedor);
+        lv.lastWinner=winner;lv.lastSide=result===0?0:1;lv.lastStay=[winner];lv.queue.push(perdedor);saiu.push(perdedor);
       }
     }else{
-      lv.lastWinner=result==='draw'?null:(result===0?c.a:c.b);
+      lv.lastWinner=result==='draw'?null:(result===0?c.a:c.b);lv.lastSide=result==='draw'?null:result;
       lv.lastStay=result==='draw'?[c.a,c.b]:[lv.lastWinner];
       /* dois times: quem perdeu não sai de quadra, mas o time dele roda com a fila */
       if(result!=='draw'&&l.cfg.winnerStays)saiu.push(result===0?c.b:c.a);

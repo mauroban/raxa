@@ -1051,6 +1051,25 @@ DOCUMENTACAO §5 (parágrafo dos rankings) · RF-11.8 · `smoke.py` ("inverter u
 e voltar", e `statsInv` na lista de ações livres).
 
 
+### D-71 · Quem fica não troca de lado — e a folha de trocar time fala nomes no 5v5
+**31/08/2026.** Dois consertos na pré-partida. **(1)** O `suggestPair` sempre punha o time que
+ficou (venceu, ou ficou no empate com 3 times) no lado **esquerdo** da tela, mesmo que ele tivesse
+acabado de jogar do direito — na quadra ninguém se moveu, mas no app o confronto aparecia
+espelhado, e quem lança se perdia. O `finish` agora grava **de que lado** o time que fica jogou
+(`lv.lastSide`) e a sugestão o mantém ali: só o lado de quem saiu recebe o time da fila. O
+instantâneo do "↩ Voltar a partida" e o remontar de times carregam/zeram o lado junto; racha antigo
+sem `lastSide` cai no comportamento de antes (esquerda). **(2)** A folha "Quem joga deste lado?"
+(trocar qual time entra) mostrava só "Time A (5)" — em liga até 5v5, onde o time é a lista de quem
+joga (D-60), agora mostra **os nomes** (via `nomesCurtos`), com o apelido da cor e a contagem na
+linha de baixo. Acima do 5v5 fica como era: a lista não caberia.
+**Descartado:** guardar o lado por time em vez de só o de quem ficou (só quem fica tem lado a
+preservar — quem entra da fila entra no lado vago por definição); deixar o usuário arrastar times
+entre lados (o toque em cada lado já resolve).
+**Onde:** `suggestPair`, `finish` (`lv.lastSide`), `voltarPartida`, `applyPlan`, `pickSide` em
+`index.html` · DOCUMENTACAO §"a próxima partida" · `smoke.py` (os roteiros de 4 times e de empate
+com 3 times agora afirmam o lado mantido — inclusive o goleiro que fica, pelo lado certo).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

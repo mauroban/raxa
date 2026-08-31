@@ -749,13 +749,13 @@ step('4 times: quem espera ha mais tempo joga antes (A×B, A×C, C×D, ...)',()=
   L().live.nextPair=[0,1];joga(0);                        // A×B, A ganha → fila C,D,B
   let par=suggestPair(L(),L().live);
   if(par.join()!=='0,2')throw new Error('depois de A×B esperava A×C, veio '+par.join('x'));
-  L().live.nextPair=par;joga(2);                          // A×C, C ganha → fila D,B,A
+  L().live.nextPair=par;joga(2);                          // A×C, C ganha (do lado direito) → fila D,B,A
   par=suggestPair(L(),L().live);
-  if(par.join()!=='2,3')throw new Error('depois de A×C (C ganhou) esperava C×D, veio '+par.join('x'));
-  L().live.nextPair=par;joga(3);                          // C×D, D ganha → fila B,A,C
+  if(par.join()!=='3,2')throw new Error('C ganhou do lado direito e fica NELE (D-71): esperava D×C, veio '+par.join('x'));
+  L().live.nextPair=par;joga(3);                          // D×C, D ganha (do lado esquerdo) → fila B,A,C
   {const lv=L().live;if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===3))throw new Error('lastStay deveria ser o vencedor (D)')}
   par=suggestPair(L(),L().live);
-  if(par.join()!=='3,1')throw new Error('depois de C×D (D ganhou) esperava D×B, veio '+par.join('x'));
+  if(par.join()!=='3,1')throw new Error('D ganhou do lado esquerdo e fica nele: esperava D×B, veio '+par.join('x'));
   }finally{S=salvo;render()}
 });
 step('3 times e empate: um time fica (o que entrou por ultimo) e o goleiro fica com ele',()=>{
@@ -774,9 +774,9 @@ step('3 times e empate: um time fica (o que entrou por ultimo) e o goleiro fica 
     const lv2=L().live;
     if(!(lv2.lastStay&&lv2.lastStay.length===1&&lv2.lastStay[0]===2))throw new Error('no empate com 3 times, C (o que entrou) deveria ficar');
     par=suggestPair(L(),lv2);
-    if(par[0]!==2)throw new Error('a proxima deveria comecar pelo C que ficou, veio '+par.join('x'));
+    if(par[1]!==2)throw new Error('C ficou no empate e continua do lado direito (D-71), veio '+par.join('x'));
     const gp=planGks(L(),lv2,par);
-    if(lv2.gkPool.length&&lv2.lastGks[2]&&!(gp.gks[0]===lv2.lastGks[2]&&gp.fica[0]))throw new Error('o goleiro do time que ficou no empate deveria ficar');
+    if(lv2.gkPool.length&&lv2.lastGks[2]&&!(gp.gks[1]===lv2.lastGks[2]&&gp.fica[1]))throw new Error('o goleiro do time que ficou no empate deveria ficar');
   }finally{S=salvo;render()}
 });
 step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>{
