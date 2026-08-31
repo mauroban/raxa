@@ -3015,7 +3015,7 @@ function viewHist(liga){
     <button class="btn sm ghost" data-a="histRacha" data-id="" style="margin-bottom:10px">‹ Todos os rachas</button>
     <div class="card" style="margin-bottom:10px">
       <div class="row"><div class="k">${aberto.avulso?'Partidas avulsas':'Racha'}</div>
-        <div class="sp tiny muted">${DIA(aberto.fim)}</div></div>
+        <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
       <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
     </div>
@@ -3028,7 +3028,7 @@ function viewHist(liga){
       const meus=eu?r.ms.filter(m=>ladoNaPartida(liga,m,eu)!==null).length:0;
       return `<button class="rachaRow ${meus?'eu':''}" data-a="histRacha" data-id="${esc(r.id)}">
         <div style="min-width:0;flex:1">
-          <div class="nm">${r.avulso?'Partidas avulsas':DIA(r.fim)}</div>
+          <div class="nm">${r.avulso?'Partidas avulsas':DIA(r.ts)}</div>
           <div class="meta"><span class="num">${v} partida${v===1?'':'s'}</span>
             <span class="num">${r.gols} gol${r.gols===1?'':'s'}</span>
             ${meus?`<span class="mine" style="color:var(--lime)">VOCÊ ${meus}</span>`:''}
@@ -3280,7 +3280,7 @@ const A={
   /* ----- presença ----- */
   startRacha(){const l=L();l.live={id:uid(),mode:l.cfg.matchMode||'curtas',started:Date.now(),stage:'presenca',
     presentIds:[],gkToday:[],teams:[],queue:[],cur:null,matchIds:[],sel:null,lastWinner:null,gkPool:[],gkFlip:0};save();render()},
-  cancelRacha(){const l=L();if(l.live.matchIds.length&&!confirm('Cancelar o racha? As partidas já lançadas continuam no histórico.'))return;l.live=null;save();render()},
+  cancelRacha(){const l=L();if(!l.live)return;if(l.live.matchIds.length&&!confirm('Cancelar o racha? As partidas já lançadas continuam no histórico.'))return;l.live=null;save();render()},
   setFormat(el){
     const l=L();l.cfg.format=+el.dataset.v;
     if(l.live&&l.live.stage==='times')applyPlan(l,l.live);
@@ -3295,7 +3295,7 @@ const A={
     if(l.live&&l.live.stage==='times')applyPlan(l,l.live);
     save();render();                          // nada de recalcular a liga: o histórico é de cada racha
   },
-  clearSel(){const lv=L().live;lv.sel=null;save();render()},
+  clearSel(){const lv=L().live;if(!lv)return;lv.sel=null;save();render()},
   /* ----- completar o time menor ----- */
   fillPick(el){
     const l=L(),lv=l.live,sd=+el.dataset.sd;
@@ -3354,7 +3354,7 @@ const A={
     closeSheet();save();render();
   },
   endMatch(){                         // encerra com o resultado que está no placar: 1 toque, sem perguntar nada
-    const l=L(),c=l.live.cur;if(!c)return;
+    const l=L(),c=l.live&&l.live.cur;if(!c)return;
     const r=c.score[0]>c.score[1]?0:c.score[1]>c.score[0]?1:'draw';
     A.finish({dataset:{r:String(r)}});
   },
@@ -3373,6 +3373,7 @@ const A={
     le.teams.forEach((ids,k)=>{if(lv.teams[k])lv.teams[k].ids=[...ids]});
     lv.queue=[...le.queue];lv.lastWinner=le.lastWinner;lv.lastStay=le.lastStay;lv.lastGks=le.lastGks;
     lv.nextPair=le.nextPair;
+    if(le.fila)lv.fila=[...le.fila];   // a fila de pessoas volta como estava antes do giro
     const c=le.cur;
     c.events.push({t:le.endedAt,type:'pause'},{t:Date.now(),type:'resume'});
     lv.cur=c;lv.lastEnd=null;
@@ -3380,25 +3381,27 @@ const A={
   },
   /* Pausar e cancelar: o racha para o tempo todo (bola na rua, discussão, chuva). */
   pauseMatch(){
-    const l=L(),c=l.live.cur;if(!c)return;
+    const l=L(),c=l.live&&l.live.cur;if(!c)return;
     c.paused=!c.paused;
     c.events.push({t:Date.now(),type:c.paused?'pause':'resume'});
     save();render();toast(c.paused?'Partida pausada':'Partida retomada');
   },
   cancelMatch(){
-    const l=L(),lv=l.live,c=lv.cur;if(!c)return;
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
     if(!confirm('Cancelar esta partida? Os gols e o tempo dela são descartados e nada vai para o histórico.'))return;
     lv.cur=null;save();render();toast('Partida cancelada');
   },
   delGoal(el){
-    const l=L(),c=l.live.cur,t=+el.dataset.t;
+    const l=L(),c=l.live&&l.live.cur;if(!c)return;
+    const t=+el.dataset.t;
     const i=c.events.findIndex(e=>e.type==='goal'&&e.t===t);
     if(i<0)return;
     c.score[c.events[i].side]--;c.events.splice(i,1);
     save();render();toast('Gol removido');
   },
   goalScorer(el){
-    const l=L(),lv=l.live,c=lv.cur,t=+el.dataset.t,own=el.dataset.own!==undefined?el.dataset.own==='1':false;
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+    const t=+el.dataset.t,own=el.dataset.own!==undefined?el.dataset.own==='1':false;
     const g=c.events.find(e=>e.type==='goal'&&e.t===t);if(!g)return;
     const contra=el.dataset.own!==undefined?own:!!g.own,lado=contra?1-g.side:g.side;
     openSheet(`<h2>Quem fez esse gol?</h2>
@@ -3408,13 +3411,15 @@ const A={
         <button class="tp big" data-a="setGoalScorer" data-t="${t}" data-id="">sem autor</button></div>`);
   },
   setGoalScorer(el){
-    const c=L().live.cur,t=+el.dataset.t;
+    const lv=L().live,c=lv&&lv.cur;if(!c)return;
+    const t=+el.dataset.t;
     const g=c.events.find(e=>e.type==='goal'&&e.t===t);
     if(g){g.pid=el.dataset.id||null;g.own=!!(g.pid&&el.dataset.own==='1')}
     closeSheet();save();render();
   },
   pres(el){
-    const l=L(),lv=l.live,id=el.dataset.id,i=lv.presentIds.indexOf(id);
+    const l=L(),lv=l.live;if(!lv)return;
+    const id=el.dataset.id,i=lv.presentIds.indexOf(id);
     lv.gkToday=lv.gkToday||[];
     if(i<0){
       lv.presentIds.push(id);
@@ -3432,7 +3437,8 @@ const A={
   },
   /* Quem veio de goleiro é decisão do dia, não do cadastro. */
   presGk(el){
-    const l=L(),lv=l.live,id=el.dataset.id;
+    const l=L(),lv=l.live;if(!lv)return;
+    const id=el.dataset.id;
     lv.gkToday=lv.gkToday||[];lv.gkTouched=true;
     const i=lv.gkToday.indexOf(id);
     if(i<0){lv.gkToday.push(id);if(lv.presentIds.indexOf(id)<0)lv.presentIds.push(id)}
@@ -3720,20 +3726,23 @@ const A={
     save();render();
   },
   goal(el){
-    const l=L(),c=l.live.cur,s=+el.dataset.s;
+    const l=L(),c=l.live&&l.live.cur;if(!c)return;
+    const s=+el.dataset.s;
     c.score[s]++;c.events.push({t:Date.now(),type:'goal',side:s,pid:null});
     buzz(18);save();render();
     if(l.cfg.askScorer)showScorer(s);
   },
   ungoal(el){
-    const c=L().live.cur,s=+el.dataset.s;
+    const lv=L().live,c=lv&&lv.cur;if(!c)return;
+    const s=+el.dataset.s;
     if(!c.score[s])return;
     c.score[s]--;
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'&&c.events[i].side===s){c.events.splice(i,1);break}
     save();render();
   },
   scorer(el){
-    const l=L(),c=l.live.cur,pid=el.dataset.id,own=!!(pid&&el.dataset.own==='1');
+    const l=L(),c=l.live&&l.live.cur;if(!c)return;
+    const pid=el.dataset.id,own=!!(pid&&el.dataset.own==='1');
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){c.events[i].pid=pid||null;c.events[i].own=own;break}
     clearTimeout(showScorer._t);
     save();render();                       // o card Gols precisa mostrar o autor na hora
@@ -3742,12 +3751,13 @@ const A={
   /* alterna a barra / a folha entre os nomes do time que marcou e os do outro (gol contra) */
   scorerSide(el){
     if(el.dataset.for==='goalScorerM'){const [id,i]=el.dataset.t.split('|');return A.goalScorerM({dataset:{id,i,own:el.dataset.own}})}
-    const c=L().live.cur;
+    const lv=L().live,c=lv&&lv.cur;if(!c)return;
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){showScorer(c.events[i].side,el.dataset.own==='1');break}
   },
   gkSheet(el){
-    const l=L(),lv=l.live,c=lv.cur,s=+el.dataset.s;
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+    const s=+el.dataset.s;
     const pool=(lv.gkPool||[]).filter(id=>id!==c.gks[s]);
     openSheet(`<h2>Goleiro — ${esc(lv.teams[s===0?c.a:c.b].name)}</h2>
       ${pool.length?`<div class="k" style="margin-bottom:8px">No rodízio</div>
@@ -3760,7 +3770,8 @@ const A={
       <div class="tiny muted" style="margin-top:10px;line-height:1.5">Quem está no rodízio troca de lado a cada partida e não ganha nem perde nível. Quem improvisa no gol continua contando normalmente pelo time.</div>`);
   },
   setGk(el){
-    const l=L(),lv=l.live,c=lv.cur,s=+el.dataset.s,id=el.dataset.id||null;
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+    const s=+el.dataset.s,id=el.dataset.id||null;
     const other=s===0?1:0;
     if(id&&c.gks[other]===id)c.gks[other]=c.gks[s]||null;   // veio do gol do outro time: os dois trocam de lugar
     c.gks[s]=id;
@@ -3770,10 +3781,11 @@ const A={
     closeSheet();save();render();
   },
   undo(){
-    const l=L(),c=l.live.cur;
+    const l=L(),lv=l.live;if(!lv)return;
+    const c=lv.cur;
     if(!c||!c.events.length){
-      if(!l.live.matchIds.length)return toast('Nada para desfazer');
-      return A.delMatch({dataset:{id:l.live.matchIds[l.live.matchIds.length-1]}});
+      if(!lv.matchIds.length)return toast('Nada para desfazer');
+      return A.delMatch({dataset:{id:lv.matchIds[lv.matchIds.length-1]}});
     }
     const ev=c.events.pop();
     if(ev.type==='goal')c.score[ev.side]--;
@@ -3867,6 +3879,7 @@ const A={
        partida e o estado da rodada ANTES do giro (times, fila, vencedor, goleiros) */
     lv.lastEnd={mid:m.id,endedAt,cur:JSON.parse(JSON.stringify(c)),
       teams:lv.teams.map(t=>[...t.ids]),queue:[...lv.queue],
+      fila:Array.isArray(lv.fila)?[...lv.fila]:null,
       lastWinner:lv.lastWinner===undefined?null:lv.lastWinner,
       lastStay:Array.isArray(lv.lastStay)?[...lv.lastStay]:null,
       lastGks:lv.lastGks?Object.assign({},lv.lastGks):null,
@@ -4414,8 +4427,10 @@ const A={
     p.role=el.dataset.r;save();A.pSheet(el);
   },
   delPlayer(el){
+    const l=L();
+    if(!souEditor(l))return toast('Só admin ou editor remove jogador');
     if(!confirm('Remover jogador? O histórico das partidas continua.'))return;
-    const l=L(),id=el.dataset.id,px=P(l,id);
+    const id=el.dataset.id,px=P(l,id);
     logAdd(l,'delPlayer',{pid:id,name:px?px.name:null,owner:px?px.owner:null});
     l.players=l.players.filter(p=>p.id!==id);
     if(l.live){l.live.presentIds=l.live.presentIds.filter(x=>x!==id);
@@ -4526,8 +4541,8 @@ function scorerTabs(alvo,t,contra){
     <button data-a="scorerSide" data-for="${alvo}" data-t="${t}" data-own="1" style="border:0;border-radius:6px;padding:3px 8px;font:inherit;cursor:pointer;background:${contra?'var(--line2)':'transparent'};color:${contra?'var(--chalk)':'var(--mute)'}">contra</button></span>`;
 }
 function showScorer(side,contra){
-  const l=L(),c=l.live.cur,box=$('#scorer');
-  if(!box)return;
+  const l=L(),c=l.live&&l.live.cur,box=$('#scorer');
+  if(!box||!c)return;
   const lado=contra?1-side:side;
   box.innerHTML=`<div class="scorerbar">
     <div class="row"><div class="k">Quem fez? (opcional)</div>${scorerTabs('scorer','',!!contra)}</div>
@@ -4629,6 +4644,7 @@ function endDrag(drop){
 }
 function onDrop(fromId,target){
   const l=L(),lv=l&&l.live;if(!lv||!fromId||!target)return;
+  if(!podeLancar(l))return;            // o arraste não passa pelo dispatcher de [data-a]
   const alvo=target.dataset.dropPlayer,zona=target.dataset.dropZone;
   if(alvo===fromId)return;
   if(lv.stage==='jogo'&&lv.cur){

@@ -868,6 +868,29 @@ mesmo milissegundo).
 dedicado: `sync.py` cobre o caminho de conflito e continua passando.
 
 
+### D-64 · Racha ao vivo à prova de tela atrasada — e o Voltar devolve a fila de verdade
+**31/08/2026.** Quatro consertos no racha em andamento. **(1)** "↩ Voltar a partida" passa a
+restaurar também **`lv.fila`** (a fila de pessoas): o instantâneo `lastEnd` guardava times, fila de
+times, vencedor e goleiros, mas o `finish` já tinha girado a fila — quem ia entrar era reclassificado
+como "chegou agora" e ia para o fundo. A DOCUMENTACAO (§"Fim sem querer tem volta") sempre prometeu
+que a fila volta; agora o código cumpre. **(2)** Guarda de `null` em todas as ações que mexem na
+partida corrente (`goal`, `ungoal`, `scorer`, `scorerSide`, `delGoal`, `goalScorer`,
+`setGoalScorer`, `gkSheet`, `setGk`, `undo`, `endMatch`, `pauseMatch`, `cancelMatch`, `clearSel`,
+`cancelRacha`, `pres`, `presGk`, `showScorer`): com dois celulares lançando, a tela pode estar um
+delta atrasada (refetch adiado por folha aberta) e a partida já ter acabado no outro aparelho —
+tocar em "gol" dava `TypeError` silencioso. **(3)** `onDrop` (arrastar) chama `A.doSub`/`A.sel`/
+`A.toPool`/`A.toTeam` por fora do dispatcher de `[data-a]`, então quem é só **Jogador** conseguia
+fazer substituição arrastando um nome; agora o arraste também exige `podeLancar`. `delPlayer` ganha
+a checagem de editor que o botão da ficha já sugeria. **(4)** Racha que vira a madrugada aparecia
+com duas datas: Stats rotulava pela primeira partida e Jogos pela última — a aba Jogos passa a usar
+a data em que o racha **começou** (a noite é de quinta, mesmo acabando 00h40 de sexta).
+**Descartado:** try/catch em volta do dispatcher (esconderia o erro em vez de tratá-lo — a guarda
+no handler diz exatamente o que ignorar); reagrupar partidas avulsas que cruzam a meia-noite num
+grupo só (mudaria a chave do grupo, e avulsa de madrugada é caso raro sem dono claro).
+**Onde:** `finish`/`voltarPartida` (instantâneo `fila`), ações citadas, `onDrop`, `delPlayer`,
+`viewHist` (`DIA(r.ts)`) em `index.html` · coberto pelos roteiros existentes de `smoke.py`.
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
