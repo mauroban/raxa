@@ -701,6 +701,32 @@ progresso que a linha mostra).
 **Onde:** `viewEscada` (`porElo`, usado na escada e no bloco "Sem nível ainda") · sem teste novo (é ordem de tela; `smoke.py` cobre a
 renderização) · DOCUMENTACAO §3.8 (ordem dentro do degrau) e §7 (nota no card dos melhores).
 
+### D-58 · Revisar é abrir a partida inteira, não só o placar
+**31/08/2026.** A revisão passa a mostrar **tudo o que a partida guardou**, antes dos botões de
+correção: resumo (minutos de jogo, quantas pessoas jogaram, gols, trechos que contam); **quem jogou
+de cada lado**, com tempo em quadra, 🧤 e tempo no gol, gols, gols contra, +/− e o que aconteceu com
+a pessoa (entrou aos 4'30, saiu aos 7'00, saiu e voltou); a **linha do tempo** com cada gol,
+substituição, troca de goleiro e pausa, no minuto de jogo e com o placar corrido; os **trechos**,
+com escalação dos dois lados, placar, se conta e com que peso; e o **efeito no nível**. A correção
+de autor de gol saiu da lista separada de gols e virou o próprio gol na linha do tempo.
+**Por quê:** revisar é decidir se o registro está certo, e o registro é muito maior que 2×1 — quem
+contesta quase nunca discorda do placar, discorda de *quem estava em quadra*, de *quando a troca
+aconteceu* ou de *qual trecho contou*. Tudo isso já estava gravado (`stints`, `events`, `goals`,
+`deltas`, `moves`, D-01/D-29) e não aparecia em lugar nenhum: o admin tinha que decidir no escuro
+ou abrir o JSON. A linha do tempo também é o único lugar onde a partida volta a ser uma história em
+ordem — é o que faz o admin lembrar do que aconteceu.
+**Descartado:** abas dentro do sheet (esconderiam justamente o que se quer comparar de relance —
+quem jogou × o que aconteceu); mostrar tudo aberto (numa partida única de 50 minutos vira parede de
+rolagem: linha do tempo abre por padrão, trechos e nível abrem com um toque); expor a mesma ficha
+para todo mundo no histórico (é tela de decisão do admin, e mostra Elo cru — a ficha pública de
+partida fica para depois, se pedirem); recalcular qualquer coisa para a tela (a revisão só lê o que
+a partida gravou; nada de estatística nova por baixo).
+**Onde:** DOCUMENTACAO §6 e §8 · `fichaPartida`, `fichaLinha`, `revTempo`, `revTrechos`, `revNivel`,
+`revDetalhe`, `corTime`, `A.review`, `A.revSec` · `smoke.py` ("revisar partida mostra a partida
+inteira", "ficha da partida conta tempo, gols e +/- de quem jogou" — o +/− da ficha é conferido
+contra `plusMinus`, o motor) · `layout.py` (snapshots com trechos e nível abertos).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

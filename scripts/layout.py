@@ -66,6 +66,8 @@ S.ui.tab='ranking';render();snap('patentes');
 A.pSheet({dataset:{id:L().players[0].id}});snap('sheet jogador');
 S.ui.tab='hist';render();snap('historico');
 A.review({dataset:{id:L().matches[0].id}});snap('sheet revisar');
+A.revSec({dataset:{k:'trechos',id:L().matches[0].id}});snap('sheet revisar trechos');
+A.revSec({dataset:{k:'nivel',id:L().matches[0].id}});snap('sheet revisar nivel');
 S.ui.tab='cfg';render();snap('ajustes');
 S.ui.tab='racha';render();snap('racha');
 A.endRacha();snap('sheet fim de racha');

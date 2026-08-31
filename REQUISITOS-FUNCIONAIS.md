@@ -197,6 +197,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-07.2 | Qualquer participante pode contestar uma partida, uma vez por pessoa (em v1, identificada pelo nome deste aparelho) | P0 | 🔶 v1 parcial |
 | RF-07.3 | Exibir o número de contestações na partida e um aviso no topo do histórico | P0 | ✅ v1 |
 | RF-07.4 | Configurar o limite de contestações e o efeito ao atingi-lo: apenas sinalizar ou suspender o efeito da partida | P1 | ✅ v1 |
+| RF-07.4b | A revisão mostra a partida inteira: resumo, quem jogou de cada lado (tempo em quadra, papel, gols, +/−, entrou/saiu), linha do tempo (gols, substituições, trocas de goleiro, pausas), trechos com escalação e peso, e efeito no nível | P1 | ✅ v1 |
 | RF-07.5 | Admin pode manter, corrigir o resultado, anular ou apagar uma partida | P0 | ✅ v1 |
 | RF-07.6 | Toda correção, anulação ou exclusão recalcula a Liga inteira do zero, sem resíduo | P0 | ✅ v1 |
 | RF-07.7 | Partida anulada permanece visível no histórico, marcada e sem efeito nas patentes | P1 | ✅ v1 |

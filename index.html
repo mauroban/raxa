@@ -325,6 +325,19 @@ body.painting{touch-action:none;overflow:hidden}
 .win{color:var(--ok)}
 .flag{font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:6px}
 .mine{font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:6px;border:1px solid currentColor}
+/* linha do tempo da revisão: um evento por linha (gol, troca, goleiro, pausa) */
+.evr{display:flex;align-items:center;gap:9px;padding:9px 10px;width:100%;background:transparent;
+  border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;text-align:left}
+.evr:last-child{border-bottom:0}
+button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--panel2)}
+.evr .t{min-width:42px;flex:0 0 auto}
+.evr .d{flex:1;min-width:0}
+.evr .nm{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evr .meta{font-size:11.5px;color:var(--mute);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evr .plc{font-family:var(--disp);font-weight:800;font-size:15px;color:var(--mute);flex:0 0 auto}
+.evr.mut .nm{font-weight:500;color:var(--mute)}
+.trecho{background:var(--panel2);border-radius:12px;padding:10px 11px;margin-bottom:7px}
+.trecho.off{opacity:.55}
 .rachaRow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;
   border:0;border-bottom:1px solid var(--line);color:var(--chalk);padding:14px 12px;cursor:pointer;font-family:inherit;min-height:60px}
 .rachaRow:last-child{border-bottom:0}
@@ -2505,6 +2518,162 @@ function mrow(liga,m,compact,eu){
       ${souAdmin(liga)?`<button class="btn sm ghost" data-a="review" data-id="${m.id}">Revisar</button>`:''}</div>`}
   </div>`;
 }
+/* ---------- ficha completa de uma partida encerrada ----------
+   A partida guarda muito mais do que o placar: quem estava em quadra em cada
+   trecho, quem entrou e saiu, quem pegou no gol, o log de eventos com hora.
+   `fichaPartida` remonta isso por jogador — é o que a revisão mostra.       */
+function corTime(m,side){
+  const i=(m.teamIdx?m.teamIdx[side]:side)||0;
+  return ['var(--lime)','var(--coral)','var(--cyan)','var(--white)'][i%4];
+}
+function fichaPartida(liga,m){
+  const sts=matchStints(liga,m),J={},ult=sts.length-1;
+  const rel=t=>(m.startedAt&&Array.isArray(m.events))?gameTime(m,t):Math.max(0,(t||0)-(m.startedAt||m.ts));
+  sts.forEach((st,i)=>{
+    const part=stintPart(st),sc=st.score||[0,0];
+    for(const pid in part){
+      const x=part[pid];
+      const j=J[pid]||(J[pid]={pid,side:x.side,min:0,minGk:0,gols:0,contra:0,pm:0,trechos:0,iDe:i,iAte:i,gk:false});
+      j.side=x.side;j.min+=st.dur||0;j.trechos++;j.iAte=i;
+      if(x.role==='G'){j.gk=true;j.minGk+=st.dur||0}
+      j.pm+=(sc[x.side]||0)-(sc[1-x.side]||0);
+    }
+  });
+  (m.goals||[]).forEach(g=>{const j=J[g.pid];if(!j)return;if(g.own)j.contra++;else j.gols++});
+  const out=[];
+  for(const pid in J){
+    const j=J[pid],a=sts[j.iDe],b=sts[j.iAte];
+    j.de=(j.iDe>0&&a&&a.from!==undefined)?rel(a.from):0;                 // entrou depois do apito inicial
+    j.ate=(j.iAte<ult&&b&&b.to!==undefined)?rel(b.to):null;              // saiu antes do fim
+    j.volta=j.trechos!==(j.iAte-j.iDe+1);                                // saiu e voltou no meio
+    j.delta=(m.deltas||{})[pid];
+    out.push(j);
+  }
+  return out.sort((x,y)=>x.side-y.side||y.min-x.min||y.pm-x.pm);
+}
+/* Uma linha por jogador: tempo em quadra, papel, gols e o que aconteceu com
+   ele na partida (entrou tarde, saiu antes, voltou depois).                 */
+function fichaLinha(liga,m,j){
+  const t=[];
+  if(j.min)t.push(fmtMin(j.min));
+  if(j.gk&&j.minGk&&j.minGk<j.min)t.push('no gol '+fmtMin(j.minGk));
+  if(j.gols)t.push(pl(j.gols,'gol'));
+  if(j.contra)t.push(j.contra+' contra');
+  if(j.de)t.push('entrou '+mmss(j.de));
+  if(j.ate!==null&&j.ate!==undefined)t.push('saiu '+mmss(j.ate));
+  if(j.volta)t.push('voltou depois');
+  return `<div class="rk3"><span class="pos">${j.gk?'🧤':'·'}</span>
+    <div class="nm">${esc(nameOf(liga,j.pid))}${t.length?`<small>${t.join(' · ')}</small>`:''}</div>
+    <span class="val num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</span></div>`;
+}
+/* Linha do tempo: o log bruto da partida em português. Gol é botão para o
+   admin trocar o autor sem sair do contexto em que o gol aconteceu.         */
+function revTempo(liga,m,podeEditar){
+  const evs=[...(m.events||[])].sort((a,b)=>a.t-b.t);
+  const minDe=t=>m.startedAt?mmss(gameTime(m,t)):'';
+  const row=(ic,txt,meta,min,side)=>`<div class="evr mut">
+    <span class="num tiny muted t">${min}</span>
+    <span class="pdot" style="background:${side===null?'var(--mute2)':corTime(m,side)}"></span>
+    <div class="d"><div class="nm">${ic} ${txt}</div>${meta?`<div class="meta">${meta}</div>`:''}</div></div>`;
+  const sc=[0,0];let gi=-1;
+  const linhas=evs.map(ev=>{
+    const min=minDe(ev.t);
+    if(ev.type==='goal'){
+      gi++;sc[ev.side]++;
+      const g=(m.goals||[])[gi]||ev,i=gi,tag=podeEditar?'button':'div';
+      const quem=g.pid?esc(nameOf(liga,g.pid))+(g.own?' <span class="tiny muted">(contra)</span>':'')
+        :'<span class="muted">sem autor</span>';
+      return `<${tag} class="evr" ${podeEditar?`data-a="goalScorerM" data-id="${m.id}" data-i="${i}"`:''}>
+        <span class="num tiny muted t">${min}</span>
+        <span class="pdot" style="background:${corTime(m,ev.side)}"></span>
+        <div class="d"><div class="nm">⚽ ${quem}</div>
+          <div class="meta">gol do ${esc(m.names[ev.side])}${podeEditar?' · toque para corrigir o autor':''}</div></div>
+        <span class="plc num">${sc[0]}-${sc[1]}</span></${tag}>`;
+    }
+    if(ev.type==='sub'){
+      const sai=esc(nameOf(liga,ev.out));
+      return row('⇄',ev.in?`Sai ${sai} · entra ${esc(nameOf(liga,ev.in))}`:`Sai ${sai}`,
+        (ev.in?'troca':'saiu sem substituto')+' no '+esc(m.names[ev.side]),min,ev.side);
+    }
+    if(ev.type==='gk')return row('🧤',ev.id?esc(nameOf(liga,ev.id))+' foi para o gol':'sem goleiro fixo',
+      'goleiro do '+esc(m.names[ev.side]),min,ev.side);
+    if(ev.type==='pause')return row('⏸','Pausa','',min,null);
+    if(ev.type==='resume')return row('▶','Voltou','',min,null);
+    return '';
+  }).join('');
+  if(!linhas)return `<div class="tiny muted" style="padding:8px 2px">Esta partida foi lançada sem o log de eventos — ficaram só o placar e os gols.</div>`;
+  const fim=`<div class="evr mut"><span class="num tiny muted t">${m.endedAt&&m.startedAt?mmss(gameTime(m,m.endedAt)):''}</span>
+    <span class="pdot" style="background:var(--mute2)"></span>
+    <div class="d"><div class="nm">🏁 Fim — ${m.score[0]}-${m.score[1]}</div>
+      <div class="meta">${m.result==='draw'?'empate':'venceu '+esc(m.names[m.result])}</div></div></div>`;
+  return `<div class="card" style="padding:0;overflow:hidden">${linhas}${fim}</div>`;
+}
+/* Trechos: cada formação que esteve em quadra, o que ela fez e se contou para
+   o nível. É aqui que se enxerga por que uma partida virou dois jogos.      */
+function revTrechos(liga,m){
+  return matchStints(liga,m).map(st=>{
+    const nomes=sd=>((st.lineups||[])[sd]||[]).map(id=>esc(nameOf(liga,id).split(' ')[0])+(((st.gks||[])[sd]===id)?' 🧤':'')).join(', ')||'—';
+    const jan=(m.startedAt&&st.from!==undefined&&st.to!==undefined)?mmss(gameTime(m,st.from))+'–'+mmss(gameTime(m,st.to)):'';
+    const sc=st.score||[0,0];
+    const res=st.result==='draw'?'empate':'venceu '+esc(m.names[st.result]);
+    const tam=[((st.lineups||[])[0]||[]).length,((st.lineups||[])[1]||[]).length];
+    return `<div class="trecho${st.counted?'':' off'}">
+      <div class="row" style="gap:8px"><b class="num" style="font-family:var(--disp);font-size:17px">${sc[0]}-${sc[1]}</b>
+        <div class="tiny muted" style="min-width:0">${jan?jan+' · ':''}${tam[0]}v${tam[1]} · ${res}</div>
+        <span class="flag sp" style="border:1px solid var(--line);color:${st.counted?'var(--ok)':'var(--mute)'}">${st.counted?'conta '+Math.round((st.w||0)*100)+'%':'descartado'}</span></div>
+      <div class="tiny" style="margin-top:6px;color:${corTime(m,0)}">${nomes(0)}</div>
+      <div class="tiny" style="color:${corTime(m,1)}">${nomes(1)}</div>
+      ${st.counted?'':`<div class="tiny muted" style="margin-top:4px">curto demais para valer nível — os gols dele continuam no +/−</div>`}</div>`;
+  }).join('');
+}
+/* O que a partida fez com o nível de cada um. Quem revisa é o admin, que já
+   enxerga o Elo cru na escada, então o número pode aparecer aqui.           */
+function revNivel(liga,m){
+  if(m.voided)return `<div class="tiny muted" style="padding:6px 2px">Partida anulada: não mexeu no nível de ninguém.</div>`;
+  const ds=Object.keys(m.deltas||{}).map(pid=>({pid,d:m.deltas[pid]||0})).sort((a,b)=>b.d-a.d);
+  if(!ds.length)return `<div class="tiny muted" style="padding:6px 2px">Nada registrado — esta partida não moveu nível.</div>`;
+  const mv={};(m.moves||[]).forEach(x=>{mv[x.pid]=x});
+  return ds.map(x=>{
+    const sob=mv[x.pid],pre=(m.pre||{})[x.pid];
+    const nota=sob?`agora é ${esc(rankLabel(liga,sob.rank))}${sob.role==='G'?' no gol':''}`
+      :(pre!==undefined?Math.round(pre)+' → '+Math.round(pre+x.d):'');
+    return `<div class="rk3"><span class="pos">${sob?(sob.dir>0?'🔺':'🔻'):'·'}</span>
+      <div class="nm">${esc(nameOf(liga,x.pid))}${nota?`<small>${nota}</small>`:''}</div>
+      <span class="val num ${x.d>0?'up':x.d<0?'dn':''}">${pmTxt(x.d)}</span></div>`;
+  }).join('');
+}
+/* A revisão inteira: ficha, quem jogou, linha do tempo, trechos e nível. As
+   seções longas abrem sob demanda para o admin não rolar tela à toa.        */
+function revDetalhe(liga,m){
+  const sts=matchStints(liga,m),cont=sts.filter(st=>st.counted);
+  const durTot=sts.reduce((a,st)=>a+(st.dur||0),0);
+  const ficha=fichaPartida(liga,m),ab=S.ui.revAb||{};
+  const sec=(k,titulo,nota,html,aberto)=>`<div class="sec"><div class="k2"><span>${titulo}</span>${nota?`<span class="tiny">${nota}</span>`:''}</div>
+    ${aberto?html:''}<button class="more" data-a="revSec" data-k="${k}" data-id="${m.id}">${aberto?'▴ esconder':'▾ ver'}</button></div>`;
+  const bloco=sd=>{
+    const time=ficha.filter(j=>j.side===sd);
+    return `<div class="sec"><div class="k2"><span style="color:${corTime(m,sd)}">${esc(m.names[sd])}</span>
+      <span class="tiny">${pl(m.score[sd],'gol')} · ${pl(time.length,'jogador','jogadores')}</span></div>
+      ${time.length?time.map(j=>fichaLinha(liga,m,j)).join(''):'<div class="tiny muted" style="padding:6px 2px">sem escalação registrada</div>'}</div>`;
+  };
+  return `
+    <div class="mini" style="margin-bottom:12px">
+      <div class="tm" style="color:${corTime(m,0)}">${esc(m.names[0])}</div>
+      <div class="sc num">${m.score[0]}<span class="muted">–</span>${m.score[1]}</div>
+      <div class="tm r" style="color:${corTime(m,1)}">${esc(m.names[1])}</div></div>
+    <div class="tiny muted" style="margin:-4px 0 12px">${new Date(m.ts).toLocaleString('pt-BR')}
+      · ${m.result==='draw'?'empate':'venceu '+esc(m.names[m.result])}
+      · ${m.mode==='unica'?'partida única':'racha curto'}${m.voided?' · <b class="dn">ANULADA</b>':''}</div>
+    <div class="stat four">
+      <div><b class="num">${durTot?MINS(durTot):'—'}</b><span>min de jogo</span></div>
+      <div><b class="num">${ficha.length}</b><span>jogadores</span></div>
+      <div><b class="num">${m.score[0]+m.score[1]}</b><span>gols</span></div>
+      <div><b class="num">${cont.length}</b><span>${cont.length===1?'trecho':'trechos'}</span></div></div>
+    ${bloco(0)}${bloco(1)}
+    ${sec('tempo','Linha do tempo',pl((m.events||[]).length,'evento'),revTempo(liga,m,souAdmin(liga)),ab.tempo!==false)}
+    ${sec('trechos','Trechos',cont.length+' de '+sts.length+' contam',revTrechos(liga,m),!!ab.trechos)}
+    ${sec('nivel','Efeito no nível',null,revNivel(liga,m),!!ab.nivel)}`;
+}
 /* O histórico é por RACHA, não por partida: uma noite de 12 partidas em uma
    linha só. Tocar no racha abre as partidas dele. Partida lançada solta (sem
    sessão) vira um grupo do próprio dia.                                      */
@@ -3444,24 +3613,18 @@ const A={
     }else toast('Contestada ('+m.disputes.length+'/'+l.cfg.disputeThreshold+')');
     closeSheet();save();render();
   },
+  /* A revisão mostra a partida inteira — quem jogou, quanto tempo, cada gol,
+     cada troca, os trechos e o efeito no nível — e só depois as correções.  */
   review(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
     if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
     const d=m.disputes||[];
     openSheet(`<h2>Revisar partida</h2>
-      <div class="tiny muted" style="margin-bottom:12px">${esc(m.names[0])} ${m.score[0]} - ${m.score[1]} ${esc(m.names[1])}
-        · ${new Date(m.ts).toLocaleString('pt-BR')}${m.voided?' · <b class="dn">ANULADA</b>':''}</div>
       ${d.length?`<div class="card" style="background:var(--panel2);margin-bottom:12px">
         <div class="k" style="margin-bottom:6px">${d.length} contestação(ões)</div>
         <div class="tiny">${d.map(x=>esc(x.by)).join(', ')}</div></div>`:''}
-      ${(m.goals||[]).length?`<div class="k" style="margin-bottom:6px">Gols — toque para corrigir o autor</div>
-      <div class="card" style="padding:0;margin-bottom:14px">${(m.goals||[]).map((g,i)=>`<button class="rank" data-a="goalScorerM" data-id="${m.id}" data-i="${i}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;cursor:pointer">
-        <span class="pdot" style="--pc:var(--mute);background:${['var(--lime)','var(--coral)','var(--cyan)','var(--white)'][m.teamIdx?m.teamIdx[g.side]:g.side]}"></span>
-        <span class="num tiny muted" style="min-width:38px">${g.min!==undefined?mmss(g.min):''}</span>
-        <div style="min-width:0;flex:1"><div class="nm">${g.pid?esc(nameOf(l,g.pid))+(g.own?' <span class="tiny muted">contra</span>':''):'<span class="muted">sem autor</span>'}</div>
-          <div class="meta"><span class="tiny muted">gol do ${esc(m.names[g.side])}</span></div></div>
-        <div style="color:var(--mute);font-size:18px">›</div></button>`).join('')}</div>`:''}
-      <div class="k" style="margin-bottom:8px">Corrigir resultado</div>
+      ${revDetalhe(l,m)}
+      <div class="k" style="margin:18px 0 8px">Corrigir resultado</div>
       <div style="display:grid;gap:7px;margin-bottom:14px">
         ${[[0,esc(m.names[0])+' venceu'],['draw','Empate'],[1,esc(m.names[1])+' venceu']]
           .map(x=>`<button class="btn wide ${String(m.result)===String(x[0])?'pri':'ghost'}" data-a="fixResult" data-id="${m.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
@@ -3471,6 +3634,13 @@ const A={
         <button class="btn sm ${m.voided?'pri':'ghost'}" data-a="voidMatch" data-id="${m.id}">${m.voided?'Reativar':'Anular'}</button>
         <button class="btn sm danger sp" data-a="delMatch" data-id="${m.id}">Apagar</button>
       </div>`);
+  },
+  /* abre/fecha uma seção da revisão e volta para a mesma revisão */
+  revSec(el){
+    S.ui.revAb=Object.assign({},S.ui.revAb);
+    const k=el.dataset.k,ab=S.ui.revAb;
+    ab[k]=k==='tempo'?(ab[k]===false):!ab[k];
+    A.review({dataset:{id:el.dataset.id}});
   },
   /* autor de um gol numa partida já encerrada (revisão): a lista é quem esteve
      em quadra pelo time que marcou; "contra" troca para o outro time         */

@@ -442,7 +442,38 @@ step('abrir um racha mostra as partidas dele',()=>{
   if(viewHist(l).indexOf('rachaRow')<0)throw new Error('nao voltou para a lista de rachas');
 });
 step('contestar partida',()=>A.contest({dataset:{id:L().matches[0].id}}));
-step('revisar partida',()=>A.review({dataset:{id:L().matches[0].id}}));
+step('revisar partida mostra a partida inteira',()=>{
+  const l=L(),m=l.matches[0];
+  A.review({dataset:{id:m.id}});
+  const h=els['#sheet'].innerHTML;
+  if(!/Linha do tempo/.test(h))throw new Error('revisao sem linha do tempo');
+  if(!/Trechos/.test(h)||!/Efeito no nível/.test(h))throw new Error('revisao sem trechos ou efeito no nivel');
+  if(h.indexOf(m.names[0])<0||h.indexOf(m.names[1])<0)throw new Error('revisao sem os dois times');
+  /* quem esteve em quadra tem que aparecer, mesmo sem gol */
+  const em=new Set();matchStints(l,m).forEach(st=>[0,1].forEach(sd=>(st.lineups[sd]||[]).forEach(id=>em.add(id))));
+  const ficha=fichaPartida(l,m);
+  if(ficha.length!==em.size)throw new Error('a ficha nao lista todo mundo que jogou ('+ficha.length+' de '+em.size+')');
+  [...em].forEach(id=>{if(h.indexOf(esc(nameOf(l,id)))<0)throw new Error('quem jogou nao aparece na revisao: '+nameOf(l,id))});
+  /* trechos e nivel abrem sob demanda */
+  if(/conta 100%|descartado/.test(h))throw new Error('trechos deveriam comecar fechados');
+  A.revSec({dataset:{k:'trechos',id:m.id}});
+  if(!/conta |descartado/.test(els['#sheet'].innerHTML))throw new Error('trechos nao abriram');
+  A.revSec({dataset:{k:'nivel',id:m.id}});
+  if(!/Efeito no nível/.test(els['#sheet'].innerHTML))throw new Error('efeito no nivel nao abriu');
+  A.revSec({dataset:{k:'tempo',id:m.id}});
+  if(/toque para corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('linha do tempo nao fechou');
+  A.revSec({dataset:{k:'tempo',id:m.id}});
+});
+step('ficha da partida conta tempo, gols e +/- de quem jogou',()=>{
+  const l=L(),m=[...l.matches].reverse().find(x=>(x.events||[]).some(e=>e.type==='sub'))||l.matches[0];
+  const ficha=fichaPartida(l,m);
+  const gols=ficha.reduce((a,j)=>a+j.gols+j.contra,0);
+  const comDono=(m.goals||[]).filter(g=>g.pid).length;
+  if(gols!==comDono)throw new Error('gols com autor na ficha ('+gols+') nao batem com a partida ('+comDono+')');
+  ficha.forEach(j=>{if(j.min<0||j.trechos<1)throw new Error('tempo em quadra invalido para '+nameOf(l,j.pid))});
+  const pm={};plusMinus(l,m,(pid,d)=>pm[pid]=(pm[pid]||0)+d);
+  ficha.forEach(j=>{if((pm[j.pid]||0)!==j.pm)throw new Error('+/- da ficha diverge do motor para '+nameOf(l,j.pid))});
+});
 step('corrigir resultado',()=>A.fixResult({dataset:{id:L().matches[0].id,r:'draw'}}));
 step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('reativar partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
