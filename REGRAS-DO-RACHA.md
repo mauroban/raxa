@@ -69,9 +69,10 @@ Time A 5  x  5 Time B (novo)   fila: os 3 que saíram
 **Quem sai do time que perdeu:** o app tira quem **mais jogou na noite** — é o que faz a fila girar parelho.
 Quem fica é sempre visível na tela da próxima partida, e trocar é um toque.
 
-**Empate:** com 3 ou 4 times, os dois saem e entram os próximos. Com 2 times, ninguém sai automaticamente —
-eles jogam de novo. Se o pessoal combinar outra coisa (alguém cansado, empate, quem tomou o último gol),
-o botão **↻ Girar no Time X** gira a fila na hora.
+**Empate:** com 4 times, os dois saem e entram os próximos; com 3, um fica — o que entrou por último
+(o que já estava sai). Com 2 times, ninguém sai automaticamente — eles jogam de novo. Se o pessoal
+combinar outra coisa (alguém cansado, quem tomou o último gol), é trocar os times na tela da
+próxima partida — toque ou arraste.
 
 ### 2.3 Quando um time fica curto
 
@@ -149,7 +150,7 @@ Mais o artilheiro, o goleiro menos vazado e quem mais apareceu. Cada linha diz `
 | manter a ordem da fila | quem entra e quem fica |
 | sugerir o próximo confronto | qual time entra em cada lado |
 | sugerir quem completa um time curto | quem completa — ou jogar com menos |
-| girar a fila quando um time sai | girar a fila na mão, quando quiser |
+| girar a fila quando um time sai | trocar qualquer time da próxima partida na mão |
 | escalar e alternar os goleiros do rodízio | quem pega no gol, a qualquer momento |
 
 Nenhuma dessas sugestões bloqueia nada. Se a decisão do app não bate com o que a galera combinou na quadra,

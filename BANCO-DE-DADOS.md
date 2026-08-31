@@ -346,14 +346,20 @@ Duas coisas que **não** são política de RLS e sim de API: o rating numérico 
 - Toda correção, anulação ou exclusão dispara `rebuildAll(liga)` **em transação**: zera o cache de rating
   de todos os jogadores e reaplica as partidas válidas em ordem de `jogada_em`. É determinístico: recálculo
   do zero bate exatamente com o incremental (testado no protótipo, e o teste sobe junto).
-- `matches.deltas` é registro histórico do que aquela partida moveu — serve para auditar, não para somar.
-- Lançamento concorrente (dois celulares na mesma quadra) resolve por `sessions.id` + `matches.ordem`
-  com `unique (session_id, ordem)`: o segundo a gravar recebe conflito, recarrega e reordena.
+- `matches.deltas` (e `acima_esp`) seriam **derivados guardados como registro histórico** — para auditar,
+  não para somar. Nota: o esquema intermediário atual foi na direção oposta e não grava derivado nenhum
+  (`matchFacts` remove `deltas`/`moves`/`pre`/`over` antes de subir — D-63); se este alvo for implementado,
+  decidir de novo se o registro histórico paga o custo de reenviar partidas a cada recálculo.
+- Lançamento concorrente (dois celulares na mesma quadra) resolveria por `sessions.id` + `matches.ordem`
+  com `unique (session_id, ordem)`: o segundo a gravar recebe conflito, recarrega e reordena. **Hoje** quem
+  faz esse papel é a trava otimista de `leagues.version` no `save_parts` (compare-and-swap: quem grava com
+  versão velha recebe o delta e reenvia).
 - Realtime: um canal por `session_id` para a partida ao vivo, um por `liga_id` para ranking e histórico.
 
-## 9. Offline
+## 9. Offline (alvo — hoje o app precisa de rede)
 
-O app continua funcionando sem internet, que é o requisito da quadra. A fila local guarda as operações
+No alvo, o app volta a funcionar sem internet, que é o requisito da quadra (o protótipo local funcionava;
+a versão atual com backend não — ver DEPLOY.md). A fila local guarda as operações
 (`match.create`, `goal.add`, `sub`, `match.end`) com id gerado no cliente (uuid v7, ordenável por tempo) e
 envia ao reconectar. Como o id vem do cliente, reenviar é idempotente: `insert … on conflict (id) do nothing`.
 

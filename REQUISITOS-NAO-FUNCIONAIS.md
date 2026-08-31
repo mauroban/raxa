@@ -2,7 +2,7 @@
 
 Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · modelo de dados da v2 em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
 
-Cada requisito traz uma **meta verificável**. Onde a meta não é atingível na v1 (protótipo local), está marcado o que fica para a v2.
+Cada requisito traz uma **meta verificável**. Onde a meta ainda não é atingível na versão atual (com backend), está marcado o que fica para a v2.
 
 ---
 
@@ -43,11 +43,11 @@ Cada requisito traz uma **meta verificável**. Onde a meta não é atingível na
 
 | # | Requisito | Meta |
 |---|---|---|
-| RNF-03.1 | O app funciona **sem internet**, do início ao fim do racha | 100% das funções de racha |
+| RNF-03.1 | O app funciona **sem internet**, do início ao fim do racha | **v2** — hoje precisa de rede (DEPLOY.md); o protótipo local atingia |
 | RNF-03.2 | Nenhum recurso externo é obrigatório para funcionar | fontes web degradam para fontes do sistema |
 | RNF-03.3 | Fechar o app ou perder a bateria não perde o racha | estado gravado a cada ação |
 | RNF-03.4 | Retomada do racha em andamento após reabrir | automática, sem perguntar nada |
-| RNF-03.5 | Sincronização (v2) tolera ficar offline por toda a sessão | fila local, envio ao reconectar — **v2** |
+| RNF-03.5 | A sincronização tolera ficar offline por toda a sessão | fila local, envio ao reconectar — **v2** (hoje: retomada com backoff e reenvio ao reconectar) |
 
 ---
 

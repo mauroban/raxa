@@ -13,7 +13,9 @@ App de racha (futebol de várias partidas curtas com nível Elo por jogador). Um
 
 ## Como publicar uma mudança
 1. `python scripts/test.py` (motor) · `python scripts/smoke.py` (telas, DOM falso) ·
-   `python scripts/sync.py` (backend com Supabase falso). Os três têm que passar.
+   `python scripts/sync.py` (backend com Supabase falso) · `python scripts/layout.py`
+   (HTML gerado). Os quatro têm que passar. `python scripts/visual.py` (Chrome
+   headless, prints) é opcional — rodar quando a mudança mexe em layout/CSS.
 2. Atualizar a documentação no mesmo commit: `DOCUMENTACAO.md` (comportamento),
    `DECISOES.md` (nova entrada D-NN: data, o quê, por quê, descartado, onde), `DEPLOY.md`
    (se o SQL mudou), `BANCO-DE-DADOS.md` (modelo).

@@ -83,7 +83,7 @@ gh api -X POST repos/:owner/raxa/pages -f "source[branch]=main" -f "source[path]
 4. Cada pessoa cria a conta dela e usa **Entrar com um código**. Isso gera um
    **pedido**: o admin aprova em **Jogadores → Membros** e a liga aparece para a
    pessoa na hora (ela vê "Aguardando aprovação" na home até lá).
-5. Em **Jogadores**, cada um abre o próprio nome e toca em **assumir perfil** para
+5. Em **Jogadores**, cada um abre o próprio nome e toca em **Sou eu** para
    vincular a conta ao jogador.
 
 Com o racha rolando, quem está com a tela aberta acompanha placar, cronômetro e
@@ -122,6 +122,8 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
 python scripts/test.py    # motor: rating, patentes, trechos, estatísticas
 python scripts/smoke.py   # todas as telas e fluxos, num DOM falso
 python scripts/sync.py    # contas, RLS, trava otimista e tempo real (Supabase falso)
+python scripts/layout.py  # estrutura do HTML gerado (tags, botões aninhados)
+python scripts/visual.py  # opcional: Chrome/Edge headless, salva prints
 ```
 
 `sync.py` roda contra um Supabase de mentira em memória, então não precisa de rede

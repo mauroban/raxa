@@ -968,6 +968,35 @@ marcador `@@FIM-DO-MOTOR@@`, `ACOES_LANCAR`) · `scripts/test.py` (extração co
 `scripts/smoke.py` (passo "toda acao tem classificacao de papel").
 
 
+### D-68 · A documentação alcança o backend — a §8 sai da era do localStorage
+**31/08/2026.** Varredura de documentação contra o código. **DOCUMENTACAO.md:** a §8 ("estado do
+protótipo") ainda descrevia a v1 — "tudo em localStorage, funciona offline", backend/contas/sync
+listados como v2 futura, sequências e edição de nome como inexistentes (tudo isso já existia);
+reescrita para o estado real, com a lista "ainda não existe" de verdade (link de convite, offline,
+recuperação de senha, papel de escrita no servidor, temporadas…). Corrigidas as duas menções
+erradas ao empate com 3 times ("os dois saem" — contradizia a própria §"Fila com 3–4 times" e o
+código, D-39), o botão "↻ Girar" que não existe desde D-32 (também em REGRAS-DO-RACHA.md e
+RF-05.3l), o rótulo real do botão de vincular ("Sou eu", não "Este perfil sou eu"), a §7.3 marcando
+link/busca como v2 e removendo a "entrada livre" que nunca existiu, e o princípio 11 que ainda
+citava a proteção pós-promoção (D-46). **REQUISITOS:** RF-03.7/03.10 atualizados para 15 partidas
+e K 64/32 (D-53/D-55); RF-10.1/10.2 deixam de afirmar "local e offline" (a versão com backend
+precisa de rede); RF-10.3 (sincronização) marcado ✅; RF-11.15 parcial (sequências existem);
+RNF-03.1/03.5 idem. **README:** modelo em partes (não "um documento jsonb"), botão do demo só sem
+liga nenhuma, `sync.py` na lista de testes, `config.js`/`schema.sql` na estrutura, "sem
+dependências" corrigido (supabase-js via CDN + fontes). **CLAUDE.md e DEPLOY.md:** a lista de
+testes vira os 4 obrigatórios + `visual.py` opcional — os três documentos citavam conjuntos
+diferentes. **BANCO-DE-DADOS.md:** cabeçalho sem localStorage; §8 explica que hoje a concorrência
+é a trava de `leagues.version` (o `unique(session_id, ordem)` é alvo); §9 offline marcado como
+alvo; nota sobre derivados (o esquema atual não grava nenhum — D-63).
+**Por quê:** doc que contradiz o código (ou a si mesma, caso do empate) ensina errado exatamente
+quem ela existe para ensinar.
+**Descartado:** apagar a parte "alvo relacional" de BANCO-DE-DADOS.md (continua sendo o desenho da
+v2 — só ganhou as notas de "hoje é assim").
+**Onde:** DOCUMENTACAO.md (§2, §4.2, §5.5, §7.3, §8, §8.1, §9) · REGRAS-DO-RACHA.md ·
+REQUISITOS-FUNCIONAIS.md · REQUISITOS-NAO-FUNCIONAIS.md · README.md · CLAUDE.md · DEPLOY.md ·
+BANCO-DE-DADOS.md · `.gitignore` (exemplo_partida_real.json, dados reais, fora do repositório).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

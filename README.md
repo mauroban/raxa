@@ -12,7 +12,7 @@ Os dados ficam no Postgres (Supabase): a mesma liga abre em qualquer aparelho e 
 racha em andamento aparece para todo mundo do grupo em tempo real. Para subir o seu,
 veja **[DEPLOY.md](DEPLOY.md)** — dá para rodar inteiro no plano gratuito.
 
-Na primeira tela (ou no rodapé da lista de ligas), **"Carregar o racha de sábado"** cria a liga já com a lista real (3 goleiros e 16 de linha), todo mundo no nível de entrada — ajuste quem quiser na aba Jogadores ou deixe as partidas de calibração resolverem.
+Na primeira tela (enquanto não existe nenhuma liga), **"Carregar o racha de sábado"** cria a liga já com a lista real (3 goleiros e 16 de linha), todo mundo no nível de entrada — ajuste quem quiser na aba Jogadores ou deixe as partidas de calibração resolverem.
 
 ---
 
@@ -43,34 +43,39 @@ Na primeira tela (ou no rodapé da lista de ligas), **"Carregar o racha de sába
 
 ## Testes
 
-O motor de patentes é feito de funções puras (sem DOM), então roda direto no Node:
+Os testes extraem o código do próprio `index.html` e o rodam no Node (o Python só orquestra):
 
 ```bash
 python scripts/test.py     # motor: escada, equilíbrio, trechos, duas patentes, histerese, recálculo
 python scripts/smoke.py    # interface: todas as telas e fluxos em um DOM falso
+python scripts/sync.py     # backend: contas, RLS, trava otimista e tempo real, num Supabase falso em memória
 python scripts/layout.py   # estrutura do HTML gerado: tags, botões aninhados, restos de template
 python scripts/visual.py   # navegador de verdade, tema escuro e claro: nada estourando, sobreposto ou pequeno demais (salva prints)
 ```
 
-Requer `node` e `python` no PATH; o `visual.py` usa o Chrome ou o Edge instalado e é pulado se não achar nenhum. Todos extraem o código do próprio `index.html` — não há cópia de lógica para sair de sincronia.
+Requer `node` e `python` no PATH; o `visual.py` usa o Chrome ou o Edge instalado e é pulado se não achar nenhum. Não há cópia de lógica para sair de sincronia.
 
 ## Estrutura
 
 ```
-index.html   o app inteiro (HTML + CSS + JS, sem dependências)
-scripts/     testes
-*.md         documentação
+index.html           o app inteiro (HTML + CSS + JS; externos: supabase-js via CDN e fontes Google)
+config.js            URL e anon key do projeto Supabase
+supabase/schema.sql  o banco: tabelas, RLS e funções (rodar no SQL Editor)
+scripts/             testes
+*.md                 documentação
 ```
 
 ## Estado
 
 Ambiente de **teste** no ar: contas (usuário e senha, sem verificação), ligas por
-código de convite, dados no Postgres e sincronização em tempo real entre celulares.
-Cada liga é um documento `jsonb` numa linha de `leagues` — o motor (`splitStints`,
-`computeElo`, `rebuildAll`) continua rodando no cliente, sem reescrita.
+código de convite com aprovação do admin, dados no Postgres e sincronização em
+tempo real entre celulares. A liga vive em **partes** (jogadores, partidas, rachas,
+live e log em tabelas próprias), com sync incremental por versão — o motor
+(`splitStints`, `computeElo`, `rebuildAll`) continua rodando no cliente, sem
+reescrita.
 
-Ainda falta para virar produto: permissões aplicadas no servidor (hoje o papel
-admin/editor/lançador é checado só na interface — quem é membro consegue gravar a
-liga inteira), e a quebra do documento no esquema relacional de `BANCO-DE-DADOS.md`,
-que é o que dá consulta, histórico e RLS por linha de verdade. Caminho em
-`DOCUMENTACAO.md` (seção 8.1).
+Ainda falta para virar produto: papel de escrita valendo no servidor para a
+gravação da liga (as ações de conta do admin já valem — D-62 —, mas qualquer
+membro consegue gravar a liga via `save_parts`), e o esquema relacional completo
+de `BANCO-DE-DADOS.md`, que é o que dá consulta, histórico e RLS por linha de
+verdade. Caminho em `DOCUMENTACAO.md` (seção 8.1).

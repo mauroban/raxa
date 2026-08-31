@@ -59,11 +59,11 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-03.4 | Gols, assistências e defesas não influenciam a patente | P0 | ✅ v1 |
 | RF-03.5 | Promoção exige ultrapassar o corte com margem; rebaixamento exige cair abaixo do corte com margem (histerese). A margem vale em todo degrau — de divisão e de patente | P0 | ✅ v1 |
 | RF-03.6 | ~~Proteção pós-promoção~~ — removida em 28/08/2026 (D-46): num racha de 10–15 partidas não se percebia | — | ❌ removido |
-| RF-03.7 | Jogador novo fica em calibração até 25 partidas (liga de várias curtas) ou 3 rachas (liga de partida única), com K dobrado (40) e sem margem | P0 | ✅ v1 |
+| RF-03.7 | Jogador novo fica em calibração até 15 partidas (liga de várias curtas, D-53) ou 3 rachas (liga de partida única), com K dobrado (64) e sem margem | P0 | ✅ v1 |
 | RF-03.7b | A calibração vale **por patente**: veterano de linha que vai ao gol pela primeira vez calibra a patente de goleiro do zero | P1 | ✅ v1 |
 | RF-03.8 | Quem entra ou sai no meio da partida só é afetado pelos trechos que jogou — o que o time fez com ele no banco não conta | P0 | ✅ v1 |
 | RF-03.9 | Goleiro ganha e perde patente como todo mundo, pelo lado que defendeu, **na escada de goleiro**. Não existe interruptor de "goleiro fora do ranking" | P1 | ✅ v1 |
-| RF-03.10 | O peso de cada partida sai automaticamente do modo do racha; K (40/20), margem e calibração são fixos e iguais em toda liga — ninguém configura rating | P1 | ✅ v1 |
+| RF-03.10 | O peso de cada partida sai automaticamente do modo do racha; K (64/32, D-55), margem e calibração são fixos e iguais em toda liga — ninguém configura rating | P1 | ✅ v1 |
 | RF-03.11 | Os nomes das 5 patentes são editáveis por Liga | P2 | ✅ v1 |
 | RF-03.12 | Mudança de patente **não** é exibida entre partidas: aparece só no resumo do fim do racha | P1 | ✅ v1 |
 | RF-03.13 | Temporadas com reset parcial de patente | P2 | ⬜ v2 |
@@ -112,7 +112,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-05.3i | Quem completa joga aquela partida pelo time que o chamou e **volta para o time dele** quando ela acaba | P0 | ✅ v1 |
 | RF-05.3j | Quem não cabe num time forma a **fila** (de pessoas, não de times): ao fim da partida quem perdeu sai, a fila entra no lugar e quem sai vai para o fim | P0 | ✅ v1 |
 | RF-05.3k | Quando a fila não dá para trocar o time inteiro, **alguns do time que saiu ficam para completar**; sai quem mais jogou na noite | P0 | ✅ v1 |
-| RF-05.3l | Girar a fila na mão, a qualquer momento, em 1 toque (empate, cansaço, combinado da galera) | P1 | ✅ v1 |
+| RF-05.3l | ~~Girar a fila na mão em 1 toque~~ — removido (D-32): trocar qualquer time na tela da próxima partida cobre o caso | — | ❌ removido |
 | RF-05.3d | No racha curto **todo time é cheio** (do tamanho do formato): o app monta quantos times inteiros couberem e quem sobra fica **de fora**, num banco compartilhado. Não existe time menor esperando a vez, e reserva presa a um time só existe na partida única | P0 | ✅ v1 |
 | RF-05.3e | Na partida única são sempre 2 times, com todos divididos entre eles: N titulares + reservas | P0 | ✅ v1 |
 | RF-05.3f | Time incompleto é sinalizado na tela de times e na partida, com atalho para chamar alguém | P1 | ✅ v1 |
@@ -259,9 +259,9 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 
 | # | Requisito | Pri | Status |
 |---|---|---|---|
-| RF-10.1 | Os dados persistem localmente entre sessões, sem login | P0 | ✅ v1 |
-| RF-10.2 | O app funciona integralmente sem internet | P0 | ✅ v1 |
-| RF-10.3 | Sincronização entre aparelhos, com vários lançadores no mesmo racha | P0 | ⬜ v2 |
+| RF-10.1 | Os dados persistem no servidor (Postgres, por conta); no aparelho fica só a preferência de tela | P0 | ✅ v1 |
+| RF-10.2 | O app funciona integralmente sem internet | P0 | ⬜ v2 — a versão com backend precisa de rede (DEPLOY.md) |
+| RF-10.3 | Sincronização entre aparelhos, com vários lançadores no mesmo racha (delta por versão + tempo real) | P0 | ✅ v1 |
 | RF-10.4 | Fila de sincronização offline com resolução determinística de conflitos | P1 | ⬜ v2 |
 | RF-10.5 | Migração automática de dados salvos por versões anteriores do app | P1 | ✅ v1 |
 
@@ -288,7 +288,7 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 | RF-11.12 | Nenhuma estatística agregada é gravada — todas são derivadas do histórico a cada tela. A partida guarda só a saída do próprio motor (deltas e acima do esperado), refeita a cada recálculo | P0 | ✅ v1 |
 | RF-11.13 | Marcar no histórico as partidas de quem assumiu o perfil no aparelho, com o resultado pelo lado dele | P1 | ✅ v1 |
 | RF-11.14 | Filtrar o histórico por **só as minhas** | P2 | ✅ v1 |
-| RF-11.15 | Sequências (maior série de vitórias), rivalidade por trio/quarteto e exportar o painel | P2 | ⬜ v2 |
+| RF-11.15 | Sequências (maior série de vitórias, atual e recorde) — ✅ v1; rivalidade por trio/quarteto e exportar o painel — ⬜ v2 | P2 | ◐ parcial |
 
 **Critério de aceite (RF-11.4/11.5):** a soma de V/E/D de um duelo é igual ao número de confrontos, e o histórico do duelo tem exatamente essa quantidade de linhas. Coberto por teste.
 

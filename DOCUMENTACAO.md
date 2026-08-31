@@ -201,7 +201,7 @@ O rating numérico é quase invisível: na aba Jogadores, **só o admin** vê o 
 
 | Modo | O que muda |
 |---|---|
-| **Várias curtas** *(padrão)* | alvo de 2 gols ou 7 min, vencedor fica em quadra (empate com 3+ times: os dois saem), cada partida pesa pouco no rating — **10 a 15 partidas por noite** |
+| **Várias curtas** *(padrão)* | alvo de 2 gols ou 7 min, vencedor fica em quadra (empate: com 4 times os dois saem; com 3, fica o que entrou por último — D-39), cada partida pesa pouco no rating — **10 a 15 partidas por noite** |
 | **Partida única** | **sempre 2 times**, fixos, com titulares e reservas; uma partida longa (50 min, sem alvo de gols); substituição é a operação principal; cada partida pesa muito mais |
 
 Os dois convivem na mesma Liga: o modo é do racha, não do grupo.
@@ -252,7 +252,7 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 
 **A fila — o "de próximo".** Quem não coube num time inteiro não fica parado: forma a **fila**, e a fila é de pessoas, não de times. Ao fim de cada partida o ciclo é o de todo racha: **quem ganhou fica, quem perdeu sai, e a fila entra no lugar de quem saiu** — primeiro quem está esperando há mais tempo. Se a fila não dá para trocar o time inteiro, **alguns do time que perdeu ficam para completar**: entram 3, ficam 2, normalmente o goleiro e mais um. Quem sai vai para o fim da fila, e sai quem mais jogou na noite — é o que faz a roda girar parelha.
 
-No empate com 2 times ninguém sai automaticamente; se a galera combinar outra coisa, o botão **↻ Girar** roda a fila na hora. O ciclo inteiro está em [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md).
+No empate com 2 times ninguém sai automaticamente; se a galera combinar outra coisa, é trocar os times na tela da próxima partida — toque ou arraste (não há botão de girar a fila, D-32). O ciclo inteiro está em [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md).
 
 **Completar o time que ficou curto.** Times nascem cheios, mas racha é racha: alguém vai embora no meio, alguém é puxado para outro time. Quando o time da vez entra com menos gente que o outro, ninguém joga em inferioridade e ninguém senta: a tela da próxima partida mostra **quem completa**, escolhido entre os que estão de fora — normalmente quem acabou de sair. Quem completa **joga aquela partida por aquele time e volta para o dele depois**; o rating enxerga isso naturalmente, porque a unidade é o trecho e o trecho guarda quem estava em quadra.
 
@@ -285,7 +285,7 @@ Cronômetro grande, dois blocos coloridos e os slots de goleiro:
 - No histórico (aba **Jogos**), as partidas ficam **agrupadas por racha**: uma linha por noite com data, quantas partidas, quantos gols e as contestações — e as partidas aparecem depois de tocar no racha. Uma noite de 12 partidas é uma linha, não doze.
 - **Até o 5v5, a partida é identificada por quem jogou, não pela cor do colete**: cada lado aparece como a lista dos primeiros nomes da escalação de largada, com os gols daquele lado ao lado, e o nome do time fica no "venceu ..." da linha de baixo. A fonte é menor para caber; se ainda não couber, o nome quebra para a linha seguinte — nome cortado no meio seria pior. Em ligas maiores (7v7, 11v11) a lista não cabe e vale o nome do time, com o placar no formato `2 - 1`.
 - Se o resultado saiu errado: **"Desfazer a última"** no bloco de partidas de hoje resolve na hora; correção fina (mudar o vencedor, anular, apagar) fica no **Histórico → Revisar**, onde dá para olhar com calma depois.
-- **Empate com 3 ou 4 times: os dois saem.** Não dá para o "vencedor fica" decidir quem fica quando ninguém venceu, e deixar os dois em quadra faria a fila nunca andar. Com 2 times, empate não muda nada — eles jogam de novo.
+- **Empate: com 4 times os dois saem; com 3, um fica — o que entrou por último** (o que já estava sai, D-39). Não dá para o "vencedor fica" decidir sozinho quando ninguém venceu; com 4 times deixar os dois faria a fila nunca andar, e com 3 tirar os dois esvaziaria a quadra. Com 2 times, empate não muda nada — eles jogam de novo.
 - **Entre uma partida e outra existe uma tela inteira: a próxima partida.** Não é um modal que some — é a tela padrão do racha enquanto nada está rolando, e ela mostra:
   - o confronto `Time A VS Time C`, com a **chance de cada lado** e o retrospecto de hoje;
   - **as duas escalações que vão entrar**, editáveis ali mesmo: toque num nome e depois no outro para trocar de lugar (ou arraste), inclusive puxando alguém de um time que está esperando ou de fora;
@@ -401,7 +401,7 @@ O resto das listas (mais enfrentados, mais jogou junto) não tem piso: elas são
 
 ### 5.5 "Quem é você"
 
-Quando alguém assume um perfil neste aparelho (`Este perfil sou eu`, na ficha do jogador), o app passa a saber quais partidas são suas:
+Quando alguém assume um perfil (**Sou eu**, na ficha do jogador), o app passa a saber quais partidas são suas:
 
 - na aba **Jogos** (o histórico), as suas partidas ficam com uma **borda verde** e o selo `VOCÊ` do lado em que você jogou, colorido pelo seu resultado;
 - um filtro **Todas / Só as minhas** no topo do histórico;
@@ -450,11 +450,11 @@ Quando o Bruninho entra na Liga, ele vê os perfis sem dono e **assume o seu**, 
 
 | Caminho | Como é | Quando serve |
 |---|---|---|
-| **Link de convite** | o admin gera o link e joga no grupo do WhatsApp; quem abre escolhe o próprio perfil e entra | começar uma Liga, chamar a galera toda de uma vez |
+| **Link de convite** — *ainda não existe (v2)* | o admin gera o link e joga no grupo do WhatsApp; quem abre escolhe o próprio perfil e entra | começar uma Liga, chamar a galera toda de uma vez |
 | **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova em Membros — **implementado** | alguém que ouviu falar do racha e quer entrar |
-| **Busca dentro do app** | o admin procura a pessoa por `@usuário` ou nome e convida direto — já apontando qual perfil é dela | o mais comum: a pessoa já joga há meses e só agora criou conta |
+| **Busca dentro do app** — *ainda não existe (v2)* | o admin procura a pessoa por `@usuário` ou nome e convida direto — já apontando qual perfil é dela | o mais comum: a pessoa já joga há meses e só agora criou conta |
 
-A regra única, nos três: **ninguém entra sem aceitar, e ninguém entra sem o admin querer.** O link vence (7 dias por padrão) e pode ser revogado; o código gera pedido, não entrada — a não ser que o admin ligue *entrada livre*; o convite direto é de uso único e só vale para aquela pessoa.
+A regra única, nos três: **ninguém entra sem aceitar, e ninguém entra sem o admin querer.** Hoje só o código existe, e ele **gera pedido, não entrada** — o admin aprova em Membros. O link com vencimento, a entrada livre e o convite direto de uso único são desenho da v2.
 
 Convidar já pode **reservar o perfil**: quem aceita cai direto no lugar certo — *"você é o Bruninho, 42 partidas, Prata 2"* — em vez de escolher numa lista e errar.
 
@@ -519,10 +519,10 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 **Funciona de verdade, hoje:**
 
 - Múltiplas Ligas isoladas, cada uma com patentes, jogadores, ajustes e histórico próprios
-- Escada de 15 degraus com nomes editáveis, histerese, proteção pós-promoção e calibração
+- Escada de 15 degraus com nomes editáveis, histerese e calibração (a proteção pós-promoção foi removida — D-46)
 - **Duas patentes por jogador** (linha e goleiro), independentes, com calibração própria
 - **Motor por trecho**: cada formação em campo é uma partida, com descarte de trecho curto e peso proporcional
-- **Rating 100% invisível em todas as telas**, com opção de esconder até a patente de quem não é admin (por aparelho, enquanto não há backend)
+- **Rating 100% invisível em todas as telas**, com opção de esconder até a patente de quem não é admin (o admin vê o Elo cru discreto — D-52)
 - Formato 5v5 / 6v6 / 7v7 / 11v11 com sugestão automática de quantidade de times
 - Presença, montagem automática equilibrada, troca manual por toque, sorteio aleatório
 - Goleiros: fixos por time, rodízio com alternância de lado, improviso no meio da partida
@@ -535,24 +535,28 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 - **Destaques dos últimos 30 dias** na tela do racha: top 3 por saldo acima do esperado, artilheiro (quando os gols têm dono), goleiro menos vazado e presença
 - **Painel de números**: duelos e parcerias por pessoa (com histórico encontro a encontro), destaques (carrasco, freguês, melhor dupla), quebra ano a ano e rankings do racha no período
 - Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
-- Assumir perfil e papéis (simulados localmente)
+- Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)
+- Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Membros
+- **Sequências** (maior série de vitórias, atual e recorde) nos rankings
+- Editar nome, nível, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar)
+- **Corrigir escalação e trocas** de partida encerrada, reescrevendo os trechos (D-61); registro de correções por liga
 - Exportar/importar a liga inteira em JSON, com migração automática de ligas gravadas por versões anteriores
-- **Tudo em `localStorage`** — funciona offline, na quadra, sem internet
+- **Tudo no Supabase** (Postgres + Auth + Realtime): sync incremental por versão, só fatos no banco, tempo real entre os celulares do racha — precisa de internet; no aparelho fica só a preferência de aba/tema
 
 **Ainda não existe (v2):**
 
-- Backend e conta real — hoje "assumir perfil" e papéis valem só naquele aparelho
-- Entrar numa liga por link, código ou convite direto (seção 7.3) — hoje não existe conta
-- Sincronização entre celulares (hoje: exporta/importa JSON)
+- Entrar por **link de convite** ou **convite direto com busca** (seção 7.3) — hoje só o código com aprovação
+- **Funcionar offline** — o protótipo funcionava; a versão com backend precisa de rede (DEPLOY.md)
+- Recuperação de senha e e-mail de verdade
+- Papel de escrita valendo no servidor para a gravação da liga (`save_parts` só exige ser membro — D-62)
 - Temporadas com reset parcial
 - Gráfico de evolução da patente ao longo do tempo
 - Motivo escrito na contestação e aviso para os admins
-- Sequências (maior série de vitórias), rivalidade por trio/quarteto e exportar o painel de números
-- Editar nome e "costuma ir ao gol" de quem já está cadastrado
+- Rivalidade por trio/quarteto e exportar o painel de números
 
-### 8.1 Caminho para a v2
+### 8.1 Como o backend está montado (e o que falta)
 
-Trocar `localStorage` por **Supabase** (Postgres + Auth + Realtime) mantendo o mesmo modelo. O esquema completo — tabelas, convites, RLS, recálculo e migração — está em **[BANCO-DE-DADOS.md](BANCO-DE-DADOS.md)**; o resumo:
+O app roda contra o **Supabase** (Postgres + Auth + Realtime) com o esquema intermediário de `supabase/schema.sql`: a liga vive em **partes** (`league_players`, `league_matches`, `league_sessions`, `league_live`, `league_log`), o cliente grava só o que mudou (`save_parts`) e recebe só o que mudou (`league_delta`), com trava otimista por versão. O **alvo relacional completo** — trechos, gols e vínculos como linhas próprias, papel de escrita no servidor — está em **[BANCO-DE-DADOS.md](BANCO-DE-DADOS.md)**; o resumo:
 
 As **estatísticas não são guardadas**: duelos, parcerias, presenças e aproveitamento são derivados dos trechos na hora de desenhar a tela. Não existe contador para desincronizar — corrigir uma partida de três semanas atrás conserta o painel junto.
 
@@ -576,7 +580,7 @@ audit_log      (id, liga_id, actor, acao, alvo, payload, ts)
 O vínculo conta↔jogador mora em `liga_members`, e não em `players`: é uma `unique (liga_id, player_id)` que
 garante, no banco, que **um membro é um jogador só**. Jogador sem linha em `liga_members` é perfil sem dono.
 
-O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`, `buildTeams`, `pairCounts`, `statsLiga`, `encontros`, `statsAnos`) vai inteiro para o servidor — são funções puras, sem DOM. Auth sai de graça, Realtime resolve "dois celulares lançando ao mesmo tempo", e o app continua offline com fila de sincronização. O front muda pouco: só a camada de persistência.
+O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`, `buildTeams`, `pairCounts`, `statsLiga`, `encontros`, `statsAnos`) é todo função pura, sem DOM — hoje roda no cliente (`rebuildAll` a cada delta) e pode subir para o servidor sem reescrita quando fizer sentido. Offline com fila de sincronização continua sendo desenho futuro: a versão atual precisa de rede.
 
 ---
 
@@ -594,7 +598,7 @@ O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `
 8. **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença, e muda no meio do racha se a pessoa mudar.
 9. **Palpite inicial + calibração rápida** vence "esperar dados suficientes". A calibração termina em **15 partidas** (várias curtas) ou **3 rachas** (partida única), e vale separado para cada uma das duas patentes.
 10. **Desfazer e contestar em todo lugar — mas cada coisa no seu lugar.** Se errar dói, ninguém lança. Gols têm remoção individual, a partida pode ser pausada ou cancelada (com confirmação) e a última tem "Desfazer" na própria tela do racha. Já **corrigir resultado, anular e apagar moram no Histórico**: são decisões de mesa, não de quadra, e ninguém quer esse botão perto do dedo enquanto o próximo time já está entrando.
-11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese, proteção pós-promoção e patente guardada como estado existem só para isso.
+11. **Subir tem que ser possível; cair não pode ser humilhação diária.** Margem de histerese e patente guardada como estado existem só para isso (a proteção pós-promoção foi testada e removida — D-46).
 12. **Patente por Liga, sempre.** A mesma pessoa pode ser referência num grupo e novata em outro, sem quebrar nenhum dos dois rankings.
 13. **Formato e modo são da liga, definidos na criação.** Uma liga é um grupo, um tamanho de time e um modo. Nível de 5v5 não se compara com nível de 11v11, e uma noite de partida única não se compara com uma de dez curtas — então quem muda de formato começa outra liga. Cada partida guarda o próprio modo.
 14. **Equilíbrio primeiro, panelinha depois.** O app tenta separar quem sempre joga junto — mas só quando isso não custa equilíbrio. Times equilibrados são o produto; misturar as duplas é o que faz a patente convergir para a pessoa em vez de para o time.
