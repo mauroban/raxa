@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
-    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','pdDesde',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
@@ -372,16 +372,20 @@ step('cancelar selecao',()=>{A.sel({dataset:{id:L().live.teams[0].ids[0]},classL
 step('recomecar partida',()=>A.startMatch());
 step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
-step('corrigir patente pela ficha',()=>{A.pSheet({dataset:{id:L().players[0].id}});A.pdRank({dataset:{s:'10'}});A.pdSave();
-  if(L().players[0].L.rank!==10)throw new Error('pdSave nao aplicou a patente');});
-step('corrigir nivel DESDE A ENTRADA: o base vira o degrau e o historico reaplica',()=>{
-  const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[1];
-  A.pSheet({dataset:{id:p.id}});A.pdDesde({dataset:{v:'entrada'}});A.pdRank({dataset:{s:'7'}});A.pdSave();
-  if(Math.round(p.L.base)!==Math.round(stepMid(7)))throw new Error('base nao virou o meio do degrau: '+p.L.base);
+step('corrigir nivel de quem ja jogou mexe no BASE e reaplica o historico (D-74)',()=>{
+  const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[0];
+  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'10'}});A.pdSave();
+  if(Math.round(p.L.base)!==Math.round(stepMid(10)))throw new Error('base nao virou o meio do degrau: '+p.L.base);
   if(!p.L.def)throw new Error('def deveria ligar');
   const e1=p.L.elo;rebuildAll(l);
-  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois do desde-a-entrada');
-  if(p.L.games>0&&(l.log[l.log.length-1]||{}).desde!=='entrada')throw new Error('log nao guardou o modo da correcao');
+  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois da correcao');
+  if(p.L.games>0&&(l.log[l.log.length-1]||{}).desde!=='entrada')throw new Error('log nao guardou que a correcao e desde a entrada');
+});
+step('corrigir nivel de quem NUNCA jogou entra direto no degrau',()=>{
+  const l=L(),p=l.players.find(x=>!x.L.games);
+  if(!p)return;
+  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'4'}});A.pdSave();
+  if(p.L.rank!==4||Math.round(p.L.elo)!==Math.round(stepMid(4)))throw new Error('sem historico, o degrau escolhido deveria valer na hora');
 });
 step('assumir perfil (Sou eu): o primeiro vinculado vira admin',()=>{
   S.me.name=S.me.name||'tester';

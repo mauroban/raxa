@@ -4268,10 +4268,13 @@ const A={
      mesmas checagens de papel e o mesmo registro no log das ações diretas. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null},desde:'agora'};
+    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null}};
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
     const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
     const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
+    /* o painel edita o nível de ENTRADA (D-74): quem já jogou parte do degrau
+       do base; quem nunca jogou tem base === elo e dá no mesmo             */
+    const rankSel=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(rt(p,r).games?stepOf(rt(p,r).base):rt(p,r).rank);
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
     const corAv=ver&&temPatente(l,p,'L')?patColor(rankDe('L')):ver&&temPatente(l,p,'G')?patColor(rankDe('G')):'var(--mute)';
@@ -4307,22 +4310,16 @@ const A={
       ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
-        <div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div>
+        <div class="k">${rt(p,role).games?'Nível de entrada (o palpite)':'Corrigir nível'} ${role==='G'?'no gol':'na linha'}</div>
         <div class="ladder4">
-          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankDe(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
+          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
         </div>
         <div class="step">
           <button class="btn ghost" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo">−</button>
-          <div class="cur">${zerado(role)?'<span class="muted">sem nível</span>':esc(rankLabel(l,rankDe(role)))}</div>
+          <div class="cur">${zerado(role)?'<span class="muted">sem nível</span>':esc(rankLabel(l,rankSel(role)))}</div>
           <button class="btn ghost" data-a="pdBump" data-d="1" aria-label="uma divisão acima">+</button>
         </div>
-        ${rt(p,role).games?`<div class="seg" style="margin-top:10px">
-          <button class="${PD.desde!=='entrada'?'on':''}" data-a="pdDesde" data-v="agora">A partir de agora</button>
-          <button class="${PD.desde==='entrada'?'on':''}" data-a="pdDesde" data-v="entrada">Desde a entrada</button>
-        </div>
-        <div class="tiny muted" style="margin-top:6px;line-height:1.5">${PD.desde==='entrada'
-          ?'É o palpite que faltou no cadastro: vira o nível com que a pessoa <b>entrou</b>, e as partidas já jogadas reaplicam por cima — o racha conta.'
-          :'O nível <b>atual</b> vira exatamente esse; o que as partidas já renderam fica absorvido no ajuste.'}</div>`:''}
+        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:8px;line-height:1.5">Muda o nível com que a pessoa <b>entrou</b> — as ${pl(rt(p,role).games,'partida já jogada','partidas já jogadas')} reaplicam por cima e a patente atual sai desse recálculo. Fato de quadra ninguém edita à mão.</div>`:''}
         ${!rt(p,role).games&&(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?'Vai calibrar do zero':'Tirar o nível — calibrar do zero'}</button>
         <div class="tiny muted" style="margin-top:6px">Só dá para zerar quem ainda não jogou ${role==='G'?'no gol':'na linha'}. Ele volta a "sem nível" até completar a calibração.</div>`:''}
       </div>`:''}
@@ -4349,11 +4346,11 @@ const A={
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
   pdRank(el){if(!PD)return;PD.rank[PD.view]=el.dataset.s==='none'?'none':+el.dataset.s;A.pSheet({dataset:{id:PD.id}})},
-  pdBump(el){if(!PD)return;const p=P(L(),PD.id),r=PD.view,cur=PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
+  pdBump(el){if(!PD)return;const p=P(L(),PD.id),r=PD.view,tr=rt(p,r);
+    const cur=PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(tr.games?stepOf(tr.base):tr.rank);
     PD.rank[r]=clamp(cur+(+el.dataset.d),0,TOP);A.pSheet({dataset:{id:PD.id}})},
   pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
   pdRole(el){if(!PD)return;PD.role=el.dataset.r;A.pSheet({dataset:{id:PD.id}})},
-  pdDesde(el){if(!PD)return;PD.desde=el.dataset.v==='entrada'?'entrada':'agora';A.pSheet({dataset:{id:PD.id}})},
   pdOwner(){if(!PD)return;if(!PD.owner&&!S.me.name)return toast('Entre na sua conta primeiro');PD.owner=PD.owner?null:S.me.name;A.pSheet({dataset:{id:PD.id}})},
   pdCancel(){PD=null;closeSheet()},
   pdSave(){
@@ -4393,13 +4390,11 @@ const A={
       }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
       p.owner=d.owner;
     }
-    /* Dois jeitos de corrigir nível (D-73):
-       - "a partir de agora" (padrão): o Elo ATUAL vira o meio do degrau — o
-         base absorve a diferença e o que as partidas renderam fica dentro
-         do ajuste. É a correção de quem olhou a escada e discordou do hoje.
-       - "desde a entrada": o degrau vira o BASE (o palpite que faltou no
-         cadastro) e o histórico reaplica por cima via rebuildAll — o racha
-         que já aconteceu conta a partir do nível certo.                    */
+    /* Corrigir nível mexe SEMPRE no nível de ENTRADA (o palpite do cadastro,
+       D-74): o degrau escolhido vira o `base`, e para quem já jogou o
+       histórico reaplica por cima (rebuildAll) — a patente atual sai do
+       recálculo, nunca da mão do admin. Fato de quadra ninguém edita.
+       Quem nunca jogou tem elo === base, então entra direto no degrau.     */
     let reaplicar=false;
     ['L','G'].forEach(r=>{
       if(d.rank[r]===null)return;
@@ -4410,11 +4405,12 @@ const A={
         tr.base=l.cfg.startElo;tr.elo=l.cfg.startElo;tr.rank=stepOf(tr.elo);tr.peak=tr.rank;tr.protect=0;tr.def=false;
         return;
       }
-      const sN=d.rank[r],target=stepMid(sN),desde=d.desde==='entrada'&&tr.games>0;
-      if(!desde&&sN===tr.rank&&tr.def)return;
-      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target},desde?{desde:'entrada'}:{}));
-      if(desde){tr.base=target;tr.def=true;reaplicar=true}
-      else{tr.base+=target-tr.elo;tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches;tr.def=true}
+      const sN=d.rank[r],target=stepMid(sN);
+      if(tr.def&&(tr.games?Math.round(tr.base)===Math.round(target):sN===tr.rank))return;
+      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target},tr.games?{desde:'entrada'}:{}));
+      tr.base=target;tr.def=true;
+      if(tr.games)reaplicar=true;
+      else{tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches}
     });
     if(reaplicar)rebuildAll(l);                          // o histórico reaplica sobre o base novo
     PD=null;closeSheet();save();render();toast(msg);

@@ -1105,6 +1105,25 @@ partida é o único relógio que importa).
 `smoke.py` ("corrigir nivel DESDE A ENTRADA": base no degrau, recálculo estável, modo no log).
 
 
+### D-74 · Nada supera fatos: correção de nível só existe no nível de entrada
+**31/08/2026.** O seletor do D-73 viveu horas: o modo **"a partir de agora"** (ancorar o Elo
+corrente no degrau escolhido) **foi removido para quem já jogou**. Corrigir nível agora é sempre
+mexer no **nível de entrada**: o degrau vira o `base`, o histórico reaplica por cima
+(`rebuildAll`) e a patente atual sai do recálculo — nunca da mão do admin. O painel da ficha
+passou a se chamar "Nível de entrada (o palpite)" para quem tem partidas, a régua e o stepper
+partem do degrau do `base` (não da patente corrente), e o texto avisa: as N partidas já jogadas
+reaplicam por cima. Quem nunca jogou tem `base = elo`, então continua entrando direto no degrau.
+**Por quê (nas palavras do dono do racha): "nada supera fatos."** Ancorar o Elo corrente era o
+admin sobrescrevendo o que as partidas disseram — e os times não são fechados a ponto de os fatos
+não separarem as pessoas (os dados reais mostram ~8 companheiros distintos por noite). O único
+palpite legítimo é sobre o que o app não viu: o nível com que a pessoa chegou.
+**Descartado:** manter os dois modos com o "agora" escondido (dois caminhos para o mesmo botão é
+como nasce inconsistência); editar a patente corrente diretamente (era exatamente o problema).
+**Onde:** `pSheet` (painel e `rankSel`), `pdBump`, `pdSave` (ramo único pelo `base`) em
+`index.html` · DOCUMENTACAO §"O sistema de nível" · `smoke.py` ("corrigir nivel de quem ja jogou
+mexe no BASE", "quem NUNCA jogou entra direto no degrau").
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
