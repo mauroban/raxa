@@ -1,15 +1,17 @@
 # Banco de dados — Raxa (v2)
 
-> Modelo de dados do backend. O protótipo (`index.html`) roda em `localStorage`; este documento descreve
-> para onde ele vai quando virar app de verdade, sem mudar nenhuma regra de produto.
+> Modelo de dados do backend. O app (`index.html`) já roda contra o Supabase (esquema intermediário
+> em `supabase/schema.sql`); este documento descreve o alvo relacional completo, sem mudar regra de produto.
 > Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · requisitos em [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md)
 > · decisões em [DECISOES.md](DECISOES.md).
 
 > **Estado (28/08/2026):** o degrau intermediário está implementado em `supabase/schema.sql` —
 > tabelas por entidade (`league_players`, `league_matches`, `league_sessions`, `league_live`,
 > `league_log`) com payload jsonb de **fatos** e sync incremental por versão (`league_delta`,
-> `save_parts`). Este documento continua sendo o alvo relacional completo (trechos, gols e
-> vínculos como linhas próprias); ver D-29 em DECISOES.md.
+> `save_parts`), trava otimista em `leagues.version`, `league_requests` (entrada por aprovação) e
+> `leagues.cfg`/`migrated`. Papel de admin vale no servidor para contas (D-62); a escrita da liga
+> (`save_parts`) ainda é por membro. Este documento continua sendo o alvo relacional completo
+> (trechos, gols e vínculos como linhas próprias); ver D-29 em DECISOES.md.
 
 **Alvo:** Postgres (Supabase) — Auth, Row Level Security e Realtime saem prontos.
 Todo o motor (`splitStints`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`) é função pura e sobe

@@ -1,8 +1,10 @@
 -- ============================================================================
 -- Raxa — esquema de teste (Supabase / Postgres)
 --
--- Modelo de DOCUMENTO: cada liga é uma linha, e o objeto de liga do app
--- ({cfg, players, matches, sessions, live}) mora inteiro na coluna `data`.
+-- Modelo em PARTES: a liga é uma linha em `leagues` (nome, código, cfg,
+-- versão) e cada entidade vive em tabela própria com payload jsonb de FATOS
+-- (league_players, league_matches, league_sessions, league_live, league_log).
+-- Sync incremental por versão (league_delta / save_parts) com trava otimista.
 -- O motor (splitStints, computeElo, rebuildAll) continua rodando no cliente,
 -- exatamente como no protótipo — nenhuma regra de produto mudou.
 --
@@ -80,14 +82,16 @@ drop policy if exists leagues_delete  on public.leagues;
 drop policy if exists members_read    on public.league_members;
 drop policy if exists members_leave   on public.league_members;
 
--- Perfil: todo mundo logado lê (para mostrar quem é quem), só o dono escreve.
-create policy profiles_read  on public.profiles for select to authenticated using (true);
+-- Perfil: cada um lê e escreve só o próprio. Username é metade da credencial
+-- de login (o e-mail é derivado dele), então a lista completa não pode vazar;
+-- quem precisa de "quem é quem" numa liga usa league_accounts (definer).
+create policy profiles_read  on public.profiles for select to authenticated using (id = auth.uid());
 create policy profiles_write on public.profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 
 -- Liga: só quem é membro enxerga. Criar/entrar/gravar passa pelas funções
 -- abaixo (security definer) — NÃO existe policy de UPDATE de propósito: toda
--- gravação tem que passar pelo compare-and-swap de save_league. Um UPDATE
+-- gravação tem que passar pelo compare-and-swap de save_parts. Um UPDATE
 -- direto pela API pularia a trava de versão e atropelaria o racha dos outros.
 create policy leagues_read   on public.leagues for select to authenticated using (public.is_member(id));
 create policy leagues_delete on public.leagues for delete to authenticated using (owner_id = auth.uid());
@@ -140,34 +144,11 @@ begin
 end $fn$;
 
 -- --------------------------------------------------------------- gravar ----
--- Compare-and-swap. Se a versão que o cliente traz não é a do servidor, alguém
--- gravou no meio do caminho: devolve ok=false + o estado bom, e o cliente se
--- realinha em vez de atropelar o racha de outra pessoa.
-create or replace function public.save_league(p_id uuid, p_data jsonb, p_version bigint)
-returns jsonb language plpgsql security definer set search_path = public as $fn$
-declare cur public.leagues;
-begin
-  if auth.uid() is null then raise exception 'nao autenticado'; end if;
-  if not public.is_member(p_id) then raise exception 'nao e membro desta liga'; end if;
-
-  select * into cur from public.leagues where id = p_id for update;
-  if not found then raise exception 'liga nao existe'; end if;
-
-  if cur.version <> p_version then
-    return jsonb_build_object('ok', false, 'version', cur.version,
-                              'data', cur.data, 'name', cur.name, 'code', cur.code);
-  end if;
-
-  update public.leagues
-     set data       = p_data,
-         name       = coalesce(nullif(trim(p_data->>'name'),''), cur.name),
-         version    = cur.version + 1,
-         updated_at = now()
-   where id = p_id
-  returning * into cur;
-
-  return jsonb_build_object('ok', true, 'version', cur.version, 'name', cur.name, 'code', cur.code);
-end $fn$;
+-- A gravação é só pelo save_parts (mais abaixo). O save_league do modelo de
+-- documento único foi removido: ele gravava em leagues.data (que a migração
+-- esvazia e o league_delta ignora) e ainda bumpava a versão — um cliente
+-- antigo mandava todo mundo para o loop de conflito sem gravar nada útil.
+drop function if exists public.save_league(uuid, jsonb, bigint);
 
 -- ---------------------------------------------------------------- sair -----
 create or replace function public.leave_league(p_id uuid)
@@ -192,15 +173,16 @@ end $do$;
 
 grant execute on function public.create_league(text, jsonb)       to authenticated;
 grant execute on function public.join_league(text)                to authenticated;
-grant execute on function public.save_league(uuid, jsonb, bigint) to authenticated;
 grant execute on function public.leave_league(uuid)               to authenticated;
 
 -- ------------------------------------------------ contas da liga (admin) ---
 -- A policy members_read só mostra o próprio vínculo. O admin precisa ver
 -- TODAS as contas que entraram — inclusive as que ainda não vincularam um
--- jogador — para vincular, criar jogador ou remover. Quem é admin vem do
--- documento da liga (mesma regra do cliente: dono, ou jogador vinculado com
--- role=admin; enquanto ninguém vinculou, todo membro é admin).
+-- jogador — para vincular, criar jogador ou remover. Quem é admin vem dos
+-- JOGADORES em league_players (mesma regra do cliente: dono, ou jogador
+-- vinculado com role=admin; enquanto ninguém vinculou, todo membro é admin).
+-- NUNCA de leagues.data: a migração esvazia essa coluna, e ler dela fazia
+-- todo membro passar por admin no servidor.
 create or replace function public.is_league_admin(lid uuid)
 returns boolean language plpgsql security definer stable set search_path = public as $fn$
 declare l public.leagues; me text;
@@ -211,12 +193,14 @@ begin
   if not found then return false; end if;
   if l.owner_id = auth.uid() then return true; end if;
   select username into me from public.profiles where id = auth.uid();
-  if not exists (select 1 from jsonb_array_elements(coalesce(l.data->'players','[]'::jsonb)) p
-                 where coalesce(p->>'owner','') <> '') then
+  if not exists (select 1 from public.league_players p
+                 where p.league_id = lid and not p.deleted
+                   and coalesce(p.data->>'owner','') <> '') then
     return true;
   end if;
-  return exists (select 1 from jsonb_array_elements(coalesce(l.data->'players','[]'::jsonb)) p
-                 where p->>'owner' = me and p->>'role' = 'admin');
+  return exists (select 1 from public.league_players p
+                 where p.league_id = lid and not p.deleted
+                   and p.data->>'owner' = me and p.data->>'role' = 'admin');
 end $fn$;
 
 create or replace function public.league_accounts(p_id uuid)
@@ -418,6 +402,12 @@ create or replace function public.migrate_league(p_id uuid)
 returns void language plpgsql security definer set search_path = public as $fn$
 declare l public.leagues; nv bigint;
 begin
+  -- liga já migrada sai ANTES do `for update`: league_delta chama isto em
+  -- toda leitura, e um lock exclusivo aqui serializava os aparelhos do racha
+  if exists (select 1 from public.leagues where id = p_id and migrated) then return; end if;
+  if auth.uid() is null or not public.is_member(p_id) then
+    raise exception 'nao e membro desta liga';
+  end if;
   select * into l from public.leagues where id = p_id for update;
   if not found or l.migrated then return; end if;
   nv := l.version + 1;

@@ -823,6 +823,29 @@ log, que o Descartar não deixa nada e que o nível bate com o recálculo do zer
 aceita correcao de escalacao") · `layout.py` (4 snapshots novos).
 
 
+### D-62 · Papel de admin vale no servidor — e a migração para de travar leitura
+**31/08/2026.** Quatro correções no `schema.sql` (rodar de novo no SQL Editor): **(1)**
+`is_league_admin` passa a ler os jogadores de **`league_players`** (`data->>'owner'`,
+`data->>'role'`, ignorando `deleted`) em vez de `leagues.data` — a migração esvazia `data`, então a
+regra "enquanto ninguém vinculou, todo membro é admin" disparava sempre e **qualquer membro
+aprovava/removia contas pelo console**. **(2)** `migrate_league` sai **antes** do `select … for
+update` quando a liga já migrou, e só roda para membro — antes, todo `league_delta` pegava lock
+exclusivo na linha da liga e serializava os aparelhos do racha (12 celulares reagindo ao mesmo
+evento de realtime entravam em fila). **(3)** o `save_league` legado (documento único) é dropado:
+gravava em `leagues.data` (que o `league_delta` ignora) e bumpava a versão — cliente antigo ou
+chamada maliciosa mandava todo mundo para o loop de conflito. **(4)** a policy `profiles_read`
+deixa de ser `using (true)`: cada um lê só o próprio perfil, porque o username é metade da
+credencial (o e-mail de login é derivado dele) e a lista completa vazava para qualquer conta.
+**Por quê:** o cliente esconde os botões pelo papel, mas RPC se chama pelo console; a fronteira que
+o servidor prometia (só admin gerencia contas) não existia de fato.
+**Descartado:** checar papel também no `save_parts` — jogador legitimamente grava (contestação,
+assumir o próprio perfil), e separar o que cada papel pode mudar exige validar o conteúdo do diff
+(o esquema relacional de BANCO-DE-DADOS.md); ficou registrado como limitação em DEPLOY.md.
+**Onde:** `supabase/schema.sql` (`is_league_admin`, `migrate_league`, drop `save_league`,
+`profiles_read`) · DEPLOY.md (§1.2 e "O que esperar") · sem teste novo: o Supabase falso de
+`sync.py` só emula o dono-como-admin, e a regra nova é SQL puro.
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -17,13 +17,18 @@ Tempo total: ~10 minutos.
    [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
    Cria as tabelas, a RLS, as funções e liga o Realtime. Pode rodar de novo sem quebrar.
    Se você já tinha aplicado uma versão anterior, rode de novo: a versão atual
-   troca o documento único por **tabelas por entidade** (`league_players`,
-   `league_matches`, `league_sessions`, `league_live`, `league_log`) com sync
-   incremental — ligas antigas migram sozinhas na primeira leitura —, adiciona `league_requests` (entrada por código passa por aprovação do admin),
-   as funções de contas da liga, e
-   **remove a policy de UPDATE direto** em `leagues` — toda gravação passa pelo
-   `save_league` (compare-and-swap), então um cliente não consegue mais pular a
-   trava de versão gravando direto na tabela.
+   usa **tabelas por entidade** (`league_players`, `league_matches`,
+   `league_sessions`, `league_live`, `league_log`) com sync incremental —
+   ligas antigas migram sozinhas na primeira leitura —, `league_requests`
+   (entrada por código passa por aprovação do admin) e as funções de contas
+   da liga. Não existe policy de UPDATE direto em `leagues`: toda gravação
+   passa pelo `save_parts` (compare-and-swap). A rodada atual (31/08/2026,
+   D-62) ainda **corrige quem é admin no servidor** (`is_league_admin` lia
+   `leagues.data`, que a migração esvazia — na prática todo membro passava
+   por admin nos RPCs de aprovar/remover conta), restringe a leitura de
+   `profiles` ao próprio perfil (username é metade da credencial), remove o
+   `save_league` legado e faz `migrate_league` sair antes do lock quando a
+   liga já migrou (senão toda leitura serializava os aparelhos do racha).
 
 3. **Authentication → Sign In / Providers → Email**:
    - **Confirm email**: **desligado**  ← sem isso ninguém entra, porque o e-mail é fictício
@@ -74,7 +79,7 @@ gh api -X POST repos/:owner/raxa/pages -f "source[branch]=main" -f "source[path]
 
 1. Abra a URL, **Criar conta**, usuário e senha (mínimo 6 caracteres).
 2. **+ Nova liga** — ou **Carregar o racha de sábado** para já vir com 19 nomes.
-3. Aba **Ajustes** → o **código de convite** de 6 letras está no topo. Compartilhe.
+3. Aba **Ajustes** → o **código de convite** de 6 caracteres está no topo. Compartilhe.
 4. Cada pessoa cria a conta dela e usa **Entrar com um código**. Isso gera um
    **pedido**: o admin aprova em **Jogadores → Membros** e a liga aparece para a
    pessoa na hora (ela vê "Aguardando aprovação" na home até lá).
@@ -93,11 +98,13 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
 
 - **Sem verificação de conta.** Usuário e senha viram `usuario@raxa.app` internamente (domínio fictício; precisa ter TLD real porque o Supabase recusa `.local`).
   Não existe recuperação de senha: senha perdida, conta perdida.
-- **Permissão de papel só na interface.** Os papéis (admin, editor, lançador,
-  jogador) mudam o que a tela oferece, mas no banco **qualquer membro da liga
-  consegue gravar a liga inteira** — a RLS protege a fronteira entre ligas, não
-  dentro delas. Aplicar papel no servidor exige o esquema relacional de
-  `BANCO-DE-DADOS.md`.
+- **Papel de escrita só na interface.** As ações de ADMIN sobre contas
+  (aprovar pedido, vincular, remover, listar) valem no servidor
+  (`is_league_admin` lê os jogadores em `league_players`), mas o `save_parts`
+  só exige ser **membro**: qualquer membro consegue, pela API, gravar a liga
+  inteira. É deliberado por ora — jogador também grava (contestar, assumir o
+  próprio perfil), e separar o que cada papel pode mudar exige validar o
+  conteúdo do diff, que é o esquema relacional de `BANCO-DE-DADOS.md`.
 - **Última gravação vence, por entidade.** Duas pessoas mexendo ao mesmo tempo: quem
   gravar depois, com a versão certa, fica; quem estava com a versão velha recebe o
   delta do servidor, perde a alteração local **só nas partes que o outro também
