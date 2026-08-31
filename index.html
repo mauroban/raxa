@@ -2765,6 +2765,9 @@ function chanceHist(liga,m){
 function mrow(liga,m,compact,eu){
   const w=m.result,d=(m.disputes||[]).length;
   const ch=chanceHist(liga,m);
+  /* a chance fica colada à esquerda do placar: por lado no 5v5 (uma linha por
+     time), e "62% × 38%" acima dele, onde o placar é um só                 */
+  const chTxt=sd=>ch?`<span class="tiny muted num sp" style="margin-right:7px" title="chance no apito">${porNome?pct(ch[sd]):pct(ch[0])+' × '+pct(ch[1])}</span>`:'';
   /* Até o 5v5 o time é a lista de quem entrou em quadra, não o apelido da cor
      (mesmo motivo do card da noite, D-60): semanas depois ninguém lembra qual
      time era o "Time A". O nome da cor continua na linha de baixo, no
@@ -2779,13 +2782,13 @@ function mrow(liga,m,compact,eu){
   const cor=meu==='V'?'var(--ok)':meu==='D'?'var(--bad)':'var(--mute)';
   return `<div class="mrow${porNome?' nomes':''}${lado===null?'':' eu'}" ${m.voided?'style="opacity:.5"':''}>
     <div class="l1">${nm(0)}${lado===0?' <span class="mine" style="color:'+cor+'">VOCÊ</span>':''}
-      ${gol(0)}</div>
+      ${chTxt(0)}${gol(0)}</div>
     <div class="l1" style="margin-top:2px">${nm(1)}${lado===1?' <span class="mine" style="color:'+cor+'">VOCÊ</span>':''}
       ${m.voided?'<span class="flag" style="color:var(--bad);border:1px solid rgba(255,93,93,.4)">ANULADA</span>'
         :d?`<span class="flag" style="color:var(--gold);border:1px solid rgba(245,197,66,.45)">⚑ ${d}</span>`:''}
-      ${porNome?gol(1):''}</div>
+      ${porNome?chTxt(1)+gol(1):''}</div>
     <div class="l2">${new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
-      · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${ch?' · '+pct(ch[0])+' × '+pct(ch[1])+' no apito':''}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nos níveis':''}
+      · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nos níveis':''}
       ${!compact&&(m.moves||[]).length?' · '+m.moves.length+' mudança(s) de nível':''}</div>
     ${compact?'':`<div class="row" style="gap:6px;margin-top:7px">
       <button class="btn sm ghost" data-a="contest" data-id="${m.id}">⚑ Contestar</button>

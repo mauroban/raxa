@@ -632,7 +632,7 @@ step('historico mostra a chance de cada lado no apito',()=>{
   S.ui.tab='hist';render();
   const g=rachasDe(L(),L().matches)[0];
   A.histRacha({dataset:{id:g.id}});
-  if(!/no apito/.test(els['#app'].innerHTML))throw new Error('chance do apito nao apareceu nas partidas do racha aberto');
+  if(!/chance no apito/.test(els['#app'].innerHTML))throw new Error('chance ao lado do placar nao apareceu nas partidas do racha aberto');
   A.histRacha({dataset:{id:''}});S.ui.tab='stats';render();
 });
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
