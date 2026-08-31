@@ -975,16 +975,23 @@ function recalcPartida(liga,m){
   const fim=sts[sts.length-1];
   if(fim){m.lineups=[(fim.lineups[0]||[]).slice(),(fim.lineups[1]||[]).slice()];m.gks=(fim.gks||[null,null]).slice()}
 }
-/* Corrigiu escalação ou troca: refaz os trechos, recalcula a liga do zero,
-   registra no log e volta para a tela de escalação.                         */
-function aplicaCorrecaoEsc(liga,m,txt,voltar){
-  recalcPartida(liga,m);
-  logAdd(liga,'esc',{mid:m.id,txt});
-  rebuildAll(liga);save();render();
-  if(voltar!==false)A.editEsc({dataset:{id:m.id}});
-  toast(txt);
+/* Rascunho da correção: as mudanças acontecem numa CÓPIA da partida e só
+   valem no Salvar. É por isso que dá para mexer à vontade sem recalcular a
+   liga a cada toque — e para desistir sem deixar rastro. Vive fora de `S`:
+   rascunho não vai para o disco.                                            */
+let ESC=null;
+function rascunhoEsc(m){
+  if(!m||!podeCorrigirEsc(m))return null;
+  if(!ESC||ESC.mid!==m.id)ESC={mid:m.id,m:JSON.parse(JSON.stringify(m)),mud:[],nt:null};
+  return ESC;
 }
-
+/* Uma mudança no rascunho: anota o que foi feito, refaz os trechos da cópia
+   (é a prévia do "como fica") e volta para a tela.                          */
+function mudaEsc(liga,r,txt){
+  r.mud.push(txt);
+  recalcPartida(liga,r.m);
+  openSheet(viewEditEsc(liga,r.m,r));
+}
 /* ---------- rating invisível ---------- */
 function computeElo(liga,part,result,mode,weight){
   const cfg=liga.cfg,W=weight===undefined?1:weight,sum=[0,0],wsum=[0,0];
@@ -2853,9 +2860,9 @@ function revDetalhe(liga,m){
     ${sec('nivel','Efeito no nível',null,revNivel(liga,m),!!ab.nivel)}`;
 }
 /* Tela de correção: quem começou (com o goleiro) e as trocas que aconteceram.
-   É a única tela que reescreve o que a partida gravou — por isso avisa, em
-   cima, que mexer aqui recalcula o nível de todo mundo.                     */
-function viewEditEsc(liga,m){
+   Tudo o que se mexe aqui é RASCUNHO — a partida real só muda no Salvar, e é
+   só então que a liga é recalculada.                                        */
+function viewEditEsc(liga,m,r){
   const ini=(m.startLineups||m.lineups||[[],[]]),gks=gksIni(m);
   const evs=(m.events||[]).map((e,i)=>({e,i})).filter(x=>x.e.type==='sub'||x.e.type==='gk')
     .sort((a,b)=>a.e.t-b.e.t);
@@ -2867,9 +2874,13 @@ function viewEditEsc(liga,m){
       :`🧤 ${x.e.id?esc(nameOf(liga,x.e.id))+' foi para o gol':'sem goleiro fixo'}`}</div>
       <div class="meta">${esc(m.names[x.e.side])} · toque para corrigir</div></div>
     <div style="color:var(--mute);font-size:18px">›</div></button>`;
+  const n=r.mud.length;
   return `<h2>Escalação e trocas</h2>
     <div class="tiny muted" style="margin-bottom:12px">${esc(m.names[0])} ${m.score[0]}-${m.score[1]} ${esc(m.names[1])} ·
-      corrigir aqui refaz os trechos da partida e recalcula o nível de todo mundo.</div>
+      mexa à vontade: nada muda de verdade até você salvar.</div>
+    ${n?`<div class="card" style="background:var(--panel2);border:1px solid var(--gold);margin-bottom:12px">
+      <div class="k" style="margin-bottom:6px;color:var(--gold)">${pl(n,'mudança','mudanças')} para salvar</div>
+      <div class="tiny" style="line-height:1.6">${r.mud.map(t=>'• '+esc(t)).join('<br>')}</div></div>`:''}
     ${[0,1].map(sd=>`<div class="sec">
       <div class="k2"><span style="color:${corTime(m,sd)}">Começaram — ${esc(m.names[sd])}</span>
         <span class="tiny">${pl((ini[sd]||[]).length,'jogador','jogadores')}</span></div>
@@ -2879,11 +2890,16 @@ function viewEditEsc(liga,m){
       ${evs.length?`<div class="card" style="padding:0;overflow:hidden">${evs.map(linha).join('')}</div>`
         :'<div class="tiny muted" style="padding:6px 2px">Nenhuma troca registrada nesta partida.</div>'}
       <button class="more" data-a="novaTroca" data-id="${m.id}">＋ nova troca</button></div>
-    <div style="height:14px"></div>
-    <button class="btn wide ghost" data-a="review" data-id="${m.id}">Voltar à revisão</button>`;
+    <div class="sec"><div class="k2"><span>Como fica</span><span class="tiny">${pl(matchStints(liga,m).filter(s=>s.counted).length,'trecho')} que ${matchStints(liga,m).filter(s=>s.counted).length===1?'conta':'contam'} para o nível</span></div>
+      ${revTrechos(liga,m)}</div>
+    <div style="height:8px"></div>
+    ${n?`<button class="btn wide pri" data-a="escSalvar" data-id="${m.id}">Salvar ${pl(n,'mudança','mudanças')}</button>
+      <div style="height:8px"></div>
+      <button class="btn wide ghost" data-a="escDescartar" data-id="${m.id}">Descartar e voltar</button>`
+      :`<button class="btn wide ghost" data-a="escDescartar" data-id="${m.id}">Voltar à revisão</button>`}`;
 }
 /* Folha da troca nova: minuto, time e quem sai/entra (ou quem vai para o gol).
-   O rascunho vive em S.ui.nt até a troca ser adicionada.                    */
+   O rascunho da troca vive junto com o da correção, até "Adicionar".        */
 function viewNovaTroca(liga,m,nt){
   const t=tDoMinuto(m,nt.min);
   const emQuadra=escalaEm(liga,m,t,nt.side),fora=foraDeQuadra(liga,m,t);
@@ -2894,11 +2910,11 @@ function viewNovaTroca(liga,m,nt){
       <button class="${nt.tipo==='sub'?'on':''}" data-a="ntSet" data-k="tipo" data-v="sub">Substituição</button>
       <button class="${nt.tipo==='gk'?'on':''}" data-a="ntSet" data-k="tipo" data-v="gk">Trocou o goleiro</button></div>
     <div class="k" style="margin-bottom:6px">Quando</div>
-    <div class="row" style="gap:8px;margin-bottom:12px">
+    <div class="row" style="gap:8px;margin-bottom:4px">
       <button class="btn sm ghost" data-a="ntSet" data-k="min" data-v="-30000">−30s</button>
       <div class="num" style="font-family:var(--disp);font-weight:800;font-size:22px;flex:1;text-align:center">${mmss(nt.min)}</div>
       <button class="btn sm ghost" data-a="ntSet" data-k="min" data-v="30000">+30s</button></div>
-    <div class="tiny muted" style="margin:-8px 0 12px">a partida durou ${mmss(fim)}</div>
+    <div class="tiny muted" style="margin-bottom:12px">a partida durou ${mmss(fim)}</div>
     <div class="seg" style="margin-bottom:12px">
       ${[0,1].map(sd=>`<button class="${nt.side===sd?'on':''}" data-a="ntSet" data-k="side" data-v="${sd}">${esc(m.names[sd])}</button>`).join('')}</div>
     ${nt.tipo==='sub'?`
@@ -3136,6 +3152,9 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
 function closeSheet(){PD=null;
+  /* fechar a folha desiste da correção de escalação: o rascunho nunca foi
+     gravado, mas o admin precisa saber que ela não valeu                    */
+  if(ESC){const n=ESC.mud.length;ESC=null;if(n)toast(pl(n,'mudança','mudanças')+' descartada'+(n===1?'':'s')+' — nada foi salvo')}
   $('#sheet').classList.remove('on');$('#scrim').classList.remove('on');
   if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);   // atualização que ficou esperando a folha fechar
 }
@@ -3885,17 +3904,18 @@ const A={
     A.review({dataset:{id:el.dataset.id}});
   },
   /* ----- corrigir escalação e trocas -----
-     Tudo aqui reescreve o que a partida gravou e chama `recalcPartida` +
-     `rebuildAll`: a liga inteira volta a ser calculada do zero.            */
+     Tudo aqui mexe no RASCUNHO (ESC.m, uma cópia da partida). O Salvar é que
+     escreve na partida, registra no log e recalcula a liga do zero.        */
   editEsc(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
     if(!souAdmin(l))return toast('Só o admin da liga corrige a escalação');
     if(!podeCorrigirEsc(m))return toast('Partida antiga: sem cronômetro gravado, a escalação não dá para corrigir');
-    S.ui.nt=null;openSheet(viewEditEsc(l,m));
+    const r=rascunhoEsc(m);r.nt=null;
+    openSheet(viewEditEsc(l,r.m,r));
   },
   escPick(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),noJogo=genteDaPartida(m);
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),noJogo=genteDaPartida(m);
     const fora=(l.players||[]).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>${esc(nameOf(l,pid))}</h2>
       <div class="tiny muted" style="margin-bottom:12px">Começou a partida no ${esc(m.names[s])}.</div>
@@ -3909,16 +3929,16 @@ const A={
       <div style="height:14px"></div><button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Voltar</button>`);
   },
   escGk(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m);
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m);
     const novo=gks[s]===pid?null:pid;
     gks[s]=novo;m.startGks=gks;
     ajustaGksEventos(m,s,m.startedAt,novo);
-    aplicaCorrecaoEsc(l,m,novo?esc(nameOf(l,pid))+' começou no gol':'O '+m.names[s]+' começou sem goleiro fixo');
+    mudaEsc(l,r,novo?nameOf(l,pid)+' começou no gol':m.names[s]+' começou sem goleiro fixo');
   },
   escDel(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const s=+el.dataset.s,pid=el.dataset.pid;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid;
     const ini=(m.startLineups||m.lineups||[[],[]]).map(x=>(x||[]).slice());
     ini[s]=ini[s].filter(id=>id!==pid);
     m.startLineups=ini;
@@ -3931,13 +3951,13 @@ const A={
     const gols=(m.goals||[]).filter(g=>g.pid===pid).length;
     (m.goals||[]).forEach(g=>{if(g.pid===pid){g.pid=null;g.own=false}});
     m.events.forEach(e=>{if(e.type==='goal'&&e.pid===pid){e.pid=null;e.own=false}});
-    aplicaCorrecaoEsc(l,m,nameOf(l,pid)+' saiu da escalação'
+    mudaEsc(l,r,nameOf(l,pid)+' não jogou'
       +(trocas?' · '+pl(trocas,'troca')+' apagada'+(trocas===1?'':'s'):'')
       +(gols?' · '+pl(gols,'gol')+' sem autor':''));
   },
   escSwap(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const pid=el.dataset.pid,por=el.dataset.por;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,pid=el.dataset.pid,por=el.dataset.por;
     if(!por||por===pid)return A.editEsc({dataset:{id:m.id}});
     const tr=id=>id===pid?por:id;
     m.startLineups=(m.startLineups||m.lineups||[[],[]]).map(x=>(x||[]).map(tr));
@@ -3953,11 +3973,11 @@ const A={
       if(Array.isArray(e.mv))e.mv.forEach(x=>{if(x.id===pid)x.id=por});
     });
     (m.goals||[]).forEach(g=>{if(g.pid===pid)g.pid=por});
-    aplicaCorrecaoEsc(l,m,'Quem jogou era '+nameOf(l,por)+', não '+nameOf(l,pid));
+    mudaEsc(l,r,'Quem jogou era '+nameOf(l,por)+', não '+nameOf(l,pid));
   },
   escAdd(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const s=+el.dataset.s,noJogo=genteDaPartida(m);
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,s=+el.dataset.s,noJogo=genteDaPartida(m);
     const fora=(l.players||[]).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>Quem mais começou no ${esc(m.names[s])}?</h2>
       <div class="tiny muted" style="margin-bottom:12px">Quem entrou no meio da partida não entra aqui: isso é uma troca.</div>
@@ -3966,16 +3986,16 @@ const A={
       <div style="height:14px"></div><button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Voltar</button>`);
   },
   escAddDo(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const s=+el.dataset.s,pid=el.dataset.pid;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid;
     const ini=(m.startLineups||m.lineups||[[],[]]).map(x=>(x||[]).slice());
     if(ini[s].indexOf(pid)<0)ini[s].push(pid);
     m.startLineups=ini;
-    aplicaCorrecaoEsc(l,m,nameOf(l,pid)+' começou no '+m.names[s]);
+    mudaEsc(l,r,nameOf(l,pid)+' começou no '+m.names[s]);
   },
   evPick(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
     const emQuadra=escalaEm(l,m,ev.t,ev.side),fora=foraDeQuadra(l,m,ev.t);
     const chip=(id,k,sel)=>`<button class="tp big ${sel?'sel':''}" data-a="evSet" data-id="${m.id}" data-i="${i}" data-k="${k}" data-v="${id}">${esc(nameOf(l,id))}</button>`;
     openSheet(`<h2>${ev.type==='sub'?'Troca':'Troca de goleiro'} aos ${mmss(gameTime(m,ev.t))}</h2>
@@ -3993,22 +4013,22 @@ const A={
       <div style="height:8px"></div><button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Voltar</button>`);
   },
   evSet(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
-    const k=el.dataset.k,v=el.dataset.v||null;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
+    const k=el.dataset.k,v=el.dataset.v||null,quando=mmss(gameTime(m,ev.t));
     let txt='';
-    if(k==='out'){if(ev.out===v)return A.editEsc({dataset:{id:m.id}});ev.out=v;txt='Quem saiu aos '+mmss(gameTime(m,ev.t))+' foi '+nameOf(l,v)}
+    if(k==='out'){if(ev.out===v)return A.editEsc({dataset:{id:m.id}});ev.out=v;txt='Quem saiu aos '+quando+' foi '+nameOf(l,v)}
     else if(k==='in'){if((ev.in||null)===v)return A.editEsc({dataset:{id:m.id}});ev.in=v;
-      txt=v?'Quem entrou aos '+mmss(gameTime(m,ev.t))+' foi '+nameOf(l,v):'Aos '+mmss(gameTime(m,ev.t))+' saiu sem substituto'}
+      txt=v?'Quem entrou aos '+quando+' foi '+nameOf(l,v):'Aos '+quando+' saiu sem substituto'}
     else if(k==='gk'){if((ev.id||null)===v)return A.editEsc({dataset:{id:m.id}});ev.id=v;
       if(Array.isArray(ev.gks))ev.gks[ev.side]=v;
       ajustaGksEventos(m,ev.side,ev.t+1,v);
-      txt=v?nameOf(l,v)+' foi para o gol aos '+mmss(gameTime(m,ev.t)):'Sem goleiro fixo a partir de '+mmss(gameTime(m,ev.t))}
-    aplicaCorrecaoEsc(l,m,txt);
+      txt=v?nameOf(l,v)+' foi para o gol aos '+quando:'Sem goleiro fixo a partir de '+quando}
+    mudaEsc(l,r,txt);
   },
   evDel(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    const i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
     let antes=null;
     if(ev.type==='gk'){                       // sem este evento, quem volta a valer é o goleiro de antes
       const sts=matchStints(l,m);let st=sts[0];
@@ -4017,18 +4037,17 @@ const A={
     }
     m.events=(m.events||[]).filter((e,k)=>k!==i);
     if(ev.type==='gk')ajustaGksEventos(m,ev.side,ev.t,antes);
-    aplicaCorrecaoEsc(l,m,(ev.type==='sub'?'Troca':'Troca de goleiro')+' aos '+mmss(gameTime(m,ev.t))+' apagada');
+    mudaEsc(l,r,(ev.type==='sub'?'Troca':'Troca de goleiro')+' aos '+mmss(gameTime(m,ev.t))+' apagada');
   },
   novaTroca(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m||!souAdmin(l))return;
-    if(!S.ui.nt||S.ui.nt.mid!==m.id)
-      S.ui.nt={mid:m.id,tipo:'sub',side:0,min:Math.round(gameTime(m,m.endedAt)/2),out:null,in:null,gk:null};
-    openSheet(viewNovaTroca(l,m,S.ui.nt));
+    const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
+    const m=r.m;
+    if(!r.nt)r.nt={tipo:'sub',side:0,min:Math.round(gameTime(m,m.endedAt)/2),out:null,in:null,gk:null};
+    openSheet(viewNovaTroca(l,m,r.nt));
   },
   ntSet(el){
-    const l=L(),nt=S.ui.nt;if(!nt)return;
-    const m=l.matches.find(x=>x.id===nt.mid);if(!m)return;
-    const k=el.dataset.k,v=el.dataset.v;
+    const l=L(),r=ESC;if(!r||!r.nt)return;
+    const m=r.m,nt=r.nt,k=el.dataset.k,v=el.dataset.v;
     if(k==='min'){nt.min=clamp(nt.min+(+v),0,gameTime(m,m.endedAt));nt.out=null;nt.gk=null}
     else if(k==='side'){nt.side=+v;nt.out=null;nt.in=null;nt.gk=null}
     else if(k==='tipo'){nt.tipo=v==='gk'?'gk':'sub';nt.out=null;nt.in=null;nt.gk=null}
@@ -4038,8 +4057,8 @@ const A={
     openSheet(viewNovaTroca(l,m,nt));
   },
   ntOk(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id),nt=S.ui.nt;
-    if(!m||!nt||!souAdmin(l))return;
+    const l=L(),r=ESC;if(!r||!r.nt||!souAdmin(l))return;
+    const m=r.m,nt=r.nt;
     if(nt.tipo==='sub'&&(!nt.out||nt.in===null))return toast('Escolha quem saiu e quem entrou');
     if(nt.tipo==='gk'&&nt.gk===null)return toast('Escolha quem foi para o gol');
     const t=tDoMinuto(m,nt.min);
@@ -4054,8 +4073,27 @@ const A={
       txt='Aos '+mmss(nt.min)+': '+(nt.gk?nameOf(l,nt.gk)+' foi para o gol':'ficou sem goleiro fixo');
     }
     m.events.sort((a,b)=>a.t-b.t);
-    S.ui.nt=null;
-    aplicaCorrecaoEsc(l,m,txt);
+    r.nt=null;
+    mudaEsc(l,r,txt);
+  },
+  /* Salvar: o rascunho vira a partida, cada mudança entra no registro de
+     correções e a liga é recalculada do zero.                              */
+  escSalvar(el){
+    const l=L(),r=ESC;if(!r||!souAdmin(l))return;
+    const m=l.matches.find(x=>x.id===r.mid);if(!m)return;
+    if(!r.mud.length){ESC=null;return A.review({dataset:{id:m.id}})}
+    ['startLineups','startGks','lineups','gks','events','goals','stints'].forEach(k=>{m[k]=r.m[k]});
+    recalcPartida(l,m);
+    r.mud.forEach(txt=>logAdd(l,'esc',{mid:m.id,txt}));
+    const n=r.mud.length;ESC=null;
+    rebuildAll(l);save();render();
+    A.review({dataset:{id:m.id}});
+    toast(pl(n,'correção','correções')+' salva'+(n===1?'':'s')+' · níveis recalculados');
+  },
+  escDescartar(el){
+    const id=(ESC&&ESC.mid)||el.dataset.id;
+    if(ESC&&ESC.mud.length&&!confirm('Descartar '+pl(ESC.mud.length,'mudança','mudanças')+' que você ainda não salvou?'))return;
+    ESC=null;A.review({dataset:{id}});
   },
   /* autor de um gol numa partida já encerrada (revisão): a lista é quem esteve
      em quadra pelo time que marcou; "contra" troca para o outro time         */

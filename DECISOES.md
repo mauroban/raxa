@@ -772,8 +772,11 @@ lado, com o goleiro de largada, e a lista das trocas. Dá para trocar uma pessoa
 a partida inteira, gols inclusive), pôr quem faltou, tirar quem não jogou (as trocas dele somem e
 os gols dele ficam sem autor), marcar o goleiro de largada, corrigir *quem saiu* / *quem entrou* de
 uma troca, apagá-la, ou criar uma troca nova — minuto (passo de 30 s), time e as duas pontas — e
-também uma troca de goleiro. Toda correção chama `recalcPartida`, que roda o **mesmo `splitStints`
-do apito final** sobre a escalação de largada + o log de eventos, e depois `rebuildAll`.
+também uma troca de goleiro. Tudo isso acontece num **rascunho** (uma cópia da partida, fora de
+`S`): a tela lista as mudanças pendentes e mostra a prévia dos trechos ("Como fica"), e só o
+**Salvar** escreve na partida, manda cada mudança para o log e roda `rebuildAll`. Descartar — ou
+fechar a folha — joga o rascunho fora. Quem refaz os trechos é `recalcPartida`, com o **mesmo
+`splitStints` do apito final** sobre a escalação de largada + o log de eventos.
 **Por quê:** a revisão já mostrava tudo (D-58), e a resposta natural de quem olha era "mas não foi
 isso que aconteceu". Faltava o inverso do mostrar. E como trecho é a unidade de nível (D-01), errar
 quem estava em quadra erra o nível de todo mundo daquela partida — era o único erro grande que o
@@ -784,7 +787,9 @@ goleiro que cada evento carrega (`ev.gks`) é corrigido até o próximo evento d
 (`ajustaGksEventos`), senão a partida "voltava" para o goleiro antigo na primeira troca; o minuto
 digitado vira hora de parede somando o tempo pausado (`tDoMinuto`); e quem pode entrar numa troca é
 só quem não está em quadra **dos dois lados** naquele minuto.
-**Descartado:** editar os trechos direto (viraria duas fontes de verdade — o log de eventos deixaria
+**Descartado:** aplicar cada toque na hora (foi a primeira versão: cada correção já recalculava a
+liga e voltava para a tela — sem lugar para salvar, ficava confuso, e um toque errado já valia);
+editar os trechos direto (viraria duas fontes de verdade — o log de eventos deixaria
 de mandar); recalcular só a partida (correção antiga tem que percorrer a liga inteira, D-07);
 apagar `ev.gks` de todos os eventos ao corrigir (perderia o goleiro que assumiu as luvas numa
 substituição); deixar o admin escrever o minuto num campo de texto (passo de 30 s resolve e não
@@ -792,10 +797,11 @@ abre teclado no celular); permitir corrigir partida gravada sem cronômetro (sem
 não há o que reconstruir — a tela avisa e não abre).
 **Onde:** DOCUMENTACAO §6 e §8 · `recalcPartida`, `gksIni`, `podeCorrigirEsc`, `escalaEm`,
 `genteDaPartida`, `foraDeQuadra`, `ajustaGksEventos`, `tDoMinuto`, `aplicaCorrecaoEsc`,
-`viewEditEsc`, `viewNovaTroca`, ações `editEsc`/`escPick`/`escGk`/`escDel`/`escSwap`/`escAdd`/
-`escAddDo`/`evPick`/`evSet`/`evDel`/`novaTroca`/`ntSet`/`ntOk` · log `esc` · `smoke.py`
-("corrigir escalacao e trocas refaz os trechos e o nivel" — partida de 10 min montada à mão, com
-troca, goleiro, gol e conferência de que o nível bate com o recálculo do zero; "partida antiga nao
+`rascunhoEsc`, `mudaEsc`, `viewEditEsc`, `viewNovaTroca`, ações `editEsc`/`escPick`/`escGk`/`escDel`/`escSwap`/`escAdd`/
+`escAddDo`/`evPick`/`evSet`/`evDel`/`novaTroca`/`ntSet`/`ntOk`/`escSalvar`/`escDescartar` · log `esc` · `smoke.py`
+("corrigir escalacao e trocas: rascunho ate o Salvar" — partida de 10 min montada à mão, com troca,
+goleiro e gol, conferindo que a partida real só muda no Salvar, que cada mudança vira uma linha do
+log, que o Descartar não deixa nada e que o nível bate com o recálculo do zero; "partida antiga nao
 aceita correcao de escalacao") · `layout.py` (4 snapshots novos).
 
 

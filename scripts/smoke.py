@@ -530,11 +530,14 @@ step('vitoria e do time que jogou, nao do nome no placar',()=>{
   const metade=[TA[0],TA[1],TC[0],TC[1],'z9'];
   if(dono(part([st(600000,metade,TB)]),0)!==null)throw new Error('sem maioria de nenhum time, a partida nao conta para time nenhum');
   /* o card da noite usa isso: nome do time some do titulo, entram os jogadores */
+  const fmt=l.cfg.format;l.cfg.format=5;
   A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});
-  const h=els['#app'].innerHTML,sess=l.sessions[l.sessions.length-1];
-  const t0=sess.teams[0],pri=esc(nameOf(l,t0.ids[0]).split(' ')[0]);
-  if(h.indexOf('Times do racha')<0)throw new Error('card dos times sumiu');
-  if(h.indexOf(pri)<0)throw new Error('o time deveria ser rotulado pelos jogadores originais no 5v5');
+  const rotulo=()=>((els['#app'].innerHTML).match(/class="rk3 time[^"]*"[\s\S]*?<div class="nm">([^<]*)</)||[])[1]||'';
+  if(els['#app'].innerHTML.indexOf('Times do racha')<0)throw new Error('card dos times sumiu');
+  if(rotulo().indexOf(', ')<0)throw new Error('ate o 5v5 o time e rotulado pelos jogadores originais, veio "'+rotulo()+'"');
+  l.cfg.format=11;render();
+  if(rotulo().indexOf(', ')>=0)throw new Error('acima do 5v5 a lista nao cabe: o rotulo devia ser o nome do time');
+  l.cfg.format=fmt;
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
 });
 step('rankings da noite abrem ate 10 e tem quem mais perdeu',()=>{
@@ -554,7 +557,7 @@ step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
 });
-step('corrigir escalacao e trocas refaz os trechos e o nivel',()=>{
+step('corrigir escalacao e trocas: rascunho ate o Salvar',()=>{
   const l=L(),ps=l.players.map(p=>p.id);
   /* partida de 10 min com uma troca aos 4: o relogio do smoke nao anda, entao
      a partida do teste e montada na mao (mesma forma que o app grava)       */
@@ -571,51 +574,67 @@ step('corrigir escalacao e trocas refaz os trechos e o nivel',()=>{
   l.matches.push(m);recalcPartida(l,m);rebuildAll(l);
   const nT=matchStints(l,m).length;
   if(nT!==2)throw new Error('a partida de teste deveria ter 2 trechos, tem '+nT);
+  const real=()=>JSON.stringify([m.startLineups,m.lineups,m.events,m.goals,m.stints]);
+  const antesDeTudo=real();
   A.editEsc({dataset:{id:m.id}});
   const h=els['#sheet'].innerHTML;
-  if(!/Começaram/.test(h)||!/nova troca/.test(h))throw new Error('tela de escalacao incompleta');
-  const cita=()=>JSON.stringify([m.startLineups,m.lineups,m.events,m.goals,m.stints]);
-  /* era outra pessoa: sai da partida inteira e entra a nova no lugar */
+  if(!/Começaram/.test(h)||!/nova troca/.test(h)||!/Como fica/.test(h))throw new Error('tela de escalacao incompleta');
+  if(/Salvar/.test(h))throw new Error('sem mudanca nenhuma nao deveria ter botao de salvar');
+  /* era outra pessoa: some da partida inteira, mas so no rascunho */
   const alvo=A0[0],novo=l.players.find(p=>!genteDaPartida(m).has(p.id));
   if(!novo)throw new Error('sem ninguem de fora para trocar');
   A.escSwap({dataset:{id:m.id,s:'0',pid:alvo,por:novo.id}});
-  if(cita().indexOf(alvo)>=0)throw new Error('quem foi trocado ainda aparece na partida');
-  if(!emQuadraNo(l,m,0).has(novo.id))throw new Error('quem entrou no lugar nao aparece nos trechos');
-  /* troca nova no meio da partida vira mais um trecho */
+  if(!ESC||ESC.mud.length!==1)throw new Error('a mudanca nao entrou na lista do rascunho');
+  if(real()!==antesDeTudo)throw new Error('o rascunho mexeu na partida antes de salvar');
+  if(!/Salvar 1 mudança/.test(els['#sheet'].innerHTML))throw new Error('faltou o botao de salvar com a conta das mudancas');
+  if(JSON.stringify(ESC.m.startLineups).indexOf(alvo)>=0)throw new Error('quem foi trocado ainda aparece no rascunho');
+  if(!emQuadraNo(l,ESC.m,0).has(novo.id))throw new Error('quem entrou no lugar nao aparece nos trechos do rascunho');
+  /* troca nova no meio da partida vira mais um trecho (na previa) */
   A.novaTroca({dataset:{id:m.id}});
   A.ntSet({dataset:{k:'side',v:'1'}});
-  const t=tDoMinuto(m,S.ui.nt.min),emq=escalaEm(l,m,t,1),livres=foraDeQuadra(l,m,t);
+  const t=tDoMinuto(ESC.m,ESC.nt.min),emq=escalaEm(l,ESC.m,t,1),livres=foraDeQuadra(l,ESC.m,t);
   if(!emq.length||!livres.length)throw new Error('sem gente para montar a troca nova');
   A.ntSet({dataset:{k:'out',v:emq[0]}});A.ntSet({dataset:{k:'in',v:livres[0]}});
   A.ntOk({dataset:{id:m.id}});
-  if(matchStints(l,m).length!==nT+1)throw new Error('a troca nova nao virou trecho');
-  if(!emQuadraNo(l,m,1).has(livres[0]))throw new Error('quem entrou pela troca nova nao esta em quadra');
+  if(matchStints(l,ESC.m).length!==nT+1)throw new Error('a troca nova nao virou trecho');
+  if(!emQuadraNo(l,ESC.m,1).has(livres[0]))throw new Error('quem entrou pela troca nova nao esta em quadra');
   /* e apagar a troca devolve os trechos de antes */
-  const i=(m.events||[]).findIndex(e=>e.type==='sub'&&e.in===livres[0]);
+  const i=(ESC.m.events||[]).findIndex(e=>e.type==='sub'&&e.in===livres[0]);
   A.evDel({dataset:{id:m.id,i:String(i)}});
-  if(matchStints(l,m).length!==nT)throw new Error('apagar a troca nao devolveu os trechos');
-  if(emQuadraNo(l,m,1).has(livres[0]))throw new Error('quem entrou pela troca apagada continua em quadra');
-  /* quem saiu numa troca: corrigir o "quem entrou" troca so o segundo trecho */
-  const iSub=(m.events||[]).findIndex(e=>e.type==='sub');
+  if(matchStints(l,ESC.m).length!==nT)throw new Error('apagar a troca nao devolveu os trechos');
+  /* corrigir quem entrou numa troca ja existente */
+  const iSub=(ESC.m.events||[]).findIndex(e=>e.type==='sub');
   A.evSet({dataset:{id:m.id,i:String(iSub),k:'in',v:livres[0]}});
-  if(!matchStints(l,m)[1].lineups[0].includes(livres[0]))throw new Error('quem entrou corrigido nao entrou no trecho');
+  if(!matchStints(l,ESC.m)[1].lineups[0].includes(livres[0]))throw new Error('quem entrou corrigido nao entrou no trecho');
   /* goleiro de largada corrigido vale desde o primeiro trecho */
-  const gk=m.startLineups[0][1];
+  const gk=ESC.m.startLineups[0][1];
   A.escGk({dataset:{id:m.id,s:'0',pid:gk}});
-  if((matchStints(l,m)[0].gks||[])[0]!==gk)throw new Error('o goleiro corrigido nao valeu para o primeiro trecho');
-  if(stintPart(matchStints(l,m)[0])[gk].role!=='G')throw new Error('o goleiro corrigido nao conta como goleiro no trecho');
-  /* nao jogou: sai da escalacao, das trocas e perde a autoria dos gols */
-  const vitima=m.startLineups[1][0];
-  A.escDel({dataset:{id:m.id,s:'1',pid:vitima}});
-  if(emQuadraNo(l,m,1).has(vitima))throw new Error('quem saiu da escalacao continua em quadra');
-  const autor=(m.goals||[])[0].pid;
-  A.escDel({dataset:{id:m.id,s:'0',pid:autor}});
-  if((m.goals||[])[0].pid)throw new Error('gol de quem nao jogou continuou com autor');
-  if(!(l.log||[]).some(e=>e.a==='esc'))throw new Error('correcao de escalacao sem registro no log');
-  /* a liga continua batendo com o recalculo do zero */
-  const antes=l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',');
+  if((matchStints(l,ESC.m)[0].gks||[])[0]!==gk)throw new Error('o goleiro corrigido nao valeu para o primeiro trecho');
+  if(stintPart(matchStints(l,ESC.m)[0])[gk].role!=='G')throw new Error('o goleiro corrigido nao conta como goleiro no trecho');
+  /* nao jogou: sai da escalacao e perde a autoria dos gols */
+  const autor=(ESC.m.goals||[])[0].pid,ladoAutor=ESC.m.startLineups[0].includes(autor)?0:1;
+  A.escDel({dataset:{id:m.id,s:String(ladoAutor),pid:autor}});
+  if((ESC.m.goals||[])[0].pid)throw new Error('gol de quem nao jogou continuou com autor');
+  if(real()!==antesDeTudo)throw new Error('a partida real mudou antes do Salvar');
+  /* Salvar: agora sim a partida muda, cada mudanca vira registro e o nivel e refeito */
+  const nMud=ESC.mud.length,logAntes=(l.log||[]).filter(e=>e.a==='esc').length;
+  A.escSalvar({dataset:{id:m.id}});
+  if(ESC)throw new Error('o rascunho deveria acabar no Salvar');
+  if(real()===antesDeTudo)throw new Error('o Salvar nao escreveu na partida');
+  if((l.log||[]).filter(e=>e.a==='esc').length!==logAntes+nMud)throw new Error('as correcoes nao foram todas para o log');
+  if(emQuadraNo(l,m,0).has(alvo))throw new Error('quem foi trocado continua na partida salva');
+  if((m.goals||[])[0].pid)throw new Error('a autoria do gol voltou depois de salvar');
+  const elos=l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',');
   rebuildAll(l);
-  if(l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',')!==antes)throw new Error('o nivel nao bate com o recalculo do zero');
+  if(l.players.map(p=>p.L.elo+'/'+p.G.elo).join(',')!==elos)throw new Error('o nivel nao bate com o recalculo do zero');
+  /* descartar: mexe e volta atras, sem deixar nada */
+  const salvo=real();
+  A.editEsc({dataset:{id:m.id}});
+  A.escAddDo({dataset:{id:m.id,s:'1',pid:alvo}});
+  if(!ESC||!ESC.mud.length)throw new Error('a mudanca nao entrou no rascunho');
+  A.escDescartar({dataset:{id:m.id}});
+  if(ESC)throw new Error('descartar deveria apagar o rascunho');
+  if(real()!==salvo)throw new Error('descartar mexeu na partida');
   l.matches=l.matches.filter(x=>x.id!=='edit1');rebuildAll(l);   // o teste nao deixa resto
 });
 step('partida antiga nao aceita correcao de escalacao',()=>{
