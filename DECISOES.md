@@ -1141,6 +1141,23 @@ zebra de ontem pode ser o favorito de hoje).
 (histórico) · `smoke.py` ("historico mostra a chance de cada lado no apito").
 
 
+### D-76 · Partida a partida na tela do jogador — com a chance da época e uma bolinha por gol
+**31/08/2026.** A aba Stats → Jogador ganhou o card **"Partida a partida"**: uma linha por jogo da
+pessoa no período do filtro, da mais recente para a mais antiga — V/E/D colorido, data, placar
+**pelo lado dela**, a **chance no apito** (a mesma conta do histórico, D-75: `m.pre` sobre a
+escalação de largada, do lado em que ela jogou) e os gols como **uma bolinha ⚽ por gol** (🙈 por
+gol contra, a pedido — número só quando passa de 8 bolinhas). Mostra 8 linhas e abre até 40, no
+mesmo padrão dos rankings. A coluna de chance segue a regra de sempre: some com as patentes
+fechadas (D-52) e vira — quando o `pre` não cobre a escalação.
+**Por quê:** o painel resumia o período mas não contava a história jogo a jogo — e com a chance da
+época na linha, dá para ver de bate-olho quem venceu de zebra e quem só confirmou favoritismo.
+**Descartado:** placar sempre na ordem dos times (pelo lado da pessoa é o que o leitor daquela
+tela quer); listar também na ficha (pSheet) — a ficha é cadastro/correção, estatística mora em
+Stats.
+**Onde:** `pps`/`ppRow`/`cardPP` em `viewStats` (`index.html`) · DOCUMENTACAO §5 (tabela do painel)
+· `smoke.py` ("partida a partida na tela do jogador").
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -635,6 +635,12 @@ step('historico mostra a chance de cada lado no apito',()=>{
   if(!/chance no apito/.test(els['#app'].innerHTML))throw new Error('chance ao lado do placar nao apareceu nas partidas do racha aberto');
   A.histRacha({dataset:{id:''}});S.ui.tab='stats';render();
 });
+step('partida a partida na tela do jogador',()=>{
+  A.statsTab({dataset:{v:'jogador'}});A.statsPer({dataset:{v:'sempre'}});
+  const h=els['#app'].innerHTML;
+  if(!/Partida a partida/.test(h))throw new Error('secao partida a partida nao apareceu');
+  if(!/no apito/.test(h))throw new Error('a chance no apito deveria aparecer nas linhas');
+});
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');

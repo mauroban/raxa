@@ -2524,6 +2524,35 @@ function viewStats(liga){
       <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`).join('');
   const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
 
+  /* --- partida a partida: a historia da pessoa no periodo, uma linha por
+     jogo — resultado, placar pelo lado dela, chance no apito e gols (D-76) */
+  const verCh=vePat(liga);
+  const pps=(()=>{const out=[];
+    [...liga.matches].sort((a,b)=>b.ts-a.ts).forEach(m=>{
+      if(m.voided||!noPeriodo(m,per))return;
+      const sd=ladoNaPartida(liga,m,who);if(sd===null)return;
+      const c2=chanceHist(liga,m);
+      out.push({m,sd,ch:c2?c2[sd]:null,
+        gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own).length,
+        gc:(m.goals||[]).filter(g=>g.pid===who&&g.own).length,
+        res:m.result==='draw'?'E':(m.result===sd?'V':'D')});
+    });return out})();
+  const ppRow=x=>`<div class="goalrow">
+      <span class="mine" style="color:${x.res==='V'?'var(--ok)':x.res==='D'?'var(--bad)':'var(--mute)'}">${x.res}</span>
+      <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
+      <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
+      ${verCh?`<span class="tiny muted num" style="min-width:78px" title="chance no apito">${x.ch!==null?pct(x.ch)+' no apito':'—'}</span>`:''}
+      <span style="min-width:44px;text-align:right;letter-spacing:1px">${x.gols<=8?'⚽'.repeat(x.gols):'⚽×'+x.gols}${x.gc?`<span title="gol contra">${'🙈'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
+    </div>`;
+  const cardPP=pps.length?`
+  <div class="card">
+    <div class="row" style="margin-bottom:8px"><div class="k">Partida a partida</div>
+      <div class="sp tiny muted">${rot}${verCh?' · % = chance no apito':''}</div></div>
+    ${pps.slice(0,aberto.pp?40:8).map(ppRow).join('')}
+    ${pps.length>8?`<button class="more" data-a="statsSec" data-k="pp">${aberto.pp?'▴ menos':'▾ ver até '+Math.min(40,pps.length)}</button>`:''}
+    ${pps.length>40&&aberto.pp?`<div class="tiny muted" style="margin-top:6px">mostrando as 40 mais recentes de ${pps.length}</div>`:''}
+  </div>`:'';
+
   const cardsJogador=`
   <div class="card">
     <div class="hero">
@@ -2569,7 +2598,7 @@ function viewStats(liga){
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
-  <div class="card">
+${cardPP}  <div class="card">
     <div class="k" style="margin-bottom:8px">Duelos — quem ${esc(quem)} enfrenta</div>
     ${carrasco||fregues?`<div class="duo">
       ${carrasco?`<div class="hl bad"><div class="t">😤 Maior carrasco</div>
