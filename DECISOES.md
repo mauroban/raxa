@@ -769,8 +769,9 @@ quando dois jogadores do mesmo time têm o mesmo primeiro nome).
 na conta da maioria (D-59). Ele roda entre os times por regra do racha (o goleiro fica com quem fica
 em quadra), então não identifica time nenhum: aparecia num racha inteiro trocando de lado e sujava
 tanto o nome do time quanto o critério de maioria. Goleiro **fixo** de um time continua na
-composição, porque aí ele é do time. A lista sai de `sess.gkPool` (ou `lv.gkPool`, no racha aberto);
-racha antigo sem essa lista segue como estava.
+composição, porque aí ele é do time. A lista sai de `sess.gkPool`; com o racha ainda **aberto** a sessão nem
+existe (ela nasce no encerrar), então times e rodízio vêm de `liga.live`. Sem lista nenhuma (racha
+antigo) vale a evidência: **quem pegou no gol por mais de um time na mesma noite estava rodando**.
 **31/08/2026, mesmo dia:** vale também para o **histórico**. Cada partida mostra os dois lados como
 a lista dos primeiros nomes da escalação de largada, com os gols de cada lado à direita; o nome do
 time fica no "venceu ..." da linha de baixo. A fonte cai para 12,5 px (texto, não display) para

@@ -547,6 +547,13 @@ step('vitoria e do time que jogou, nao do nome no placar',()=>{
   const doLance=timesDoRacha(l,[{ts:1,names:['X','Y'],startLineups:[['a','b','g'],['d','e','g2']]}],{gkPool:['g']});
   if(doLance[0].ids.indexOf('g')>=0)throw new Error('goleiro do rodizio entrou na composicao vinda da escalacao');
   if(doLance[1].ids.length!==3)throw new Error('goleiro fixo do outro time nao devia sair da composicao');
+  /* sem lista de rodizio gravada, vale a evidencia: pegou no gol pelos dois times */
+  const stq=(l0,l1,g0,g1)=>({dur:6e5,counted:true,w:1,lineups:[l0,l1],gks:[g0,g1],score:[1,0],result:0,ended:'apito'});
+  const semLista=timesDoRacha(l,[
+    {ts:1,names:['X','Y'],startLineups:[['a','b','g'],['d','e','h']],stints:[stq(['a','b','g'],['d','e','h'],'g','h')]},
+    {ts:2,names:['Y','X'],startLineups:[['d','e','g'],['a','b','h']],stints:[stq(['d','e','g'],['a','b','h'],'g','h')]}],null);
+  if(semLista.some(t=>t.ids.indexOf('g')>=0||t.ids.indexOf('h')>=0))
+    throw new Error('goleiro que pegou no gol pelos dois times e do rodizio, nao do time');
   /* o card da noite usa isso: nome do time some do titulo, entram os jogadores */
   const fmt=l.cfg.format;l.cfg.format=5;
   A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});

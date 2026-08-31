@@ -1756,10 +1756,23 @@ function timeDoLado(liga,m,side,times){
 /* Os times como foram montados no racha. Sessão antiga (que não guardou os
    times): a escalação de largada da primeira partida em que o nome aparece
    serve de composição original.                                             */
+/* Quem estava no rodízio de goleiro naquele racha. A lista gravada manda; sem
+   ela (racha antigo), vale a evidência: quem pegou no gol por mais de um time
+   na mesma noite estava rodando.                                            */
+function rodizioDoRacha(liga,ms,sess){
+  const pool=new Set(sess&&Array.isArray(sess.gkPool)?sess.gkPool:[]);
+  const times={};
+  (ms||[]).forEach(m=>matchStints(liga,m).forEach(st=>[0,1].forEach(sd=>{
+    const g=(st.gks||[])[sd];if(!g)return;
+    (times[g]=times[g]||new Set()).add((m.names||[])[sd]);
+  })));
+  Object.keys(times).forEach(id=>{if(times[id].size>1)pool.add(id)});
+  return pool;
+}
 function timesDoRacha(liga,ms,sess){
   /* Goleiro de rodízio não é de time nenhum: ele roda entre os times, então
      fica fora da composição — nem no rótulo, nem na conta da maioria.       */
-  const pool=new Set(sess&&Array.isArray(sess.gkPool)?sess.gkPool:[]);
+  const pool=rodizioDoRacha(liga,ms,sess);
   const semGk=ids=>(ids||[]).filter(id=>!pool.has(id));
   if(sess&&Array.isArray(sess.teams)&&sess.teams.length)
     return sess.teams.map(t=>({name:t.name,ids:semGk(t.ids)}));
@@ -1784,9 +1797,11 @@ function nomesCurtos(liga,ids){
    substituição não leva a vitória, e quem virou maioria de outro time leva a
    dele.                                                                     */
 function teamRecord(liga,lv,ti){
-  const pool=lv.gkPool||[];                       // goleiro de rodízio não é de time nenhum
+  /* goleiro de rodízio não é de time nenhum */
+  const ms=(lv.matchIds||[]).map(id=>liga.matches.find(x=>x.id===id)).filter(Boolean);
+  const pool=rodizioDoRacha(liga,ms,{gkPool:lv.gkPool||[]});
   const orig=(lv.teams||[]).map((t,i)=>({name:t.name,i,
-    ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).filter(id=>pool.indexOf(id)<0)}));
+    ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).filter(id=>!pool.has(id))}));
   let w=0,d=0,l=0;
   (lv.matchIds||[]).forEach(id=>{
     const m=liga.matches.find(x=>x.id===id);
@@ -2572,7 +2587,13 @@ function viewStats(liga){
   const cardsUmRacha=(()=>{
     if(!soRacha)return '';
     if(!ms.length)return `<div class="card"><div class="k">Último racha</div><div class="tiny muted">Nenhum racha registrado ainda.</div></div>`;
-    const sid=per.slice(6),sess=(liga.sessions||[]).find(x=>x.id===sid);
+    const sid=per.slice(6);
+    /* racha ainda aberto não tem sessão gravada (ela nasce no encerrar): os
+       times e o rodízio de goleiro vêm do próprio racha em andamento        */
+    const lv=liga.live;
+    const sess=(liga.sessions||[]).find(x=>x.id===sid)
+      ||(lv&&lv.id===sid?{teams:(lv.teams||[]).map(t=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice()})),
+          gkPool:(lv.gkPool||[]).slice(),presentIds:lv.presentIds||[]}:null);
     const ini=Math.min(...ms.map(m=>m.startedAt||m.ts)),fim=Math.max(...ms.map(m=>m.endedAt||m.ts));
     const jogo=ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.counted?(st.dur||0):0),0),0);
     /* presença do racha: quem esteve (sessão) ∪ quem jogou (partidas) — conta
