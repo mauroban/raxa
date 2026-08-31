@@ -2720,10 +2720,20 @@ ${cardPP}  <div class="card">
     ${tempo.length?`<div class="sec"><div class="k2"><span>⏱ Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
     ${gks.length?`<div class="sec"><div class="k2"><span>🧤 Menos vazado <span class="tiny muted">mín. 20 min no gol</span></span>${ordBtn('rgk')}</div>${corta(gks,'rgk').map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')+mais(gks,'rgk')}</div>`:''}
     ${gc.length?`<div class="sec"><div class="k2">🙈 Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
-    ${subiu.length||caiu.length?`<div class="sec"><div class="k2">Nível</div>
-      ${subiu.map(x=>{const [pid,role]=x[0].split('|'),p=P(liga,pid);return p?lin({pid},'🔺 '+esc(rankLabel(liga,rt(p,role).rank)),role==='G'?'no gol':null):''}).join('')}
-      ${caiu.map(x=>{const [pid,role]=x[0].split('|'),p=P(liga,pid);return p?lin({pid},'🔻 '+esc(rankLabel(liga,rt(p,role).rank)),role==='G'?'no gol':null):''}).join('')}</div>`
-      :'<div class="tiny muted" style="margin-top:8px">Ninguém mudou de nível.</div>'}
+    ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
+         🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
+         "de onde → para onde" escrito — quem andou mais vem primeiro     */
+      if(!vePat(liga))return '';
+      const movRow=x=>{const [pid,role]=x[0].split('|'),n=x[1],p=P(liga,pid);if(!p)return '';
+        const tr=rt(p,role),de=clamp(tr.rank-n,0,TOP),up=n>0;
+        return `<div class="rk3">
+          <span class="pos" style="color:${up?'var(--ok)':'var(--bad)'};font-size:12px;letter-spacing:1px;min-width:30px">${(up?'▲':'▼').repeat(Math.min(Math.abs(n),3))}</span>
+          <div class="nm">${esc(nameOf(liga,pid))}${role==='G'?' 🧤':''}<small>${esc(rankLabel(liga,de))} → ${esc(rankLabel(liga,tr.rank))}${Math.abs(n)>1?' · '+Math.abs(n)+' divisões':''}${role==='G'?' · no gol':''}</small></div>
+          <span class="val">${patBadge(liga,tr.rank)}</span></div>`};
+      const movs=[...subiu].sort((a,b)=>b[1]-a[1]).concat([...caiu].sort((a,b)=>a[1]-b[1]));
+      return movs.length?`<div class="sec"><div class="k2">Nível</div>${movs.map(movRow).join('')}</div>`
+        :'<div class="tiny muted" style="margin-top:8px">Ninguém mudou de nível.</div>';
+    })()}
   </div>`;
   })();
   const cardsRacha=soRacha?cardsUmRacha:`
