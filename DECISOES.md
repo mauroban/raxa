@@ -912,6 +912,33 @@ contraditório patente+calibrando); piso configurável por liga (mais um botão 
 esperado" (piso) · `test.py` (blocos de patente e destaques, assinatura nova).
 
 
+### D-66 · Limpeza: uma definição só por ação, sem sombras e sem texto mentindo
+**31/08/2026.** Passa a valer "cada conceito existe uma vez". **(1)** Apagadas as versões do
+protótipo que o bloco de conta sobrepunha (`resetAll`, `saveLiga`, `delLiga`, `demo`, `doImport`) e
+as ações que nenhum `data-a` chama desde que a ficha (D-58) e o D-44 as substituíram: `setRank`,
+`bumpRank`, `setRole`, `togGkP`, `claim` (as duas versões), `unclaim`, `giraFila`, `setFormat`,
+`setMatchMode` — o `smoke.py` que as usava como atalho passou a testar o caminho real
+(`pSheet → pdRank/pdOwner/pdRole/pdBump → pdSave`) e ganhou helpers próprios de formato/modo.
+Também caíram o `planGks` de assinatura antiga (o hoisting da segunda declaração o apagava em
+silêncio), `suggestTeams`, a constante `KEY` e os campos `res`/`side` que `benchList` devolvia sem
+ninguém ler. `ACOES_LANCAR`/`ACOES_ADMIN` só listam ações que existem. **(2)** Sombras renomeadas:
+em `viewStats`, `nRachas` (número) escondia `nRachas()` (função) e `pct` escondia `pct()`; em
+`statsAnos`, `const A={}` escondia o objeto global de ações — viraram `nRachasPer`, `pctMe`,
+`porAno`. **(3)** `esc()` também escapa apóstrofo (atributo com aspas simples deixa de ser armadilha
+de XSS). **(4)** `pSheet` varre o histórico uma vez só (o `statsLiga` rodava de novo dentro de
+`inseparaveis`). **(5)** `doImport` ensaia o `normalize` numa cópia isolada antes de empurrar em
+`S.ligas` — JSON torto estourava depois do push e a liga inválida ficava quebrando todo
+`applyDelta` até o reload. **(6)** Textos que mentiam: Ajustes dizia "K 20" (é 32/64), a folha de
+código dizia "6 letras" (tem dígitos), e o botão da tela de erro dizia "Apagar tudo e recomeçar"
+quando só fazia logout — agora diz "Sair da conta".
+**Por quê:** seis handlers com duas definições e três funções com sombra eram a maior fonte de
+leitura errada do arquivo — a primeira versão parece viva e não é.
+**Descartado:** manter as ações mortas "como API de teste" (teste que exercita código morto não
+protege nada; o fluxo da ficha é o que o usuário usa).
+**Onde:** `index.html` (bloco AÇÕES, `esc`, `benchList`, `viewStats`, `statsAnos`, `pSheet`,
+`doImport`) · `scripts/smoke.py` (passos reescritos pelo fluxo da ficha).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

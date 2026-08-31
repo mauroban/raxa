@@ -533,9 +533,8 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const uid=()=>Math.random().toString(36).slice(2,9);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const KEY='raxa_v1';
 const TEAMNAMES=['Time A','Time B','Time C','Time D'];
 const TEAMCLASS=['a','b','c','d'], TEAMBG=['cA','cB','cC','cD'];
 const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d:'Fut7'},{n:11,l:'11v11',d:'Campo'}];
@@ -1321,14 +1320,8 @@ const teamAvg=(liga,t,gkToday)=>{
   return t.ids.reduce((s,id)=>{const p=P(liga,id);return s+(p?lvlOf(p,gk.indexOf(id)>=0):0)},0)/t.ids.length;
 };
 
-/* Compatibilidade com os testes: quantos times cabem e quem vai para o rodízio. */
-function suggestTeams(liga,ids,rotating){return planTeams(liga,ids,{rotating:!!rotating}).n}
-function planGks(liga,presentIds,nTeams,gkToday){
-  const gks=presentIds.filter(id=>gkSetOf(liga,presentIds,gkToday).indexOf(id)>=0);
-  return gks.length&&gks.length<nTeams?gks:[];
-}
-/* Sugestão de quem entra — o usuário pode trocar à vontade.
-   Empate com 3 ou 4 times: os dois saem e entram os dois primeiros da fila.  */
+/* Sugestão de quem entra — o usuário pode trocar à vontade. Empate com 4
+   times: os dois saem; com 3, fica o que entrou por último (D-39).          */
 function suggestPair(liga,lv){
   const all=lv.teams.map((_,i)=>i);
   if(all.length<2)return [0,0];
@@ -1556,7 +1549,7 @@ function encontros(liga,a,b,periodo,mesmoLado){
 }
 /* Ano a ano, só para uma pessoa — é o "na vida" quebrado por temporada. */
 function statsAnos(liga,pid){
-  const A={};
+  const porAno={};
   (liga.matches||[]).forEach(m=>{
     if(m.voided)return;
     const y=ANO(m.ts),sid=m.sessionId||m.id;
@@ -1567,14 +1560,14 @@ function statsAnos(liga,pid){
       side=me.side;min+=st.dur||0;
     });
     if(side!==null&&contaPartida(liga,m,min,tot)){
-      const a=A[y]||(A[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
+      const a=porAno[y]||(porAno[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
       a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
     }
-    plusMinus(liga,m,(q,d)=>{if(q===pid&&A[y])A[y].pm+=d});
-    (m.goals||[]).forEach(g=>{if(g.pid===pid&&!g.own&&A[ANO(m.ts)])A[ANO(m.ts)].gols++});
+    plusMinus(liga,m,(q,d)=>{if(q===pid&&porAno[y])porAno[y].pm+=d});
+    (m.goals||[]).forEach(g=>{if(g.pid===pid&&!g.own&&porAno[ANO(m.ts)])porAno[ANO(m.ts)].gols++});
   });
-  return Object.keys(A).map(k=>A[k]).sort((x,y)=>y.ano-x.ano);
+  return Object.keys(porAno).map(k=>porAno[k]).sort((x,y)=>y.ano-x.ano);
 }
 /* Quem é "eu" nesta liga: o perfil que a conta deste aparelho assumiu. */
 function euId(liga){
@@ -1621,7 +1614,7 @@ function render(){
       <div class="tiny muted" style="line-height:1.55;margin-bottom:12px">${esc(e.message||String(e))}</div>
       <button class="btn wide ghost" data-a="home">Voltar para a lista de ligas</button>
       <div style="height:8px"></div>
-      <button class="btn wide danger" data-a="resetAll">Apagar tudo e recomeçar</button></div>`;
+      <button class="btn wide ghost" data-a="logout">Sair da conta</button></div>`;
     $('#bar').innerHTML='';setNav('');
   }
 }
@@ -1688,8 +1681,8 @@ function renderHome(){
 
 /* ---------- quem enxerga nível ----------
    O admin da liga pode deixar os níveis visíveis para todo mundo (padrão)
-   ou só para ele. Em v1 isso vale por aparelho: sem backend não há como
-   esconder de verdade — a checagem de papel é a mesma que o servidor fará.  */
+   ou só para ele. A checagem aqui decide o que a tela mostra; nas ações de
+   conta o servidor faz a checagem dele (is_league_admin, D-62).             */
 function meuPapel(liga){
   const meu=liga.players.find(p=>p.owner&&p.owner===S.me.name);
   if(meu)return meu.role||'jogador';
@@ -1717,11 +1710,11 @@ const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
    Jogador só olha, vincula o próprio perfil e contesta. */
 const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
-const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','giraFila','fillOff','pickSide','setSide',
+const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','togGkP','delPlayer']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','setFormat','setMatchMode','saveLiga']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="--pc:${patColor(step)}"></span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -2071,8 +2064,7 @@ function benchList(liga,lv){
   const jogando=c?[c.a,c.b]:[];
   return lv.presentIds.filter(id=>emCampo.indexOf(id)<0&&(lv.gkPool||[]).indexOf(id)<0)
     .map(id=>{const i=lv.teams.findIndex(t=>t.ids.indexOf(id)>=0);
-      return{id,ti:i,from:i>=0?lv.teams[i].name:null,res:jogando.indexOf(i),
-        side:jogando.indexOf(i)};});
+      return{id,ti:i,from:i>=0?lv.teams[i].name:null};});
 }
 /* Chance esperada do confronto, pelo Elo dos que vão entrar. É a única % de
    nível que o app mostra: fala do CONFRONTO (o quanto os dois times estão
@@ -2448,7 +2440,7 @@ function viewStats(liga){
   /* --- a liga no período --- */
   const ms=liga.matches.filter(m=>!m.voided&&noPeriodo(m,per));
   const rachas={};ms.forEach(m=>rachas[m.sessionId||m.id]=1);
-  const nRachas=Object.keys(rachas).length;
+  const nRachasPer=Object.keys(rachas).length;   // nome proprio: nRachas() e a funcao global
   const golsTot=ms.reduce((a,m)=>a+(m.score||[0,0])[0]+(m.score||[0,0])[1],0);
   const empates=ms.filter(m=>m.result==='draw').length;
 
@@ -2495,7 +2487,7 @@ function viewStats(liga){
       <span class="val">${fmt(x)}</span></div>`}).join('')
       +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+itens.length}</button>`:'');
   };
-  const C=2*Math.PI*43,pct=pctDe(me.v,me.jogos);
+  const C=2*Math.PI*43,pctMe=pctDe(me.v,me.jogos);   // pct() e a funcao global de %
   const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
   const listaDuelo=(arr,m)=>arr.slice(0,aberto[m?'parc':'duel']?arr.length:5).map(x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
       <span class="pos" style="font-size:12px;color:${x.v>x.d?'var(--ok)':x.d>x.v?'var(--bad)':'var(--mute2)'}">${x.v>x.d?'▲':x.d>x.v?'▼':'='}</span>${av(x.pid)}
@@ -2525,8 +2517,8 @@ function viewStats(liga){
     <div class="herogrid">
       <div class="ring">
         <svg viewBox="0 0 104 104"><circle class="tr" cx="52" cy="52" r="43"/>
-          <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(pct/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
-        <div class="rv num">${pct}%</div><div class="rl">aproveitamento</div>
+          <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(pctMe/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
+        <div class="rv num">${pctMe}%</div><div class="rl">aproveitamento</div>
       </div>
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
@@ -2673,7 +2665,7 @@ function viewStats(liga){
   <div class="card">
     <div class="k" style="margin-bottom:10px">O racha ${rot}</div>
     <div class="tiles">
-      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachas}</b><span>racha${nRachas===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer}</b><span>racha${nRachasPer===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
     </div>
@@ -2681,7 +2673,7 @@ function viewStats(liga){
     <div class="tiles">
       <div class="tile" style="--tc:var(--gold)"><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
       <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
-      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachas?Math.round(ms.length/nRachas):'—'}</b><span>partidas por racha</span></div>
+      <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer?Math.round(ms.length/nRachasPer):'—'}</b><span>partidas por racha</span></div>
     </div>
 
   </div>
@@ -3080,7 +3072,7 @@ function viewCfg(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
-    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo clássico (K 20, dobrado na calibração). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
+    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo de time (K 32, dobrado para 64 na calibração). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
       Quem é novo anda rápido (K dobrado) até completar <b>${calMeta(liga).n} ${calMeta(liga).u}</b> — um cadastro errado se corrige em um ou dois rachas. Vale separado para o nível de linha e o de goleiro.</div>
   </div>
   <div class="card">
@@ -3229,11 +3221,6 @@ function mkPlayer(liga,name,elo,gk){
    ========================================================================== */
 const A={
   home(){S.active=null;save();render()},
-  resetAll(){
-    if(!confirm('Apagar TODAS as ligas deste aparelho e começar do zero?'))return;
-    try{localStorage.removeItem(KEY)}catch(e){}
-    S=defState();save();render();
-  },
   openLiga(el){S.active=el.dataset.id;S.ui.tab='racha';save();render()},
   tab(el){S.ui.tab=el.dataset.v;save();render()},
   closeSheet,
@@ -3267,39 +3254,15 @@ const A={
     if(el.dataset.k==='format')NOVA.format=+el.dataset.v;else NOVA.modo=el.dataset.v;
     A.novaSheet();
   },
-  saveLiga(){
-    const l={id:uid(),name:(NOVA.nome||'').trim()||'Meu racha',createdAt:Date.now(),cfg:cfgNova(),players:[],matches:[],sessions:[],live:null};
-    S.ligas.push(l);S.active=l.id;S.ui.tab='racha';closeSheet();save();render();
-  },
-  delLiga(){if(!confirm('Apagar esta liga e todo o histórico?'))return;S.ligas=S.ligas.filter(l=>l.id!==S.active);S.active=null;save();render()},
-  demo(){
-    const l={id:uid(),name:'Racha de sábado',createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
-    ['Alex','Luis','Marlon'].forEach(n=>l.players.push(mkPlayer(l,n,0,true)));
-    ['JPx','Rodrigo','Juliano Rocha','Pedro Henrique','Igor','Guilherme','João Gabriel','Vinashow',
-     'Convidado 1','S10','Gleik','Jefferson R.','Maike','Mauro','Halisson','Matheus Bonfá Jr']
-      .forEach(n=>l.players.push(mkPlayer(l,n,0,false)));
-    S.ligas.push(l);S.active=l.id;S.ui.tab='racha';save();render();
-    toast('Racha de sábado criado — 3 goleiros e 16 de linha');
-  },
+  /* saveLiga, delLiga, demo, doImport e o logout vivem no bloco de conta, no
+     fim do arquivo — precisam do backend (createLeague, sb).               */
 
   /* ----- presença ----- */
   startRacha(){const l=L();l.live={id:uid(),mode:l.cfg.matchMode||'curtas',started:Date.now(),stage:'presenca',
     presentIds:[],gkToday:[],teams:[],queue:[],cur:null,matchIds:[],sel:null,lastWinner:null,gkPool:[],gkFlip:0};save();render()},
   cancelRacha(){const l=L();if(!l.live)return;if(l.live.matchIds.length&&!confirm('Cancelar o racha? As partidas já lançadas continuam no histórico.'))return;l.live=null;save();render()},
-  setFormat(el){
-    const l=L();l.cfg.format=+el.dataset.v;
-    if(l.live&&l.live.stage==='times')applyPlan(l,l.live);
-    save();render();
-  },
-  setMatchMode(el){
-    const l=L(),v=el.dataset.v;
-    l.cfg.matchMode=v;                       // vira o padrão do próximo racha
-    if(l.live)l.live.mode=v;                 // e o formato deste racha
-    if(v==='unica'){l.cfg.targetGoals=0;l.cfg.targetMin=50;l.cfg.winnerStays=false}
-    else{l.cfg.targetGoals=2;l.cfg.targetMin=7;l.cfg.winnerStays=true}
-    if(l.live&&l.live.stage==='times')applyPlan(l,l.live);
-    save();render();                          // nada de recalcular a liga: o histórico é de cada racha
-  },
+  /* formato e modo são da LIGA e se escolhem na criação (D-44): não existe
+     mais ação de trocar no meio do caminho.                                */
   clearSel(){const lv=L().live;if(!lv)return;lv.sel=null;save();render()},
   /* ----- completar o time menor ----- */
   fillPick(el){
@@ -3328,12 +3291,6 @@ const A={
     f[sd]=f[sd].filter(x=>x!==el.dataset.id);
     lv.fill=f;lv.fillMan=true;
     save();render();
-  },
-  giraFila(el){
-    const l=L(),lv=l.live,i=+el.dataset.i;
-    const r=rodaFila(l,lv,i);
-    resetFill(lv);save();render();
-    toast(r?`Entra ${r.entram.map(id=>nameOf(l,id).split(' ')[0]).join(', ')}`:'Ninguém na fila');
   },
   fillOff(){
     const l=L(),lv=l.live;
@@ -4280,6 +4237,9 @@ const A={
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
     const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;
+    /* uma varredura só do histórico para a folha inteira */
+    const stTudo=statsLiga(l,'sempre'),j=stTudo.J[p.id]||{min:0,minGk:0,sofridos:0,pm:0};
+    const jt=inseparaveis(l,stTudo).filter(x=>x.a===p.id||x.b===p.id);
     openSheet(`
       <div class="ps-hd">
         <div class="avatar" style="--pc:${corAv}">${esc(iniciais(PD.name||p.name))}</div>
@@ -4291,14 +4251,14 @@ const A={
         </div>
       </div>
       ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
-      ${(()=>{const j=statsLiga(l,'sempre').J[p.id]||{min:0,minGk:0,sofridos:0,pm:0};return `<div class="stat four">
+      ${(()=>{return `<div class="stat four">
         ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
         <div><b class="num">${tot}</b><span>partidas</span></div>
         <div><b class="num">${tot?Math.round(vit/tot*100):0}%</b><span>vitórias</span></div>
         <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
         <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
       </div>
-      ${(()=>{const jt=inseparaveis(l).filter(x=>x.a===p.id||x.b===p.id);return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
+      ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
         <div class="k">Corrigir nível ${role==='G'?'no gol':'na linha'}</div>
@@ -4395,42 +4355,8 @@ const A={
     });
     PD=null;closeSheet();save();render();toast(msg);
   },
-  setRank(el){
-    const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L',s=+el.dataset.s,target=stepMid(s);
-    if(!souAdmin(l))return toast('Só o admin corrige nível');
-    const tr=rt(p,role);
-    logAdd(l,'rank',{pid:p.id,role,from:tr.rank,to:s,fromElo:Math.round(tr.elo),toElo:target});
-    tr.base+=target-tr.elo;tr.elo=target;tr.rank=s;tr.protect=l.cfg.protectMatches;tr.def=true;
-    save();render();A.pSheet({dataset:{id:p.id,r:role}});toast('Agora é '+rankLabel(l,s)+(role==='G'?' no gol':''));
-  },
-  bumpRank(el){
-    const l=L(),p=P(l,el.dataset.id),role=el.dataset.r==='G'?'G':'L';
-    if(!souAdmin(l))return toast('Só o admin corrige nível');
-    const tr=rt(p,role),s=clamp(tr.rank+(+el.dataset.d),0,TOP),target=stepMid(s);
-    logAdd(l,'rank',{pid:p.id,role,from:tr.rank,to:s,fromElo:Math.round(tr.elo),toElo:target});
-    tr.base+=target-tr.elo;tr.elo=target;tr.rank=s;tr.protect=l.cfg.protectMatches;tr.def=true;
-    save();render();A.pSheet({dataset:{id:p.id,r:role}});
-  },
-  togGkP(el){const p=P(L(),el.dataset.id);p.gk=!p.gk;save();render();A.pSheet(el)},
-  claim(el){
-    const p=P(L(),el.dataset.id);
-    if(!S.me.name){const n=prompt('Seu nome de usuário:');if(!n)return;S.me.name=n.trim()}
-    p.owner=S.me.name;closeSheet();save();render();toast('Perfil vinculado a você');
-  },
-  unclaim(el){
-    const l=L(),p=P(l,el.dataset.id);
-    if(p.owner!==S.me.name&&!souAdmin(l))return toast('Só o dono do perfil ou o admin desvincula');
-    logAdd(l,'unlink',{pid:p.id,user:p.owner});
-    p.owner=null;closeSheet();save();render();
-  },
-  setRole(el){
-    const l=L(),p=P(l,el.dataset.id);
-    if(!souAdmin(l))return toast('Só o admin muda permissão');
-    const outrosAdmins=l.players.some(x=>x.id!==p.id&&x.owner&&x.role==='admin');
-    if(p.role==='admin'&&el.dataset.r!=='admin'&&p.owner&&!outrosAdmins)return toast('A liga precisa de pelo menos um admin');
-    logAdd(l,'role',{pid:p.id,from:p.role,to:el.dataset.r});
-    p.role=el.dataset.r;save();A.pSheet(el);
-  },
+  /* nível, gol, conta e permissão mudam pela ficha (PD → pdSave), num
+     rascunho com as mesmas checagens de papel — não há ações diretas.      */
   delPlayer(el){
     const l=L();
     if(!souEditor(l))return toast('Só admin ou editor remove jogador');
@@ -4526,16 +4452,6 @@ const A={
       <div class="tiny muted" style="margin-bottom:10px">Cole o JSON exportado de outro aparelho. Entra como uma liga nova.</div>
       <textarea id="imp" style="height:180px;font-size:12px"></textarea>
       <div style="height:10px"></div><button class="btn wide pri" data-a="doImport">Importar</button>`);
-  },
-  doImport(){
-    try{
-      const o=JSON.parse($('#imp').value);
-      if(!o.players||!o.cfg)throw 0;
-      o.id=uid();o.name=(o.name||'Liga')+' (importada)';
-      S.ligas.push(o);S.active=o.id;
-      S=normalize(S);                    // liga exportada por versao antiga entra migrada
-      closeSheet();save();render();toast('Liga importada');
-    }catch(e){toast('JSON inválido')}
   }
 };
 
@@ -5206,8 +5122,6 @@ Object.assign(A,{
     authMode='entrar';renderAuth();
   },
 
-  resetAll(){A.logout()},
-
   /* ----- criar / entrar / sair de liga ----- */
   saveLiga(){
     const name=(NOVA.nome||'').trim()||'Meu racha';
@@ -5226,7 +5140,7 @@ Object.assign(A,{
 
   joinLiga(){
     openSheet(`<h2>Entrar numa liga</h2>
-      <div class="tiny muted" style="margin-bottom:12px;line-height:1.5">Peça o código de 6 letras para quem criou a liga. Ele aparece em <b>Ajustes</b>.</div>
+      <div class="tiny muted" style="margin-bottom:12px;line-height:1.5">Peça o código de 6 caracteres para quem criou a liga. Ele aparece em <b>Ajustes</b>.</div>
       <label class="f"><span class="k">Código</span>
         <input id="jc" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false"
                style="text-transform:uppercase;letter-spacing:.2em" placeholder="ABC123"></label>
@@ -5279,24 +5193,14 @@ Object.assign(A,{
     else toast(c);
   },
 
-  /* O perfil é vinculado à conta logada — nada de digitar nome à mão. */
-  claim(el){
-    const l=L(),p=P(l,el.dataset.id);
-    const quem=ME?ME.username:(S.me.name||'eu');
-    p.owner=quem;S.me.name=quem;
-    /* a liga nunca pode ficar sem admin: o primeiro a vincular um perfil vira
-       admin (é quem criou a liga, na prática) e depois nomeia os outros */
-    const temAdmin=l.players.some(x=>x.owner&&x.role==='admin');
-    if(!temAdmin)p.role='admin';
-    logAdd(l,'link',{pid:p.id,user:quem,self:true});
-    closeSheet();save();render();toast(temAdmin?'Perfil vinculado a você':'Perfil vinculado — você é o admin da liga');
-  },
-
   doImport(){
     try{
       const o=JSON.parse($('#imp').value);
-      if(!o.players||!o.cfg)throw 0;
+      if(!Array.isArray(o.players)||!o.cfg||typeof o.cfg!=='object')throw 0;
       delete o.id;
+      /* ensaio numa cópia isolada: mkLiga empurra em S.ligas ANTES do
+         normalize, então JSON torto tem que estourar aqui, não lá dentro */
+      const ensaio=defState();ensaio.ligas=[Object.assign(JSON.parse(JSON.stringify(o)),{id:'ensaio'})];normalize(ensaio);
       const nome=(o.name||'Liga')+' (importada)';
       closeSheet();createLeague(nome,o).then(()=>toast('Liga importada'));
     }catch(e){toast('JSON inválido')}

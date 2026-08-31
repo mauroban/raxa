@@ -51,6 +51,13 @@ function step(label,fn){
 }
 console.log('\n[smoke] telas e fluxo completo');
 step('tela inicial (sem ligas)',()=>{S=defState();render()});
+/* formato e modo sao fixos por liga (D-44): o roteiro muda o cfg direto,
+   reproduzindo o que a acao antiga fazia */
+const setFormat=v=>{const l=L();l.cfg.format=+v;if(l.live&&l.live.stage==='times')applyPlan(l,l.live);save();render()};
+const setMatchMode=v=>{const l=L();l.cfg.matchMode=v;if(l.live)l.live.mode=v;
+  if(v==='unica'){l.cfg.targetGoals=0;l.cfg.targetMin=50;l.cfg.winnerStays=false}
+  else{l.cfg.targetGoals=2;l.cfg.targetMin=7;l.cfg.winnerStays=true}
+  if(l.live&&l.live.stage==='times')applyPlan(l,l.live);save();render()};
 step('criar liga de exemplo',()=>A.demo());
 step('iniciar racha',()=>A.startRacha());
 step('marcar todos presentes',()=>{L().players.forEach(p=>A.pres({dataset:{id:p.id}}));render()});
@@ -78,7 +85,7 @@ step('nova liga escolhe formato e modo na criacao',()=>{
   const l=L();if(l.cfg.format!==7||l.cfg.matchMode!=='unica'||l.cfg.targetGoals!==0)throw new Error('cfg da liga nova nao respeitou a folha: '+JSON.stringify(l.cfg));
   S.ligas.pop();S.active=S.ligas[S.ligas.length-1].id;render();
 });
-step('trocar formato para 7v7',()=>A.setFormat({dataset:{v:'7'}}));
+step('trocar formato para 7v7',()=>setFormat(7));
 step('forcar 3 times: com 16 na linha no 7v7 so cabem 2 cheios',()=>{
   A.nteams({dataset:{v:'3'}});
   const lv=L().live;
@@ -273,19 +280,19 @@ step('proxima partida entra com o time escolhido',()=>{
 step('chegou atrasado (sheet)',()=>A.lateSheet());
 step('desfazer',()=>A.undo());
 step('encerrar segunda partida',()=>{A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}})});
-step('formato 11v11',()=>A.setFormat({dataset:{v:'11'}}));
-step('modo partida unica',()=>A.setMatchMode({dataset:{v:'unica'}}));
+step('formato 11v11',()=>setFormat(11));
+step('modo partida unica',()=>setMatchMode('unica'));
 step('partida unica com goleiro fixo: escalacao sem vaga fantasma',()=>{
   const l=L(),lv=l.live;lv.stage='jogo';lv.cur=null;
   const gks=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
   lv.presentIds=[...new Set(gks.concat(l.players.filter(p=>!p.gk).slice(0,10).map(p=>p.id)))];lv.gkToday=gks.slice();
-  A.setFormat({dataset:{v:'5'}});applyPlan(l,lv);
+  setFormat(5);applyPlan(l,lv);
   if((lv.gkPool||[]).length)throw new Error('com um goleiro por time nao deveria haver rodizio');
   render();
   if(/pl  empty|＋ completar|>vaga</.test(document.querySelector('#app').innerHTML))throw new Error('escalacao mostra vaga que nao existe (goleiro fixo conta como um dos 5)');
-  A.setFormat({dataset:{v:'11'}});
+  setFormat(11);
 });
-step('modo varias curtas',()=>A.setMatchMode({dataset:{v:'curtas'}}));
+step('modo varias curtas',()=>setMatchMode('curtas'));
 step('comecar partida para as substituicoes',()=>A.startMatch());
 step('substituir tocando em quem esta em quadra',()=>{
   A.outPick({dataset:{s:'0',id:L().live.cur.lineups[0][0]}});
@@ -347,15 +354,19 @@ step('cancelar selecao',()=>{A.sel({dataset:{id:L().live.teams[0].ids[0]},classL
 step('recomecar partida',()=>A.startMatch());
 step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
-step('corrigir patente',()=>A.setRank({dataset:{id:L().players[0].id,s:'10'}}));
-step('assumir perfil: o primeiro vinculado vira admin',()=>{
-  A.claim({dataset:{id:L().players[0].id}});
+step('corrigir patente pela ficha',()=>{A.pSheet({dataset:{id:L().players[0].id}});A.pdRank({dataset:{s:'10'}});A.pdSave();
+  if(L().players[0].L.rank!==10)throw new Error('pdSave nao aplicou a patente');});
+step('assumir perfil (Sou eu): o primeiro vinculado vira admin',()=>{
+  S.me.name=S.me.name||'tester';
+  A.pSheet({dataset:{id:L().players[0].id}});A.pdOwner();A.pdSave();
+  if(L().players[0].owner!==S.me.name)throw new Error('perfil nao foi vinculado');
   if(L().players[0].role!=='admin')throw new Error('primeiro perfil vinculado deveria ser admin, veio '+L().players[0].role);
   if(!souAdmin(L()))throw new Error('souAdmin deveria ser true');
 });
 step('nao da para tirar o ultimo admin',()=>{
-  A.setRole({dataset:{id:L().players[0].id,r:'jogador'}});
+  A.pSheet({dataset:{id:L().players[0].id}});A.pdRole({dataset:{r:'jogador'}});A.pdSave();
   if(L().players[0].role!=='admin')throw new Error('o ultimo admin foi rebaixado');
+  A.pdCancel();
 });
 step('admin ve o elo cru, discreto, na escada',()=>{
   if(viewEscada(L()).indexOf('Elo — só o admin vê')<0)throw new Error('elo sutil nao apareceu para o admin');
@@ -367,8 +378,9 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   if(viewEscada(l).indexOf('Elo — só o admin vê')>=0)throw new Error('quem nao e admin nao pode ver o elo cru');
   const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
   if(m.result!==antes)throw new Error('lancador corrigiu resultado');
-  const r0=eu.L.rank;A.bumpRank({dataset:{id:eu.id,r:'L',d:'1'}});
+  const r0=eu.L.rank;A.pSheet({dataset:{id:eu.id,r:'L'}});A.pdBump({dataset:{d:'1'}});A.pdSave();
   if(eu.L.rank!==r0)throw new Error('lancador mexeu na propria patente');
+  A.pdCancel();
   S.ui.tab='hist';render();if(/data-a="review"/.test(document.querySelector('#app').innerHTML))throw new Error('botao Revisar aparece para lancador');
   eu.role='admin';l.players[1].owner=null;l.players[1].role='lancador';S.ui.tab='racha';render();
 });
@@ -490,7 +502,7 @@ step('corrigir resultado',()=>A.fixResult({dataset:{id:L().matches[0].id,r:'draw
 step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('reativar partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('aba ajustes',()=>{S.ui.tab='cfg';render()});
-step('partida unica nao aceita 3 times',()=>{A.setMatchMode({dataset:{v:'unica'}});const antes=L().live.teams.length;A.nteams({dataset:{v:'3'}});if(L().live.teams.length!==antes)throw new Error('mexeu nos times na partida unica');L().live.stage='times';A.setMatchMode({dataset:{v:'unica'}});if(L().live.teams.length!==2)throw new Error('ao montar times na partida unica deveria dar 2, deu '+L().live.teams.length);A.setMatchMode({dataset:{v:'curtas'}});L().live.stage='jogo';});
+step('partida unica nao aceita 3 times',()=>{setMatchMode('unica');const antes=L().live.teams.length;A.nteams({dataset:{v:'3'}});if(L().live.teams.length!==antes)throw new Error('mexeu nos times na partida unica');L().live.stage='times';setMatchMode('unica');if(L().live.teams.length!==2)throw new Error('ao montar times na partida unica deveria dar 2, deu '+L().live.teams.length);setMatchMode('curtas');L().live.stage='jogo';});
 step('estabilidade nao e mais opcao da liga',()=>{
   if(A.setStab)throw new Error('setStab ainda existe');
   if(L().cfg.stability!==undefined)throw new Error('cfg.stability ainda existe');
