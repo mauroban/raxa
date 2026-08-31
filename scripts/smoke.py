@@ -430,6 +430,7 @@ step('numeros: ultimo racha e ultimo mes',()=>{
   A.statsPer({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
   if(!/Racha de /.test(h)||!/Destaques da noite/.test(h))throw new Error('aba racha no periodo "ultimo racha" sem os cards proprios');
+  if(/Times do racha/.test(h)&&!/\(esp\. \d+%\)/.test(h))throw new Error('faltou o aproveitamento esperado discreto na linha dos times');
   if(/Rankings/.test(h))throw new Error('ranking de temporada nao cabe no ultimo racha');
   A.statsInv({dataset:{k:'rvenc'}});
   if(els['#app'].innerHTML.indexOf('↑')<0)throw new Error('setinha invertida nao apareceu no card da noite');

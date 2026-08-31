@@ -2662,13 +2662,18 @@ ${cardPP}  <div class="card">
     /* Times da noite: a partida conta para o time cuja MAIORIA original esteve
        em quadra (D-59), não para o nome que estava no placar.                */
     const orig=timesDoRacha(liga,ms,sess);
-    const T={};orig.forEach(t=>T[t.name]={n:t.name,ids:t.ids,v:0,e:0,d:0,gp:0,gc:0});
+    const T={};orig.forEach(t=>T[t.name]={n:t.name,ids:t.ids,v:0,e:0,d:0,gp:0,gc:0,esp:0,jE:0});
     let semDono=0;
+    /* probabilidade média de vitória do time no apito (a chance do histórico,
+       D-75) — comparada abaixo com a % de vitórias que ele DE FATO teve.
+       Só nível entra na conta; nada do resultado da noite. Some com as
+       patentes fechadas, como toda % de confronto.                          */
     ms.forEach(m=>[0,1].forEach(s=>{
       const dono=timeDoLado(liga,m,s,orig);
       if(!dono){semDono++;return}
-      const t=T[dono.name]||(T[dono.name]={n:dono.name,ids:dono.ids,v:0,e:0,d:0,gp:0,gc:0});
+      const t=T[dono.name]||(T[dono.name]={n:dono.name,ids:dono.ids,v:0,e:0,d:0,gp:0,gc:0,esp:0,jE:0});
       t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++;
+      const c2=chanceHist(liga,m);if(c2){t.esp+=c2[s];t.jE++}
     }));
     const times=Object.values(T).sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
     /* Até o 5v5 o time é reconhecido pelos jogadores, não pelo apelido da cor:
@@ -2702,7 +2707,7 @@ ${cardPP}  <div class="card">
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
     ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver a escalação</span></div>
-      ${times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${i+1}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small></span></div>`).join('')}
+      ${times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${i+1}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num" style="text-align:right">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small>${(t.v+t.e+t.d)?`<span class="tiny muted" style="display:block;font-weight:400;letter-spacing:0" title="% de vitórias · probabilidade média de vitória no apito">${pctDe(t.v,t.v+t.e+t.d)}% V${t.jE?' <span style="opacity:.75">(esp. '+Math.round(t.esp/t.jE*100)+'%)</span>':''}</span>`:''}</span></div>`).join('')}
       ${semDono?`<div class="tiny muted" style="margin-top:7px">${pl(semDono,'formação','formações')} não ${semDono===1?'contou':'contaram'} para nenhum time: mais da metade do time original não estava em quadra.</div>`:''}</div>`:''}
   </div>
   <div class="card">

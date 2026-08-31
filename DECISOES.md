@@ -1161,6 +1161,23 @@ Stats.
 · `smoke.py` ("partida a partida na tela do jogador").
 
 
+### D-77 · Times do racha: % de vitórias realizada × probabilidade de vitória no apito
+**31/08/2026.** No card do último racha, cada time ganhou uma linha discreta **abaixo da contagem
+V E D**: `50% V (esp. 62%)` — a % de vitórias que o time de fato teve na noite contra a **média das
+probabilidades de vitória** que ele tinha no apito de cada partida (a mesma chance do histórico,
+D-75, agregada pelo dono da partida via `timeDoLado`/D-59). Só nível entra no "esperado" — nada do
+resultado da noite contamina a régua (a primeira versão corrigia pela taxa de empate da noite e
+saiu a pedido: comparar chance com vitórias puras é mais honesto e mais legível). Some com as
+patentes fechadas, como toda % de confronto (D-52).
+**Por quê:** é a versão de time do "rendeu acima do esperado" — mostra em um relance se o time
+que mais venceu era mesmo o favorito ou se atropelou o nível.
+**Descartado:** aproveitamento em pontos esperado×realizado (exigia modelo de empate e misturava
+resultado da noite na expectativa); coluna própria (chamaria atenção demais — o pedido era
+discrição).
+**Onde:** `cardsUmRacha` (acumulador `esp`/`jE` e a linha sob o V E D) em `index.html` ·
+DOCUMENTACAO §5 (leitura da noite) · `smoke.py` (regex `esp. N%` no card da noite).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
