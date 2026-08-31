@@ -1700,7 +1700,8 @@ const souAdmin=liga=>meuPapel(liga)==='admin';
 function logAdd(liga,a,extra){
   if(!Array.isArray(liga.log))liga.log=[];
   liga.log.push(Object.assign({ts:Date.now(),by:S.me.name||null,a},extra||{}));
-  if(liga.log.length>2000)liga.log=liga.log.slice(-2000);
+  /* sem corte de tamanho: o diffParts usa o comprimento como cursor (cortar
+     congelava o sync do log), e a carga inicial já traz o log inteiro */
 }
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
@@ -4725,11 +4726,11 @@ document.addEventListener('change',e=>{
 /* ==========================================================================
    BACKEND — contas e Postgres (Supabase)
 
-   O motor não sabe que existe servidor. Cada liga é UM documento jsonb numa
-   linha de `leagues`; save() marca a liga suja e o sincronizador empurra o
-   documento com trava otimista (version). Se outra pessoa gravou no meio,
-   o servidor devolve o estado bom e a tela se realinha.
-   Esquema em supabase/schema.sql.
+   O motor não sabe que existe servidor. No banco a liga vive em PARTES
+   (jogadores, partidas, rachas, live, log); save() marca a liga suja e o
+   sincronizador manda só o que difere do último estado conhecido (diffParts),
+   com trava otimista (version). Se outra pessoa gravou no meio, o servidor
+   devolve o delta e a tela se realinha. Esquema em supabase/schema.sql.
    ========================================================================== */
 const CFG=window.RAXA_CFG||{};
 const CONFIGURADO=!!(window.supabase&&CFG.url&&CFG.anonKey&&CFG.url.indexOf('http')===0);
@@ -4747,9 +4748,11 @@ let ME=null;                       // {id, username}
 let PEND=[];
 const SIZE={};                     // por liga: {at, d:{players,matches,sessions,log,bytes}}
 async function loadSize(id){
-  if(!sb||!ME)return;SIZE[id]=Object.assign({at:Date.now()},SIZE[id]||{});
+  if(!sb||!ME||(SIZE[id]&&SIZE[id].carregando))return;
+  SIZE[id]=Object.assign({},SIZE[id],{at:Date.now(),carregando:true});
   const r=await sb.rpc('league_size',{p_id:id});
   if(!r.error&&r.data){SIZE[id]={at:Date.now(),d:r.data};if(!ocupado())render()}
+  else if(SIZE[id])SIZE[id].carregando=false;
 }                       // meus pedidos de entrada aguardando o admin [{league_id,name,requested_at}]
 const VER={}, SNAP={}, CODE={};    // por liga: versão do servidor, último doc gravado, código de convite
 let syncT=null, syncing=false, netErr=false, chan=null;
@@ -4773,7 +4776,7 @@ function loadUI(){
    recalculados aqui (rebuildAll) a partir das partidas.                     */
 const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,
   L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def)},G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def)}});
-const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;return o};
+const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;return o};
 const factsDoc=l=>({name:l.name,cfg:l.cfg,players:(l.players||[]).map(playerFacts),
   matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],live:l.live||null,log:l.log||[]});
 const snapNovo=()=>({players:{},matches:{},sessions:{},live:'null',log:0,name:null,cfg:null});
@@ -4877,7 +4880,19 @@ function applyDelta(id,d){
     recalc=true})};
   ent('players',d.players);ent('matches',d.matches);ent('sessions',d.sessions);
   if(d.live)l.live=d.live.data||null;
-  if(d.log&&d.log.length)l.log=(l.log||[]).concat(d.log);
+  /* Log é append (as outras entidades substituem por id): num conflito, as
+     entradas que NÓS gravamos podem voltar no delta — sem dedup elas dobravam
+     na tela. E o que ainda não subiu tem que continuar depois do cursor,
+     senão o snapshot o marcava como sincronizado e ele nunca chegava lá.   */
+  let logSync=null;
+  if(d.log&&d.log.length){
+    const log=l.log||[],antigas=log.slice(0,(SNAP[id]||{log:0}).log||0),pend=log.slice(antigas.length);
+    const j=x=>JSON.stringify(x),temAntiga=new Set(antigas.map(j));
+    const novas=d.log.filter(x=>!temAntiga.has(j(x)));
+    const noServidor=new Set(novas.map(j));
+    l.log=antigas.concat(novas,pend.filter(x=>!noServidor.has(j(x))));
+    logSync=antigas.length+novas.length;
+  }
   if(d.code)CODE[id]=d.code;
   VER[id]=d.version;
   S=normalize(S);
@@ -4890,8 +4905,8 @@ function applyDelta(id,d){
   if(d.live)s.live=JSON.stringify(l.live||null);
   if(d.cfg&&Object.keys(d.cfg).length)s.cfg=JSON.stringify(l.cfg);
   if(d.name)s.name=l.name;
-  if(d.log&&d.log.length)s.log=l.log.length;
-  if(s.log===0&&!(d.log&&d.log.length))s.log=(l.log||[]).length;
+  if(logSync!==null)s.log=logSync;
+  if(s.log===0&&logSync===null)s.log=(l.log||[]).length;
 }
 /* compat: quem ainda chama aplicaRemoto (import antigo) recebe o documento inteiro como delta */
 function aplicaRemoto(id,data,name,code){

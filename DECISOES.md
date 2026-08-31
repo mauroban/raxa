@@ -846,6 +846,28 @@ assumir o próprio perfil), e separar o que cada papel pode mudar exige validar 
 `sync.py` só emula o dono-como-admin, e a regra nova é SQL puro.
 
 
+### D-63 · Sync sem derivado, sem log dobrado e sem RPC em rajada
+**31/08/2026.** Quatro consertos na camada de sincronização. **(1)** `matchFacts` também remove
+`m.over` — é derivado (o `applyMatch` recalcula a partir do Elo corrente), e como ia junto no
+payload, qualquer `rebuildAll` que mexesse no Elo (corrigir partida antiga, anular, corrigir
+escalação) mudava o `over` de todas as partidas seguintes e o `diffParts` reenviava **o histórico
+inteiro** pelo 4G da quadra. **(2)** o log deixa de ser cortado em 2000 entradas: o `diffParts` usa
+o comprimento como cursor, e com o corte o comprimento parava de crescer — dali em diante nenhuma
+correção nova subia; a carga inicial já traz o log inteiro do servidor, então o corte nem limitava
+memória. **(3)** `applyDelta` deduplica o log e preserva o que ainda não subiu: num conflito de
+versão, as entradas que nós mesmos tínhamos acabado de gravar voltavam no delta e dobravam na tela;
+e entradas locais pendentes eram marcadas como sincronizadas sem nunca terem ido. **(4)**
+`loadSize` tinha o `Object.assign` invertido (o `at` velho vencia o `Date.now()` novo) e não tinha
+guarda de requisição em voo: RPC falhando = um `league_size` novo a cada render dos Ajustes.
+**Por quê:** todos os quatro quebravam a promessa do D-29 ("um gol é ~1 KB") ou a do log ("nunca é
+apagado, sempre aparece uma vez").
+**Descartado:** cursor do log por id/seq em vez de comprimento (exigia mudar o formato da entrada e
+o schema; dedup por JSON cobre o caso real — colisão só se duas entradas idênticas nascerem no
+mesmo milissegundo).
+**Onde:** `matchFacts`, `logAdd`, `applyDelta`, `loadSize` em `index.html` · sem teste novo
+dedicado: `sync.py` cobre o caminho de conflito e continua passando.
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
