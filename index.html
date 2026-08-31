@@ -1757,12 +1757,16 @@ function timeDoLado(liga,m,side,times){
    times): a escalação de largada da primeira partida em que o nome aparece
    serve de composição original.                                             */
 function timesDoRacha(liga,ms,sess){
+  /* Goleiro de rodízio não é de time nenhum: ele roda entre os times, então
+     fica fora da composição — nem no rótulo, nem na conta da maioria.       */
+  const pool=new Set(sess&&Array.isArray(sess.gkPool)?sess.gkPool:[]);
+  const semGk=ids=>(ids||[]).filter(id=>!pool.has(id));
   if(sess&&Array.isArray(sess.teams)&&sess.teams.length)
-    return sess.teams.map(t=>({name:t.name,ids:(t.ids||[]).slice()}));
+    return sess.teams.map(t=>({name:t.name,ids:semGk(t.ids)}));
   const T={},ordem=[];
   [...ms].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(m=>[0,1].forEach(s=>{
     const n=(m.names||[])[s];if(!n||T[n])return;
-    T[n]={name:n,ids:((((m.startLineups||m.lineups))||[])[s]||[]).slice()};ordem.push(T[n]);
+    T[n]={name:n,ids:semGk((((m.startLineups||m.lineups))||[])[s])};ordem.push(T[n]);
   }));
   return ordem;
 }
@@ -1780,7 +1784,9 @@ function nomesCurtos(liga,ids){
    substituição não leva a vitória, e quem virou maioria de outro time leva a
    dele.                                                                     */
 function teamRecord(liga,lv,ti){
-  const orig=(lv.teams||[]).map((t,i)=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice(),i}));
+  const pool=lv.gkPool||[];                       // goleiro de rodízio não é de time nenhum
+  const orig=(lv.teams||[]).map((t,i)=>({name:t.name,i,
+    ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).filter(id=>pool.indexOf(id)<0)}));
   let w=0,d=0,l=0;
   (lv.matchIds||[]).forEach(id=>{
     const m=liga.matches.find(x=>x.id===id);

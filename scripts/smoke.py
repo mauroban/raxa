@@ -541,6 +541,12 @@ step('vitoria e do time que jogou, nao do nome no placar',()=>{
   if(dono(part([st(60000,TA,TB),st(540000,umaTroca,TB)]),0)!=='Time A')throw new Error('uma substituicao nao tira a vitoria do time');
   const metade=[TA[0],TA[1],TC[0],TC[1],'z9'];
   if(dono(part([st(600000,metade,TB)]),0)!==null)throw new Error('sem maioria de nenhum time, a partida nao conta para time nenhum');
+  /* goleiro de rodizio nao e de time nenhum: fica fora da composicao */
+  const comGk=timesDoRacha(l,[],{teams:[{name:'X',ids:['a','b','c']}],gkPool:['c']});
+  if(comGk[0].ids.indexOf('c')>=0)throw new Error('goleiro do rodizio entrou na composicao do time');
+  const doLance=timesDoRacha(l,[{ts:1,names:['X','Y'],startLineups:[['a','b','g'],['d','e','g2']]}],{gkPool:['g']});
+  if(doLance[0].ids.indexOf('g')>=0)throw new Error('goleiro do rodizio entrou na composicao vinda da escalacao');
+  if(doLance[1].ids.length!==3)throw new Error('goleiro fixo do outro time nao devia sair da composicao');
   /* o card da noite usa isso: nome do time some do titulo, entram os jogadores */
   const fmt=l.cfg.format;l.cfg.format=5;
   A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'racha'}});

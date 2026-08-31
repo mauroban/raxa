@@ -765,12 +765,19 @@ inteira para dois números.
 e é como se chamam em quadra); mostrar a lista em ligas maiores que 5v5 (7 nomes não cabem numa
 linha de celular — lá continua o nome do time); repetir o sobrenome inteiro (só a inicial, e só
 quando dois jogadores do mesmo time têm o mesmo primeiro nome).
+**31/08/2026, mesmo dia:** o **goleiro de rodízio fica fora** da composição do time — no rótulo e
+na conta da maioria (D-59). Ele roda entre os times por regra do racha (o goleiro fica com quem fica
+em quadra), então não identifica time nenhum: aparecia num racha inteiro trocando de lado e sujava
+tanto o nome do time quanto o critério de maioria. Goleiro **fixo** de um time continua na
+composição, porque aí ele é do time. A lista sai de `sess.gkPool` (ou `lv.gkPool`, no racha aberto);
+racha antigo sem essa lista segue como estava.
 **31/08/2026, mesmo dia:** vale também para o **histórico**. Cada partida mostra os dois lados como
 a lista dos primeiros nomes da escalação de largada, com os gols de cada lado à direita; o nome do
 time fica no "venceu ..." da linha de baixo. A fonte cai para 12,5 px (texto, não display) para
 caber, e quebra em duas linhas se precisar — cortar nome no meio seria pior. Acima do 5v5 continua o
 nome do time com o placar `2 - 1`.
-**Onde:** DOCUMENTACAO §5.2 e §6 · `nomesCurtos`, `rotuloTime` em `cardsUmRacha`, `mrow` · CSS
+**Onde:** DOCUMENTACAO §5.2 e §6 · `nomesCurtos`, `timesDoRacha` (filtra o rodízio), `rotuloTime`
+em `cardsUmRacha`, `teamRecord`, `mrow` · CSS
 `.rk3.time` e `.mrow.nomes` (o rótulo pode ocupar duas linhas) · `smoke.py` (teste do D-59 no card
 da noite; "abrir um racha mostra as partidas dele" confere a lista no histórico e a volta ao nome
 do time acima do 5v5).
