@@ -1084,6 +1084,27 @@ derrotas absolutas é outra pergunta, e ninguém pediu).
 (o passo agora garante que a seção NÃO volta).
 
 
+### D-73 · Corrigir nível "desde a entrada" — o palpite que faltou, com o racha contando por cima
+**31/08/2026.** O painel "Corrigir nível" da ficha ganhou um seletor com dois modos. **A partir de
+agora** (o comportamento que já existia, e continua o padrão): o Elo atual vira o meio do degrau
+escolhido — `base += alvo − elo` — e o efeito das partidas já jogadas fica absorvido no ajuste.
+**Desde a entrada** (novo, só aparece para quem já jogou): o degrau escolhido vira o **próprio
+`base`** e o histórico inteiro **reaplica por cima** (`rebuildAll`) — é o palpite que faltou no
+cadastro, dado depois do primeiro racha, com o racha valendo a partir do nível certo. O log de
+correções grava o modo ("desde a entrada — histórico reaplicado").
+**Por quê:** o caso real que motivou — um racha já aconteceu com todo mundo entrando em 1500 sem
+palpite, e a simulação de convergência mostrou que o palpite vale meses de racha (ρ 0,94 contra
+0,28 no segundo racha). Sem este modo, dar o palpite atrasado anulava justamente o racha que já
+tinha sido jogado: a correção antiga ancorava o Elo corrente, "engolindo" os deltas da noite.
+**Descartado:** trocar o comportamento padrão (a correção "discordei da escada de hoje" continua
+sendo a mais comum no dia a dia); permitir "desde a entrada" também no Zerar (zerar já é, por
+definição, voltar à entrada padrão); um terceiro modo com data de corte (ninguém precisa disso e a
+partida é o único relógio que importa).
+**Onde:** `pSheet` (seletor `pdDesde`), `pdSave` (ramo `desde`, com `rebuildAll`), `logCard` em
+`index.html` · DOCUMENTACAO §"O sistema de nível" (bullet "Corrigir nível tem dois modos") ·
+`smoke.py` ("corrigir nivel DESDE A ENTRADA": base no degrau, recálculo estável, modo no log).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

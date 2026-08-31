@@ -4268,7 +4268,7 @@ const A={
      mesmas checagens de papel e o mesmo registro no log das ações diretas. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null}};
+    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null},desde:'agora'};
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
     const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
     const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
@@ -4316,6 +4316,13 @@ const A={
           <div class="cur">${zerado(role)?'<span class="muted">sem nível</span>':esc(rankLabel(l,rankDe(role)))}</div>
           <button class="btn ghost" data-a="pdBump" data-d="1" aria-label="uma divisão acima">+</button>
         </div>
+        ${rt(p,role).games?`<div class="seg" style="margin-top:10px">
+          <button class="${PD.desde!=='entrada'?'on':''}" data-a="pdDesde" data-v="agora">A partir de agora</button>
+          <button class="${PD.desde==='entrada'?'on':''}" data-a="pdDesde" data-v="entrada">Desde a entrada</button>
+        </div>
+        <div class="tiny muted" style="margin-top:6px;line-height:1.5">${PD.desde==='entrada'
+          ?'É o palpite que faltou no cadastro: vira o nível com que a pessoa <b>entrou</b>, e as partidas já jogadas reaplicam por cima — o racha conta.'
+          :'O nível <b>atual</b> vira exatamente esse; o que as partidas já renderam fica absorvido no ajuste.'}</div>`:''}
         ${!rt(p,role).games&&(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?'Vai calibrar do zero':'Tirar o nível — calibrar do zero'}</button>
         <div class="tiny muted" style="margin-top:6px">Só dá para zerar quem ainda não jogou ${role==='G'?'no gol':'na linha'}. Ele volta a "sem nível" até completar a calibração.</div>`:''}
       </div>`:''}
@@ -4346,6 +4353,7 @@ const A={
     PD.rank[r]=clamp(cur+(+el.dataset.d),0,TOP);A.pSheet({dataset:{id:PD.id}})},
   pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
   pdRole(el){if(!PD)return;PD.role=el.dataset.r;A.pSheet({dataset:{id:PD.id}})},
+  pdDesde(el){if(!PD)return;PD.desde=el.dataset.v==='entrada'?'entrada':'agora';A.pSheet({dataset:{id:PD.id}})},
   pdOwner(){if(!PD)return;if(!PD.owner&&!S.me.name)return toast('Entre na sua conta primeiro');PD.owner=PD.owner?null:S.me.name;A.pSheet({dataset:{id:PD.id}})},
   pdCancel(){PD=null;closeSheet()},
   pdSave(){
@@ -4385,6 +4393,14 @@ const A={
       }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
       p.owner=d.owner;
     }
+    /* Dois jeitos de corrigir nível (D-73):
+       - "a partir de agora" (padrão): o Elo ATUAL vira o meio do degrau — o
+         base absorve a diferença e o que as partidas renderam fica dentro
+         do ajuste. É a correção de quem olhou a escada e discordou do hoje.
+       - "desde a entrada": o degrau vira o BASE (o palpite que faltou no
+         cadastro) e o histórico reaplica por cima via rebuildAll — o racha
+         que já aconteceu conta a partir do nível certo.                    */
+    let reaplicar=false;
     ['L','G'].forEach(r=>{
       if(d.rank[r]===null)return;
       const tr=rt(p,r);
@@ -4394,11 +4410,13 @@ const A={
         tr.base=l.cfg.startElo;tr.elo=l.cfg.startElo;tr.rank=stepOf(tr.elo);tr.peak=tr.rank;tr.protect=0;tr.def=false;
         return;
       }
-      const sN=d.rank[r],target=stepMid(sN);
-      if(sN===tr.rank&&tr.def)return;
-      logAdd(l,'rank',{pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target});
-      tr.base+=target-tr.elo;tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches;tr.def=true;
+      const sN=d.rank[r],target=stepMid(sN),desde=d.desde==='entrada'&&tr.games>0;
+      if(!desde&&sN===tr.rank&&tr.def)return;
+      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target},desde?{desde:'entrada'}:{}));
+      if(desde){tr.base=target;tr.def=true;reaplicar=true}
+      else{tr.base+=target-tr.elo;tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches;tr.def=true}
     });
+    if(reaplicar)rebuildAll(l);                          // o histórico reaplica sobre o base novo
     PD=null;closeSheet();save();render();toast(msg);
   },
   /* nível, gol, conta e permissão mudam pela ficha (PD → pdSave), num
@@ -5409,7 +5427,7 @@ function logCard(liga){
   const nome=pid=>{const p=P(liga,pid);return p?p.name:'(removido)'};
   const linha=e=>{
     let o=LOG_TXT[e.a]||e.a;
-    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}`;
+    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.desde==='entrada'?' (desde a entrada — histórico reaplicado)':''}`;
     else if(e.a==='result')o+=`: ${e.from==='draw'?'empate':'time '+(e.from+1)} → ${e.to==='draw'?'empate':'time '+(e.to+1)}`;
     else if(e.a==='role')o+=` de ${esc(nome(e.pid))}: ${PAPEL[e.from]||'Jogador'} → ${PAPEL[e.to]||'Jogador'}`;
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;

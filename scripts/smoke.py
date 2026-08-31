@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
-    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','pdDesde',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
@@ -374,6 +374,15 @@ step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
 step('corrigir patente pela ficha',()=>{A.pSheet({dataset:{id:L().players[0].id}});A.pdRank({dataset:{s:'10'}});A.pdSave();
   if(L().players[0].L.rank!==10)throw new Error('pdSave nao aplicou a patente');});
+step('corrigir nivel DESDE A ENTRADA: o base vira o degrau e o historico reaplica',()=>{
+  const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[1];
+  A.pSheet({dataset:{id:p.id}});A.pdDesde({dataset:{v:'entrada'}});A.pdRank({dataset:{s:'7'}});A.pdSave();
+  if(Math.round(p.L.base)!==Math.round(stepMid(7)))throw new Error('base nao virou o meio do degrau: '+p.L.base);
+  if(!p.L.def)throw new Error('def deveria ligar');
+  const e1=p.L.elo;rebuildAll(l);
+  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois do desde-a-entrada');
+  if(p.L.games>0&&(l.log[l.log.length-1]||{}).desde!=='entrada')throw new Error('log nao guardou o modo da correcao');
+});
 step('assumir perfil (Sou eu): o primeiro vinculado vira admin',()=>{
   S.me.name=S.me.name||'tester';
   A.pSheet({dataset:{id:L().players[0].id}});A.pdOwner();A.pdSave();
