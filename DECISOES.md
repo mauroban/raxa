@@ -1187,6 +1187,11 @@ divisões`), a patente nova como badge colorido à direita, e quem andou mais ap
 (subidas, depois quedas). De quebra o bloco passou a respeitar `vePat` — com as patentes fechadas
 para não-admin, os rótulos de nível não vazavam mais ali (era o único lugar da noite sem a
 checagem).
+**Ajuste no mesmo dia:** o caminho virou visual — badge da patente **anterior → badge da nova**
+na direita da linha (`PRA 1 → Prata 3`), com "N divisões" no texto pequeno. E o teste do smoke que
+exigia o "(esp. N%)" dos times ficou intermitente (o `pre` não cobre escalação com trecho curto
+descartado, D-75) — passou a exigir só a "% V", que sempre sai; o commit anterior subiu com o
+smoke vermelho por um `;` no lugar de `&&` no encadeamento, corrigido aqui.
 **Descartado:** manter os emojis com cor no texto ao lado (a seta é o sinal — se ela não carrega a
 cor, nada carrega); mostrar o delta de Elo cru (número não aparece para ninguém, D-52).
 **Onde:** `cardsUmRacha` (IIFE do bloco Nível) em `index.html` · sem doc de produto nova (a §5 já

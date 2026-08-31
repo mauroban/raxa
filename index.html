@@ -2728,8 +2728,8 @@ ${cardPP}  <div class="card">
         const tr=rt(p,role),de=clamp(tr.rank-n,0,TOP),up=n>0;
         return `<div class="rk3">
           <span class="pos" style="color:${up?'var(--ok)':'var(--bad)'};font-size:12px;letter-spacing:1px;min-width:30px">${(up?'▲':'▼').repeat(Math.min(Math.abs(n),3))}</span>
-          <div class="nm">${esc(nameOf(liga,pid))}${role==='G'?' 🧤':''}<small>${esc(rankLabel(liga,de))} → ${esc(rankLabel(liga,tr.rank))}${Math.abs(n)>1?' · '+Math.abs(n)+' divisões':''}${role==='G'?' · no gol':''}</small></div>
-          <span class="val">${patBadge(liga,tr.rank)}</span></div>`};
+          <div class="nm">${esc(nameOf(liga,pid))}${role==='G'?' 🧤':''}<small>${pl(Math.abs(n),'divisão','divisões')}${role==='G'?' · no gol':''}</small></div>
+          <span class="val" style="display:flex;align-items:center;gap:5px">${patBadgeShort(liga,de)}<span style="color:var(--mute)">→</span>${patBadge(liga,tr.rank)}</span></div>`};
       const movs=[...subiu].sort((a,b)=>b[1]-a[1]).concat([...caiu].sort((a,b)=>a[1]-b[1]));
       return movs.length?`<div class="sec"><div class="k2">Nível</div>${movs.map(movRow).join('')}</div>`
         :'<div class="tiny muted" style="margin-top:8px">Ninguém mudou de nível.</div>';
