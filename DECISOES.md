@@ -1124,6 +1124,23 @@ como nasce inconsistência); editar a patente corrente diretamente (era exatamen
 mexe no BASE", "quem NUNCA jogou entra direto no degrau").
 
 
+### D-75 · O histórico mostra a chance de cada lado no apito
+**31/08/2026.** Cada linha de partida na aba Jogos ganhou, na linha de detalhes, a chance esperada
+dos dois lados **no momento em que a bola rolou** — `62% × 38% no apito`. A conta sai de `m.pre`
+(o Elo de cada jogador antes daquela partida, que o `rebuildAll` refaz do zero a cada recálculo)
+sobre a escalação de largada: média por lado e a curva do Elo. Nada novo é gravado — é derivado,
+como todo o resto. A % some quando a liga fecha as patentes (é % de confronto, mesma regra da
+pré-partida, D-52) e em partida onde o `pre` não cobre a escalação inteira (jogador removido do
+cadastro, partida anulada recém-sincronizada).
+**Por quê:** "ganhamos, mas éramos favoritos ou zebra?" é a pergunta que dá graça ao histórico — e
+é a mesma informação que o "rendeu acima do esperado" já usa por baixo, só que visível por partida.
+**Descartado:** gravar a chance na partida (derivado não sobe, D-63); mostrar dentro da revisão
+apenas (a graça é bater o olho na lista da noite); recomputar com o nível de HOJE (mentiria — a
+zebra de ontem pode ser o favorito de hoje).
+**Onde:** `chanceHist` e `mrow` em `index.html` · DOCUMENTACAO §"como o racha acontece"
+(histórico) · `smoke.py` ("historico mostra a chance de cada lado no apito").
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

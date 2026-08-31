@@ -628,6 +628,13 @@ step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-7
   A.statsPer({dataset:{v:'sempre'}});
   if(els['#app'].innerHTML.indexOf('Mais derrotas')<0)throw new Error('faltou Mais derrotas nos rankings de temporada');
 });
+step('historico mostra a chance de cada lado no apito',()=>{
+  S.ui.tab='hist';render();
+  const g=rachasDe(L(),L().matches)[0];
+  A.histRacha({dataset:{id:g.id}});
+  if(!/no apito/.test(els['#app'].innerHTML))throw new Error('chance do apito nao apareceu nas partidas do racha aberto');
+  A.histRacha({dataset:{id:''}});S.ui.tab='stats';render();
+});
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');

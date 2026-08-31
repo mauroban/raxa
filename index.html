@@ -2748,8 +2748,23 @@ ${cardJuntos}  <div class="card">
 ${tab==='jogador'?cardsJogador:cardsRacha}`;
 }
 /* ---------- histórico ---------- */
+/* Chance de cada lado NO APITO daquela partida: sai de m.pre (o Elo de cada
+   um antes dela, refeito a cada rebuildAll) sobre a escalação de largada.
+   É % de CONFRONTO, como a da pré-partida — some com as patentes fechadas
+   (D-52) e em partida antiga sem pre completo (jogador removido, etc.).    */
+function chanceHist(liga,m){
+  if(!vePat(liga)||!m.pre)return null;
+  const ini=m.startLineups||m.lineups||[[],[]];
+  if(!(ini[0]||[]).length||!(ini[1]||[]).length)return null;
+  const avg=[0,1].map(sd=>{const xs=ini[sd].map(id=>m.pre[id]).filter(x=>typeof x==='number');
+    return xs.length===ini[sd].length?xs.reduce((a,b)=>a+b,0)/xs.length:null});
+  if(avg[0]===null||avg[1]===null)return null;
+  const Ea=1/(1+Math.pow(10,(avg[1]-avg[0])/400));
+  return [Ea,1-Ea];
+}
 function mrow(liga,m,compact,eu){
   const w=m.result,d=(m.disputes||[]).length;
+  const ch=chanceHist(liga,m);
   /* Até o 5v5 o time é a lista de quem entrou em quadra, não o apelido da cor
      (mesmo motivo do card da noite, D-60): semanas depois ninguém lembra qual
      time era o "Time A". O nome da cor continua na linha de baixo, no
@@ -2770,7 +2785,7 @@ function mrow(liga,m,compact,eu){
         :d?`<span class="flag" style="color:var(--gold);border:1px solid rgba(245,197,66,.45)">⚑ ${d}</span>`:''}
       ${porNome?gol(1):''}</div>
     <div class="l2">${new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
-      · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nos níveis':''}
+      · ${w==='draw'?'empate':'venceu '+esc(m.names[w])}${ch?' · '+pct(ch[0])+' × '+pct(ch[1])+' no apito':''}${m.mode==='unica'?' · partida única':''}${tre>1?' · '+tre+' trechos':''}${m.voided?' · sem efeito nos níveis':''}
       ${!compact&&(m.moves||[]).length?' · '+m.moves.length+' mudança(s) de nível':''}</div>
     ${compact?'':`<div class="row" style="gap:6px;margin-top:7px">
       <button class="btn sm ghost" data-a="contest" data-id="${m.id}">⚑ Contestar</button>
