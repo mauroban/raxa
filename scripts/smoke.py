@@ -58,6 +58,24 @@ const setMatchMode=v=>{const l=L();l.cfg.matchMode=v;if(l.live)l.live.mode=v;
   if(v==='unica'){l.cfg.targetGoals=0;l.cfg.targetMin=50;l.cfg.winnerStays=false}
   else{l.cfg.targetGoals=2;l.cfg.targetMin=7;l.cfg.winnerStays=true}
   if(l.live&&l.live.stage==='times')applyPlan(l,l.live);save();render()};
+step('toda acao tem classificacao de papel',()=>{
+  /* acoes fora dos dois conjuntos rodam para qualquer membro; as LIVRES sao
+     as que (a) so olham/preferencia, (b) tem checagem interna de papel
+     (fixResult, voidMatch, escSalvar, pdSave, acc*...), ou (c) sao de conta.
+     Acao nova cai aqui ate alguem classifica-la de proposito. */
+  const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk',
+    'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
+    'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
+    'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
+    'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin',
+    'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
+  const todas=Object.keys(A);
+  const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
+  if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));
+  const fantasmas=[...ACOES_LANCAR,...ACOES_ADMIN].filter(k=>!(k in A));
+  if(fantasmas.length)throw new Error('acao listada nos conjuntos que nao existe em A: '+fantasmas.join(', '));
+});
 step('criar liga de exemplo',()=>A.demo());
 step('iniciar racha',()=>A.startRacha());
 step('marcar todos presentes',()=>{L().players.forEach(p=>A.pres({dataset:{id:p.id}}));render()});

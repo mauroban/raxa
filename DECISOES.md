@@ -939,6 +939,35 @@ protege nada; o fluxo da ficha é o que o usuário usa).
 `doImport`) · `scripts/smoke.py` (passos reescritos pelo fluxo da ficha).
 
 
+### D-67 · Fim do monkey-patch — e os contratos com os testes viram texto no código
+**31/08/2026.** Três mudanças de estrutura, comportamento idêntico. **(1)** As três funções que o
+bloco de conta **reatribuía** viram definição única: `membrosCard` é a função que decide (admin com
+backend → lista de contas; senão → `membrosCardBase`), `viewCfg` é a composição declarada (cartão
+do convite + `viewCfgBody` + `logCard`), e `renderHome` ganhou no próprio template o botão "Entrar
+com um código", o card "Aguardando aprovação" e o rodapé de conta — o patch antigo fazia cirurgia
+no DOM pronto (`insertAdjacentHTML` antes da `.hr`), o que amarrava o backend ao layout da home:
+mudar a `<div class="hr">` quebrava o botão em silêncio. De quebra morreu o último texto
+pré-backend do app ("Dados salvos só neste aparelho… funciona offline"). **(2)** O corte que o
+`test.py` fazia por `split('   RENDER')` (três espaços, contrato invisível) virou o marcador
+explícito `@@FIM-DO-MOTOR@@` no `index.html`, com `assert` no teste; os dois `replace` mortos do
+`test.py` (apontavam para código de localStorage que não existe mais) viraram um stub real de
+`save()` com `assert`. **(3)** `smoke.py` ganhou o teste de cobertura de papel: toda ação de `A`
+tem que estar em `ACOES_LANCAR`, `ACOES_ADMIN` ou na lista explícita de LIVRES (só-leitura,
+checagem interna ou conta) — ação nova esquecida fora dos conjuntos derruba o teste em vez de
+nascer desprotegida; e os conjuntos não podem listar ação que não existe. `scorerSide` e
+`clearSel` entraram em `ACOES_LANCAR` (o `scorerSide` despachava para `goalScorer` por dentro,
+pulando a checagem do dispatcher).
+**Por quê:** eram os três pontos onde ler o código enganava — a função que se lê não é a que roda —
+e os dois contratos por convenção que nenhum aviso protegia.
+**Descartado:** separar em `engine.js`/`ui.js`/`sync.js` via `<script src>` (funciona e os testes
+até melhorariam, mas abandona o "é uma página só" sem necessidade atual — fica documentado como
+opção); ES modules (strict mode quebraria o que restasse de reatribuição e `file://` deixa de
+abrir).
+**Onde:** `index.html` (`membrosCard`/`membrosCardBase`, `viewCfg`/`viewCfgBody`, `renderHome`,
+marcador `@@FIM-DO-MOTOR@@`, `ACOES_LANCAR`) · `scripts/test.py` (extração com assert) ·
+`scripts/smoke.py` (passo "toda acao tem classificacao de papel").
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

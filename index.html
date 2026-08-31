@@ -1586,6 +1586,9 @@ function ladoNaPartida(liga,m,pid){
   return lado;
 }
 
+/* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
+   extrai e roda no Node. Mover uma função para baixo desta linha a tira dos
+   testes do motor sem nenhum aviso — não mova sem ajustar o test.py.       */
 /* ==========================================================================
    RENDER
    ========================================================================== */
@@ -1674,8 +1677,15 @@ function renderHome(){
   <div style="height:10px"></div>
   <button class="btn wide pri" data-a="newLiga">+ Nova liga</button>
   ${S.ligas.length?'':'<div style="height:8px"></div><button class="btn wide ghost" data-a="demo">Carregar o racha de sábado</button>'}
+  <div style="height:8px"></div>
+  <button class="btn wide ghost" data-a="joinLiga">Entrar com um código</button>
+  ${PEND.length?`<div class="card" style="margin-top:12px"><div class="k" style="margin-bottom:6px">Aguardando aprovação</div>
+      ${PEND.map(x=>`<div class="row" style="margin-bottom:6px"><div style="min-width:0;flex:1"><b>${esc(x.name)}</b><div class="tiny muted">o admin precisa aprovar sua entrada</div></div>
+        <button class="btn sm ghost" data-a="cancelPend" data-id="${esc(x.league_id)}">cancelar</button></div>`).join('')}
+      <div class="tiny muted">Pode fechar o app: assim que aprovar, a liga aparece aqui.</div></div>`:''}
   <div class="hr"></div>
-  <div class="tiny muted" style="text-align:center;line-height:1.6">Dados salvos só neste aparelho.<br>Funciona offline, na quadra, sem internet.</div>`;
+  <div class="tiny muted" style="text-align:center;line-height:1.6">Conectado como <b>${esc(ME?ME.username:'—')}</b> · dados no servidor<br>
+    <button data-a="logout" style="background:none;border:0;color:var(--mute);text-decoration:underline;font:inherit;cursor:pointer;padding:12px 14px;min-height:44px">sair da conta</button></div>`;
   $('#bar').innerHTML='';setNav('');
 }
 
@@ -1710,7 +1720,7 @@ const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
    Jogador só olha, vincula o próprio perfil e contesta. */
 const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
-const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide',
+const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
   'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
@@ -3042,7 +3052,7 @@ function viewHist(liga){
    admin muda o papel.                                                        */
 const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
 const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
-let membrosCard=function(liga){
+function membrosCardBase(liga){
   const eu=euId(liga),meu=meuPapel(liga),adm=souAdmin(liga);
   const comConta=liga.players.filter(p=>p.owner),semConta=liga.players.filter(p=>!p.owner);
   const ord=[...comConta].sort((a,b)=>(PAPEL_ORD[a.role]??2)-(PAPEL_ORD[b.role]??2)||a.name.localeCompare(b.name));
@@ -3062,7 +3072,7 @@ let membrosCard=function(liga){
 };
 
 /* ---------- ajustes ---------- */
-function viewCfg(liga){
+function viewCfgBody(liga){
   const c=liga.cfg;
   return `
   <div class="card">
@@ -5035,7 +5045,8 @@ async function boot(){
 }
 
 /* ==========================================================================
-   AÇÕES DE CONTA E DE LIGA (sobrepõem as versões locais do protótipo)
+   AÇÕES DE CONTA E DE LIGA — o que precisa do backend (criar/entrar/sair de
+   liga, contas, importar). Cada ação existe UMA vez; nada é sobreposto.
    ========================================================================== */
 /* A liga aparece na tela na hora, com um id provisório, e só depois troca
    pelo id que o servidor deu. Ninguém fica olhando para o vazio esperando a
@@ -5226,8 +5237,7 @@ async function loadAccounts(id){
 /* Para o admin, o card Membros é a lista de CONTAS (com ou sem jogador): é
    a única lista que ele precisa. Para os outros, a versão do protótipo
    (jogadores com perfil vinculado).                                        */
-const membrosCardBase=membrosCard;
-membrosCard=function(liga){
+function membrosCard(liga){
   if(!sb||!ME||!souAdmin(liga))return membrosCardBase(liga);
   const c=ACC[liga.id];
   if(!c||(!c.carregando&&Date.now()-c.at>ACC_TTL))setTimeout(()=>loadAccounts(liga.id),0);
@@ -5263,7 +5273,7 @@ membrosCard=function(liga){
     <div class="card" style="padding:0;margin:0 0 ${semConta?'8px':'0'}">${ord.map(linha).join('')}</div>
     ${semConta?`<div class="tiny muted">${semConta} jogador${semConta===1?'':'es'} sem conta — alguém lança por ele${semConta===1?'':'s'}. Estão na escada abaixo.</div>`:''}
   </div>`;
-};
+}
 
 Object.assign(A,{
   accSheet(el){
@@ -5341,9 +5351,10 @@ Object.assign(A,{
   }
 });
 
-/* ---------- código de convite no topo dos Ajustes ---------- */
-const viewCfgOrig=viewCfg;
-viewCfg=function(liga){
+/* ---------- Ajustes = convite + corpo + cartões do admin ----------
+   Definido aqui (e não junto do corpo) porque precisa de CODE e logCard;
+   declaração de função sobe, então drawApp o encontra normalmente.         */
+function viewCfg(liga){
   const c=CODE[liga.id]||'——————';
   return `<div class="card" style="display:flex;align-items:center;gap:12px">
       <div style="min-width:0;flex:1">
@@ -5352,8 +5363,8 @@ viewCfg=function(liga){
         <div class="tiny muted">Quem tiver esse código entra nesta liga.</div>
       </div>
       <button class="btn ghost" data-a="copyCode" style="width:auto;padding:10px 14px">Copiar</button>
-    </div>`+viewCfgOrig(liga)+logCard(liga);
-};
+    </div>`+viewCfgBody(liga)+logCard(liga);
+}
 function logCard(liga){
   if(!souAdmin(liga))return '';
   const log=(liga.log||[]).slice(-25).reverse();
@@ -5380,25 +5391,6 @@ function logCard(liga){
     ${log.length?log.map(linha).join(''):'<div class="tiny muted">Nada corrigido ainda.</div>'}
     ${(liga.log||[]).length>25?`<div class="tiny muted" style="margin-top:6px">…e mais ${liga.log.length-25} no backup.</div>`:''}</div>`;
 }
-
-/* ---------- home: entrar por código + conta ---------- */
-const renderHomeOrig=renderHome;
-renderHome=function(){
-  renderHomeOrig();
-  const app=$('#app');
-  const hr=app.querySelector('.hr');
-  if(hr)hr.insertAdjacentHTML('beforebegin',
-    '<div style="height:8px"></div><button class="btn wide ghost" data-a="joinLiga">Entrar com um código</button>'
-    +(PEND.length?`<div class="card" style="margin-top:12px"><div class="k" style="margin-bottom:6px">Aguardando aprovação</div>
-      ${PEND.map(x=>`<div class="row" style="margin-bottom:6px"><div style="min-width:0;flex:1"><b>${esc(x.name)}</b><div class="tiny muted">o admin precisa aprovar sua entrada</div></div>
-        <button class="btn sm ghost" data-a="cancelPend" data-id="${esc(x.league_id)}">cancelar</button></div>`).join('')}
-      <div class="tiny muted">Pode fechar o app: assim que aprovar, a liga aparece aqui.</div></div>`:''));
-  const pe=app.lastElementChild;
-  if(pe&&pe.classList.contains('tiny'))pe.innerHTML=
-    `Conectado como <b>${esc(ME?ME.username:'—')}</b> · dados no servidor<br>`
-    +`<button data-a="logout" style="background:none;border:0;color:var(--mute);text-decoration:underline;`
-    +`font:inherit;cursor:pointer;padding:12px 14px;min-height:44px">sair da conta</button>`;
-};
 
 /* Enter envia o formulário da tela de conta / do código. */
 document.addEventListener('keydown',e=>{

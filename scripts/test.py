@@ -17,9 +17,13 @@ html = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
 js = html.split('<script>')[1].split('</script>')[0]
 io.open(os.path.join(OUT, 'full.js'), 'w', encoding='utf-8').write(js)
 
-core = js.split('   RENDER')[0]
-core = core.replace("try{S=JSON.parse(localStorage.getItem(KEY))||defState()}catch(e){S=defState()}", "S=defState();")
-core = core.replace("const save=()=>localStorage.setItem(KEY,JSON.stringify(S));", "const save=()=>{};")
+# O motor termina no marcador explicito; mover funcao para baixo dele a tira daqui.
+assert '@@FIM-DO-MOTOR@@' in js, 'marcador @@FIM-DO-MOTOR@@ sumiu de index.html'
+core = js.split('/* @@FIM-DO-MOTOR@@')[0]
+# save() do app fala com o sincronizador; aqui vira no-op (e o teste avisa se mudar de cara)
+alvo = 'const save=()=>{saveUI();markDirty(S.active)}'
+assert alvo in core, 'save() mudou em index.html; ajuste o stub em test.py'
+core = core.replace(alvo, 'const save=()=>{}')
 
 harness = r"""
 /* ---------------- harness ---------------- */
