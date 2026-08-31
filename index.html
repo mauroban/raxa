@@ -564,7 +564,7 @@ const streakK=tr=>1;
 /* Histerese fixa: promove ao passar do corte + 21, rebaixa ao cair abaixo do
    corte − 21, sem proteção pós-promoção. A margem acompanha o K: precisa ser
    maior que meia vitória parelha (K/2 = 16), senão V-D-V-D em volta do corte
-   vira ioiô. Um degrau tem ~67 pontos, então a banda fica em ~109: segura o
+   vira ioiô. A banda é de 42 pontos (corte ± 21) num degrau de ~67: segura o
    ioiô sem travar a subida. Não é opção da liga de propósito — nível tem que
    variar igual em todo racha, senão a mesma escada significa coisas
    diferentes.                                                               */
@@ -646,10 +646,14 @@ function newTrack(e,def){return{elo:e,base:e,rank:stepOf(e),peak:stepOf(e),prote
   games:0,w:0,l:0,d:0,sessions:0,lastSession:null,form:[]};}
 const rt=(p,role)=>role==='G'?p.G:p.L;
 /* Só tem nível quem recebeu um à mão (cadastro ou admin) ou quem já saiu da
-   calibração naquela valência. Enquanto calibra sem nível manual, o rating
-   existe por baixo (monta time, entra na conta) mas não vira rótulo.        */
-const temPatente=(p,role)=>{const t=rt(p,role);if(!t)return false;
-  return !!(t.def||((t.sessions||0)>=CAL_RACHAS||(t.games||0)>=CAL_GAMES))};
+   calibração naquela valência — pelo MESMO critério (e números) que
+   `calibrando` usa: partidas no racha curto, rachas na partida única (D-65).
+   Antes eram dois critérios em OU com constantes globais, e dava para ter a
+   patente na escada e ainda estar "calibrando · 12/15" na mesma linha.
+   Enquanto calibra sem nível manual, o rating existe por baixo (monta time,
+   entra na conta) mas não vira rótulo.                                      */
+const temPatente=(liga,p,role)=>{const t=rt(p,role);
+  return !!(t&&(t.def||!calibrando(liga,p,t)))};
 function fixTrack(t,e){
   t=Object.assign(newTrack(e),t||{});
   t.def=!!t.def;
@@ -763,7 +767,7 @@ const nameOf=(liga,id)=>{const p=P(liga,id);return p?p.name:'—'};
    jogadores — o mesmo espírito do +/- da NBA. Se o seu time foi mal enquanto
    você estava no banco, isso não te afeta.
    - Trecho cortado por uma troca só conta se durou pelo menos cfg.stintMin
-     minutos (padrão 4). Menos que isso, descarta.
+     minutos (padrão 3). Menos que isso, descarta.
    - O trecho que termina no apito conta sempre.
    - O peso é a fatia da partida que o trecho ocupou, então uma partida
      inteira continua valendo uma partida — 2 trechos não valem em dobro.    */
@@ -1020,11 +1024,10 @@ function computeElo(liga,part,result,mode,weight){
 /* Histerese: promove só quando passa do corte + margem, rebaixa só quando cai
    abaixo do corte − margem, e quem acabou de subir fica protegido por algumas
    partidas. É isso que impede o efeito ioiô entre dois níveis.            */
-/* Calibrando até completar 4 rachas OU 15 partidas — o que vier primeiro.
-   Vale por trilha: quem nunca pegou no gol calibra do zero o nível de
-   goleiro na primeira vez que for para lá.                                  */
-/* Calibração: no racha curto são 25 PARTIDAS (10 a 15 por noite: duas noites);
-   na partida única, onde a noite tem uma partida só, são 3 RACHAS.          */
+/* Calibração: um critério só, escolhido pelo modo da liga — PARTIDAS no
+   racha curto (15; a ~7 por pessoa por noite, ~2 noites), RACHAS na partida
+   única (3), onde a noite tem uma partida só. Vale por trilha: quem nunca
+   pegou no gol calibra do zero o nível de goleiro na primeira vez lá.       */
 function calibrando(liga,p,tr){
   tr=tr||(p&&p.L)||p;
   return liga.cfg.matchMode==='unica'?(tr.sessions||0)<liga.cfg.calRachas:(tr.games||0)<liga.cfg.calGames;
@@ -1104,7 +1107,7 @@ function applyMatch(liga,m){
   plusMinus(liga,m,(pid,d)=>{const p=P(liga,pid);if(p)p.pm=(p.pm||0)+d});
   /* mudança de nível só existe para quem TEM nível: quem ainda calibra sem
      nível manual anda por baixo, mas não aparece em subiu/caiu            */
-  m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from&&temPatente(P(liga,x.pid),x.role))
+  m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from&&temPatente(liga,P(liga,x.pid),x.role))
     .map(x=>({pid:x.pid,role:x.role,dir:x.rank>x.from?1:-1,rank:x.rank}));
   for(const g of m.goals||[]){const p=P(liga,g.pid);if(!p)continue;if(g.own)p.gc=(p.gc||0)+1;else p.goals++}
 }
@@ -1508,8 +1511,10 @@ function destaques(liga,dias){
      quem passou a métade do mês no gol aparece pelo nível de goleiro.       */
   gente.forEach(x=>{x.val=x.jogosG>x.jogos/2?'G':'L'});
   /* Piso duplo: quem so apareceu uma vez, ou jogou pouco, nao vira destaque do
-     mes por causa de uma noite boa.                                          */
-  const piso={rachas:2,jogos:20};
+     mes por causa de uma noite boa. O piso de jogos segue a cadencia do modo:
+     no racha curto ~7 partidas por noite; na partida unica cada racha E uma
+     partida (exigir 20 jogos seria exigir 20 rachas — ninguem seria destaque). */
+  const piso=liga.cfg.matchMode==='unica'?{rachas:2,jogos:2}:{rachas:2,jogos:20};
   const elegiveis=gente.filter(x=>x.nR>=piso.rachas&&x.jogos>=piso.jogos);
   const top=elegiveis.slice().sort((a,b)=>b.over-a.over||b.v-a.v||b.jogos-a.jogos).slice(0,3);
   const artilheiro=gols&&comDono/gols>=.5
@@ -1521,7 +1526,7 @@ function destaques(liga,dias){
   /* Os melhores da escada, só entre quem apareceu no período. A ordem é a mesma
      do ranking — degrau, depois aproveitamento, depois nome — para a posição
      não denunciar o rating de ninguém dentro da mesma divisão.                */
-  const melhores=gente.filter(x=>{const p=P(liga,x.pid);return p&&temPatente(p,x.val)})
+  const melhores=gente.filter(x=>{const p=P(liga,x.pid);return p&&temPatente(liga,p,x.val)})
     .sort((a,b)=>{const pa=P(liga,a.pid),pb=P(liga,b.pid);
       return rt(pb,b.val).rank-rt(pa,a.val).rank
         ||pctDe(b.v,b.jogos)-pctDe(a.v,a.jogos)
@@ -1848,7 +1853,7 @@ function linhaDestaque(liga,x,i,badge){
       <div class="nm">${esc(nameOf(liga,x.pid))}${x.val==='G'?' 🧤':''}</div>
       <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${pctDe(x.v,x.jogos)}% de vitórias</div>
     </div>
-    ${badge&&p&&temPatente(p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
+    ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
   </div>`;
 }
 /* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
@@ -1916,7 +1921,7 @@ function viewPresenca(liga,lv){
         <div class="pcw" data-nm="${esc(p.name.toLowerCase())}">
           <button class="pchip ${on?'on':''}" data-a="pres" data-id="${p.id}">
             <span class="nm">${esc(p.name)}</span>
-            ${vePat(liga)&&temPatente(p,'L')?patBadgeShort(liga,p.L.rank):''}
+            ${vePat(liga)&&temPatente(liga,p,'L')?patBadgeShort(liga,p.L.rank):''}
             ${p.sessions?`<span class="tiny muted num" title="rachas que jogou">${p.sessions}×</span>`:''}
           </button>
           <button class="gktog ${gk?'on':''}" data-a="presGk" data-id="${p.id}" title="veio de goleiro" aria-label="${esc(p.name)} veio de goleiro" aria-pressed="${gk?'true':'false'}">🧤</button>
@@ -2094,7 +2099,7 @@ const pct=x=>Math.round(x*100)+'%';
 function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const pool=lv.gkPool||[];extra=extra||{};
   const linha=ids.filter(id=>id!==gk);
-  const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
+  const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(liga,p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
   const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="entrou depois: substituto / completando">⇄</span>':'';
   const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
     :`<button class="pl ${cls} empty" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
@@ -2111,7 +2116,7 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
 function tpChip(liga,lv,id,big){
   const p=P(liga,id);if(!p)return '';
-  const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(p,role)&&vePat(liga);
+  const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(liga,p,role)&&vePat(liga);
   return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
     ${tem?patDot(liga,rt(p,role).rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
 }
@@ -2330,7 +2335,7 @@ function viewEscada(liga){
           ${p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}</div></div></div>`).join('')}</div>`;
   }
   const role=S.ui.rankRole==='G'?'G':'L';
-  const lista=liga.players.filter(p=>temPatente(p,role));   // sem nível na valência, fora da escada
+  const lista=liga.players.filter(p=>temPatente(liga,p,role));   // sem nível na valência, fora da escada
   /* Ordem dentro do degrau: para o admin — que já vê o Elo cru na linha — manda
      o Elo, que é o desempate honesto (a divisão só muda com histerese, então dois
      do mesmo degrau podem estar longe um do outro). Para os outros continua
@@ -2349,7 +2354,7 @@ function viewEscada(liga){
      precisa da ordem verdadeira antes de o rótulo existir), quantidade de
      partidas para os outros — que é o que a linha mostra ali. Quem ainda não
      jogou está todo no Elo de entrada, e aí o desempate é o nome.            */
-  const semNivel=liga.players.filter(p=>!temPatente(p,role)&&(rt(p,role).games>0||role==='L'))
+  const semNivel=liga.players.filter(p=>!temPatente(liga,p,role)&&(rt(p,role).games>0||role==='L'))
     .sort((a,b)=>(porElo?rt(b,role).elo-rt(a,role).elo:rt(b,role).games-rt(a,role).games)||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
@@ -2502,13 +2507,13 @@ function viewStats(liga){
   const cardsJogador=`
   <div class="card">
     <div class="hero">
-      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="avatar" style="--pc:${vePat(liga)&&p&&temPatente(liga,p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
         <div class="row" style="gap:6px;flex-wrap:wrap">
-          ${vePat(liga)&&p&&temPatente(p,'L')?patBadge(liga,p.L.rank):''}
-          ${vePat(liga)&&p&&temPatente(p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤</span>':''}
+          ${vePat(liga)&&p&&temPatente(liga,p,'L')?patBadge(liga,p.L.rank):''}
+          ${vePat(liga)&&p&&temPatente(liga,p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">🧤</span>':''}
           ${me.ultimos.length?formaDots(me.ultimos):''}
         </div>
       </div>
@@ -3577,7 +3582,7 @@ const A={
     const fila=filaDe(lv);
     const reservas=[];lv.teams.forEach((tt,k)=>{if(k!==i)tt.ids.slice(per).forEach(id=>reservas.push({id,de:tt.name}))});
     const cnt=jogosHoje(l,lv);
-    const chip=(id,de)=>`<button class="tp big" data-a="slotSet" data-i="${i}" data-id="${id}">${temPatente(P(l,id),'L')?patDot(l,P(l,id).L.rank):''}${esc(nameOf(l,id))}${de?` <small>${esc(de)}</small>`:''}${cnt[id]?` <small>${cnt[id]} hoje</small>`:''}</button>`;
+    const chip=(id,de)=>`<button class="tp big" data-a="slotSet" data-i="${i}" data-id="${id}">${temPatente(l,P(l,id),'L')?patDot(l,P(l,id).L.rank):''}${esc(nameOf(l,id))}${de?` <small>${esc(de)}</small>`:''}${cnt[id]?` <small>${cnt[id]} hoje</small>`:''}</button>`;
     openSheet(`<h2>Vaga no ${esc(t.name)}</h2>
       ${fila.length?`<div class="k" style="margin-bottom:6px">Na fila</div><div class="chips" style="margin-bottom:12px">${fila.map(id=>chip(id)).join('')}</div>`:''}
       ${reservas.length?`<div class="k" style="margin-bottom:6px">Reserva de outro time</div><div class="chips" style="margin-bottom:12px">${reservas.map(r=>chip(r.id,r.de)).join('')}</div>`:''}
@@ -3594,7 +3599,7 @@ const A={
       <div class="tiny muted" style="margin-bottom:10px">Marque quem chegou e mande direto para um time.</div>
       <div class="chips" style="margin-bottom:14px">
         ${fora.length?fora.map(p=>`<button class="tp" data-a="lateIn" data-id="${p.id}">
-          ${temPatente(p,'L')?patDot(l,p.L.rank):''}${esc(p.name)}${p.gk?' 🧤':''}</button>`).join('')
+          ${temPatente(l,p,'L')?patDot(l,p.L.rank):''}${esc(p.name)}${p.gk?' 🧤':''}</button>`).join('')
           :'<span class="tiny muted">Todo mundo do cadastro já está presente.</span>'}
       </div>
       <button class="btn wide ghost" data-a="addPlayer">+ Cadastrar jogador novo</button>`);
@@ -4246,7 +4251,7 @@ const A={
         <div><b>${top?esc(nameOf(l,top[0]).split(' ')[0]):'—'}</b><span>artilheiro ${top?top[1]:''}</span></div>
         <div><b>${ups.length}</b><span>mudanças de nível</span></div>
       </div>
-      ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(p,role))return '';
+      ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(l,p,role))return '';
         const tr=rt(p,role);return `<div class="promo" style="--pc:${patColor(tr.rank)}">
         <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
         <div class="tiny muted">agora é ${esc(rankLabel(l,tr.rank))}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
@@ -4266,12 +4271,12 @@ const A={
     const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
-    const corAv=ver&&temPatente(p,'L')?patColor(rankDe('L')):ver&&temPatente(p,'G')?patColor(rankDe('G')):'var(--mute)';
-    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=(temPatente(p,r)||PD.rank[r]!==null)&&!zerado(r);
+    const corAv=ver&&temPatente(l,p,'L')?patColor(rankDe('L')):ver&&temPatente(l,p,'G')?patColor(rankDe('G')):'var(--mute)';
+    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=(temPatente(l,p,r)||PD.rank[r]!==null)&&!zerado(r);
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
         <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
         ${tem?patBadge(l,rankDe(r),'big'):'<span class="none">sem nível</span>'}
-        ${temPatente(p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
+        ${temPatente(l,p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
     const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;

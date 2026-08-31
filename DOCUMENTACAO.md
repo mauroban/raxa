@@ -376,7 +376,8 @@ Por que isso funciona num racha:
   número jogando muito, só rendendo acima do que se esperava dele;
 - **respeita substituição**, porque a unidade é o trecho: o que o time fez com você no banco não entra;
 - **é acumulado, não média** — num racha, aparecer faz parte do mérito. E o piso é duplo: **2 rachas e 20
-  partidas no período**, para uma noite sortuda não virar destaque do mês.
+  partidas no período** na liga de várias curtas (na de partida única, onde cada racha é uma partida,
+  o piso é 2 rachas — D-65), para uma noite sortuda não virar destaque do mês.
 
 **Artilheiro** só aparece quando a maioria dos gols tem dono (metade ou mais). Autor de gol é opcional de
 propósito — e ranking de artilharia com metade dos gols sem dono é pior do que ranking nenhum. Quando falta

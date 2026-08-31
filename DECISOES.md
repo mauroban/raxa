@@ -891,6 +891,27 @@ grupo só (mudaria a chave do grupo, e avulsa de madrugada é caso raro sem dono
 `viewHist` (`DIA(r.ts)`) em `index.html` · coberto pelos roteiros existentes de `smoke.py`.
 
 
+### D-65 · Patente e destaques seguem o critério do modo — como a doc sempre disse
+**31/08/2026.** Dois consertos no motor. **(1)** `temPatente` passa a usar **o mesmo critério (e os
+mesmos números da liga) que `calibrando`**: `t.def || !calibrando(liga, p, t)`. Antes era um OU dos
+dois critérios com as constantes globais (`sessions>=3 || games>=15`, ignorando o modo e o cfg da
+liga) — dava para aparecer na escada com patente e, na mesma linha, "calibrando · 12/15": três
+rachas de 4 partidas davam o rótulo antes de a calibração terminar. A assinatura ganhou a liga
+(`temPatente(liga, p, role)`); todos os chamadores e o `test.py` acompanharam. **(2)** O piso dos
+destaques ("Os melhores do racha" / "Quem mais rendeu") acompanha o modo: na liga de **partida
+única** cada racha é uma partida, então exigir 20 jogos era exigir 20 rachas — meses sem nenhum
+destaque, com a tela dizendo só "ainda sem gente suficiente". Agora: curtas `{rachas:2, jogos:20}`,
+única `{rachas:2, jogos:2}` (equivale ao piso de rachas). De quebra, os comentários do motor que
+citavam números velhos (banda "~109", "4 rachas OU 15 partidas", "25 PARTIDAS", stintMin "padrão
+4") foram corrigidos para os valores reais (banda 42, critério único por modo, 15, 3).
+**Por quê:** a DOCUMENTACAO (§Calibração) já descrevia o critério único por modo — o código é que
+tinha ficado para trás; e comentário errado sobre constante é bug em incubação.
+**Descartado:** manter o OU dos dois critérios "por segurança" (é exatamente o que criava o estado
+contraditório patente+calibrando); piso configurável por liga (mais um botão para ninguém mexer).
+**Onde:** `temPatente`, `calibrando`, `destaques` em `index.html` · DOCUMENTACAO §"Acima do
+esperado" (piso) · `test.py` (blocos de patente e destaques, assinatura nova).
+
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
