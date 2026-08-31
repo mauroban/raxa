@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
-    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
@@ -635,11 +635,17 @@ step('historico mostra a chance de cada lado no apito',()=>{
   if(!/chance no apito/.test(els['#app'].innerHTML))throw new Error('chance ao lado do placar nao apareceu nas partidas do racha aberto');
   A.histRacha({dataset:{id:''}});S.ui.tab='stats';render();
 });
-step('partida a partida na tela do jogador',()=>{
+step('partida a partida na tela do jogador, com paginacao',()=>{
   A.statsTab({dataset:{v:'jogador'}});A.statsPer({dataset:{v:'sempre'}});
   const h=els['#app'].innerHTML;
   if(!/Partida a partida/.test(h))throw new Error('secao partida a partida nao apareceu');
-  if(!/no apito/.test(h))throw new Error('a chance no apito deveria aparecer nas linhas');
+  if(!/prob\. de vitória/.test(h))throw new Error('o rotulo prob. de vitoria deveria aparecer');
+  if(/data-a="ppPage"/.test(h)){
+    A.ppPage({dataset:{d:'1'}});
+    if(!S.ui.ppPage)throw new Error('paginacao nao avancou');
+    A.ppPage({dataset:{d:'-1'}});
+    if(S.ui.ppPage)throw new Error('paginacao nao voltou');
+  }
 });
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();

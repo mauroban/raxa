@@ -1146,9 +1146,12 @@ zebra de ontem pode ser o favorito de hoje).
 pessoa no período do filtro, da mais recente para a mais antiga — V/E/D colorido, data, placar
 **pelo lado dela**, a **chance no apito** (a mesma conta do histórico, D-75: `m.pre` sobre a
 escalação de largada, do lado em que ela jogou) e os gols como **uma bolinha ⚽ por gol** (🙈 por
-gol contra, a pedido — número só quando passa de 8 bolinhas). Mostra 8 linhas e abre até 40, no
-mesmo padrão dos rankings. A coluna de chance segue a regra de sempre: some com as patentes
-fechadas (D-52) e vira — quando o `pre` não cobre a escalação.
+gol contra, a pedido — número só quando passa de 8 bolinhas). A coluna de chance segue a regra de
+sempre: some com as patentes fechadas (D-52) e vira — quando o `pre` não cobre a escalação.
+**Ajuste no mesmo dia:** o rótulo virou **"% = prob. de vitória"** (o "no apito" saiu das linhas,
+que mostram só o número) e o "8 linhas → ver até 40" virou **paginação** de 10 em 10 (‹ recentes ·
+antigas ›, com "11–20 de 87"), que aguenta histórico de qualquer tamanho; a página zera ao trocar
+o período ou a pessoa.
 **Por quê:** o painel resumia o período mas não contava a história jogo a jogo — e com a chance da
 época na linha, dá para ver de bate-olho quem venceu de zebra e quem só confirmou favoritismo.
 **Descartado:** placar sempre na ordem dos times (pelo lado da pessoa é o que o leitor daquela

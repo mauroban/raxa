@@ -2541,16 +2541,21 @@ function viewStats(liga){
       <span class="mine" style="color:${x.res==='V'?'var(--ok)':x.res==='D'?'var(--bad)':'var(--mute)'}">${x.res}</span>
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
       <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
-      ${verCh?`<span class="tiny muted num" style="min-width:78px" title="chance no apito">${x.ch!==null?pct(x.ch)+' no apito':'—'}</span>`:''}
+      ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
       <span style="min-width:44px;text-align:right;letter-spacing:1px">${x.gols<=8?'⚽'.repeat(x.gols):'⚽×'+x.gols}${x.gc?`<span title="gol contra">${'🙈'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
+  const PP_PAG=10,ppMax=Math.max(0,Math.ceil(pps.length/PP_PAG)-1);
+  const ppPag=clamp(S.ui.ppPage||0,0,ppMax),ppIni=ppPag*PP_PAG,ppFim=Math.min(pps.length,ppIni+PP_PAG);
   const cardPP=pps.length?`
   <div class="card">
     <div class="row" style="margin-bottom:8px"><div class="k">Partida a partida</div>
-      <div class="sp tiny muted">${rot}${verCh?' · % = chance no apito':''}</div></div>
-    ${pps.slice(0,aberto.pp?40:8).map(ppRow).join('')}
-    ${pps.length>8?`<button class="more" data-a="statsSec" data-k="pp">${aberto.pp?'▴ menos':'▾ ver até '+Math.min(40,pps.length)}</button>`:''}
-    ${pps.length>40&&aberto.pp?`<div class="tiny muted" style="margin-top:6px">mostrando as 40 mais recentes de ${pps.length}</div>`:''}
+      <div class="sp tiny muted">${rot}${verCh?' · % = prob. de vitória':''}</div></div>
+    ${pps.slice(ppIni,ppFim).map(ppRow).join('')}
+    ${pps.length>PP_PAG?`<div class="row" style="gap:6px;margin-top:8px;align-items:center">
+      <button class="btn sm ghost" data-a="ppPage" data-d="-1" ${ppPag===0?'disabled':''} style="flex:0 0 auto">‹ recentes</button>
+      <div class="tiny muted num" style="flex:1;text-align:center">${ppIni+1}–${ppFim} de ${pps.length}</div>
+      <button class="btn sm ghost" data-a="ppPage" data-d="1" ${ppPag===ppMax?'disabled':''} style="flex:0 0 auto">antigas ›</button>
+    </div>`:''}
   </div>`:'';
 
   const cardsJogador=`
@@ -4482,7 +4487,7 @@ const A={
   toggleCfg(el){const l=L();l.cfg[el.dataset.k]=!l.cfg[el.dataset.k];save();render()},
   setVis(el){const l=L();l.cfg.rankVisibility=el.dataset.v==='admin'?'admin':'todos';save();render()},
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
-  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');save();render()},
+  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
   /* Times do racha (aba Números): toque no time mostra quem eram os jogadores */
@@ -4505,6 +4510,7 @@ const A={
         <div class="chips">${gks.map(id=>`<button class="tp" data-a="pSheet" data-id="${id}">🧤 ${esc(nameOf(l,id))}</button>`).join('')}</div>`:''}`);
   },
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
+  ppPage(el){S.ui.ppPage=Math.max(0,(S.ui.ppPage||0)+(+el.dataset.d));render()},   // pagina do partida-a-partida
   /* setinha dos rankings: ↓ melhor primeiro · ↑ lido do fim (preferência do aparelho) */
   statsInv(el){S.ui.statsInv=S.ui.statsInv||{};S.ui.statsInv[el.dataset.k]=!S.ui.statsInv[el.dataset.k];save();render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
@@ -4515,7 +4521,7 @@ const A={
     openSheet(`<h2>Ver os números de quem?</h2>
       <div class="chips">${ps.map(p=>`<button class="tp big" data-a="setStatsWho" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>`);
   },
-  setStatsWho(el){S.ui.statsWho=el.dataset.id;closeSheet();save();render()},
+  setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;closeSheet();save();render()},
   /* Histórico de um confronto (ou de uma parceria) entre duas pessoas. */
   duelo(el){
     const l=L(),rival=el.dataset.id,mesmo=el.dataset.m==='1';

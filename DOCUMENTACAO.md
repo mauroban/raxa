@@ -327,7 +327,7 @@ Duas consequências que importam:
 
 | Bloco | O que mostra |
 |---|---|
-| **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, partidas no gol, barra V/E/D e as duas patentes — e o card **Partida a partida** (D-76): uma linha por jogo com V/E/D, placar pelo lado da pessoa, a **chance no apito** e uma bolinha ⚽ por gol (🙈 por gol contra); 8 linhas, abrindo até 40 |
+| **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, partidas no gol, barra V/E/D e as duas patentes — e o card **Partida a partida** (D-76): uma linha por jogo com V/E/D, placar pelo lado da pessoa, a **prob. de vitória** no início do jogo e uma bolinha ⚽ por gol (🙈 por gol contra); paginado de 10 em 10 (‹ recentes · antigas ›) |
 | **Duelos** | **Maior carrasco** e **Freguês** em destaque, e a lista de quem você mais enfrenta com V/E/D e barra. Tocar em um nome abre o histórico completo do confronto: data, placar, formato e resultado |
 | **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque |
 | **O racha no período** | rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — 3 linhas cada, abrindo até 10; **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
