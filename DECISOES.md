@@ -1072,7 +1072,7 @@ com 3 times agora afirmam o lado mantido — inclusive o goleiro que fica, pelo 
 
 
 ### D-72 · "Quem mais perdeu" sai do card da noite — a setinha já conta essa história
-**01/09/2026.** O card do último racha perdeu a seção "😵 Quem mais perdeu" (nascida no D-54): com
+**31/08/2026.** O card do último racha perdeu a seção "😵 Quem mais perdeu" (nascida no D-54): com
 a setinha de ordem (D-70) em "🏆 Quem mais ganhou", a leitura espelhada está a um toque, e duas
 listas quase iguais uma embaixo da outra só esticavam a tela da noite. Rigorosamente a inversão
 mostra "menos vitórias" (entre quem venceu), não "mais derrotas" — mas na prática da noite é a
