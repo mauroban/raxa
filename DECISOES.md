@@ -1259,7 +1259,8 @@ subpixel arredondava um "I" para 3px e o vizinho para 4px, e saíam de grossuras
 Cada metal passou a ter **dois tons** (`PATFILL` = a peça, `PATFILL2` = a sombra embaixo do
 degradê): com um tom só, ouro `#FFD84D` era amarelo-limão ("amarelo, não dourado") — agora é
 âmbar `#E4AE1E` com sombra marrom-dourada; e diamante `#B9E6FF` era só azul-claro — agora é gelo
-quase branco `#D9F3FF` cuja sombra escorrega para o violeta `#8C93F0`, com o reflexo mais forte
+quase branco (`#D9F3FF`; depois `#C6EBFF`, um passo mais azul: em tela só de badges, prata e
+diamante ficavam próximos) cuja sombra escorrega para o violeta `#8C93F0`, com o reflexo mais forte
 (`PATSH`): brilho de pedra lapidada, que é o que faz parecer raro. Prata, bronze e ferro ficaram
 como estavam. O ouro do texto no tema escuro (`PATC_ESCURO`) acompanhou para `#F0BE2A`.
 O reflexo diagonal nasceu largo (banda de 28% a 66% da peça) e cobria o meio do nome; virou um
