@@ -1239,6 +1239,31 @@ function rebuildAll(liga){
   });
 }
 
+/* Corrigir nível pela ficha (D-86): o admin escolhe o nível de HOJE e o app
+   acha o nível de ENTRADA que, com o histórico reaplicado por cima, chega lá
+   — ou o mais perto que dá. Testa os degraus de entrada do mais próximo do
+   atual para o mais distante (menor mudança primeiro), recalculando a liga
+   inteira a cada tentativa (~20 ms). Devolve {entrada,res} e deixa a liga
+   exatamente como estava. Quem nunca jogou: entrada = hoje.
+   Por que não editar o "hoje" direto: fato de quadra ninguém edita (D-74);
+   só a entrada é palpite. Por que não editar a entrada: o resultado não é
+   monotônico (baixar a entrada pode SUBIR o hoje, porque as vitórias passam
+   a valer mais) e o admin era surpreendido ao salvar.                       */
+function entradaPara(liga,p,r,alvo){
+  if(!rt(p,r).games)return {entrada:alvo,res:alvo};
+  const base0=rt(p,r).base,def0=rt(p,r).def,s0=stepOf(base0);
+  const ordem=[];for(let d=0;d<=TOP;d++){if(s0-d>=0)ordem.push(s0-d);if(d&&s0+d<=TOP)ordem.push(s0+d)}
+  let best=null;
+  for(const st of ordem){
+    rt(p,r).base=stepMid(st);rt(p,r).def=true;rebuildAll(liga);     // rebuildAll troca o objeto da trilha: sempre rt() de novo
+    const res=rt(p,r).rank,dist=Math.abs(res-alvo);
+    if(!best||dist<best.dist)best={entrada:st,res,dist};
+    if(dist===0)break;
+  }
+  rt(p,r).base=base0;rt(p,r).def=def0;rebuildAll(liga);
+  return {entrada:best.entrada,res:best.res};
+}
+
 /* ---------- montagem de times ---------- */
 /* Quem é goleiro é escolha do dia: vem de lv.gkToday, não do cadastro.
    O cadastro (p.gk) só sugere quem costuma ir para o gol.                   */
@@ -2453,9 +2478,14 @@ function todayBlock(liga,lv){
 }
 
 /* ---------- níveis ---------- */
+/* escolha do nível de HOJE na ficha (D-86): acha a entrada e o resultado, com cache por alvo */
+function pdAlvo(l,p,r,alvo){
+  const k=r+':'+alvo,e=PD.cache[k]||(PD.cache[k]=entradaPara(l,p,r,alvo));
+  PD.alvo[r]=alvo;PD.rank[r]=e.entrada;PD.res[r]=e.res;
+}
 function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
-  return membrosCard(liga)+viewEscada(liga);
+  return pendenciasCard(liga)+viewEscada(liga);
 }
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
@@ -2495,7 +2525,7 @@ function viewEscada(liga){
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>
-      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
+      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(p)}</div>
         <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${calTxt(liga,tr)}</span>${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}</div></div>
       </div>`}).join('')}</div>
     <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
@@ -2513,7 +2543,7 @@ function viewEscada(liga){
     html+=`<div class="rank" data-a="pSheet" data-id="${p.id}">
       ${patDivOnly(liga,tr.rank)}
       <div style="min-width:0;flex:1">
-        <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
+        <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(p)}</div>
         <div class="meta">
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
@@ -3271,25 +3301,11 @@ function viewHist(liga){
    admin muda o papel.                                                        */
 const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
 const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
-function membrosCardBase(liga){
-  const eu=euId(liga),meu=meuPapel(liga),adm=souAdmin(liga);
-  const comConta=liga.players.filter(p=>p.owner),semConta=liga.players.filter(p=>!p.owner);
-  const ord=[...comConta].sort((a,b)=>(PAPEL_ORD[a.role]??2)-(PAPEL_ORD[b.role]??2)||a.name.localeCompare(b.name));
-  return `<div class="card">
-    <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
-      <div class="sp tiny muted num">${comConta.length} com conta · ${semConta.length} só no cadastro</div></div>
-    <div class="tiny muted" style="margin-bottom:10px">Você é <b>${PAPEL[meu]||'Jogador'}</b>${eu?'':' — ainda sem perfil vinculado'}.
-      ${adm?'Toque num membro para mudar a permissão.':''}
-      ${liga.players.some(p=>p.owner)?'':'<br>Enquanto ninguém vincular um perfil, todo mundo é admin.'}</div>
-    ${ord.length?`<div class="card" style="padding:0;margin:0 0 ${semConta.length?'8px':'0'}">${ord.map(p=>`<div class="rank" data-a="pSheet" data-id="${p.id}">
-      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
-        <div class="meta"><span class="tiny muted">@${esc(p.owner)}</span></div></div>
-      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Jogador'}</span>
-      <div style="color:var(--mute);font-size:18px">›</div></div>`).join('')}</div>`
-      :'<div class="tiny muted" style="margin-bottom:10px">Ninguém vinculou uma conta ainda. Aqui embaixo, cada um abre o próprio nome e toca em “Este perfil sou eu”.</div>'}
-  </div>`;
-};
-
+/* Na linha da escada (D-85): quem tem conta com papel acima de jogador leva o
+   badge do papel; quem tem conta e é só jogador, o pontinho. Sem conta, nada. */
+const papelMarca=p=>!p.owner?'':(p.role&&p.role!=='jogador'
+  ?` <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':'var(--cyan)'};font-size:9.5px;padding:1px 5px;margin-left:4px;vertical-align:middle">${PAPEL[p.role]}</span>`
+  :' <span style="color:var(--cyan)" title="tem conta">•</span>');
 /* ---------- ajustes ---------- */
 function viewCfgBody(liga){
   const c=liga.cfg;
@@ -4461,13 +4477,17 @@ const A={
      mesmas checagens de papel e o mesmo registro no log das ações diretas. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,rank:{L:null,G:null}};
+    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,
+      rank:{L:null,G:null},   /* nível de ENTRADA que vai para o base (derivado) */
+      alvo:{L:null,G:null},   /* nível de HOJE que o admin escolheu (D-86) */
+      res:{L:null,G:null},    /* nível de hoje que a entrada derivada produz */
+      cache:{}};
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
     const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
-    const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:rt(p,r).rank;
-    /* o painel edita o nível de ENTRADA (D-74): quem já jogou parte do degrau
-       do base; quem nunca jogou tem base === elo e dá no mesmo             */
-    const rankSel=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(rt(p,r).games?stepOf(rt(p,r).base):rt(p,r).rank);
+    /* o que os cards de cima mostram: o hoje previsto para a escolha (D-86) */
+    const rankDe=r=>PD.res[r]!==null&&PD.alvo[r]!=='none'?PD.res[r]:rt(p,r).rank;
+    /* o que o seletor mostra: o hoje que o admin pediu */
+    const rankSel=r=>PD.alvo[r]!==null&&PD.alvo[r]!=='none'?PD.alvo[r]:rt(p,r).rank;
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
     const corAv=ver&&temPatente(l,p,'L')?patVars(rankDe('L')):ver&&temPatente(l,p,'G')?patVars(rankDe('G')):'--pc:var(--mute)';
@@ -4504,7 +4524,7 @@ const A={
       ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
-        <div class="k">${rt(p,role).games?'Nível de entrada (o palpite)':'Corrigir nível'} ${role==='G'?'no gol':'na linha'}</div>
+        <div class="k">${rt(p,role).games?'Nível de hoje':'Nível de entrada'} ${role==='G'?'no gol':'na linha'}</div>
         ${(()=>{const rv=rankingSurpresa(l,role),x=rv.pos[p.id],d=revisar(l,p,role,rv);if(!x)return '';
           return `<div class="tiny ${d?'':'muted'}" style="${d?'color:var(--gold);':''}margin:-4px 0 8px;line-height:1.4">${d?revisarTxt(d,x,rv)+(d>0?' Os resultados':' Os resultados')+(role==='G'?' no gol':' na linha')+' vêm consistentemente '+(d>0?'acima':'abaixo')+' do que o nível prevê.':`Nos últimos ${rv.rachas} rachas: ${x.pos}º de ${rv.total} em render acima do esperado (${x.n} partidas).`}</div>`})()}
         <div class="ladder4">
@@ -4515,7 +4535,9 @@ const A={
           <div class="cur">${zerado(role)?'<span class="muted">sem nível</span>':patBadge(l,rankSel(role),'big')}</div>
           <button class="btn ghost" data-a="pdBump" data-d="1" aria-label="uma divisão acima">+</button>
         </div>
-        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:8px;line-height:1.5">Muda o nível com que a pessoa <b>entrou</b> — as ${pl(rt(p,role).games,'partida já jogada','partidas já jogadas')} reaplicam por cima e a patente atual sai desse recálculo. Fato de quadra ninguém edita à mão.</div>`:''}
+        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:8px;line-height:1.5">${PD.alvo[role]!==null&&PD.alvo[role]!=='none'
+          ?`Para ficar <b>${esc(rankLabel(l,PD.res[role]))}</b> hoje${PD.res[role]!==PD.alvo[role]?` (o mais perto que dá de ${esc(rankLabel(l,PD.alvo[role]))})`:''}, a entrada vira <b>${esc(rankLabel(l,PD.rank[role]))}</b>${stepOf(rt(p,role).base)!==PD.rank[role]?` (era ${esc(rankLabel(l,stepOf(rt(p,role).base)))})`:''} e as ${pl(rt(p,role).games,'partida','partidas')} reaplicam por cima ao salvar.`
+          :`Entrou como <b>${esc(rankLabel(l,stepOf(rt(p,role).base)))}</b>; o nível de hoje sai das ${pl(rt(p,role).games,'partida','partidas')} por cima. Escolha o nível de <b>hoje</b> — o app acha a entrada que chega lá e mostra antes de salvar. Fato de quadra ninguém edita à mão.`}</div>`:''}
         ${!rt(p,role).games&&(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?'Vai calibrar do zero':'Tirar o nível — calibrar do zero'}</button>
         <div class="tiny muted" style="margin-top:6px">Só dá para zerar quem ainda não jogou ${role==='G'?'no gol':'na linha'}. Ele volta a "sem nível" até completar a calibração.</div>`:''}
       </div>`:''}
@@ -4541,10 +4563,13 @@ const A={
       </div>
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
-  pdRank(el){if(!PD)return;PD.rank[PD.view]=el.dataset.s==='none'?'none':+el.dataset.s;A.pSheet({dataset:{id:PD.id}})},
-  pdBump(el){if(!PD)return;const p=P(L(),PD.id),r=PD.view,tr=rt(p,r);
-    const cur=PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(tr.games?stepOf(tr.base):tr.rank);
-    PD.rank[r]=clamp(cur+(+el.dataset.d),0,TOP);A.pSheet({dataset:{id:PD.id}})},
+  pdRank(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view;if(!p)return;
+    if(el.dataset.s==='none'){PD.alvo[r]='none';PD.rank[r]='none';PD.res[r]=null}
+    else pdAlvo(l,p,r,+el.dataset.s);
+    A.pSheet({dataset:{id:PD.id}})},
+  pdBump(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view;if(!p)return;
+    const cur=PD.alvo[r]!==null&&PD.alvo[r]!=='none'?PD.alvo[r]:rt(p,r).rank;
+    pdAlvo(l,p,r,clamp(cur+(+el.dataset.d),0,TOP));A.pSheet({dataset:{id:PD.id}})},
   pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
   pdRole(el){if(!PD)return;PD.role=el.dataset.r;A.pSheet({dataset:{id:PD.id}})},
   pdOwner(){if(!PD)return;if(!PD.owner&&!S.me.name)return toast('Entre na sua conta primeiro');PD.owner=PD.owner?null:S.me.name;A.pSheet({dataset:{id:PD.id}})},
@@ -4603,7 +4628,8 @@ const A={
       }
       const sN=d.rank[r],target=stepMid(sN);
       if(tr.def&&(tr.games?Math.round(tr.base)===Math.round(target):sN===tr.rank))return;
-      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:sN,fromElo:Math.round(tr.elo),toElo:target},tr.games?{desde:'entrada'}:{}));
+      /* no registro: de onde para onde o HOJE vai (o que o admin pediu) e a entrada que faz isso */
+      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:tr.games&&d.res[r]!==null?d.res[r]:sN,fromElo:Math.round(tr.elo),toElo:target},tr.games?{desde:'entrada',entrada:sN}:{}));
       tr.base=target;tr.def=true;
       if(tr.games)reaplicar=true;
       else{tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches}
@@ -5483,45 +5509,36 @@ async function loadAccounts(id){
   ACC[id]={at:Date.now(),lista:error?((c&&c.lista)||[]):(data||[]),erro:error?traduz(error):null};
   if(!ocupado())render();
 }
-/* Para o admin, o card Membros é a lista de CONTAS (com ou sem jogador): é
-   a única lista que ele precisa. Para os outros, a versão do protótipo
-   (jogadores com perfil vinculado).                                        */
-function membrosCard(liga){
-  if(!sb||!ME||!souAdmin(liga))return membrosCardBase(liga);
+/* Pendências (D-85): a lista de membros saiu da aba Jogadores — quem tem
+   conta e com que papel aparece na própria linha da escada (papelMarca) e na
+   ficha. O que sobra é o que NÃO cabe na linha de ninguém: pedido para
+   entrar e conta sem jogador (não são jogadores ainda). Só o admin vê, e só
+   quando há o que fazer. Enquanto ninguém vinculou conta, um lembrete para
+   todos — nesse estado todo mundo é admin.                                  */
+function pendenciasCard(liga){
+  const lembrete=liga.players.some(p=>p.owner)?'':`<div class="card"><div class="k" style="margin-bottom:6px">Contas</div>
+    <div class="tiny muted" style="line-height:1.5">Ninguém vinculou uma conta ainda. Cada um abre o próprio nome na escada e toca em “Este perfil sou eu”. Enquanto isso, todo mundo é admin.</div></div>`;
+  if(!sb||!ME||!souAdmin(liga))return lembrete;
   const c=ACC[liga.id];
   if(!c||(!c.carregando&&Date.now()-c.at>ACC_TTL))setTimeout(()=>loadAccounts(liga.id),0);
-  const eu=euId(liga),semConta=liga.players.filter(p=>!p.owner).length;
-  if(!c||!c.lista)return `<div class="card"><div class="row" style="margin-bottom:6px"><div class="k">Membros</div></div><div class="tiny muted">Buscando contas…</div></div>`;
+  if(!c||!c.lista)return lembrete;
   const jog=a=>a.pending?null:liga.players.find(p=>p.owner===a.username);
-  const pend=c.lista.filter(a=>a.pending),contas=c.lista.filter(a=>!a.pending);
-  const semJog=contas.filter(a=>!jog(a));
-  const ord=pend.concat([...contas].sort((a,b)=>{const pa=jog(a),pb=jog(b);
-    if(!pa!==!pb)return pa?1:-1;                                   // sem jogador primeiro: é o que precisa de ação
-    return ((pa?PAPEL_ORD[pa.role]??2:9)-(pb?PAPEL_ORD[pb.role]??2:9))||a.username.localeCompare(b.username)}));
-  const linha=a=>{const p=jog(a);
-    if(a.pending)return `<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
+  const pend=c.lista.filter(a=>a.pending),soltas=c.lista.filter(a=>!a.pending&&!jog(a));
+  if(!pend.length&&!soltas.length&&!c.erro)return lembrete;
+  const linha=a=>a.pending?`<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
       <div style="min-width:0;flex:1"><div class="nm">@${esc(a.username)}</div>
         <div class="meta"><span class="tiny" style="color:var(--lime)">pediu para entrar — toque para aprovar</span></div></div>
-      <span class="pat" style="--pc:var(--lime)">Pedido</span>
-      <div style="color:var(--mute);font-size:18px">›</div></div>`;
-    return p?`<div class="rank" data-a="pSheet" data-id="${p.id}">
-      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${p.id===eu?' <span class="tiny muted">(você)</span>':''}</div>
-        <div class="meta"><span class="tiny muted">@${esc(a.username)}${a.is_owner?' · dono':''}</span></div></div>
-      <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':p.role==='editor'?'var(--cyan)':'var(--mute)'}">${PAPEL[p.role]||'Jogador'}</span>
-      <div style="color:var(--mute);font-size:18px">›</div></div>`
+      <span class="pat" style="--pc:var(--lime)">Pedido</span><div style="color:var(--mute);font-size:18px">›</div></div>`
     :`<div class="rank" data-a="accSheet" data-u="${esc(a.user_id)}">
       <div style="min-width:0;flex:1"><div class="nm">@${esc(a.username)}${a.user_id===ME.id?' <span class="tiny muted">(você)</span>':''}</div>
         <div class="meta"><span class="tiny" style="color:var(--gold)">sem jogador — toque para vincular</span></div></div>
-      ${a.is_owner?'<span class="pat" style="--pc:var(--gold)">Dono</span>':''}
-      <div style="color:var(--mute);font-size:18px">›</div></div>`};
+      ${a.is_owner?'<span class="pat" style="--pc:var(--gold)">Dono</span>':''}<div style="color:var(--mute);font-size:18px">›</div></div>`;
   return `<div class="card">
-    <div class="row" style="margin-bottom:6px"><div class="k">Membros</div>
-      <div class="sp tiny muted num">${pend.length?pend.length+' pedido'+(pend.length===1?'':'s')+' · ':''}${contas.length} conta${contas.length===1?'':'s'}${semJog.length?' · '+semJog.length+' sem jogador':''}${semConta?' · '+semConta+' só no cadastro':''}</div></div>
-    <div class="tiny muted" style="margin-bottom:10px">Você é <b>Admin</b>. Toque num membro para mudar permissão ou vínculo; só você vê as contas ainda sem jogador.</div>
+    <div class="row" style="margin-bottom:6px"><div class="k">Pendências</div>
+      <div class="sp tiny muted num">${pend.length?pl(pend.length,'pedido'):''}${pend.length&&soltas.length?' · ':''}${soltas.length?pl(soltas.length,'conta sem jogador','contas sem jogador'):''}</div></div>
     ${c.erro?`<div class="tiny" style="color:var(--red);margin-bottom:8px">${esc(c.erro)}</div>`:''}
-    <div class="card" style="padding:0;margin:0 0 ${semConta?'8px':'0'}">${ord.map(linha).join('')}</div>
-    ${semConta?`<div class="tiny muted">${semConta} jogador${semConta===1?'':'es'} sem conta — alguém lança por ele${semConta===1?'':'s'}. Estão na escada abaixo.</div>`:''}
-  </div>`;
+    <div class="card" style="padding:0">${pend.concat(soltas).map(linha).join('')}</div>
+  </div>`+lembrete;
 }
 
 Object.assign(A,{
@@ -5620,7 +5637,7 @@ function logCard(liga){
   const nome=pid=>{const p=P(liga,pid);return p?p.name:'(removido)'};
   const linha=e=>{
     let o=LOG_TXT[e.a]||e.a;
-    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.desde==='entrada'?' (desde a entrada — histórico reaplicado)':''}`;
+    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.desde==='entrada'?(e.entrada!==undefined?` (entrada ${esc(rankLabel(liga,clamp(e.entrada,0,TOP)))} — histórico reaplicado)`:' (desde a entrada — histórico reaplicado)'):''}`;
     else if(e.a==='result')o+=`: ${e.from==='draw'?'empate':'time '+(e.from+1)} → ${e.to==='draw'?'empate':'time '+(e.to+1)}`;
     else if(e.a==='role')o+=` de ${esc(nome(e.pid))}: ${PAPEL[e.from]||'Jogador'} → ${PAPEL[e.to]||'Jogador'}`;
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;

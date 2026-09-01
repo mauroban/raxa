@@ -1410,6 +1410,45 @@ que é do admin. Gols e forma continuam na ficha e na aba Stats, que é onde se 
 **Descartado:** tirar também o V/E/D (é o único número que justifica a posição para quem não vê
 Elo). **Onde:** `viewEscada` (`index.html`) · `DOCUMENTACAO.md` §3.1.
 
+### D-85 · Membros sai da aba Jogadores: papel na linha da escada, e um card só de pendências
+**01/09/2026.** O card Membros respondia três coisas: quem tem conta e com que papel, "você é X",
+e — para o admin — pedidos para entrar e contas sem jogador. As duas primeiras cabem na linha do
+jogador e na ficha: quem tem conta com papel acima de jogador leva o **badge do papel** (ADMIN /
+EDITOR / LANÇADOR) ao lado do nome; quem tem conta e é só jogador, o pontinho; a ficha já diz
+`@usuário · papel`. O que **não cabe na linha de ninguém** é o que ainda não é jogador: pedido
+pendente e conta solta. Isso virou o card **Pendências**, só para o admin e só quando há o que
+fazer (senão não aparece). Enquanto ninguém vinculou conta, um lembrete para todos ("abra o seu
+nome e toque em Este perfil sou eu; enquanto isso todo mundo é admin"). A aba Jogadores volta a
+ser uma pergunta só: quem é de que nível.
+**Descartado:** manter a lista completa de contas para o admin (é a escada de novo, com outra
+ordem); mover Membros para Ajustes (D-23 já tinha trazido para Jogadores; a lista é que sobrava).
+**Onde:** `pendenciasCard`, `papelMarca`, `viewRanking`/`viewEscada` (`index.html`) ·
+`membrosCard`/`membrosCardBase` removidos · `sync.py` (pedido aparece) · `DOCUMENTACAO.md` §7.
+
+### D-86 · O admin corrige o nível de HOJE; o app acha a entrada que chega lá e mostra antes de salvar
+**01/09/2026.** A regra da D-74 ("só a entrada é editável; o hoje sai do histórico") estava
+certa e continua — mas a ficha pedia ao admin que editasse a **entrada** e mostrava a entrada
+escolhida no card de cima como se fosse o hoje. Aí o admin abria um Ouro 3, "baixava" para Ouro 2
+e, ao salvar, o jogador aparecia Diamante: com a entrada mais baixa cada vitória do histórico
+passa a valer mais, e o resultado da reaplicação **não é monotônico**. Certo por dentro,
+inexplicável por fora. Agora o admin escolhe **o nível de hoje** (o que a escada mostra), e
+`entradaPara` acha a entrada que, com o histórico reaplicado, chega lá — testando os 15 degraus
+do mais próximo do atual para o mais distante (menor mudança primeiro), recalculando a liga a
+cada tentativa (~20 ms; 0,3 s no pior caso, com cache por alvo na ficha) — e a ficha mostra
+**antes de salvar**: "para ficar Ouro 2 hoje, a entrada vira Prata 3 (era Ouro 3) e as 37
+partidas reaplicam por cima"; se o alvo não é alcançável, "o mais perto que dá de X". Os cards de
+cima mostram o hoje previsto. O registro de correções passa a guardar hoje-de → hoje-para e a
+entrada usada. Quem nunca jogou: entrada = hoje, como antes. `entradaPara` vive no motor e deixa
+a liga como estava (testado).
+**Descartado:** editar o hoje direto com um "ajuste manual" por cima do Elo (viola D-74: vira
+fato inventado, e some no próximo recálculo); uma aba separada de "níveis base" (afasta a
+correção de onde o admin já olha o jogador); só um sinal de "entrada" na escada (não resolve a
+surpresa, e polui a lista).
+**Onde:** `entradaPara` (motor), `pdAlvo`, `pdRank`/`pdBump`/`pdSave`, painel da ficha,
+`LOG_TXT` de rank (`index.html`) · `scripts/smoke.py` (ficha mostra o resultado, base vira a
+entrada achada, hoje bate com o previsto, log guarda os dois) · `scripts/test.py` (sem histórico)
+· `DOCUMENTACAO.md` §3.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

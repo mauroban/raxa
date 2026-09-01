@@ -256,6 +256,8 @@ ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquida
   ok(rankingSurpresa(liga,'G').total===0,'trilha de goleiro sem partidas: ranking vazio, sem aviso');
   liga.matches.push({id:'v','sessionId':'s9',ts:99,voided:true,overR:{[ids[5]+'L']:9}});
   ok(rankingSurpresa(liga,'L').pos[ids[5]].pos!==1,'partida anulada nao conta');
+  const e=entradaPara(liga,liga.players[3],'L',7);
+  ok(e.entrada===7&&e.res===7,'entradaPara: quem nunca jogou entra direto no degrau pedido (D-86)');
   liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));liga.players.forEach(p=>{p.L.def=false;p.L.games=0});rebuildAll(liga);
 }
 console.log('\n[6] calibracao');

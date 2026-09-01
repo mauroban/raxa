@@ -81,7 +81,7 @@ Então:
 - **Cada patente = 200 pontos de rating.** Diferença de uma patente ≈ 75% de vitória esperada. Diferença de duas ≈ 91%.
 - **Cada divisão = ~67 pontos.** Diferença de uma divisão ≈ 60% de vitória esperada — perceptível, mas não gritante.
 - A escada cobre 1000–1999, **centrada em 1500**. Como o Elo é soma zero, a média da liga fica sempre perto do valor de entrada — então o meio da escada precisa ser a média, ou um nível enche e o outro fica vazio. O valor de entrada padrão (1500) cai em **Prata 2**: o degrau do meio, com dois níveis inteiros para cada lado.
-- **Corrigir nível mexe sempre no nível de ENTRADA** (na ficha, só admin — D-74). O degrau escolhido vira o `base` (o palpite do cadastro); para quem já jogou, o histórico inteiro **reaplica por cima** (`rebuildAll`) e a patente atual sai do recálculo — **fato de quadra ninguém edita à mão**. Quem nunca jogou tem `base = elo`, então entra direto no degrau escolhido. Fica no registro de correções ("desde a entrada — histórico reaplicado"); só `base` vai para o banco, Elo e patente são recalculados dele + histórico.
+- **Corrigir nível** (na ficha, só admin — D-74/D-86): o admin escolhe o nível de **hoje**; o app acha o nível de **entrada** (`base`, o palpite) que, com o histórico inteiro **reaplicado por cima** (`rebuildAll`), chega lá — ou o mais perto que dá — e mostra o resultado **antes de salvar** ("para ficar Ouro 2 hoje, a entrada vira Prata 3"). Só a entrada é editável porque **fato de quadra ninguém edita à mão**; e o admin escolhe pelo hoje porque a relação entrada → hoje não é monotônica (baixar a entrada pode subir o hoje: as vitórias passam a valer mais) e ninguém deve ser surpreendido ao salvar. Quem nunca jogou tem `base = elo`, então entra direto no degrau escolhido. Fica no registro de correções ("Ouro 3 → Ouro 2 (entrada Prata 3 — histórico reaplicado)"); só `base` vai para o banco, Elo e patente são recalculados dele + histórico.
 - **Zerar o nível.** Na ficha, o admin pode tirar o nível dado à mão de quem ainda **não jogou** naquela valência ("Tirar o nível — calibrar do zero"): o jogador volta ao rating de entrada e fica sem nível até completar a calibração. Fica no registro de correções. **Sem nível até calibrar.** Quem entra sem um nível dado à mão (cadastro ou admin) não recebe rótulo enquanto calibra (15 partidas no racha curto; 3 rachas na partida única): o rating existe por baixo — monta time, entra na conta dos outros — mas a escada mostra a pessoa em "Sem nível ainda", com o progresso da calibração.
 
 | Patente | Faixa interna de rating |
@@ -497,7 +497,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 **Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).
 
-**Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Membros** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
+**Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Pendências** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
 
 ---
 
@@ -548,7 +548,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 - **Painel de números**: duelos e parcerias por pessoa (com histórico encontro a encontro), destaques (carrasco, freguês, melhor dupla), quebra ano a ano e rankings do racha no período
 - Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
 - Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)
-- Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Membros
+- Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
 - Editar nome, nível, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar)
 - **Corrigir escalação e trocas** de partida encerrada, reescrevendo os trechos (D-61); registro de correções por liga

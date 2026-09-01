@@ -302,7 +302,7 @@ await step('o admin ve o pedido e aprova',async()=>{
   A.openLiga({dataset:{id:ligaId}});
   A.tab({dataset:{v:'ranking'}});
   await loadAccounts(ligaId);
-  ok('o card Membros mostra o pedido',/pediu para entrar/.test(els['#app'].innerHTML));
+  ok('o card Pendencias mostra o pedido',/pediu para entrar/.test(els['#app'].innerHTML));
   await A.accApprove({dataset:{u:luisId}});
   ok('luis virou membro no servidor',DB.members.some(m=>m.league_id===ligaId&&m.user_id===luisId));
   ok('o pedido sumiu',!DB.requests.length);
