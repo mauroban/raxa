@@ -1216,6 +1216,32 @@ principal — princípio de sempre); animação no brilho (bateria de celular na
 `divCls` em `endRacha`/avatares (`index.html`) · conferido no claro e no escuro pelo `visual.py`.
 
 
+### D-80 · Divisão em riscos (`/`, `//`, `///`), não em número — e 3 continua sendo o topo
+**01/09/2026.** O badge deixa de escrever "OURO 3" e passa a mostrar **OURO ///**: o nome da
+patente e um, dois ou três traços inclinados, um por divisão. A cor continua distinguindo a
+patente, mas a divisão não podia depender só de tom (fosco/metal/polido, D-79) nem de um dígito
+de 11px — no chip do time montado o pontinho era só cor, e ninguém lia a divisão ali. Contagem
+se lê de longe e é auto-explicativa: **mais riscos, mais alto**. Isso também fecha a pergunta
+"3 > 1 ou 1 > 3?": **fica 3 no topo**, como sempre foi (Diamante 3 é o degrau mais alto). Com
+riscos, a ordem crescente é a única que faz sentido — três traços obviamente valem mais que um;
+inverter (1 melhor, como no LoL/Overwatch, que usam algarismo romano) daria um risco ao melhor e
+três ao pior, além de virar o motor, os testes e a documentação de cabeça para baixo sem ganho.
+Valorant, Rocket League e Apex usam a mesma ordem crescente. O número não sumiu: segue em texto
+corrido (`rankLabel`: "agora é Ouro 3", toast, registro de correções) e no `title`/`aria-label`
+de todo badge. O mesmo desenho vale em TODO lugar em que a patente aparece: `patBadge`,
+`patBadgeShort`, `patDot` (o pontinho dos chips virou riscos, na altura do chip), a escada
+(`patDivOnly`: só os riscos, porque o cabeçalho já agrupa por patente), o editor de nível do
+admin (badge grande no lugar do texto), os cards de promoção do fim do racha (badge no lugar do
+texto) e a variação de nível dos destaques. Os pontinhos de **cor de time** que dividiam a classe
+`.pdot` viraram `.swatch`, para não herdar os riscos.
+**Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
+não medalha); chevron em V (mais largo, estoura o chip); manter o número ao lado dos riscos
+(redundante e mais largo); inverter a ordem (acima).
+**Onde:** CSS `.dv`, `.pdot`, `.swatch` e `divMarks`/`patBadge`/`patBadgeShort`/`patDivOnly`/
+`patDot` em `index.html` · texto da tela Ajustes ("marcadas por riscos") · `DOCUMENTACAO.md` §3.2
+· conferido nos dois temas, nos 15 degraus, com galeria em Chrome headless (sem teste automático
+do desenho; `layout.py`/`smoke.py` cobrem o HTML).
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
