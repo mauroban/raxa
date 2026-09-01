@@ -147,42 +147,34 @@ label.f .k{display:block;margin-bottom:6px}
 .steps .d{font-size:12.5px;color:var(--mute);line-height:1.45;margin-top:2px}
 
 /* ---------- patentes (nível) ---------- */
-.pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:700;font-size:12px;
-  letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:7px;white-space:nowrap;
-  color:var(--pc);border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);
-  background:color-mix(in srgb,var(--pc) 12%,transparent)}
+/* O badge é um bloco SÓLIDO na cor do metal — a cor sozinha diz a patente,
+   de longe, sem ler o nome (D-80). O texto e os riscos vão na tinta que
+   contrasta com aquele metal (--ink: escura no ouro/prata/bronze/diamante,
+   clara no ferro). A borda é a própria cor puxada para a tinta, para prata
+   e diamante não sumirem no card branco.                                    */
+.pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:800;font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap;
+  color:var(--ink,var(--onink));background:var(--pc);border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk))}
 .pat.big{font-size:15px;padding:6px 11px;border-radius:9px}
-/* riscos de divisão: 1, 2 ou 3 traços inclinados no lugar do número. A
+/* riscos de divisão: I, II ou III — barras retas no lugar do número. A
    divisão vira CONTAGEM — lê de longe, sem depender só da cor, e "mais
    riscos = mais alto" dispensa explicação (D-80). Tamanho em em: acompanha
    o badge pequeno do chip e o grande da ficha.                              */
 .dv{display:inline-flex;align-items:center;gap:.2em;flex:0 0 auto}
-.dv i{display:block;width:.26em;height:.9em;border-radius:.1em;background:var(--pc);transform:skewX(-16deg)}
+.dv i{display:block;width:.26em;height:.9em;border-radius:.1em;background:currentColor}
 .pat .dv{margin-left:.15em}
-/* divisões: 1 fosca → 2 metal → 3 POLIDA. A rampa tem que gritar "quanto
-   maior, mais raro": a 1 é apagada (sem preenchimento, borda rala), a 2 é o
-   metal, e a 3 é a única com brilho — banda de luz diagonal (o reflexo do
-   metal polido), borda cheia e halo. Clarear a cor foi testado e lavava. */
-.pat.d1{border-color:color-mix(in srgb,var(--pc) 34%,transparent);background:color-mix(in srgb,var(--pc) 6%,transparent)}
-.pat.d1 .dv i{opacity:.7}
-.pat.d2{border-color:color-mix(in srgb,var(--pc) 62%,transparent);background:color-mix(in srgb,var(--pc) 16%,transparent)}
-.pat.d2 .dv i{opacity:.85}
-.pat.d3{border-color:var(--pc);
-  background:linear-gradient(115deg,
-    color-mix(in srgb,var(--pc) 30%,transparent) 0%,
-    color-mix(in srgb,var(--pc) 14%,transparent) 34%,
-    color-mix(in srgb,var(--pc) 44%,transparent) 50%,
-    color-mix(in srgb,var(--pc) 16%,transparent) 64%,
-    color-mix(in srgb,var(--pc) 28%,transparent) 100%);
-  box-shadow:0 0 10px -1px color-mix(in srgb,var(--pc) 60%,transparent),
-    inset 0 0 6px color-mix(in srgb,var(--pc) 28%,transparent)}
-.pat.d3 .dv i{opacity:1;box-shadow:0 0 5px color-mix(in srgb,var(--pc) 75%,transparent)}
-/* pontinho de nível dos chips (times, slots) — agora os mesmos riscos, no
-   tamanho do chip: a divisão se lê no time montado, não só a cor.          */
-.pdot{display:inline-flex;align-items:center;gap:2px;height:11px;flex:0 0 auto}
-.pdot i{display:block;width:2.5px;height:11px;border-radius:1px;background:var(--pc);transform:skewX(-16deg)}
-.pdot.d1{opacity:.55}
-.pdot.d3 i{box-shadow:0 0 6px color-mix(in srgb,var(--pc) 90%,transparent),0 0 2px color-mix(in srgb,var(--pc) 95%,transparent)}
+/* divisões: a diferença é a CONTAGEM de riscos (D-80). A cor é a mesma nas
+   três; o acabamento só acompanha de leve — 1 um pouco mais rala, 3 com um
+   halo discreto — para não competir com os riscos nem sugerir outra
+   patente. A rampa forte (fosco → metal → polido, D-79) fazia sentido quando
+   o número era um dígito de 11px; agora seria ruído.                        */
+.pat.d3{box-shadow:0 0 8px -2px color-mix(in srgb,var(--pc) 55%,transparent)}
+/* pontinho de nível dos chips (times, slots) — um mini-badge sólido com os
+   riscos: patente pela cor, divisão pela contagem, no time montado.        */
+.pdot{display:inline-flex;align-items:center;gap:2px;height:16px;padding:0 4px;border-radius:4px;flex:0 0 auto;
+  background:var(--pc);color:var(--ink,var(--onink));border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk))}
+.pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor}
+.pdot.d3{box-shadow:0 0 6px -1px color-mix(in srgb,var(--pc) 60%,transparent)}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
 .gk{font-size:11px;color:var(--cyan)}
@@ -217,10 +209,8 @@ body.painting{touch-action:none;overflow:hidden}
 .tp small{font-size:10px;opacity:.6;font-family:var(--body);letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .tp.big{font-size:15px;padding:0 13px;min-height:46px}
 .tp.lv{background:color-mix(in srgb,var(--pc) 12%,var(--panel));border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
-.tp.lv.d1{background:color-mix(in srgb,var(--pc) 6%,var(--panel));border-color:color-mix(in srgb,var(--pc) 26%,var(--line))}
-.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 75%,var(--line));
-  background:linear-gradient(115deg,color-mix(in srgb,var(--pc) 24%,var(--panel)) 0%,color-mix(in srgb,var(--pc) 12%,var(--panel)) 40%,color-mix(in srgb,var(--pc) 30%,var(--panel)) 54%,color-mix(in srgb,var(--pc) 14%,var(--panel)) 100%);
-  box-shadow:0 0 8px -2px color-mix(in srgb,var(--pc) 50%,transparent)}
+.tp.lv.d1{background:color-mix(in srgb,var(--pc) 9%,var(--panel));border-color:color-mix(in srgb,var(--pc) 34%,var(--line))}
+.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 50%,var(--line));box-shadow:0 0 6px -2px color-mix(in srgb,var(--pc) 40%,transparent)}
 .tp.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
 .tp.vaga{border-style:dashed;border-color:var(--line2);color:var(--mute);background:transparent}
 .tp.emp{border-style:dashed;border-color:var(--line2)}
@@ -333,11 +323,10 @@ body.painting{touch-action:none;overflow:hidden}
 .form{display:flex;gap:3px}
 .form i{width:7px;height:7px;border-radius:2px;background:var(--mute2);display:block}
 .form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
-.promo{border:1px solid var(--pc);border-radius:13px;padding:12px;margin-bottom:8px;background:color-mix(in srgb,var(--pc) 6%,var(--panel))}
-.promo .t{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--pc);text-transform:uppercase}
-.promo.d1{border-color:color-mix(in srgb,var(--pc) 45%,transparent)}
-.promo.d3{background:linear-gradient(115deg,color-mix(in srgb,var(--pc) 16%,var(--panel)) 0%,color-mix(in srgb,var(--pc) 7%,var(--panel)) 40%,color-mix(in srgb,var(--pc) 19%,var(--panel)) 54%,color-mix(in srgb,var(--pc) 8%,var(--panel)) 100%);
-  box-shadow:0 0 12px -3px color-mix(in srgb,var(--pc) 55%,transparent)}
+.promo{border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk));border-radius:13px;padding:12px;margin-bottom:8px;background:color-mix(in srgb,var(--pc) 10%,var(--panel))}
+.promo .t{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--chalk);text-transform:uppercase}
+.promo.d1{border-color:color-mix(in srgb,var(--pc) 65%,transparent)}
+.promo.d3{box-shadow:0 0 10px -3px color-mix(in srgb,var(--pc) 45%,transparent)}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 
 /* ---------- histórico ---------- */
@@ -412,8 +401,8 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .rkbtn .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rkbtn:active{opacity:.65}
 .avatar{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:26px;
-  background:var(--pc,var(--chalk));color:var(--onink);flex:0 0 auto}
-.avatar.d3{box-shadow:0 0 12px -2px color-mix(in srgb,var(--pc) 65%,transparent)}
+  background:var(--pc,var(--chalk));color:var(--ink,var(--onink));flex:0 0 auto}
+.avatar.d3{box-shadow:0 0 10px -2px color-mix(in srgb,var(--pc) 45%,transparent)}
 .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:13px;
   background:var(--panel2);border:1px solid var(--line);color:var(--chalk);flex:0 0 auto}
 .hero{display:flex;align-items:center;gap:12px}
@@ -614,7 +603,14 @@ const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.c
    prata: quase branca · ouro: amarelo vivo · diamante: azul-gelo            */
 const PATC_ESCURO=['#5A646D','#D08A55','#DCE4EC','#FFD84D','#B9E6FF'];
 const PATC_CLARO =['#3A4249','#9A5626','#5B6B7A','#A06E00','#1F8FD6'];
-let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado para dar contraste
+let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado — só para TEXTO na cor (cabeçalho da escada, botões de nível)
+/* Preenchimento (badge, pontinho, avatar): sempre o metal vivo, nos dois
+   temas — ouro tem que parecer ouro em cima do card branco também. O que
+   muda com o tema é a tinta por cima, não o metal (D-80).                  */
+const PATFILL=PATC_ESCURO;
+const INK_ESCURA='#0F1F16', INK_CLARA='#F3F7EE';
+const lumHex=h=>{const c=i=>parseInt(h.substr(i,2),16)/255;return .2126*c(1)+.7152*c(3)+.0722*c(5)};
+const patInk=s=>lumHex(PATFILL[patOf(s)])>.45?INK_ESCURA:INK_CLARA;
 const PATSHORT=['FER','BRO','PRA','OUR','DIA'];
 const DIVS=['1','2','3'];
 const BASE=1000, STEP=200/3, TOP=14;
@@ -623,18 +619,11 @@ const stepMin=s=>BASE+s*STEP;
 const stepMid=s=>Math.round(BASE+(s+.5)*STEP);
 const patOf=s=>Math.floor(s/3);
 const divOf=s=>DIVS[s%3];
-/* Dentro do nível, a divisão muda o brilho: 1 um pouco mais fechada, 2 a cor
-   do metal, 3 um pouco mais clara. Sutil de propósito — o número continua
-   sendo a leitura principal, a cor só acompanha.                            */
-function mixHex(hex,alvo,t){
-  const h=hex.replace('#',''),c=i=>parseInt(h.substr(i,2),16);
-  const m=v=>Math.round(v+(alvo-v)*t).toString(16).padStart(2,'0');
-  return '#'+m(c(0))+m(c(2))+m(c(4));
-}
-/* Divisão: a 1 é fosca (cor mais fechada), a 2 é o metal, a 3 é POLIDA — a
-   mesma cor, com brilho (reflexo + halo via CSS .d3) em vez de mais clara:
-   clarear lavava a cor e parecia transparente, não superior.               */
-const patColor=s=>{const base=PATC[patOf(s)],d=s%3;return d===0?mixHex(base,0,.28):base};
+/* A cor é a da patente, igual nas três divisões — quem diz a divisão são os
+   riscos (D-80). Escurecer a 1 (testado em D-79) fazia Ouro 1 parecer outro
+   metal; clarear a 3 lavava. O acabamento fica só no CSS (.d1/.d3), de leve. */
+const patColor=s=>PATFILL[patOf(s)];
+const patVars=s=>`--pc:${patColor(s)};--ink:${patInk(s)}`;
 const divCls=s=>'d'+(s%3+1);
 const patName=(liga,s)=>liga.cfg.patNames[patOf(s)];
 const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
@@ -642,10 +631,10 @@ const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
    do nível + contagem. O número continua em texto corrido (rankLabel:
    toast, log, "agora é Ouro 3") e no title/aria-label do badge (D-80).     */
 const divMarks=s=>`<span class="dv">${'<i></i>'.repeat(s%3+1)}</span>`;
-const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''} ${divCls(s)}" style="--pc:${patColor(s)}" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${esc(patName(liga,s))}${divMarks(s)}</span>`;
-const patBadgeShort=(liga,s)=>`<span class="pat ${divCls(s)}" style="--pc:${patColor(s)}" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${PATSHORT[patOf(s)]}${divMarks(s)}</span>`;
+const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''} ${divCls(s)}" style="${patVars(s)}" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${esc(patName(liga,s))}${divMarks(s)}</span>`;
+const patBadgeShort=(liga,s)=>`<span class="pat ${divCls(s)}" style="${patVars(s)}" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${PATSHORT[patOf(s)]}${divMarks(s)}</span>`;
 /* só os riscos, sem nome — a escada já agrupa por nível no cabeçalho */
-const patDivOnly=(liga,s)=>`<span class="pat ${divCls(s)}" style="--pc:${patColor(s)};min-width:40px;justify-content:center;font-size:14px" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${divMarks(s)}</span>`;
+const patDivOnly=(liga,s)=>`<span class="pat ${divCls(s)}" style="${patVars(s)};min-width:40px;justify-content:center;font-size:14px" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${divMarks(s)}</span>`;
 
 /* ---------- estado ---------- */
 function defCfg(){return{
@@ -1768,7 +1757,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
-const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="--pc:${patColor(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
+const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
 /* ---------- de quem é a vitória do time ----------
    Time da noite é a composição original, não o nome no placar. Um lado da
@@ -2593,7 +2582,7 @@ function viewStats(liga){
   const cardsJogador=`
   <div class="card">
     <div class="hero">
-      <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,'L')?divCls(p.L.rank):''}" style="--pc:${vePat(liga)&&p&&temPatente(liga,p,'L')?patColor(p.L.rank):'var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,'L')?divCls(p.L.rank):''}" style="${vePat(liga)&&p&&temPatente(liga,p,'L')?patVars(p.L.rank):'--pc:var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
@@ -3225,7 +3214,7 @@ function viewCfgBody(liga){
   <div class="card">
     <div class="k" style="margin-bottom:10px">Nomes dos níveis (da pior para a melhor)</div>
     ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:8px">
-      <span class="swatch" style="--pc:${PATC[i]}"></span>
+      <span class="swatch" style="--pc:${PATFILL[i]}"></span>
       <input value="${esc(n)}" data-pat="${i}" style="flex:1"></div>`).join('')}
     <div class="tiny muted">Cada nível tem 3 divisões, marcadas por riscos: um risco é o primeiro degrau, três é o melhor. Cada jogador tem duas: uma de linha e uma de goleiro.</div>
   </div>
@@ -4354,7 +4343,7 @@ const A={
         <div><b>${ups.length}</b><span>mudanças de nível</span></div>
       </div>
       ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(l,p,role))return '';
-        const tr=rt(p,role);return `<div class="promo ${divCls(tr.rank)}" style="--pc:${patColor(tr.rank)}">
+        const tr=rt(p,role);return `<div class="promo ${divCls(tr.rank)}" style="${patVars(tr.rank)}">
         <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
         <div class="tiny muted" style="display:flex;align-items:center;gap:6px">agora é ${patBadge(l,tr.rank)}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
       <button class="btn wide pri" data-a="closeSheet">Fechar</button>`);
@@ -4376,7 +4365,7 @@ const A={
     const rankSel=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(rt(p,r).games?stepOf(rt(p,r).base):rt(p,r).rank);
     const zerado=r=>PD.rank[r]==='none';
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
-    const corAv=ver&&temPatente(l,p,'L')?patColor(rankDe('L')):ver&&temPatente(l,p,'G')?patColor(rankDe('G')):'var(--mute)';
+    const corAv=ver&&temPatente(l,p,'L')?patVars(rankDe('L')):ver&&temPatente(l,p,'G')?patVars(rankDe('G')):'--pc:var(--mute)';
     const divAv=ver&&temPatente(l,p,'L')?divCls(rankDe('L')):ver&&temPatente(l,p,'G')?divCls(rankDe('G')):'';
     const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=(temPatente(l,p,r)||PD.rank[r]!==null)&&!zerado(r);
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
@@ -4391,7 +4380,7 @@ const A={
     const jt=inseparaveis(l,stTudo).filter(x=>x.a===p.id||x.b===p.id);
     openSheet(`
       <div class="ps-hd">
-        <div class="avatar ${divAv}" style="--pc:${corAv}">${esc(iniciais(PD.name||p.name))}</div>
+        <div class="avatar ${divAv}" style="${corAv}">${esc(iniciais(PD.name||p.name))}</div>
         <div style="min-width:0;flex:1">
           ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value" placeholder="Nome" aria-label="nome do jogador"
               style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`

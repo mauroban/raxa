@@ -1216,9 +1216,10 @@ principal — princípio de sempre); animação no brilho (bateria de celular na
 `divCls` em `endRacha`/avatares (`index.html`) · conferido no claro e no escuro pelo `visual.py`.
 
 
-### D-80 · Divisão em riscos (`/`, `//`, `///`), não em número — e 3 continua sendo o topo
-**01/09/2026.** O badge deixa de escrever "OURO 3" e passa a mostrar **OURO ///**: o nome da
-patente e um, dois ou três traços inclinados, um por divisão. A cor continua distinguindo a
+### D-80 · Divisão em riscos (I, II, III), não em número — e 3 continua sendo o topo
+**01/09/2026.** O badge deixa de escrever "OURO 3" e passa a mostrar **OURO III**: o nome da
+patente e uma, duas ou três barras retas, uma por divisão (nasceram inclinadas, `///`; retas
+lêem como algarismo romano e ficam mais firmes no chip). A cor continua distinguindo a
 patente, mas a divisão não podia depender só de tom (fosco/metal/polido, D-79) nem de um dígito
 de 11px — no chip do time montado o pontinho era só cor, e ninguém lia a divisão ali. Contagem
 se lê de longe e é auto-explicativa: **mais riscos, mais alto**. Isso também fecha a pergunta
@@ -1234,9 +1235,23 @@ de todo badge. O mesmo desenho vale em TODO lugar em que a patente aparece: `pat
 admin (badge grande no lugar do texto), os cards de promoção do fim do racha (badge no lugar do
 texto) e a variação de nível dos destaques. Os pontinhos de **cor de time** que dividiam a classe
 `.pdot` viraram `.swatch`, para não herdar os riscos.
+Com os riscos dizendo a divisão, a **rampa de cor entre divisões da mesma patente afrouxou**:
+a divisão 1 deixa de escurecer a cor (`patColor` devolve sempre a cor da patente — Ouro 1 escuro
+parecia outro metal), o reflexo diagonal e o halo forte da 3 (D-79) saem, e fica só um halo
+discreto na 3 — em badges, chips, cards de promoção e avatares. Duas coisas dizendo a mesma
+coisa era ruído; a cor volta a ser só patente.
+E a cor virou **a leitura principal da patente**: o badge deixou de ser texto colorido em fundo
+tingido (12% da cor — ouro e prata lavados, quase iguais) e passou a ser um **bloco sólido na cor
+do metal**, com texto e riscos na tinta que contrasta (`patInk`: escura em ouro/prata/bronze/
+diamante, clara em ferro). O metal é o mesmo nos dois temas (`PATFILL`, sempre a paleta viva —
+ouro tem que parecer ouro em cima do card branco); a paleta fechada do tema claro (`PATC_CLARO`)
+fica só para texto na cor (cabeçalho da escada, botões de nível). O pontinho dos chips virou um
+mini-badge sólido com os riscos, e os avatares da ficha recebem a mesma tinta. O nome continua
+escrito nos badges longos (é editável por liga), mas dá para não ler: a cor basta.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
-não medalha); chevron em V (mais largo, estoura o chip); manter o número ao lado dos riscos
-(redundante e mais largo); inverter a ordem (acima).
+não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
+lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a
+rampa forte fosco/metal/polido junto com os riscos (redundante); inverter a ordem (acima).
 **Onde:** CSS `.dv`, `.pdot`, `.swatch` e `divMarks`/`patBadge`/`patBadgeShort`/`patDivOnly`/
 `patDot` em `index.html` · texto da tela Ajustes ("marcadas por riscos") · `DOCUMENTACAO.md` §3.2
 · conferido nos dois temas, nos 15 degraus, com galeria em Chrome headless (sem teste automático
