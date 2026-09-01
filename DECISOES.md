@@ -1488,6 +1488,26 @@ não precisava aparecer, e o espaço é do nome.
 `paintScroll`, `paintChipAt`, `presBadge`, `viewPresenca` (`index.html`) · conferido no
 `visual.py` (tela 1, 360px) · `DOCUMENTACAO.md` §4.1.
 
+### D-89 · Menos densidade nos números: destaques recolhidos, V/E/D seco, duelos sem ruído, empate divide posição
+**01/09/2026.** Quatro cortes de densidade, todos na direção "a tela responde uma pergunta":
+**(1)** A aba Racha serve para iniciar racha; os destaques dos últimos 30 dias viraram um card
+de UMA linha ("Destaques · últimos 30 dias · 3 rachas · 28 partidas ▾") que abre num toque
+(`S.ui.destAberto`, lembrado) — e sem partidas no período o card nem aparece (antes ocupava a
+tela explicando que não tinha nada). **(2)** No herói do jogador (aba Stats), as três barras de
+Vitórias/Empates/Derrotas diziam o mesmo que o anel de aproveitamento ao lado; viraram três
+números secos (12V · 3E · 5D). **(3)** Duelos e parcerias: a setinha ▲▼ por linha saiu (a
+barrinha V/E/D de cada linha já conta a história); "Maior carrasco" e "Freguês" agora exigem,
+além do mínimo de confrontos, **saldo de 3+** (2V×1D coroava freguês — ruído virando manchete;
+a mesma régua vale para "Melhor dupla"); e os dois blocos ganharam a setinha de ordem dos
+rankings (a lista lida do fim). **(4)** Em TODO ranking numerado, **empate no número divide a
+mesma posição** (1, 2, 2, 4 — `posEmpate`): rankings de temporada (`rkBars`), +/− e times do
+último racha, quem mais ganhou, melhores duplas.
+**Descartado:** esconder os destaques atrás de uma aba (curiosidade boa quer um toque, não uma
+navegação); remover a barrinha V/E/D dos duelos (é ela que substitui a setinha).
+**Onde:** `statsBlock`/`toggleDestaques`, `.vednum`, `listaDuelo`/`carrasco`/`fregues`/`dupla`,
+`posEmpate` e os cinco rankings numerados (`index.html`) · `scripts/test.py` (posEmpate) ·
+`DOCUMENTACAO.md` §5.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -257,6 +257,8 @@ ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquida
   liga.matches.push({id:'v','sessionId':'s9',ts:99,voided:true,overR:{[ids[5]+'L']:9}});
   ok(rankingSurpresa(liga,'L').pos[ids[5]].pos!==1,'partida anulada nao conta');
   ok(hojeCom(liga,liga.players[3],'L',7)===7,'hojeCom: quem nunca jogou, hoje = entrada (D-86)');
+  const pe=posEmpate([{v:9},{v:7},{v:7},{v:3}],x=>x.v);
+  ok(pe.join(',')==='1,2,2,4','empate divide a posicao: 1,2,2,4 (D-89)');
   liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));liga.players.forEach(p=>{p.L.def=false;p.L.games=0});rebuildAll(liga);
 }
 console.log('\n[6] calibracao');

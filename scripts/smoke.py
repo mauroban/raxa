@@ -67,7 +67,7 @@ step('toda acao tem classificacao de papel',()=>{
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
-    'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo',
+    'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
