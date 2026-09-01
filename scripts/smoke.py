@@ -88,6 +88,19 @@ step('quem veio de goleiro sai do cadastro e vira escolha do dia',()=>{
   A.presGk({dataset:{id:alguem}});
   if(lv.gkToday.indexOf(alguem)>=0)throw new Error('nao desmarcou');
 });
+step('chip de presenca mostra o nivel do papel de hoje: gol com luva acesa, linha apagada (D-81)',()=>{
+  const l=L(),lv=l.live,p=l.players.find(x=>!x.gk&&temPatente(l,x,'L'));
+  if(!p)throw new Error('precisa de alguem de linha com nivel');
+  p.G.def=true;p.G.rank=TOP;p.G.elo=stepMid(TOP);        /* Diamante 3 no gol, so para o teste */
+  const lRank=rankLabel(l,p.L.rank),gRank=rankLabel(l,TOP);
+  const chip=()=>{const h=viewPresenca(l,lv);const i=h.indexOf('data-id="'+p.id+'"');return h.slice(i,i+600)};
+  if(chip().indexOf(gRank)>=0||chip().indexOf(lRank)<0)throw new Error('luva apagada: esperava '+lRank);
+  A.presGk({dataset:{id:p.id}});
+  if(chip().indexOf(gRank)<0||chip().indexOf(lRank)>=0)throw new Error('luva acesa: esperava '+gRank+', veio '+chip());
+  A.presGk({dataset:{id:p.id}});
+  if(chip().indexOf(lRank)<0)throw new Error('desmarcou e nao voltou para '+lRank);
+  p.G.def=false;p.G.elo=l.cfg.startElo;p.G.rank=stepOf(p.G.elo);
+});
 step('montar times',()=>A.toTimes());
 step('lista real: 19 presentes no 5v5 viram 4 times de 4 + 3 goleiros no rodizio',()=>{
   const lv=L().live;
