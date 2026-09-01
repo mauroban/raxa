@@ -48,6 +48,7 @@ TELAS = {
     8: 'numeros',
     9: 'completar',
     10: 'destaques',
+    11: 'ficha admin',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -92,12 +93,19 @@ DRIVER = r"""
     if(step>=5){                     /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
+    if(step===11)S.ui.tab='ranking';
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';
     if(step===8)S.ui.tab='stats';
   }
   render();closeSheet();
+  if(step===11){                   /* ficha do admin com a entrada editada: previa do hoje (D-86) */
+    const l=L(),eu=l.players[1];eu.role='admin';
+    const p=l.players.find(x=>x.L.games>0&&x!==eu)||l.players[0];
+    A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:String(Math.max(0,p.L.rank-2))}});
+    const sh=document.querySelector('#sheet');if(sh)sh.scrollTop=380;
+  }
   const problemas=[];
   const nome=e=>e.tagName.toLowerCase()+(e.className?'.'+String(e.className).trim().split(/\s+/).join('.'):'');
   const dentro=[...document.querySelectorAll('#app *')];

@@ -1446,7 +1446,9 @@ de onde o admin já olha o jogador); só um sinal de "entrada" na escada (não r
 **Onde:** `hojeCom` (motor), `pdEntrada`, `pdRank`/`pdBump`/`pdSave`, painel da ficha, `LOG_TXT`
 de rank (`index.html`) · `scripts/smoke.py` (prévia na ficha, base vira o degrau escolhido, hoje
 bate com a prévia, log guarda os dois, `hojeCom` não deixa rastro) · `scripts/test.py` (sem
-histórico) · `DOCUMENTACAO.md` §3.2.
+histórico) · `scripts/visual.py` tela 11 "ficha admin" (a ficha com a entrada editada, nas duas
+larguras) · `DOCUMENTACAO.md` §3.2. Layout do painel: duas linhas rotuladas — ENTRADA (− badge +,
+"era X") e HOJE (atual → previsto, "ao salvar") — em vez de − e + soltos nas bordas.
 
 ## Como registrar uma decisão nova
 

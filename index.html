@@ -539,6 +539,15 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .ladder4 button i{display:block;width:100%;height:4px;border-radius:2px;background:var(--pc)}
 .ladder4 button.on{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}
 .step{display:flex;align-items:center;gap:8px;margin-top:10px}
+/* editor de nível da ficha (D-86): duas linhas com rótulo — ENTRADA (− badge +)
+   e HOJE (atual → previsto) — para o admin ver de cara o que edita e o que
+   é consequência.                                                            */
+.lvedit{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;margin-top:10px}
+.lvedit .lbl{font-size:10.5px;letter-spacing:.08em;color:var(--mute);font-weight:700;font-family:var(--body)}
+.lvedit .ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.lvedit .sq{width:36px;min-height:36px;padding:0;border-radius:9px;font-size:20px;line-height:1;flex:0 0 auto;border:1px solid var(--line2);background:var(--panel)}
+.lvedit .sub{font-size:11px;color:var(--mute);margin-left:2px}
+.lvedit .arr{color:var(--mute);font-size:15px}
 .step .cur{flex:1;text-align:center;font-family:var(--disp);font-weight:800;font-size:20px}
 .step .btn{flex:0 0 56px;padding:0;font-size:20px;line-height:1}
 .trow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
@@ -4522,18 +4531,20 @@ const A={
         <div class="ladder4">
           ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>
-        <div class="step">
-          <button class="btn ghost" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo na entrada">−</button>
-          <div class="cur"><div class="tiny muted" style="letter-spacing:.06em;margin-bottom:3px">ENTRADA</div>${zerado(role)?'<span class="muted">sem nível</span>':patBadge(l,rankSel(role),'big')}</div>
-          <button class="btn ghost" data-a="pdBump" data-d="1" aria-label="uma divisão acima na entrada">+</button>
-        </div>
-        ${rt(p,role).games?`<div class="row" style="justify-content:center;gap:8px;margin-top:8px;opacity:.9">
-          <div class="tiny muted" style="letter-spacing:.06em">HOJE</div>
-          ${PD.rank[role]!==null&&PD.rank[role]!=='none'&&PD.res[role]!==null&&PD.res[role]!==rt(p,role).rank
-            ?`${patBadge(l,rt(p,role).rank)}<span class="muted">→</span>${patBadge(l,PD.res[role])}<span class="tiny muted">ao salvar</span>`
-            :`${patBadge(l,rt(p,role).rank)}<span class="tiny muted">não se edita</span>`}
-        </div>`:''}
-        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:8px;line-height:1.5">Você edita o nível com que a pessoa <b>entrou</b> (o palpite). O de <b>hoje</b> não se edita: sai das ${pl(rt(p,role).games,'partida já jogada','partidas já jogadas')} reaplicadas por cima da entrada — e pode andar mais, menos ou até para o outro lado do que a entrada, porque cada partida passa a valer diferente. ${PD.rank[role]!==null&&PD.rank[role]!=='none'?`Com a entrada em <b>${esc(rankLabel(l,PD.rank[role]))}</b>${stepOf(rt(p,role).base)!==PD.rank[role]?` (era ${esc(rankLabel(l,stepOf(rt(p,role).base)))})`:''}, hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>.`:'O resultado aparece aqui antes de salvar.'} Fato de quadra ninguém edita à mão.</div>`:''}
+        ${(()=>{const t=rt(p,role),ed=PD.rank[role]!==null&&PD.rank[role]!=='none',base=stepOf(t.base);
+          const mudouHoje=ed&&PD.res[role]!==null&&PD.res[role]!==t.rank;
+          return `<div class="lvedit">
+          <div class="lbl">ENTRADA</div>
+          <div class="ctl">
+            <button class="btn ghost sq" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo na entrada">−</button>
+            ${zerado(role)?'<span class="muted">sem nível</span>':patBadge(l,rankSel(role))}
+            <button class="btn ghost sq" data-a="pdBump" data-d="1" aria-label="uma divisão acima na entrada">+</button>
+            ${t.games&&ed&&PD.rank[role]!==base?`<span class="sub">era ${esc(rankLabel(l,base))}</span>`:t.games?'<span class="sub">o palpite</span>':''}
+          </div>
+          ${t.games?`<div class="lbl">HOJE</div>
+          <div class="ctl">${patBadge(l,t.rank)}${mudouHoje?`<span class="arr">→</span>${patBadge(l,PD.res[role])}<span class="sub">ao salvar</span>`:'<span class="sub">não se edita</span>'}</div>`:''}
+          </div>`})()}
+        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:10px;line-height:1.5">Você edita a <b>entrada</b> (o palpite). O <b>hoje</b> sai das ${pl(rt(p,role).games,'partida','partidas')} reaplicadas por cima dela — pode andar diferente da entrada, porque cada partida passa a valer diferente. ${PD.rank[role]!==null&&PD.rank[role]!=='none'?`Com a entrada em <b>${esc(rankLabel(l,PD.rank[role]))}</b>, hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>.`:''} Fato de quadra ninguém edita à mão.</div>`:''}
         ${!rt(p,role).games&&(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?'Vai calibrar do zero':'Tirar o nível — calibrar do zero'}</button>
         <div class="tiny muted" style="margin-top:6px">Só dá para zerar quem ainda não jogou ${role==='G'?'no gol':'na linha'}. Ele volta a "sem nível" até completar a calibração.</div>`:''}
       </div>`:''}
