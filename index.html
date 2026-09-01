@@ -451,11 +451,6 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .ring .pr{fill:none;stroke:var(--ok);stroke-width:9;stroke-linecap:round}
 .ring .rv{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:30px}
 .ring .rl{position:absolute;left:-14px;right:-14px;bottom:-22px;text-align:center;font-family:var(--body);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
-/* V/E/D do herói do jogador: números secos — as três barras diziam o mesmo
-   que o anel de aproveitamento ao lado (D-89)                               */
-.vednum{display:flex;gap:18px;align-items:baseline;justify-content:center}
-.vednum b{font-family:var(--disp);font-weight:800;font-size:26px}
-.vednum small{font-size:11px;color:var(--mute);margin-left:3px;letter-spacing:.05em}
 .ved{display:grid;gap:8px}
 .ved .r{display:grid;grid-template-columns:70px 1fr 28px;gap:10px;align-items:center}
 .ved .r span{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-size:11px;font-weight:700}
@@ -2700,13 +2695,14 @@ function viewStats(liga){
       +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+Math.min(TOPN,itens.length)}</button>`:'');
   };
   const C=2*Math.PI*43,aprMe=aprDe(me.v,me.e,me.jogos);   // pontos ganhos / disputados (V=3, E=1)
+  const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
   /* sem a setinha ▲▼ por linha (ruído — a barrinha V/E/D já conta a história);
      a ordem inverte pelo mesmo botão dos rankings (D-89)                     */
   const listaDuelo=(arr,m)=>{const kO=m?'parcOrd':'duelOrd',base=inv(kO)?[...arr].reverse():arr;
     return base.slice(0,aberto[m?'parc':'duel']?base.length:5).map(x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
       ${av(x.pid)}
       <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.pid))}</div>
-        <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${aprDe(x.v,x.e,x.n)}% de aproveitamento</div>${vedBar(x)}</div>
+        <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${aprDe(x.v,x.e,x.n)}% de aproveitamento</div></div>
       <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`).join('')};
   const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
 
@@ -2768,7 +2764,7 @@ function viewStats(liga){
           <circle class="pr" cx="52" cy="52" r="43" stroke-dasharray="${(aprMe/100*C).toFixed(1)} ${C.toFixed(1)}"/></svg>
         <div class="rv num">${aprMe}%</div><div class="rl">aproveitamento</div>
       </div>
-      <div class="vednum"><span><b class="num" style="color:var(--ok)">${me.v}</b><small>V</small></span><span><b class="num">${me.e}</b><small>E</small></span><span><b class="num" style="color:var(--bad)">${me.d}</b><small>D</small></span></div>
+      <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
     ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">🔥 ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best} vitórias</span>`:''}</div>`:''}
     <div class="tiles ${longa?'five':'four'}" style="margin-top:16px">
@@ -2790,7 +2786,7 @@ function viewStats(liga){
   </div>
 
 ${cardPP}  <div class="card">
-    <div class="k2" style="margin-top:0"><span class="k">Duelos — quem ${esc(quem)} enfrenta</span>${ordBtn('duelOrd')}</div>
+    <div class="k2" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="k">Duelos — quem ${esc(quem)} enfrenta</span>${ordBtn('duelOrd')}</div>
     ${carrasco||fregues?`<div class="duo">
       ${carrasco?`<div class="hl bad"><div class="t">😤 Maior carrasco</div>
         <div class="n">${esc(nameOf(liga,carrasco.pid))}</div>
@@ -2804,7 +2800,7 @@ ${cardPP}  <div class="card">
   </div>
 
   <div class="card">
-    <div class="k2" style="margin-top:0"><span class="k">Parcerias — quem joga do lado de ${esc(quem)}</span>${ordBtn('parcOrd')}</div>
+    <div class="k2" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="k">Parcerias — quem joga do lado de ${esc(quem)}</span>${ordBtn('parcOrd')}</div>
     ${parceiro?`<div class="duo">
       <div class="hl"><div class="t">🤝 Mais jogou junto</div>
         <div class="n">${esc(nameOf(liga,parceiro.pid))}</div>
