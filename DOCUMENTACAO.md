@@ -266,6 +266,8 @@ O app **sugere** quem completa (quem menos jogou na noite, para a fila girar), m
 
 Se mesmo assim um time entra incompleto, a tela avisa (“jogando 4v4 — puxe alguém de fora para fechar 5v5”) em vez de esconder o problema.
 
+Cada cartão de time mostra, ao lado do nome, a **patente média do time** (D-87) — a média dos níveis de quem está nele (goleiro pela patente de goleiro), no mesmo badge da escada. É a leitura rápida de "esse time está de que tamanho?" antes da barra de equilíbrio; some com as patentes fechadas (D-52), como tudo que expõe nível.
+
 **Mexer nos times é a operação mais frequente depois da presença**, então ela é a mais visível da tela:
 
 - todos os nomes ficam em botões grandes, e **quem está de fora tem card próprio com contador** — nunca escondido;

@@ -1451,6 +1451,17 @@ histórico) · `scripts/visual.py` tela 11 "ficha admin" (a ficha com a entrada 
 larguras) · `DOCUMENTACAO.md` §3.2. Layout do painel: duas linhas rotuladas — ENTRADA (− badge +,
 "era X") e HOJE (atual → previsto, "ao salvar") — em vez de − e + soltos nas bordas.
 
+### D-87 · Patente média do time no cabeçalho do cartão
+**01/09/2026.** Na tela de times, a única leitura de força era a barra de equilíbrio e o
+veredito ("leve vantagem…") — globais. Agora cada cartão mostra, ao lado do nome, a **patente
+média** de quem está nele (média dos Elos pelo papel — goleiro pela patente de goleiro —
+convertida no degrau da escada, `stepOf(teamAvg)`), no badge curto padrão, pequeno para não
+competir com o nome. Respeita `vePat`: com patentes fechadas (só admin), some para os demais.
+**Descartado:** número (viola "o número não existe"); média só da linha (o goleiro joga e conta
+no equilíbrio, então conta na leitura).
+**Onde:** `.team .hd .pat` e o cartão de time em `viewTimes` (`index.html`) · conferido no
+`visual.py` (tela 2, claro/escuro) · `DOCUMENTACAO.md` §4.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
