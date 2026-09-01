@@ -1256,6 +1256,12 @@ cima, fio escuro embaixo, borda na cor puxada para o preto), **reflexo diagonal*
 `color-mix` a partir de `--pc`, então cada metal tem o próprio brilho e nada muda por tema.
 Os riscos têm largura em **px inteiro** (3px; 4px no badge grande): em `em` (.26em = 3,12px) o
 subpixel arredondava um "I" para 3px e o vizinho para 4px, e saíam de grossuras diferentes.
+Cada metal passou a ter **dois tons** (`PATFILL` = a peça, `PATFILL2` = a sombra embaixo do
+degradê): com um tom só, ouro `#FFD84D` era amarelo-limão ("amarelo, não dourado") — agora é
+âmbar `#E4AE1E` com sombra marrom-dourada; e diamante `#B9E6FF` era só azul-claro — agora é gelo
+quase branco `#D9F3FF` cuja sombra escorrega para o violeta `#8C93F0`, com o reflexo mais forte
+(`PATSH`): brilho de pedra lapidada, que é o que faz parecer raro. Prata, bronze e ferro ficaram
+como estavam. O ouro do texto no tema escuro (`PATC_ESCURO`) acompanhou para `#F0BE2A`.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a

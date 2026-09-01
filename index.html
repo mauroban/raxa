@@ -162,14 +162,14 @@ label.f .k{display:block;margin-bottom:6px}
     color-mix(in srgb,var(--pc) 58%,#fff) 0%,
     color-mix(in srgb,var(--pc) 88%,#fff) 30%,
     var(--pc) 55%,
-    color-mix(in srgb,var(--pc) 76%,#000) 100%);
+    var(--pc2,color-mix(in srgb,var(--pc) 76%,#000)) 100%);
   border:1px solid color-mix(in srgb,var(--pc) 55%,#000);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(0,0,0,.22),0 1px 2px rgba(0,0,0,.28);
   text-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4));
   position:relative;overflow:hidden;isolation:isolate}
 /* reflexo: uma banda de luz diagonal por cima do degradê */
 .pat::after,.pdot::after,.avatar::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(115deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.42) 44%,rgba(255,255,255,.08) 52%,rgba(255,255,255,0) 66%)}
+  background:linear-gradient(115deg,rgba(255,255,255,0) 28%,var(--sh,rgba(255,255,255,.42)) 44%,rgba(255,255,255,.08) 52%,rgba(255,255,255,0) 66%)}
 .pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:800;font-size:12px;
   letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap;
   color:var(--ink,var(--onink))}
@@ -621,13 +621,20 @@ const modoDe=(liga,m)=>KMODE[m&&m.mode]?m.mode:(KMODE[liga.cfg.matchMode]?liga.c
 /* ferro · bronze · prata · ouro · diamante
    ferro: aço escuro (cinza fechado, longe da prata clara) · bronze: laranja ·
    prata: quase branca · ouro: amarelo vivo · diamante: azul-gelo            */
-const PATC_ESCURO=['#5A646D','#D08A55','#DCE4EC','#FFD84D','#B9E6FF'];
+const PATC_ESCURO=['#5A646D','#D08A55','#DCE4EC','#F0BE2A','#B9E6FF'];
 const PATC_CLARO =['#3A4249','#9A5626','#5B6B7A','#A06E00','#1F8FD6'];
 let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado — só para TEXTO na cor (cabeçalho da escada, botões de nível)
 /* Preenchimento (badge, pontinho, avatar): sempre o metal vivo, nos dois
    temas — ouro tem que parecer ouro em cima do card branco também. O que
    muda com o tema é a tinta por cima, não o metal (D-80).                  */
-const PATFILL=PATC_ESCURO;
+/* Cada metal tem dois tons: a cor da peça (--pc, o meio do degradê) e a
+   sombra embaixo (--pc2). Ouro é âmbar, não amarelo-limão: a luz puxa para o
+   creme e a sombra para o marrom-dourado. Diamante não é azul: é gelo quase
+   branco cuja sombra escorrega para o violeta — brilho de pedra lapidada, e
+   o reflexo mais forte (--sh) para parecer raro.                            */
+const PATFILL =['#5A646D','#D08A55','#DCE4EC','#E4AE1E','#D9F3FF'];
+const PATFILL2=['#2E353C','#8A4A1E','#8E9EAE','#8A5E06','#8C93F0'];
+const PATSH   =[null,null,null,null,'rgba(255,255,255,.62)'];
 const INK_ESCURA='#0F1F16', INK_CLARA='#F3F7EE';
 const lumHex=h=>{const c=i=>parseInt(h.substr(i,2),16)/255;return .2126*c(1)+.7152*c(3)+.0722*c(5)};
 const patInk=s=>lumHex(PATFILL[patOf(s)])>.45?INK_ESCURA:INK_CLARA;
@@ -643,7 +650,7 @@ const divOf=s=>DIVS[s%3];
    riscos (D-80). Escurecer a 1 (testado em D-79) fazia Ouro 1 parecer outro
    metal; clarear a 3 lavava. O acabamento fica só no CSS (.d1/.d3), de leve. */
 const patColor=s=>PATFILL[patOf(s)];
-const patVars=s=>{const ink=patInk(s);return `--pc:${patColor(s)};--ink:${ink};--emb:${ink===INK_ESCURA?'rgba(255,255,255,.4)':'rgba(0,0,0,.5)'}`};
+const patVars=s=>{const ink=patInk(s),k=patOf(s);return `--pc:${patColor(s)};--pc2:${PATFILL2[k]};${PATSH[k]?`--sh:${PATSH[k]};`:''}--ink:${ink};--emb:${ink===INK_ESCURA?'rgba(255,255,255,.4)':'rgba(0,0,0,.5)'}`};
 const divCls=s=>'d'+(s%3+1);
 const patName=(liga,s)=>liga.cfg.patNames[patOf(s)];
 const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
