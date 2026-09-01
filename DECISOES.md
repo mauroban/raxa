@@ -1281,6 +1281,13 @@ dos cabeçalhos (12px, sem espaçamento), vão de 4px, e o nome vai num `span` c
 de nível editado pela liga, comprido demais, corta em vez de vazar. O picker do cadastro ("Sem
 nível" + 5 níveis) virou grade 3×2 (`.ladder4.six`) em vez de seis botões espremidos numa linha.
 Medido em Chrome headless a 360px com a fonte de verdade: DIAMANTE ocupa 48px de um botão de 56.
+Não bastou: no iPhone SE (320/375px, e com a fonte que o iOS tiver) continuou vazando. Então o
+layout deixou de depender de fonte: em folha de até 420px os 5 níveis viram **3 + 2** (grade de 6
+colunas — 2+2+2 em cima, 3+3 embaixo, os dois de baixo esticados), via **container query** na
+`.sheet` (`container-type:inline-size`) e não media query — mede a largura real da folha e dá
+para testar em Chrome headless, que não abre janela menor que 500px. Medido a 320/375/414/500:
+DIAMANTE tem 128px em 320 e volta a 5 numa linha em 500 (84px). O `span` do nome é `display:block;
+width:100%` (o `max-width:100%` em item de flex-coluna não corta no Safari).
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a
@@ -1289,6 +1296,19 @@ rampa forte fosco/metal/polido junto com os riscos (redundante); inverter a orde
 `patDot` em `index.html` · texto da tela Ajustes ("marcadas por riscos") · `DOCUMENTACAO.md` §3.2
 · conferido nos dois temas, nos 15 degraus, com galeria em Chrome headless (sem teste automático
 do desenho; `layout.py`/`smoke.py` cobrem o HTML).
+
+### D-81 · Chip de presença mostra o nível do papel de hoje (🧤 aceso = nível de goleiro)
+**01/09/2026.** Em "Quem chegou", o badge ao lado do nome era sempre o nível **de linha** — quem
+só tinha patente no gol (goleiro fixo) aparecia sem badge nenhum, e quem tinha as duas mostrava a
+errada quando vinha de goleiro. Agora o badge é o do **papel em que a pessoa vai jogar hoje**:
+🧤 aceso → nível de goleiro; apagado → nível de linha (`presBadge`). E troca **no lugar** ao tocar
+no 🧤 ou ao marcar presença (que pode acender o 🧤 sozinho para quem costuma ir ao gol) —
+`presBadgeUpd` substitui só o `<span class="pb">` do chip, porque redesenhar a lista reordenaria
+embaixo do dedo (regra antiga da presença). Sem nível naquele papel, sem badge — igual à escada.
+**Descartado:** mostrar os dois badges (ocupa o chip inteiro em 360px e a informação relevante é
+uma só: o papel de hoje); redesenhar a lista ao trocar (reordena embaixo do dedo).
+**Onde:** `presBadge`/`presBadgeUpd`, `viewPresenca`, handlers `pres` e `presGk` (`index.html`) ·
+`DOCUMENTACAO.md` §4.1 · coberto pelo `smoke.py` (presença com goleiro marcado).
 
 ## Como registrar uma decisão nova
 
