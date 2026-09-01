@@ -1462,6 +1462,25 @@ no equilíbrio, então conta na leitura).
 **Onde:** `.team .hd .pat` e o cartão de time em `viewTimes` (`index.html`) · conferido no
 `visual.py` (tela 2, claro/escuro) · `DOCUMENTACAO.md` §4.2.
 
+### D-88 · Presença densa no celular: duas colunas, chip menor, e ✕ na busca
+**01/09/2026.** Cenário real: 50 cadastrados, achar os 18 que vieram. No celular estreito a
+grade caía para UMA coluna de chips de 50px — ~12 nomes por tela, e marcar presença virava
+rolagem e busca sem fim. Agora: **duas colunas sempre** (o media query que virava 1 coluna em
+<460px saiu), chip de 42px, nome em 13px com reticências, badge e luva menores — cabe
+aproximadamente o dobro de nomes por tela, com alvo de toque ainda acima de 40px. E a busca
+ganhou o **✕** (aparece quando há texto): achou e marcou, limpa num toque e procura o próximo —
+antes era apagar letra por letra no teclado.
+**Descartado:** abreviar nomes por código ("Matheus B."): a reticência faz o mesmo sem inventar
+apelido; lista corrida de uma coluna com fonte menor ainda (duas colunas rendem mais tela).
+E o **arrasto rola a tela**: pintando presença com o dedo na borda (100px de cada ponta), a
+página desce/sobe sozinha (`paintScroll`, via `requestAnimationFrame` + `scrollBy`) e continua
+marcando quem passa sob o dedo — o `overflow:hidden` do modo pintura saiu (o `preventDefault` do
+`touchmove` já segura a rolagem nativa; o hidden também travava o `scrollBy`). O ✕ da busca
+ganhou `[hidden]{display:none}` (o `display:grid` da classe vencia o hidden do navegador).
+**Onde:** `.grid`/`.pchip`/`.gktog`/`.qwrap`/`.qclear`, `filterPlayers`/`limparBusca`,
+`paintScroll`, `viewPresenca` (`index.html`) · conferido no `visual.py` (tela 1, 360px) ·
+`DOCUMENTACAO.md` §4.1.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

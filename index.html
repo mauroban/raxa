@@ -209,21 +209,29 @@ label.f .k{display:block;margin-bottom:6px}
 .gk{font-size:11px;color:var(--cyan)}
 
 /* ---------- presença ---------- */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(max-width:460px){.grid{grid-template-columns:1fr}}
-.pcw{display:flex;gap:6px;min-width:0}
+/* Densidade pensada para "50 cadastrados, achar 18" (D-88): duas colunas
+   MESMO no celular estreito, chip de 42px e nome de 13px com reticências —
+   cabe o dobro de gente na tela do que o chip antigo de 50px em coluna única. */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.pcw{display:flex;gap:4px;min-width:0}
 .pcw .pchip{flex:1;min-width:0}
-.pchip{display:flex;align-items:center;gap:6px;padding:0 10px;min-height:50px;border-radius:12px;border:1px solid transparent;
+.pchip{display:flex;align-items:center;gap:5px;padding:0 8px;min-height:42px;border-radius:11px;border:1px solid transparent;
   background:var(--fill);cursor:pointer;text-align:left;color:var(--chalk);transition:background .12s,border-color .12s}
 .pchip:active{transform:scale(.97)}
 .pchip,.gktog{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-body.painting{touch-action:none;overflow:hidden}
-.pchip .nm{font-weight:600;font-size:15px;letter-spacing:-.01em;line-height:1.15;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pchip .pat{font-size:11px;padding:2px 5px;gap:3px}
-.pchip .tiny{font-size:11px}
+.qwrap{position:relative}
+.qwrap input{width:100%;padding-right:44px}
+.qclear[hidden]{display:none}
+.qclear{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:9px;border:0;
+  background:var(--fill);color:var(--mute);font-size:15px;cursor:pointer;display:grid;place-items:center}
+body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; o auto-rolar do arrasto usa scrollBy (D-88) */
+.pchip .nm{font-weight:600;font-size:13px;letter-spacing:-.01em;line-height:1.15;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pchip .pat{font-size:10px;padding:1px 4px;gap:2px}
+.pchip .pat .dv i{height:9px}
+.pchip .tiny{font-size:10px}
 .pchip.on{background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-color:var(--ok)}
-.gktog{flex:0 0 auto;width:46px;min-height:50px;border-radius:12px;border:1px solid transparent;background:var(--fill);
-  color:var(--mute2);font-size:18px;cursor:pointer;filter:grayscale(1) opacity(.5)}
+.gktog{flex:0 0 auto;width:38px;min-height:42px;border-radius:11px;border:1px solid transparent;background:var(--fill);
+  color:var(--mute2);font-size:16px;cursor:pointer;filter:grayscale(1) opacity(.5)}
 .gktog.on{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,var(--panel));filter:none}
 .gktog:active{transform:scale(.94)}
 
@@ -2077,7 +2085,8 @@ function viewPresenca(liga,lv){
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
     <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span></div>
     <div style="height:10px"></div>
-    <input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
+    <div class="qwrap"><input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
+      <button class="qclear" id="qx" onclick="limparBusca()" aria-label="limpar busca" hidden>✕</button></div>
     <div style="height:10px"></div>
     <div class="grid" id="plist">
       ${sorted.map(p=>{const on=lv.presentIds.indexOf(p.id)>=0,gk=ehGkHoje(lv,p.id);return `
@@ -3453,8 +3462,19 @@ function presCount(liga,lv){
     g.textContent=n?' — '+n+' no gol':''}
   const b=$('#bar');if(b)b.innerHTML=barFor(liga);
 }
-function filterPlayers(q){q=q.toLowerCase().trim();$$('#plist .pcw').forEach(el=>el.classList.toggle('hide',q&&!el.dataset.nm.includes(q)))}
+function filterPlayers(q){q=q.toLowerCase().trim();$$('#plist .pcw').forEach(el=>el.classList.toggle('hide',q&&!el.dataset.nm.includes(q)));
+  const x=$('#qx');if(x)x.hidden=!q;}
 window.filterPlayers=filterPlayers;
+/* Digitar o nome na ficha não redesenha a folha (o cursor pularia) — então o
+   botão Salvar é habilitado direto no oninput, com a mesma conta de "mudou". */
+function pdNome(){
+  const l=L(),p=PD?P(l,PD.id):null,b=$('#pdsalvar');if(!p||!b)return;
+  b.disabled=!(PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null);
+}
+window.pdNome=pdNome;
+/* o ✕ da busca (D-88): achou e marcou, limpa num toque e segue para o próximo nome */
+function limparBusca(){const i=$('#q');if(i)i.value='';filterPlayers('');if(i&&i.focus)i.focus()}
+window.limparBusca=limparBusca;
 function mkPlayer(liga,name,elo,gk){
   const e=elo||liga.cfg.startElo,pad=liga.cfg.startElo;
   /* o palpite do cadastro vale para a valência em que a pessoa vai jogar; a
@@ -4510,7 +4530,7 @@ const A={
       <div class="ps-hd">
         <div class="avatar ${divAv}" style="${corAv}">${esc(iniciais(PD.name||p.name))}</div>
         <div style="min-width:0;flex:1">
-          ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value" placeholder="Nome" aria-label="nome do jogador"
+          ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value;pdNome()" placeholder="Nome" aria-label="nome do jogador"
               style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`
             :`<h2><span>${esc(p.name)}</span></h2>`}
           <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}</div>
@@ -4568,7 +4588,7 @@ const A={
       </div>
       <div class="ps-foot">
         <button class="btn ghost" data-a="pdCancel">Cancelar</button>
-        <button class="btn pri" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
+        <button class="btn pri" id="pdsalvar" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
       </div>
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
@@ -4781,6 +4801,17 @@ function paintChipAt(x,y){
   paint.done.add(chip.dataset.id);
   if(chip.classList.contains('on')!==paint.on)A.pres(chip);
 }
+/* Dedo na borda enquanto pinta: a tela desce (ou sobe) sozinha, e o pincel
+   continua marcando o que passa por baixo do dedo (D-88). Zona de 100px em
+   cada ponta; velocidade cresce até a borda.                                */
+function paintScroll(){
+  if(!paint||!paint.active){paint&&(paint.rolando=false);return}
+  const H=innerHeight,y=paint.y||0;let v=0;
+  if(y>H-100)v=4+16*Math.min(1,(y-(H-100))/100);
+  else if(y<130)v=-(4+16*Math.min(1,(130-y)/130));
+  if(v){scrollBy(0,v);paintChipAt(paint.x,paint.y);requestAnimationFrame(paintScroll)}
+  else paint.rolando=false;
+}
 function beginPaint(chip){
   const l=L();
   if(!l||!l.live||!podeLancar(l)){paint=null;return}
@@ -4810,7 +4841,11 @@ document.addEventListener('touchmove',e=>{
     return;
   }
   e.preventDefault();
+  paint.x=t.clientX;paint.y=t.clientY;
   paintChipAt(t.clientX,t.clientY);
+  if(!paint.rolando&&(t.clientY>innerHeight-100||t.clientY<130)&&typeof requestAnimationFrame==='function'){
+    paint.rolando=true;requestAnimationFrame(paintScroll);
+  }
 },{passive:false});
 document.addEventListener('touchend',endPaint);
 document.addEventListener('touchcancel',endPaint);

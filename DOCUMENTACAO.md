@@ -211,7 +211,7 @@ O rating numérico é quase invisível: na aba Jogadores, **só o admin** vê o 
 
 Os dois convivem na mesma Liga: o modo é do racha, não do grupo.
 
-**Presença.** Grade com todos os jogadores da Liga; toca no nome de quem chegou. Uma Liga pode ter 50 cadastrados e 14 presentes, e o contador fica grande no topo. Os presentes sobem para o começo da lista **quando a tela é redesenhada** — marcar presença não reordena nada embaixo do seu dedo, senão marcar 14 pessoas seguidas viraria uma caça ao nome que pulou de lugar.
+**Presença.** Grade com todos os jogadores da Liga, em **duas colunas mesmo no celular estreito** — chips compactos (42px, nome em 13px com reticências) para o cenário real de "50 cadastrados, achar os 18 de hoje" caber na tela (D-88). A busca tem um **✕** que limpa o campo num toque (achou um, limpa, procura o próximo). Toca no nome de quem chegou — e no arrasto (segurar e pintar), quando o dedo chega à borda da tela ela **rola sozinha**, marcando quem passa por baixo.  Uma Liga pode ter 50 cadastrados e 14 presentes, e o contador fica grande no topo. Os presentes sobem para o começo da lista **quando a tela é redesenhada** — marcar presença não reordena nada embaixo do seu dedo, senão marcar 14 pessoas seguidas viraria uma caça ao nome que pulou de lugar.
 
 - **A lista vem ordenada por quem mais aparece nos rachas.** Quem joga toda semana está sempre nas primeiras linhas; quem apareceu uma vez em março fica no fim. É o que faz achar a galera de sempre sem usar a busca.
 - **Ao lado de cada nome tem um 🧤:** toque nele para dizer que essa pessoa **veio para ser goleiro hoje**. Quem tem o hábito já entra marcado, e dá para mudar a qualquer momento — inclusive no meio do racha, em partidas específicas.
