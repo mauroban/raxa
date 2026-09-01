@@ -609,18 +609,21 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    vitórias para subir 3 divisões, e o racha ficava desequilibrado esse tempo
    todo. Com 36 (e o acelerador de sequência abaixo) uma noite perfeita vale
    ~2 divisões; uma noite normal, meia.                                       */
-/* K de jogo de TIME, não de xadrez (D-55). O 40/20 da FIDE assume sinal
-   direto (1×1); em time equilibrado a expectativa é a média dos dez, então o
-   sinal individual dilui e o K precisa ser maior. Referência testada em
-   escala: o Elo do Faceit (CS2) — K fixo ≈50 (±25 por vitória parelha) com
-   níveis de ~200 pontos, como a nossa patente. Aqui: base 32 (o K padrão
-   fora da FIDE — USCF/online), dobrado para 64 na calibração de 15 partidas
-   (D-53) — ±16 e ±32 por vitória parelha, a mesma banda do Faceit. Sem
-   acelerador de sequência e sem decaimento por histórico — o que separa o
-   racha curto da partida única é o peso da unidade (1/n × K contra fatia de
-   tempo × K), não o K.                                                      */
-const KMODE={curtas:{cal:64,base:32,min:32},unica:{cal:64,base:32,min:32}};
-function kFor(km,tr){return km.base}
+/* K de jogo de TIME (D-55) que acompanha a INCERTEZA (D-82). Em time
+   equilibrado a expectativa é a média dos dez, o sinal individual dilui — e
+   cada partida diz pouco sobre UMA pessoa. Simulado com este motor
+   (scripts/converge.py): K fixo 32 corrói um palpite bom até o piso de ruído
+   (~100 pts, 1,5 divisão) em poucos meses; o que funciona é o K de cada
+   trilha ser alto ao entrar e assentar conforme joga, como Glicko/TrueSkill:
+       sem palpite  64 → 16      com palpite  32 → 16
+   ao longo de K_DECAI × a calibração (45 partidas no racha curto, 9 rachas
+   na partida única). O rótulo "calibrando" (15 partidas / 3 rachas) segue
+   sendo só sobre MOSTRAR a patente. Sem acelerador de sequência e sem K por
+   surpresa: os dois amplificam ruído (simulados e reprovados). O que separa
+   o racha curto da partida única é o peso da unidade, não o K.             */
+const KMODE={curtas:{semPalpite:64,comPalpite:32,piso:16},unica:{semPalpite:64,comPalpite:32,piso:16}};
+const K_DECAI=3;
+function kFor(liga,km,tr){const c=calMeta(liga),prog=Math.min(1,c.de(tr)/(K_DECAI*c.n)),k0=tr.def?km.comPalpite:km.semPalpite;return Math.round(k0-(k0-km.piso)*prog)}
 const streakK=tr=>1;
 /* Histerese fixa: promove ao passar do corte + 21, rebaixa ao cair abaixo do
    corte − 21, sem proteção pós-promoção. A margem acompanha o K: precisa ser
@@ -717,7 +720,7 @@ function defState(){return{v:2,me:{id:uid(),name:''},ligas:[],active:null,ui:{ta
    Quem nunca jogou na linha, ou nunca pegou no gol, simplesmente NÃO TEM
    nível naquela valência — e entra valendo o nível de entrada padrão. */
 function newTrack(e,def){return{elo:e,base:e,rank:stepOf(e),peak:stepOf(e),protect:0,def:!!def,
-  games:0,w:0,l:0,d:0,sessions:0,lastSession:null,form:[]};}
+  games:0,w:0,l:0,d:0,sessions:0,lastSession:null,form:[],surp:0};}
 const rt=(p,role)=>role==='G'?p.G:p.L;
 /* Só tem nível quem recebeu um à mão (cadastro ou admin) ou quem já saiu da
    calibração naquela valência — pelo MESMO critério (e números) que
@@ -726,6 +729,15 @@ const rt=(p,role)=>role==='G'?p.G:p.L;
    patente na escada e ainda estar "calibrando · 12/15" na mesma linha.
    Enquanto calibra sem nível manual, o rating existe por baixo (monta time,
    entra na conta) mas não vira rótulo.                                      */
+/* Surpresa persistente = pista para o ADMIN revisar o palpite, nunca para o
+   motor mexer sozinho (D-82). Com times equilibrados, sequências contra o
+   esperado acontecem por acaso toda noite — automático amplifica ruído; como
+   aviso a uma correção humana, ataca justamente o caso que os dados não
+   corrigem (palpite errado de quem joga pouco). Ruído de moeda na média
+   móvel fica em ~0,17; 0,35 é ~2 desvios, com 10+ partidas.                 */
+const REVISAR_SURP=0.35, REVISAR_MIN=10;
+const revisar=(liga,p,role)=>{const tr=rt(p,role);if(!temPatente(liga,p,role)||(tr.games||0)<REVISAR_MIN||Math.abs(tr.surp||0)<REVISAR_SURP)return 0;return tr.surp>0?1:-1};
+const revisarTxt=d=>d>0?'⚠ rende acima do nível — revisar palpite?':'⚠ rende abaixo do nível — revisar palpite?';
 const temPatente=(liga,p,role)=>{const t=rt(p,role);
   return !!(t&&(t.def||!calibrando(liga,p,t)))};
 function fixTrack(t,e){
@@ -1090,7 +1102,7 @@ function computeElo(liga,part,result,mode,weight){
     const tr=rt(p,part[pid].role);
     pre[pid]=tr.elo;
     const km=KMODE[mode]||KMODE[cfg.matchMode]||KMODE.curtas;
-    const K=(calibrando(liga,p,tr)?km.cal:kFor(km,tr))*streakK(tr);
+    const K=kFor(liga,km,tr)*streakK(tr);
     deltas[pid]=Math.round(K*(Sc[part[pid].side]-E[part[pid].side])*part[pid].w*W);
   }
   return {avg,exp:E,deltas,pre};
@@ -1172,6 +1184,9 @@ function applyMatch(liga,m){
     if(!contaPartida(liga,m,x.dur,totalDur))continue;
     const tr=rt(p,x.role);
     tr.games++;
+    /* surpresa acumulada (média móvel de resultado − esperado): só alimenta o
+       aviso de revisão para o admin, nunca o K (D-82)                        */
+    tr.surp=0.8*(tr.surp||0)+0.2*clamp(m.over[x.pid]||0,-1,1);
     const res=m.result==='draw'?'E':(m.result===x.side?'V':'D');
     if(res==='V')tr.w++;else if(res==='D')tr.l++;else tr.d++;
     tr.form.unshift(res);tr.form=tr.form.slice(0,10);
@@ -1193,7 +1208,7 @@ function rebuildAll(liga){
     ['L','G'].forEach(k=>{
       const tr=p[k]=fixTrack(p[k],liga.cfg.startElo);
       tr.elo=tr.base;tr.rank=stepOf(tr.base);tr.peak=tr.rank;tr.protect=0;
-      tr.games=0;tr.w=0;tr.l=0;tr.d=0;tr.form=[];tr.sessions=0;tr.lastSession=null;
+      tr.games=0;tr.w=0;tr.l=0;tr.d=0;tr.form=[];tr.sessions=0;tr.lastSession=null;tr.surp=0;
     });
     p.goals=0;p.gc=0;p.sessions=0;p.lastSession=null;
   });
@@ -2482,6 +2497,7 @@ function viewEscada(liga){
           ${role==='L'&&p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
           ${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}
+          ${souAdmin(liga)&&revisar(liga,p,role)?`<span class="prov" title="média móvel de resultado − esperado: ${(tr.surp>0?'+':'')+(tr.surp||0).toFixed(2)}">${revisarTxt(revisar(liga,p,role))}</span>`:''}
           <span class="form">${tr.form.slice(0,6).map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>
         </div>
       </div>
@@ -3265,8 +3281,8 @@ function viewCfgBody(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
-    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo de time (K 32, dobrado para 64 na calibração). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
-      Quem é novo anda rápido (K dobrado) até completar <b>${calMeta(liga).n} ${calMeta(liga).u}</b> — um cadastro errado se corrige em um ou dois rachas. Vale separado para o nível de linha e o de goleiro.</div>
+    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo de time. O peso de cada partida acompanha a incerteza: quem entra sem nível anda rápido (K 64) e vai assentando (K 16) conforme joga; quem entra com palpite anda na metade disso (K 32 → 16). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
+      A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>; o peso continua assentando até 3× isso. Vale separado para o nível de linha e o de goleiro.${souAdmin(liga)?' Quando os resultados de alguém vêm persistentemente contra o nível, a escada e a ficha avisam <b>revisar palpite?</b> — só para você; o app não mexe sozinho.':''}</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:8px">Quem vê os níveis</div>
@@ -4469,6 +4485,7 @@ const A={
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
         <div class="k">${rt(p,role).games?'Nível de entrada (o palpite)':'Corrigir nível'} ${role==='G'?'no gol':'na linha'}</div>
+        ${revisar(l,p,role)?`<div class="tiny" style="color:var(--gold);margin:-4px 0 8px;line-height:1.4">${revisarTxt(revisar(l,p,role))} Os resultados ${role==='G'?'no gol':'na linha'} vêm consistentemente ${revisar(l,p,role)>0?'acima':'abaixo'} do que o nível prevê.</div>`:''}
         <div class="ladder4">
           ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>

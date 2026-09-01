@@ -1314,6 +1314,54 @@ uma só: o papel de hoje); redesenhar a lista ao trocar (reordena embaixo do ded
 **Onde:** `presBadge`/`presBadgeUpd`, `viewPresenca`, handlers `pres` e `presGk` (`index.html`) ·
 `DOCUMENTACAO.md` §4.1 · coberto pelo `smoke.py` (presença com goleiro marcado).
 
+### D-82 · K por incerteza (64/32 → 16) e aviso "revisar palpite?" para o admin — em vez de K fixo 32
+**01/09/2026.** Pergunta de origem: "as patentes convergem bem com um mínimo de direcionamento
+dos palpites?". Respondida com simulação usando o MOTOR REAL (`computeElo`/`updateRank`/
+`buildTeams` importados do `index.html`, hoje `scripts/converge.py`): grupo de 20 com habilidade
+verdadeira ~N(1500, 200), presença variável (13–18, quatro que vêm a cada 3 semanas), times
+montados pelo app pelo Elo atual, vencedor fica, remontagem em 25% das noites, 12 partidas
+curtas com gols Poisson (2 gols ou 7 min). Três cenários de palpite × sete regras, 80–300 ligas.
+**O que se mediu.** (1) O palpite é o que decide: com palpite bom (±1 divisão) a ordem já nasce
+em 0,90 e os times saem a ~30 pts do perfeito no 3º racha; sem palpite, os times ficam 75–100
+pts desequilibrados por ~10 rachas em QUALQUER regra — inclusive num estimador em lote com todo
+o histórico, o teto de informação. (2) **K fixo 32 corrói o palpite bom**: 73% de patente certa
+no 1º racha → 57% no 30º, erro 57 → 103 pts — o piso de ruído do motor (~100 pts, 1,5 divisão).
+Com times equilibrados a expectativa é 0,5 e cada partida dá ±16 aos 4 do time por igual: quase
+todo movimento é passeio aleatório; a informação individual só entra quando os times se misturam.
+(3) K 16 preserva o palpite (82% dentro de ±1 divisão em 30 rachas, contra 60%) e a convergência
+de ORDEM sem palpite é igual em qualquer K (0,77) — o K só muda a escala. (4) O medo "K menor
+prende palpite errado" é verdade só nos primeiros ~5 meses (racha 5: 39% corrigidos a K32, 20% a
+K16); perto do racha 25 empata e depois o 16 corrige melhor (64% vs 53%) porque o 32 estaciona no
+ruído. (5) **Bônus de sequência** (3+ iguais ×1,5, 5+ ×2) e **K adaptativo por surpresa** perdem
+em TODOS os cenários, inclusive para os palpites errados que deveriam ajudar — sequência contra
+o esperado é o que o acaso produz toda noite para alguém dos 16. (6) **K decrescente por
+incerteza** (sem palpite 64→16, com palpite 32→16, em 45 partidas) foi a melhor ou empatada em
+todos os cenários: misto 75% / bom 85% / sem palpite 74% dentro de ±1 divisão em 40 rachas,
+contra 55 / 61 / 67 do K fixo 32. (7) O teto (reajuste em lote): 95% com palpite bom, 70–77% nos
+outros — ou seja, sem palpite ou com palpite errado, ~70–75% É o limite da informação; a regra
+nova chega perto dele, e com palpite bom chega a 2/3 do caminho entre o atual e o teto.
+(8) O esporádico com palpite errado é o caso que nenhuma regra resolve com dados (teto: 26% em
+40 rachas) — só a correção humana.
+**Decidido.** `kFor(liga,km,tr)`: K = k0 − (k0 − 16) × min(1, progresso/(3 × calibração)), com
+k0 = 64 sem palpite (`tr.def` falso) e 32 com palpite; progresso em partidas no racha curto e em
+rachas na partida única (`calMeta`), como a calibração. O rótulo "calibrando" (D-65) não muda:
+é sobre mostrar a patente. E o sinal de surpresa vira **aviso ao admin**, não K: cada trilha
+guarda `surp` = média móvel (0,8/0,2) de resultado − esperado (`m.over`, já calculado); com 10+
+partidas e |surp| ≥ 0,35 (~2 desvios do ruído de moeda, 0,17), a escada e a ficha mostram
+"⚠ rende acima/abaixo do nível — revisar palpite?" só para o admin. `surp` é recalculado no
+`rebuildAll` como tudo; não vai para o banco.
+**Descartado:** K fixo 16 (empata com o por incerteza quando há palpite, mas sem palpite demora
+mais para abrir a escala); K por incerteza "rápida" (48/96 → 16 em 30 partidas: corrige o
+esporádico errado um pouco antes, mas chacoalha os palpites bons — 85% vs 92% no 3º racha);
+bônus de sequência e K por surpresa (acima); incerteza que cresce com ausência (Glicko) — não
+testada, fica como próximo experimento; mexer na margem de histerese (21 > 16/2 assentado; entre
+15 e 45 partidas K/2 passa de 21 por um trecho curto, e o ioiô possível ali é de calibração,
+aceito).
+**Onde:** `KMODE`, `K_DECAI`, `kFor`, `computeElo`, `applyMatch` (surp), `revisar`/`revisarTxt`,
+escada e ficha do admin, texto de Ajustes (`index.html`) · `scripts/test.py` [5] e bloco de
+surpresa · `scripts/converge.py` (a régua: `python scripts/converge.py misto`) ·
+`DOCUMENTACAO.md` §3.4, §3.5, §3.8.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -220,21 +220,35 @@ const rU=computeElo(liga,part,1);
 ok(Math.abs(rU.deltas['p10'])>Math.abs(dA),'zebra rende mais que o favorito confirmar');
 const rd=computeElo(liga,part,'draw');
 ok(rd.deltas['p1']<0&&rd.deltas['p10']>0,'empate: favorito perde, azarao ganha');
-ok(KMODE.curtas.base===32&&KMODE.curtas.cal===64&&KMODE.unica.base===32,'K de time (D-55): 64 calibrando, 32 depois, nos dois modos');
+ok(KMODE.curtas.semPalpite===64&&KMODE.curtas.comPalpite===32&&KMODE.curtas.piso===16&&KMODE.unica.piso===16,'K por incerteza (D-82): 64 sem palpite, 32 com, piso 16, nos dois modos');
 const divisao=stepMin(1)-stepMin(0);
-const vitLiq=divisao/(KMODE.curtas.base/2);
-console.log('  K='+KMODE.curtas.base+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
-ok(vitLiq>=4&&vitLiq<=4.5,'com K=32 uma divisao pede ~4 vitorias liquidas (um racha bom)');
-{ /* K constante depois da calibracao, sem acelerador nem decaimento */
+const vitLiq=divisao/(KMODE.curtas.piso/2);
+console.log('  K assentado='+KMODE.curtas.piso+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
+ok(vitLiq>=8&&vitLiq<=8.5,'assentado (K=16) uma divisao pede ~8 vitorias liquidas (dois rachas bons)');
+{ /* K acompanha a incerteza: alto ao entrar, assenta em 3x a calibracao, e fica */
   const km=KMODE.curtas;
-  ok(kFor(km,{games:20})===32&&kFor(km,{games:400})===32,'K nao decai com o historico');
+  ok(kFor(liga,km,{games:0,def:false})===64&&kFor(liga,km,{games:0,def:true})===32,'ao entrar: K 64 sem palpite, 32 com palpite');
+  ok(kFor(liga,km,{games:15,def:false})===48&&kFor(liga,km,{games:15,def:true})===27,'com 15 partidas (patente aparece): 48 sem palpite, 27 com');
+  ok(kFor(liga,km,{games:45,def:false})===16&&kFor(liga,km,{games:400,def:true})===16,'assenta em 16 depois de 45 partidas e nao decai mais');
   ok(streakK({form:['V','V','V','V','V','V']})===1,'sequencia nao acelera o K');
   liga.matches.length=0;rebuildAll(liga);
-  liga.players.forEach(p=>{p.L.games=CAL_GAMES;p.L.elo=1500});
+  liga.players.forEach(p=>{p.L.games=3*CAL_GAMES;p.L.elo=1500});
   const dv=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
-  ok(dv===16,'vitoria em jogo parelho, calibrado: +16 (K=32 x 0,5), deu '+dv);
-  ok(RANK_MARGIN>KMODE.curtas.base/2,'a margem de histerese e maior que meia vitoria parelha — sem ioio V-D-V-D no corte');
+  ok(dv===8,'vitoria em jogo parelho, assentado: +8 (K=16 x 0,5), deu '+dv);
+  liga.players.forEach(p=>{p.L.games=0});
+  const dv0=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
+  ok(dv0===32,'a mesma vitoria ao entrar sem palpite: +32 (K=64 x 0,5), deu '+dv0);
+  ok(RANK_MARGIN>KMODE.curtas.piso/2,'a margem de histerese e maior que meia vitoria parelha assentada — sem ioio V-D-V-D no corte');
   liga.matches.length=0;rebuildAll(liga);
+}
+{ /* surpresa acumulada e o aviso de revisao (D-82): so admin, so com 10+ partidas, so fora de +-0,35 */
+  const p=liga.players[0];p.L.games=12;p.L.def=true;p.L.surp=0.5;
+  ok(revisar(liga,p,'L')===1,'rende acima do nivel com 10+ partidas: aviso de revisar');
+  p.L.surp=-0.5;ok(revisar(liga,p,'L')===-1,'rende abaixo: aviso de revisar');
+  p.L.surp=0.2;ok(revisar(liga,p,'L')===0,'surpresa dentro do ruido (0,2): sem aviso');
+  p.L.surp=0.5;p.L.games=5;ok(revisar(liga,p,'L')===0,'menos de 10 partidas: sem aviso');
+  p.L.games=0;p.L.surp=0;p.L.def=false;
+  ok(newTrack(1500).surp===0&&fixTrack({elo:1500},1500).surp===0,'trilha nasce com surpresa zero (e dado antigo tambem)');
 }
 console.log('\n[6] calibracao');
 liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});
