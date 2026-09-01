@@ -514,10 +514,16 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .lv2 .none{font-size:13px;color:var(--mute)}
 .ps-panel{background:var(--fill);border:0;border-radius:12px;padding:12px;margin-top:12px}
 .ps-panel .k{margin-bottom:8px}
-.ladder4{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}
-.ladder4 button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 4px 8px;color:var(--chalk);
-  font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:6px;min-height:44px}
+.ladder4{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px}
+.ladder4.six{grid-template-columns:repeat(3,1fr)}   /* "Sem nível" + 5 níveis: 3×2, e não 6 espremidos numa linha */
+/* Fonte condensada (a dos cabeçalhos da escada) e vão de 4px: na fonte do
+   corpo "DIAMANTE" faltavam 4px em 360px e vazava do botão. O nome vai num
+   span com reticências — nome de nível editado pela liga, comprido demais,
+   corta em vez de vazar.                                                    */
+.ladder4 button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 3px 8px;color:var(--chalk);
+  font-family:var(--disp);font-weight:800;font-size:12px;letter-spacing:0;text-transform:uppercase;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;min-height:44px;min-width:0}
+.ladder4 button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ladder4 button i{display:block;width:100%;height:4px;border-radius:2px;background:var(--pc)}
 .ladder4 button.on{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}
 .step{display:flex;align-items:center;gap:8px;margin-top:10px}
@@ -3589,9 +3595,9 @@ const A={
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
         <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando.</small></div>
-        <div class="ladder4">
-          <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i>Sem nível</button>
-          ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i>${esc(n)}</button>`).join('')}
+        <div class="ladder4 six">
+          <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i><span>Sem nível</span></button>
+          ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>
       </div>
       <input type="hidden" id="ps" value=""><input type="hidden" id="pg" value="0">
@@ -4435,7 +4441,7 @@ const A={
       ${ver&&adm?`<div class="ps-panel">
         <div class="k">${rt(p,role).games?'Nível de entrada (o palpite)':'Corrigir nível'} ${role==='G'?'no gol':'na linha'}</div>
         <div class="ladder4">
-          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i>${esc(n)}</button>`).join('')}
+          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>
         <div class="step">
           <button class="btn ghost" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo">−</button>

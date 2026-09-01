@@ -1275,6 +1275,12 @@ tamanho, e a coluna da escada e os chips não dançam com a divisão.
 times e slots) e os cards de subida/queda do fim do racha (`.promo`) perderam o tingimento na cor
 da patente e a borda/halo por divisão — fundo neutro, e a cor só no mini-badge/badge. Tingir o
 chip inteiro era a mesma informação duas vezes e deixava o time montado parecendo um mosaico.
+**Botões de nível sem vazar** (ficha do jogador e "Novo jogador"): em 360px "DIAMANTE" precisava
+de 58px num botão de 54 e saía pela borda. Os botões (`.ladder4`) passaram para a fonte condensada
+dos cabeçalhos (12px, sem espaçamento), vão de 4px, e o nome vai num `span` com reticências — nome
+de nível editado pela liga, comprido demais, corta em vez de vazar. O picker do cadastro ("Sem
+nível" + 5 níveis) virou grade 3×2 (`.ladder4.six`) em vez de seis botões espremidos numa linha.
+Medido em Chrome headless a 360px com a fonte de verdade: DIAMANTE ocupa 48px de um botão de 56.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a
