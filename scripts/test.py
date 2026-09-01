@@ -220,35 +220,43 @@ const rU=computeElo(liga,part,1);
 ok(Math.abs(rU.deltas['p10'])>Math.abs(dA),'zebra rende mais que o favorito confirmar');
 const rd=computeElo(liga,part,'draw');
 ok(rd.deltas['p1']<0&&rd.deltas['p10']>0,'empate: favorito perde, azarao ganha');
-ok(KMODE.curtas.semPalpite===64&&KMODE.curtas.comPalpite===32&&KMODE.curtas.piso===16&&KMODE.unica.piso===16,'K por incerteza (D-82): 64 sem palpite, 32 com, piso 16, nos dois modos');
+ok(KMODE.curtas.semPalpite===64&&KMODE.curtas.comPalpite===32&&KMODE.curtas.piso===20&&KMODE.unica.piso===20,'K por incerteza (D-82/D-83): 64 sem palpite, 32 com, piso 20, nos dois modos');
 const divisao=stepMin(1)-stepMin(0);
 const vitLiq=divisao/(KMODE.curtas.piso/2);
 console.log('  K assentado='+KMODE.curtas.piso+': subir uma divisao pede ~'+vitLiq.toFixed(1)+' vitorias liquidas');
-ok(vitLiq>=8&&vitLiq<=8.5,'assentado (K=16) uma divisao pede ~8 vitorias liquidas (dois rachas bons)');
+ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquidas');
 { /* K acompanha a incerteza: alto ao entrar, assenta em 3x a calibracao, e fica */
   const km=KMODE.curtas;
   ok(kFor(liga,km,{games:0,def:false})===64&&kFor(liga,km,{games:0,def:true})===32,'ao entrar: K 64 sem palpite, 32 com palpite');
-  ok(kFor(liga,km,{games:15,def:false})===48&&kFor(liga,km,{games:15,def:true})===27,'com 15 partidas (patente aparece): 48 sem palpite, 27 com');
-  ok(kFor(liga,km,{games:45,def:false})===16&&kFor(liga,km,{games:400,def:true})===16,'assenta em 16 depois de 45 partidas e nao decai mais');
+  ok(kFor(liga,km,{games:15,def:false})===49&&kFor(liga,km,{games:15,def:true})===28,'com 15 partidas (patente aparece): 49 sem palpite, 28 com');
+  ok(kFor(liga,km,{games:45,def:false})===20&&kFor(liga,km,{games:400,def:true})===20,'assenta em 20 depois de 45 partidas e nao decai mais');
   ok(streakK({form:['V','V','V','V','V','V']})===1,'sequencia nao acelera o K');
   liga.matches.length=0;rebuildAll(liga);
   liga.players.forEach(p=>{p.L.games=3*CAL_GAMES;p.L.elo=1500});
   const dv=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
-  ok(dv===8,'vitoria em jogo parelho, assentado: +8 (K=16 x 0,5), deu '+dv);
+  ok(dv===10,'vitoria em jogo parelho, assentado: +10 (K=20 x 0,5), deu '+dv);
   liga.players.forEach(p=>{p.L.games=0});
   const dv0=computeElo(liga,stintPart({lineups:[A5,B5],gks:[null,null]}),0,'curtas').deltas['p1'];
   ok(dv0===32,'a mesma vitoria ao entrar sem palpite: +32 (K=64 x 0,5), deu '+dv0);
   ok(RANK_MARGIN>KMODE.curtas.piso/2,'a margem de histerese e maior que meia vitoria parelha assentada — sem ioio V-D-V-D no corte');
   liga.matches.length=0;rebuildAll(liga);
 }
-{ /* surpresa acumulada e o aviso de revisao (D-82): so admin, so com 10+ partidas, so fora de +-0,35 */
-  const p=liga.players[0];p.L.games=12;p.L.def=true;p.L.surp=0.5;
-  ok(revisar(liga,p,'L')===1,'rende acima do nivel com 10+ partidas: aviso de revisar');
-  p.L.surp=-0.5;ok(revisar(liga,p,'L')===-1,'rende abaixo: aviso de revisar');
-  p.L.surp=0.2;ok(revisar(liga,p,'L')===0,'surpresa dentro do ruido (0,2): sem aviso');
-  p.L.surp=0.5;p.L.games=5;ok(revisar(liga,p,'L')===0,'menos de 10 partidas: sem aviso');
-  p.L.games=0;p.L.surp=0;p.L.def=false;
-  ok(newTrack(1500).surp===0&&fixTrack({elo:1500},1500).surp===0,'trilha nasce com surpresa zero (e dado antigo tambem)');
+{ /* aviso de revisao por RANKING (D-83): soma de (resultado - esperado) por trilha nos ultimos 8 rachas, 3 pontas de cada lado */
+  const bk=liga.matches.slice();liga.matches.length=0;
+  const ids=liga.players.map(p=>p.id);
+  const fake=(id,sid,ts)=>{const overR={};ids.forEach((pid,i)=>{overR[pid+'L']=i===0?0.3:i===1?-0.3:(8-i)*0.01});return {id,sessionId:sid,ts,overR}};
+  for(let s=0;s<10;s++)liga.matches.push(fake('f'+s,'s'+s,s));
+  ok(rankingSurpresa(liga,'L').total===0,'com menos de 10 partidas na janela ninguem entra no ranking');
+  for(let s=0;s<10;s++)liga.matches.push(fake('g'+s,'s'+s,s+0.5));
+  const rv=rankingSurpresa(liga,'L');
+  ok(rv.rachas===8&&rv.total===ids.length&&rv.pos[ids[0]].n===16,'janela de 8 rachas (dos 10): todo mundo com 16 partidas entra');
+  ok(rv.pos[ids[0]].pos===1&&rv.pos[ids[1]].pos===ids.length,'quem mais rendeu acima e o 1o; quem mais rendeu abaixo e o ultimo');
+  liga.players.forEach(p=>{p.L.def=true;p.L.games=20});
+  ok(revisar(liga,liga.players[0],'L',rv)===1&&revisar(liga,liga.players[1],'L',rv)===-1&&revisar(liga,liga.players[8],'L',rv)===0,'aviso so nas 3 pontas de cada lado');
+  ok(rankingSurpresa(liga,'G').total===0,'trilha de goleiro sem partidas: ranking vazio, sem aviso');
+  liga.matches.push({id:'v','sessionId':'s9',ts:99,voided:true,overR:{[ids[5]+'L']:9}});
+  ok(rankingSurpresa(liga,'L').pos[ids[5]].pos!==1,'partida anulada nao conta');
+  liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));liga.players.forEach(p=>{p.L.def=false;p.L.games=0});rebuildAll(liga);
 }
 console.log('\n[6] calibracao');
 liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});

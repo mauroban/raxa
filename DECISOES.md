@@ -1362,6 +1362,46 @@ escada e ficha do admin, texto de Ajustes (`index.html`) · `scripts/test.py` [5
 surpresa · `scripts/converge.py` (a régua: `python scripts/converge.py misto`) ·
 `DOCUMENTACAO.md` §3.4, §3.5, §3.8.
 
+### D-83 · Piso do K em 20; aviso de revisão por RANKING (últimos 8 rachas); cansaço fica fora do rating
+**01/09/2026.** Continuação da D-82, respondendo a três perguntas com a mesma régua
+(`scripts/converge.py`, agora com cansaço opcional): "o que acontece com UM jogador mal
+posicionado numa liga bem calibrada?", "precisamos corrigir cansaço?" e "o aviso de revisão
+funciona?".
+**Um jogador errado em uma patente inteira, liga bem classificada, cansaço ligado.** Frequente
+(85% dos rachas): leva ~6 meses para ficar a uma divisão do lugar em QUALQUER regra (limite de
+informação: +0,07 de sinal por partida). Mas com vencedor-fica apareceu uma assimetria: o
+**subestimado** se corrige mais rápido (o time dele ganha, fica em quadra, joga mais partidas);
+o **superestimado** perde, sai e joga menos — no piso 16, 40% dentro de ±1 divisão em 6 meses
+contra 65% do subestimado; **no piso 20, 68% dos dois lados** (K fixo 32: 68%/64%, mas com a
+liga a 72%). A liga bem classificada perde 2–4 pontos com o piso 20 (87–89% contra 91%). O
+**esporádico** (1 em 3 rachas) errado não converge com dados em 6 meses em regra nenhuma
+(26–51%) — só correção humana.
+**Cansaço.** Testado cansaço real de −50 pts por partida seguida em quadra (até −150) e correção
+no motor de 0/15/25/50 na expectativa: corrigir **não melhora nem com o valor exato** (89% → 85%
+em 6 meses) e custa 2–5 pontos quando o cansaço não existe. Cansaço é simétrico — todo mundo
+cansa, em todas as noites — e se cancela na média de cada pessoa; a correção só adiciona
+variância à expectativa. Fica fora do rating. Onde ele importa é na probabilidade de vitória
+mostrada no apito e na justiça do vencedor-fica; antes de qualquer coisa, medir do histórico real
+(taxa de vitória por partida seguida em quadra — o app guarda ordem e duração) — item de Stats a
+fazer, não decisão de motor.
+**Aviso de revisão.** O da D-82 (média móvel fora de ±0,35) estava mal calibrado: para quem
+está uma patente fora, dispara em ~5% das noites contra ~2% de quem está certo — quase nunca.
+Trocado por **posição no ranking**: soma de (resultado − esperado) por trilha (`m.overR`,
+pid+papel, calculado no `applyMatch` ao lado de `m.over`) nos **últimos 8 rachas**, normalizada
+por √partidas, mínimo 10 partidas na janela; os **3 de cada ponta** (com 6+ na lista) ganham
+"📈/📉 Nº de M em render acima/abaixo do esperado nos últimos 8 rachas — revisar palpite?" na
+escada (só admin) e na ficha (que mostra a posição de todo mundo). Em simulação, o jogador uma
+patente fora aparece no top 5 desse ranking em ~2/3 dos casos com 2–3 meses (frequente) e em
+metade com 6 meses (esporádico). As linhas dos rankings da aba Stats passam a abrir a ficha.
+**Decidido:** `KMODE.piso` 16 → 20 (os dois modos); `rankingSurpresa`/`revisar`/`revisarTxt`
+substituem `tr.surp` (removido de `newTrack`/`rebuildAll`); sem correção de cansaço.
+**Descartado:** piso 24 (devolve ruído: liga a 80–86%); corrigir cansaço no rating (acima);
+limiar absoluto de surpresa (acima); incerteza que cresce com ausência (Glicko) — ainda não
+testada.
+**Onde:** `KMODE`, `applyMatch` (`m.overR`), `rankingSurpresa`, `revisar`, escada e ficha do
+admin, `lin` da aba Stats (`index.html`) · `scripts/test.py` [5] e bloco D-83 ·
+`scripts/converge.py` (argumento de cansaço) · `DOCUMENTACAO.md` §3.4, §3.5, §3.8.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

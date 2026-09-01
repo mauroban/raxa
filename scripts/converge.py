@@ -6,7 +6,8 @@ Importa computeElo/updateRank/buildTeams do index.html e roda ligas inteiras
 com habilidade verdadeira escondida, para medir quão perto o nível mostrado
 chega do nível real — por regra de atualização e por cenário de palpite.
 
-Uso:  python scripts/converge.py [bom|misto|nada] [rachas] [ligas]
+Uso:  python scripts/converge.py [bom|misto|nada] [rachas] [ligas] [cansaço]
+  cansaço = pts que o time perde por partida seguida em quadra (até 3); 0 = sem; 50 = forte
   bom   = todo mundo entra com palpite bom (±1 divisão)
   misto = palpites bons, mas 25% errados em uma patente inteira (e são justamente os esporádicos)
   nada  = ninguém com palpite (todos 1500)
@@ -36,7 +37,7 @@ core = core.replace('function kFor(liga,km,tr){', 'let kFor=function(liga,km,tr)
 
 sim = r"""
 const CEN=process.argv[2]||'misto',RACHAS=parseInt(process.argv[3]||'40'),LIGAS=parseInt(process.argv[4]||'80');
-const POOL=20,PART=12;
+const POOL=20,PART=12,FAD=parseInt(process.argv[5]||'0');
 const kForMotor=kFor;
 let _i=0;const nid=()=>'p'+(++_i);
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
@@ -88,13 +89,15 @@ function runLiga(R){
     let T=montar();
     const bk=liga.players.map(p=>p.L.elo);liga.players.forEach(p=>p.L.elo=truth[p.id]);const To=montar();liga.players.forEach((p,i)=>p.L.elo=bk[i]);
     const gReal=gap(T),gOra=gap(To);
-    const remonta=Math.random()<.25;let fila=T.map((_,i)=>i);
+    const remonta=Math.random()<.25;let fila=T.map((_,i)=>i);const seguidas=T.map(()=>0);
     for(let k=0;k<PART;k++){
       if(remonta&&k===Math.floor(PART/2)){T=montar();fila=T.map((_,i)=>i)}
       const a=fila[0],b=fila[1];
       const part={};T[a].forEach(id=>part[id]={side:0,w:1,role:'L'});T[b].forEach(id=>part[id]={side:1,w:1,role:'L'});
       const avg=t=>t.reduce((s,id)=>s+truth[id],0)/t.length;
-      const res=resultado(avg(T[a]),avg(T[b]));
+      /* cansaço: cada partida seguida em quadra tira FAD pts do time (até 3); quem sai descansa */
+      const res=resultado(avg(T[a])-FAD*Math.min(3,seguidas[a]),avg(T[b])-FAD*Math.min(3,seguidas[b]));
+      seguidas[a]++;seguidas[b]++;
       hist.push({a:T[a].slice(),b:T[b].slice(),S:res==='draw'?.5:res===0?1:0});
       if(!R.batch){const c=computeElo(liga,part,res,'curtas',1);
         for(const id in part){const p=P(liga,id),tr=p.L;tr.elo+=c.deltas[id]||0;updateRank(liga,p,tr);tr.games++;}}
@@ -102,6 +105,7 @@ function runLiga(R){
       fila.shift();fila.shift();
       if(res===0){fila.push(b);fila.unshift(a)}else if(res===1){fila.push(a);fila.unshift(b)}
       else if(T.length>=4){fila.push(a);fila.push(b)}else{fila.push(a);fila.unshift(b)}
+      if(res===0)seguidas[b]=0;else if(res===1)seguidas[a]=0;else{seguidas[a]=0;if(T.length>=4)seguidas[b]=0}
     }
     if(R.batch)refit(liga,hist,prior,sig);
     const el=liga.players.map(p=>p.L.elo),tv=liga.players.map(p=>truth[p.id]);
@@ -113,7 +117,7 @@ function runLiga(R){
   }
   return out;
 }
-console.log('cenário: '+CEN+' · '+LIGAS+' ligas · 20 no grupo (4 vêm a cada 3 semanas), 13–18 por racha, vencedor fica, remontagem em 25%');
+console.log('cenário: '+CEN+' · '+LIGAS+' ligas · 20 no grupo (4 vêm a cada 3 semanas), 13–18 por racha, vencedor fica, remontagem em 25% · cansaço -'+FAD+'/partida seguida');
 console.log('célula = todos %±1div · erro pts · esporádicos %±1div · desequilíbrio REAL entre times (pts; entre parênteses, com a verdade)');
 console.log('regra'.padEnd(50)+'| racha 3 | racha 5 | racha 10 | racha 20 | racha 40');
 for(const nome in REGRAS){
