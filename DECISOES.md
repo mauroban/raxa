@@ -1263,7 +1263,18 @@ quase branco `#D9F3FF` cuja sombra escorrega para o violeta `#8C93F0`, com o ref
 (`PATSH`): brilho de pedra lapidada, que é o que faz parecer raro. Prata, bronze e ferro ficaram
 como estavam. O ouro do texto no tema escuro (`PATC_ESCURO`) acompanhou para `#F0BE2A`.
 O reflexo diagonal nasceu largo (banda de 28% a 66% da peça) e cobria o meio do nome; virou um
-**risco fino de luz** (36% → 58%, pico em 45%) — brilha sem apagar letra.
+**risco fino de luz** (40% → 54%, pico a 30% de branco em 46%) — brilha sem apagar letra.
+**Metal só em quem tem patente**: o degradê, o chanfro e o reflexo valem para `.pat`/`.avatar`
+com classe de divisão (`d1/d2/d3`) e para o `.pdot`; os outros `.pat` — papel (Jogador/Admin/
+Dono), "Pedido", o ⏳ de quem ainda calibra na escada — e o avatar sem nível ficam chapados e
+foscos, como eram. Brilho é de patente, não de rótulo.
+**Largura fixa**: o bloco de riscos (`.dv`) mede sempre a largura de III (13px; 18px no badge
+grande; o `.pdot` 18px) com os riscos centralizados — OURO I, OURO II e OURO III têm o mesmo
+tamanho, e a coluna da escada e os chips não dançam com a divisão.
+**Sem fundo colorido atrás do nome**: com o badge dizendo tudo, os chips de jogador (`.tp.lv`,
+times e slots) e os cards de subida/queda do fim do racha (`.promo`) perderam o tingimento na cor
+da patente e a borda/halo por divisão — fundo neutro, e a cor só no mini-badge/badge. Tingir o
+chip inteiro era a mesma informação duas vezes e deixava o time montado parecendo um mosaico.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a

@@ -157,7 +157,16 @@ label.f .k{display:block;margin-bottom:6px}
    reflexo diagonal e o texto em relevo. Tudo derivado de --pc com
    color-mix, então cada metal tem o seu brilho e o esquema vale nos dois
    temas. Uma cor chapada parecia botão pintado (D-80).                     */
-.pat,.pdot,.avatar{
+/* Só quem TEM patente vira metal: badge/avatar com classe de divisão (d1/d2/
+   d3) e o pontinho dos chips. Os outros .pat (papel: Jogador/Admin/Dono,
+   "Pedido", o ⏳ de quem ainda calibra) e o avatar sem nível ficam chapados
+   e foscos — brilho é de patente, não de rótulo.                            */
+.pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:800;font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap;
+  color:var(--pc);border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);
+  background:color-mix(in srgb,var(--pc) 12%,transparent)}
+.pat.d1,.pat.d2,.pat.d3,.pdot,.avatar.d1,.avatar.d2,.avatar.d3{
+  color:var(--ink,var(--onink));
   background:linear-gradient(180deg,
     color-mix(in srgb,var(--pc) 58%,#fff) 0%,
     color-mix(in srgb,var(--pc) 88%,#fff) 30%,
@@ -168,11 +177,10 @@ label.f .k{display:block;margin-bottom:6px}
   text-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4));
   position:relative;overflow:hidden;isolation:isolate}
 /* reflexo: uma banda de luz diagonal por cima do degradê */
-.pat::after,.pdot::after,.avatar::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(115deg,rgba(255,255,255,0) 36%,var(--sh,rgba(255,255,255,.42)) 45%,rgba(255,255,255,.06) 50%,rgba(255,255,255,0) 58%)}
-.pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:800;font-size:12px;
-  letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap;
-  color:var(--ink,var(--onink))}
+/* reflexo: um risco fino de luz, discreto — largo ou forte, apagava letra */
+.pat.d1::after,.pat.d2::after,.pat.d3::after,.pdot::after,.avatar.d1::after,.avatar.d2::after,.avatar.d3::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,0) 40%,var(--sh,rgba(255,255,255,.3)) 46%,rgba(255,255,255,.04) 49%,rgba(255,255,255,0) 54%)}
 .pat.big{font-size:15px;padding:6px 11px;border-radius:9px}
 /* riscos de divisão: I, II ou III — barras retas no lugar do número. A
    divisão vira CONTAGEM — lê de longe, sem depender só da cor, e "mais
@@ -180,9 +188,9 @@ label.f .k{display:block;margin-bottom:6px}
    o badge pequeno do chip e o grande da ficha.                              */
 /* larguras em px INTEIRO: em em (.26em = 3,12px) o subpixel arredondava um
    risco para 3px e o vizinho para 4px, e os "I" saíam de grossuras diferentes */
-.dv{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}
+.dv{display:inline-flex;align-items:center;justify-content:center;gap:2px;flex:0 0 auto;width:13px}   /* largura fixa = III, riscos no centro: OURO I e OURO III medem o mesmo */
 .dv i{display:block;width:3px;height:11px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
-.pat.big .dv{gap:3px}.pat.big .dv i{width:4px;height:14px}
+.pat.big .dv{gap:3px;width:18px}.pat.big .dv i{width:4px;height:14px}
 .pchip .dv i{height:10px}
 .pat .dv{margin-left:.15em}
 /* divisões: a diferença é a CONTAGEM de riscos (D-80). A cor é a mesma nas
@@ -194,7 +202,7 @@ label.f .k{display:block;margin-bottom:6px}
   0 0 9px -1px color-mix(in srgb,var(--pc) 70%,transparent)}
 /* pontinho de nível dos chips (times, slots) — um mini-badge sólido com os
    riscos: patente pela cor, divisão pela contagem, no time montado.        */
-.pdot{display:inline-flex;align-items:center;gap:2px;height:16px;padding:0 4px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
+.pdot{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:16px;width:18px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
 .pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
@@ -229,9 +237,9 @@ body.painting{touch-action:none;overflow:hidden}
   padding:0 10px;min-height:38px;font-size:14px;font-weight:500;cursor:pointer;color:var(--chalk)}
 .tp small{font-size:10px;opacity:.6;font-family:var(--body);letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .tp.big{font-size:15px;padding:0 13px;min-height:46px}
-.tp.lv{background:color-mix(in srgb,var(--pc) 12%,var(--panel));border-color:color-mix(in srgb,var(--pc) 40%,var(--line))}
-.tp.lv.d1{background:color-mix(in srgb,var(--pc) 9%,var(--panel));border-color:color-mix(in srgb,var(--pc) 34%,var(--line))}
-.tp.lv.d3{border-color:color-mix(in srgb,var(--pc) 50%,var(--line));box-shadow:0 0 6px -2px color-mix(in srgb,var(--pc) 40%,transparent)}
+/* chip de jogador: fundo neutro sempre. A cor da patente mora no mini-badge
+   (.pdot), não atrás do nome — tingir o chip inteiro era redundante e
+   deixava o time montado parecendo um mosaico (D-80).                      */
 .tp.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
 .tp.vaga{border-style:dashed;border-color:var(--line2);color:var(--mute);background:transparent}
 .tp.emp{border-style:dashed;border-color:var(--line2)}
@@ -344,10 +352,9 @@ body.painting{touch-action:none;overflow:hidden}
 .form{display:flex;gap:3px}
 .form i{width:7px;height:7px;border-radius:2px;background:var(--mute2);display:block}
 .form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
-.promo{border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk));border-radius:13px;padding:12px;margin-bottom:8px;background:color-mix(in srgb,var(--pc) 10%,var(--panel))}
+/* card de subida/queda: neutro, o badge dentro dele dá a cor */
+.promo{border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;background:var(--fill)}
 .promo .t{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--chalk);text-transform:uppercase}
-.promo.d1{border-color:color-mix(in srgb,var(--pc) 65%,transparent)}
-.promo.d3{box-shadow:0 0 10px -3px color-mix(in srgb,var(--pc) 45%,transparent)}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 
 /* ---------- histórico ---------- */
@@ -422,7 +429,7 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .rkbtn .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rkbtn:active{opacity:.65}
 .avatar{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:26px;
-  --pc:var(--chalk);color:var(--ink,var(--onink));flex:0 0 auto}
+  background:var(--pc,var(--chalk));color:var(--onink);flex:0 0 auto}
 .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:13px;
   background:var(--panel2);border:1px solid var(--line);color:var(--chalk);flex:0 0 auto}
 .hero{display:flex;align-items:center;gap:12px}
@@ -634,7 +641,7 @@ let PATC=PATC_ESCURO;   // trocado pelo tema: no claro, tom mais fechado — só
    o reflexo mais forte (--sh) para parecer raro.                            */
 const PATFILL =['#5A646D','#D08A55','#DCE4EC','#E4AE1E','#D9F3FF'];
 const PATFILL2=['#2E353C','#8A4A1E','#8E9EAE','#8A5E06','#8C93F0'];
-const PATSH   =[null,null,null,null,'rgba(255,255,255,.62)'];
+const PATSH   =[null,null,null,null,'rgba(255,255,255,.5)'];
 const INK_ESCURA='#0F1F16', INK_CLARA='#F3F7EE';
 const lumHex=h=>{const c=i=>parseInt(h.substr(i,2),16)/255;return .2126*c(1)+.7152*c(3)+.0722*c(5)};
 const patInk=s=>lumHex(PATFILL[patOf(s)])>.45?INK_ESCURA:INK_CLARA;
