@@ -1477,9 +1477,14 @@ página desce/sobe sozinha (`paintScroll`, via `requestAnimationFrame` + `scroll
 marcando quem passa sob o dedo — o `overflow:hidden` do modo pintura saiu (o `preventDefault` do
 `touchmove` já segura a rolagem nativa; o hidden também travava o `scrollBy`). O ✕ da busca
 ganhou `[hidden]{display:none}` (o `display:grid` da classe vencia o hidden do navegador).
+O badge do chip virou **só cor + riscos** (o mini-badge dos times): escrever a patente comia o
+nome do jogador — sobravam 4 letras. E o segurar-e-arrastar ficou menos "questão de timing":
+espera de 180 → **150 ms**, tolerância de tremida de 12 → **20 px** (com 12, o polegar normal
+cancelava o segurar), e a **linha inteira** (chip + luva + vãos) conta como área de pintura —
+antes só o retângulo exato do chip marcava, e o arrasto pulava gente.
 **Onde:** `.grid`/`.pchip`/`.gktog`/`.qwrap`/`.qclear`, `filterPlayers`/`limparBusca`,
-`paintScroll`, `viewPresenca` (`index.html`) · conferido no `visual.py` (tela 1, 360px) ·
-`DOCUMENTACAO.md` §4.1.
+`paintScroll`, `paintChipAt`, `presBadge`, `viewPresenca` (`index.html`) · conferido no
+`visual.py` (tela 1, 360px) · `DOCUMENTACAO.md` §4.1.
 
 ## Como registrar uma decisão nova
 

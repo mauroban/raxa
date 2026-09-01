@@ -4799,7 +4799,10 @@ function showScorer(side,contra){
 let paint=null;
 let PD=null;                          // rascunho da ficha do jogador aberta
 function paintChipAt(x,y){
-  const el=document.elementFromPoint(x,y),chip=el&&el.closest?el.closest('#plist .pchip'):null;
+  /* a LINHA inteira pinta (chip + luva + vãos): no arrasto, o dedo não
+     precisa ficar em cima do retângulo exato do chip (D-88)               */
+  const el=document.elementFromPoint(x,y),row=el&&el.closest?el.closest('#plist .pcw'):null;
+  const chip=row?row.querySelector('.pchip'):null;
   if(!chip||paint.done.has(chip.dataset.id))return;
   paint.done.add(chip.dataset.id);
   if(chip.classList.contains('on')!==paint.on)A.pres(chip);
@@ -4834,13 +4837,15 @@ document.addEventListener('touchstart',e=>{
   endPaint();
   const t=e.touches[0];
   paint={chip,x0:t.clientX,y0:t.clientY,active:false,done:new Set(),timer:null};
-  paint.timer=setTimeout(()=>{if(paint&&!paint.active)beginPaint(chip)},180);
+  paint.timer=setTimeout(()=>{if(paint&&!paint.active)beginPaint(chip)},150);
 },{passive:true});
 document.addEventListener('touchmove',e=>{
   if(!paint)return;
   const t=e.touches[0];
-  if(!paint.active){                              // mexeu antes de segurar: é rolagem
-    if(Math.hypot(t.clientX-paint.x0,t.clientY-paint.y0)>12)endPaint();
+  if(!paint.active){                              // mexeu DE VERDADE antes de segurar: é rolagem
+    /* 20px de tolerância: com 12px, a tremida normal do polegar cancelava o
+       segurar e a pintura parecia questão de timing (D-88)                */
+    if(Math.hypot(t.clientX-paint.x0,t.clientY-paint.y0)>20)endPaint();
     return;
   }
   e.preventDefault();
