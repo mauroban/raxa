@@ -394,21 +394,21 @@ step('cancelar selecao',()=>{A.sel({dataset:{id:L().live.teams[0].ids[0]},classL
 step('recomecar partida',()=>A.startMatch());
 step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
-step('corrigir nivel de quem ja jogou: admin escolhe o HOJE, o app acha a entrada e reaplica (D-74/D-86)',()=>{
+step('corrigir nivel de quem ja jogou mexe no BASE, mostra a previa do hoje e reaplica (D-74/D-86)',()=>{
   const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[0];
-  const elo0=p.L.elo,base0=p.L.base,e=entradaPara(l,p,'L',10);
-  if(p.L.elo!==elo0||p.L.base!==base0)throw new Error('entradaPara deixou rastro');
+  const elo0=p.L.elo,base0=p.L.base,prev=hojeCom(l,p,'L',10);
+  if(p.L.elo!==elo0||p.L.base!==base0)throw new Error('hojeCom deixou rastro');
   A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'10'}});
-  if(PD.alvo.L!==10||PD.rank.L!==e.entrada||PD.res.L!==e.res)throw new Error('ficha nao guardou alvo/entrada/resultado');
-  if(!/Para ficar <b>/.test(els['#sheet'].innerHTML))throw new Error('ficha nao mostra o resultado antes de salvar');
+  if(PD.rank.L!==10||PD.res.L!==prev)throw new Error('ficha nao guardou entrada e previa');
+  if(!/hoje fica <b>/.test(els['#sheet'].innerHTML))throw new Error('ficha nao mostra a previa do hoje antes de salvar');
   A.pdSave();
-  if(Math.round(p.L.base)!==Math.round(stepMid(e.entrada)))throw new Error('base nao virou a entrada achada: '+p.L.base+' vs '+e.entrada);
-  if(p.L.rank!==e.res)throw new Error('hoje nao bateu com o previsto: '+p.L.rank+' vs '+e.res);
+  if(Math.round(p.L.base)!==Math.round(stepMid(10)))throw new Error('base nao virou o meio do degrau: '+p.L.base);
+  if(p.L.rank!==prev)throw new Error('hoje nao bateu com a previa: '+p.L.rank+' vs '+prev);
   if(!p.L.def)throw new Error('def deveria ligar');
   const e1=p.L.elo;rebuildAll(l);
   if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois da correcao');
   const lg=l.log[l.log.length-1]||{};
-  if(p.L.games>0&&(lg.desde!=='entrada'||lg.entrada!==e.entrada||lg.to!==e.res))throw new Error('log nao guardou hoje e entrada: '+JSON.stringify(lg));
+  if(p.L.games>0&&(lg.desde!=='entrada'||lg.entrada!==10||lg.to!==prev))throw new Error('log nao guardou hoje e entrada: '+JSON.stringify(lg));
 });
 step('corrigir nivel de quem NUNCA jogou entra direto no degrau',()=>{
   const l=L(),p=l.players.find(x=>!x.L.games);

@@ -1425,29 +1425,28 @@ ordem); mover Membros para Ajustes (D-23 já tinha trazido para Jogadores; a lis
 **Onde:** `pendenciasCard`, `papelMarca`, `viewRanking`/`viewEscada` (`index.html`) ·
 `membrosCard`/`membrosCardBase` removidos · `sync.py` (pedido aparece) · `DOCUMENTACAO.md` §7.
 
-### D-86 · O admin corrige o nível de HOJE; o app acha a entrada que chega lá e mostra antes de salvar
-**01/09/2026.** A regra da D-74 ("só a entrada é editável; o hoje sai do histórico") estava
-certa e continua — mas a ficha pedia ao admin que editasse a **entrada** e mostrava a entrada
-escolhida no card de cima como se fosse o hoje. Aí o admin abria um Ouro 3, "baixava" para Ouro 2
-e, ao salvar, o jogador aparecia Diamante: com a entrada mais baixa cada vitória do histórico
-passa a valer mais, e o resultado da reaplicação **não é monotônico**. Certo por dentro,
-inexplicável por fora. Agora o admin escolhe **o nível de hoje** (o que a escada mostra), e
-`entradaPara` acha a entrada que, com o histórico reaplicado, chega lá — testando os 15 degraus
-do mais próximo do atual para o mais distante (menor mudança primeiro), recalculando a liga a
-cada tentativa (~20 ms; 0,3 s no pior caso, com cache por alvo na ficha) — e a ficha mostra
-**antes de salvar**: "para ficar Ouro 2 hoje, a entrada vira Prata 3 (era Ouro 3) e as 37
-partidas reaplicam por cima"; se o alvo não é alcançável, "o mais perto que dá de X". Os cards de
-cima mostram o hoje previsto. O registro de correções passa a guardar hoje-de → hoje-para e a
-entrada usada. Quem nunca jogou: entrada = hoje, como antes. `entradaPara` vive no motor e deixa
-a liga como estava (testado).
-**Descartado:** editar o hoje direto com um "ajuste manual" por cima do Elo (viola D-74: vira
-fato inventado, e some no próximo recálculo); uma aba separada de "níveis base" (afasta a
-correção de onde o admin já olha o jogador); só um sinal de "entrada" na escada (não resolve a
-surpresa, e polui a lista).
-**Onde:** `entradaPara` (motor), `pdAlvo`, `pdRank`/`pdBump`/`pdSave`, painel da ficha,
-`LOG_TXT` de rank (`index.html`) · `scripts/smoke.py` (ficha mostra o resultado, base vira a
-entrada achada, hoje bate com o previsto, log guarda os dois) · `scripts/test.py` (sem histórico)
-· `DOCUMENTACAO.md` §3.2.
+### D-86 · A ficha deixa claro que o admin edita a ENTRADA — e mostra o HOJE que vai sair, antes de salvar
+**01/09/2026.** A regra da D-74 ("só a entrada é editável; o hoje sai do histórico") está certa
+e continua. O problema era a ficha: pedia a entrada sem dizer que era a entrada, e mostrava a
+entrada escolhida no card de cima como se fosse o hoje. Aí o admin abria um Ouro 3, "baixava" para
+Ouro 2 e, ao salvar, o jogador aparecia Diamante: com a entrada mais baixa cada vitória do
+histórico passa a valer mais, e o resultado da reaplicação **não é monotônico**. Certo por
+dentro, inexplicável por fora. Agora: o seletor é rotulado **ENTRADA**; ao lado, **HOJE** com o
+nível atual e "não se edita"; ao mexer na entrada, `hojeCom` recalcula a liga com aquela entrada
+(~20 ms, lido e desfeito, com cache por entrada) e a ficha mostra **antes de salvar** "HOJE Ouro 3
+→ Ouro 1 ao salvar" e o texto "com a entrada em Ouro 2 (era Ouro 3), hoje fica Ouro 1". Os cards
+de cima mostram o hoje previsto. O registro de correções guarda hoje-de → hoje-para e a entrada
+usada. Quem nunca jogou: hoje = entrada.
+**Descartado (tentado e recusado no mesmo dia):** inverter o controle — o admin escolher o hoje e
+o app procurar a entrada que chega lá. Funcionava, mas trocava o modelo mental que a D-74 fixou:
+o admin sabe qual era o palpite e é isso que ele corrige; o hoje é consequência, não pedido.
+Também descartados: editar o hoje direto com um "ajuste manual" por cima do Elo (viola D-74: vira
+fato inventado, e some no próximo recálculo); aba separada de "níveis base" (afasta a correção
+de onde o admin já olha o jogador); só um sinal de "entrada" na escada (não resolve a surpresa).
+**Onde:** `hojeCom` (motor), `pdEntrada`, `pdRank`/`pdBump`/`pdSave`, painel da ficha, `LOG_TXT`
+de rank (`index.html`) · `scripts/smoke.py` (prévia na ficha, base vira o degrau escolhido, hoje
+bate com a prévia, log guarda os dois, `hojeCom` não deixa rastro) · `scripts/test.py` (sem
+histórico) · `DOCUMENTACAO.md` §3.2.
 
 ## Como registrar uma decisão nova
 
