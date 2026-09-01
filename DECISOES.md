@@ -1262,6 +1262,8 @@ degradê): com um tom só, ouro `#FFD84D` era amarelo-limão ("amarelo, não dou
 quase branco `#D9F3FF` cuja sombra escorrega para o violeta `#8C93F0`, com o reflexo mais forte
 (`PATSH`): brilho de pedra lapidada, que é o que faz parecer raro. Prata, bronze e ferro ficaram
 como estavam. O ouro do texto no tema escuro (`PATC_ESCURO`) acompanhou para `#F0BE2A`.
+O reflexo diagonal nasceu largo (banda de 28% a 66% da peça) e cobria o meio do nome; virou um
+**risco fino de luz** (36% → 58%, pico em 45%) — brilha sem apagar letra.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a
