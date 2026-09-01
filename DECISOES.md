@@ -1248,6 +1248,14 @@ ouro tem que parecer ouro em cima do card branco); a paleta fechada do tema clar
 fica só para texto na cor (cabeçalho da escada, botões de nível). O pontinho dos chips virou um
 mini-badge sólido com os riscos, e os avatares da ficha recebem a mesma tinta. O nome continua
 escrito nos badges longos (é editável por liga), mas dá para não ler: a cor basta.
+A primeira versão do bloco sólido era cor chapada — ficou clara, mas **"parecia botão pintado,
+não metal"**. O acabamento voltou por cima da cor, agora como metal de verdade e igual em badge,
+pontinho e avatar: **degradê vertical** (luz no alto, sombra na base), **chanfro** (fio claro em
+cima, fio escuro embaixo, borda na cor puxada para o preto), **reflexo diagonal** (`::after`) e
+**texto e riscos em relevo** (`--emb`: sombra clara sob a tinta escura, escura sob a clara). Tudo
+`color-mix` a partir de `--pc`, então cada metal tem o próprio brilho e nada muda por tema.
+Os riscos têm largura em **px inteiro** (3px; 4px no badge grande): em `em` (.26em = 3,12px) o
+subpixel arredondava um "I" para 3px e o vizinho para 4px, e saíam de grossuras diferentes.
 **Descartado:** estrelas/pips (D-79 os rejeitou por parecerem "prêmio"; risco é patente militar,
 não medalha); chevron em V (mais largo, estoura o chip); barras inclinadas (a primeira versão —
 lembravam barra de URL); manter o número ao lado dos riscos (redundante e mais largo); manter a

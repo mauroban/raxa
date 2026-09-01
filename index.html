@@ -152,29 +152,50 @@ label.f .k{display:block;margin-bottom:6px}
    contrasta com aquele metal (--ink: escura no ouro/prata/bronze/diamante,
    clara no ferro). A borda é a própria cor puxada para a tinta, para prata
    e diamante não sumirem no card branco.                                    */
+/* METAL, não tinta: o bloco sólido ganha um degradê vertical (luz em cima,
+   sombra embaixo), um chanfro (fio claro no alto, fio escuro na base), um
+   reflexo diagonal e o texto em relevo. Tudo derivado de --pc com
+   color-mix, então cada metal tem o seu brilho e o esquema vale nos dois
+   temas. Uma cor chapada parecia botão pintado (D-80).                     */
+.pat,.pdot,.avatar{
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--pc) 58%,#fff) 0%,
+    color-mix(in srgb,var(--pc) 88%,#fff) 30%,
+    var(--pc) 55%,
+    color-mix(in srgb,var(--pc) 76%,#000) 100%);
+  border:1px solid color-mix(in srgb,var(--pc) 55%,#000);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(0,0,0,.22),0 1px 2px rgba(0,0,0,.28);
+  text-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4));
+  position:relative;overflow:hidden;isolation:isolate}
+/* reflexo: uma banda de luz diagonal por cima do degradê */
+.pat::after,.pdot::after,.avatar::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.42) 44%,rgba(255,255,255,.08) 52%,rgba(255,255,255,0) 66%)}
 .pat{display:inline-flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:800;font-size:12px;
   letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap;
-  color:var(--ink,var(--onink));background:var(--pc);border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk))}
+  color:var(--ink,var(--onink))}
 .pat.big{font-size:15px;padding:6px 11px;border-radius:9px}
 /* riscos de divisão: I, II ou III — barras retas no lugar do número. A
    divisão vira CONTAGEM — lê de longe, sem depender só da cor, e "mais
    riscos = mais alto" dispensa explicação (D-80). Tamanho em em: acompanha
    o badge pequeno do chip e o grande da ficha.                              */
-.dv{display:inline-flex;align-items:center;gap:.2em;flex:0 0 auto}
-.dv i{display:block;width:.26em;height:.9em;border-radius:.1em;background:currentColor}
+/* larguras em px INTEIRO: em em (.26em = 3,12px) o subpixel arredondava um
+   risco para 3px e o vizinho para 4px, e os "I" saíam de grossuras diferentes */
+.dv{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}
+.dv i{display:block;width:3px;height:11px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
+.pat.big .dv{gap:3px}.pat.big .dv i{width:4px;height:14px}
+.pchip .dv i{height:10px}
 .pat .dv{margin-left:.15em}
 /* divisões: a diferença é a CONTAGEM de riscos (D-80). A cor é a mesma nas
    três; o acabamento só acompanha de leve — 1 um pouco mais rala, 3 com um
    halo discreto — para não competir com os riscos nem sugerir outra
    patente. A rampa forte (fosco → metal → polido, D-79) fazia sentido quando
    o número era um dígito de 11px; agora seria ruído.                        */
-.pat.d3{box-shadow:0 0 8px -2px color-mix(in srgb,var(--pc) 55%,transparent)}
+.pat.d3,.pdot.d3,.avatar.d3{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(0,0,0,.22),0 1px 2px rgba(0,0,0,.28),
+  0 0 9px -1px color-mix(in srgb,var(--pc) 70%,transparent)}
 /* pontinho de nível dos chips (times, slots) — um mini-badge sólido com os
    riscos: patente pela cor, divisão pela contagem, no time montado.        */
-.pdot{display:inline-flex;align-items:center;gap:2px;height:16px;padding:0 4px;border-radius:4px;flex:0 0 auto;
-  background:var(--pc);color:var(--ink,var(--onink));border:1px solid color-mix(in srgb,var(--pc) 72%,var(--chalk))}
-.pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor}
-.pdot.d3{box-shadow:0 0 6px -1px color-mix(in srgb,var(--pc) 60%,transparent)}
+.pdot{display:inline-flex;align-items:center;gap:2px;height:16px;padding:0 4px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
+.pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
 .gk{font-size:11px;color:var(--cyan)}
@@ -401,8 +422,7 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .rkbtn .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rkbtn:active{opacity:.65}
 .avatar{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:26px;
-  background:var(--pc,var(--chalk));color:var(--ink,var(--onink));flex:0 0 auto}
-.avatar.d3{box-shadow:0 0 10px -2px color-mix(in srgb,var(--pc) 45%,transparent)}
+  --pc:var(--chalk);color:var(--ink,var(--onink));flex:0 0 auto}
 .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:13px;
   background:var(--panel2);border:1px solid var(--line);color:var(--chalk);flex:0 0 auto}
 .hero{display:flex;align-items:center;gap:12px}
@@ -623,7 +643,7 @@ const divOf=s=>DIVS[s%3];
    riscos (D-80). Escurecer a 1 (testado em D-79) fazia Ouro 1 parecer outro
    metal; clarear a 3 lavava. O acabamento fica só no CSS (.d1/.d3), de leve. */
 const patColor=s=>PATFILL[patOf(s)];
-const patVars=s=>`--pc:${patColor(s)};--ink:${patInk(s)}`;
+const patVars=s=>{const ink=patInk(s);return `--pc:${patColor(s)};--ink:${ink};--emb:${ink===INK_ESCURA?'rgba(255,255,255,.4)':'rgba(0,0,0,.5)'}`};
 const divCls=s=>'d'+(s%3+1);
 const patName=(liga,s)=>liga.cfg.patNames[patOf(s)];
 const rankLabel=(liga,s)=>patName(liga,s)+' '+divOf(s);
