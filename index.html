@@ -2097,7 +2097,6 @@ function viewPresenca(liga,lv){
           <button class="pchip ${on?'on':''}" data-a="pres" data-id="${p.id}">
             <span class="nm">${esc(p.name)}</span>
             <span class="pb">${presBadge(liga,p,on,gk)}</span>
-            ${p.sessions?`<span class="tiny muted num" title="rachas que jogou">${p.sessions}×</span>`:''}
           </button>
           <button class="gktog ${gk?'on':''}" data-a="presGk" data-id="${p.id}" title="veio de goleiro" aria-label="${esc(p.name)} veio de goleiro" aria-pressed="${gk?'true':'false'}">🧤</button>
         </div>`}).join('')}

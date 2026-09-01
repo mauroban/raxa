@@ -1481,7 +1481,9 @@ O badge do chip virou **só cor + riscos** (o mini-badge dos times): escrever a 
 nome do jogador — sobravam 4 letras. E o segurar-e-arrastar ficou menos "questão de timing":
 espera de 180 → **150 ms**, tolerância de tremida de 12 → **20 px** (com 12, o polegar normal
 cancelava o segurar), e a **linha inteira** (chip + luva + vãos) conta como área de pintura —
-antes só o retângulo exato do chip marcava, e o arrasto pulava gente.
+antes só o retângulo exato do chip marcava, e o arrasto pulava gente. O contador "12×" (rachas
+que jogou) saiu do chip — a ORDEM por frequência fica (é o que acha a galera de sempre), o número
+não precisava aparecer, e o espaço é do nome.
 **Onde:** `.grid`/`.pchip`/`.gktog`/`.qwrap`/`.qclear`, `filterPlayers`/`limparBusca`,
 `paintScroll`, `paintChipAt`, `presBadge`, `viewPresenca` (`index.html`) · conferido no
 `visual.py` (tela 1, 360px) · `DOCUMENTACAO.md` §4.1.
