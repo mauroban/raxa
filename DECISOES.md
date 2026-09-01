@@ -1402,6 +1402,14 @@ testada.
 admin, `lin` da aba Stats (`index.html`) · `scripts/test.py` [5] e bloco D-83 ·
 `scripts/converge.py` (argumento de cansaço) · `DOCUMENTACAO.md` §3.4, §3.5, §3.8.
 
+### D-84 · A escada só fala de nível: sem gols e sem bolinhas de forma na linha do jogador
+**01/09/2026.** A linha da aba Jogadores tinha patente, V/E/D, ⚽ gols, calibrando, Elo (admin),
+aviso de revisão (admin) e seis bolinhas das últimas partidas — informação demais para a pergunta
+que a aba responde ("quem é de que nível?"). Saem os gols e as bolinhas; ficam patente, V/E/D e o
+que é do admin. Gols e forma continuam na ficha e na aba Stats, que é onde se olha desempenho.
+**Descartado:** tirar também o V/E/D (é o único número que justifica a posição para quem não vê
+Elo). **Onde:** `viewEscada` (`index.html`) · `DOCUMENTACAO.md` §3.1.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

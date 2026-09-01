@@ -2516,11 +2516,9 @@ function viewEscada(liga){
         <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${p.owner?' <span style="color:var(--cyan)">•</span>':''}</div>
         <div class="meta">
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
-          ${role==='L'&&p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
           ${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}
           ${rv&&revisar(liga,p,role,rv)?`<span class="prov">${revisarTxt(revisar(liga,p,role,rv),rv.pos[p.id],rv)}</span>`:''}
-          <span class="form">${tr.form.slice(0,6).map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>
         </div>
       </div>
       <div style="color:var(--mute);font-size:18px">›</div>

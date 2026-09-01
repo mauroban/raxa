@@ -52,7 +52,7 @@ Por quê:
 - **O corte exposto vira jogo.** Se as pessoas sabem que faltam 12 pontos, elas passam a escolher partida em vez de jogar.
 - **Patente é aspiracional, ponto é contábil.** O que faz alguém querer voltar na quinta é subir de patente, não somar pontos.
 
-O que o app mostra a todo mundo é sempre: **patente + divisão**, forma recente (V/D/E), vitórias, gols, e o momento em que alguém sobe ou cai. Fora da linha discreta do admin, o rating só existe no backup/servidor, como dado técnico.
+O que o app mostra a todo mundo é sempre: **patente + divisão**, a campanha (V/E/D) e o momento em que alguém sobe ou cai. Gols e forma recente ficam na ficha e na aba Stats — a escada é sobre nível (D-84). Fora da linha discreta do admin, o rating só existe no backup/servidor, como dado técnico.
 
 ### 3.2 A escada
 
