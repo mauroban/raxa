@@ -215,7 +215,7 @@ Os dois convivem na mesma Liga: o modo é do racha, não do grupo.
 
 - **A lista vem ordenada por quem mais aparece nos rachas.** Quem joga toda semana está sempre nas primeiras linhas; quem apareceu uma vez em março fica no fim. É o que faz achar a galera de sempre sem usar a busca.
 - **Ao lado de cada nome tem um 🧤:** toque nele para dizer que essa pessoa **veio para ser goleiro hoje**. Quem tem o hábito já entra marcado, e dá para mudar a qualquer momento — inclusive no meio do racha, em partidas específicas.
-- **O badge do chip é o nível do papel de hoje** (D-81): com o 🧤 aceso aparece a patente de goleiro; apagado, a de linha. Troca na hora ao tocar no 🧤. Quem não tem nível naquele papel fica sem badge. Antes de marcar presença vale o **padrão da pessoa**: quem costuma ir ao gol mostra a de goleiro, o resto a de linha (sem nível no papel de costume, mostra o outro).
+- **O badge do chip é o nível do papel de hoje** (D-81), no formato compacto de cor + riscos (sem o nome da patente — com 50 nomes em duas colunas, o nome do nível comia o do jogador; D-88): com o 🧤 aceso aparece a patente de goleiro; apagado, a de linha. Troca na hora ao tocar no 🧤. Quem não tem nível naquele papel fica sem badge. Antes de marcar presença vale o **padrão da pessoa**: quem costuma ir ao gol mostra a de goleiro, o resto a de linha (sem nível no papel de costume, mostra o outro).
 - Busca instantânea e **"+ Novo jogador"** que cadastra sem sair da tela (nome + patente + costuma ir ao gol).
 
 ### 4.2 Times — 1 toque

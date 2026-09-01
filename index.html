@@ -2066,7 +2066,10 @@ function presBadge(liga,p,on,gk){
   if(!vePat(liga))return '';
   let r=on?(gk?'G':'L'):(p.gk?'G':'L');
   if(!on&&!temPatente(liga,p,r))r=r==='G'?'L':'G';
-  return temPatente(liga,p,r)?patBadgeShort(liga,rt(p,r).rank):'';
+  /* só cor + riscos (o mini-badge dos times): com 50 nomes em duas colunas,
+     escrever a patente comia o nome — sobravam 4 letras (D-88). O nome
+     completo do nível segue no title e em toda tela menos apertada.        */
+  return temPatente(liga,p,r)?patDot(liga,rt(p,r).rank):'';
 }
 /* troca o badge no lugar (a lista não é redesenhada ao tocar — reordenaria embaixo do dedo) */
 function presBadgeUpd(liga,lv,chip,id){const pb=chip&&chip.querySelector?chip.querySelector('.pb'):null;const p=P(liga,id);
