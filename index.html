@@ -1985,12 +1985,22 @@ function statsBlock(liga){
     ${d.presenca?`<div class="tiny muted" style="margin-top:8px">📅 Mais presente: <b>${nome(d.presenca.pid)}</b> — ${d.presenca.nR} racha${d.presenca.nR===1?'':'s'}</div>`:''}
   </div>`;
 }
-/* Badge do chip de presença: o nível do papel em que a pessoa vai jogar
-   HOJE — 🧤 aceso mostra o de goleiro, apagado o de linha. Antes era sempre
-   o de linha, e goleiro com patente no gol aparecia sem nada.               */
-const presBadge=(liga,p,gk)=>{const r=gk?'G':'L';return vePat(liga)&&temPatente(liga,p,r)?patBadgeShort(liga,rt(p,r).rank):''};
+/* Badge do chip de presença (D-81):
+   - já marcado: o nível do papel em que a pessoa vai jogar HOJE — 🧤 aceso
+     mostra o de goleiro, apagado o de linha; sem nível nesse papel, sem badge;
+   - ainda não marcado: o padrão da pessoa — quem "costuma ir ao gol" mostra
+     o de goleiro, o resto o de linha; se o papel de costume não tem nível,
+     vale o outro (é o que ela tem para mostrar).
+   Antes era sempre o de linha, e goleiro com patente no gol ficava sem nada. */
+function presBadge(liga,p,on,gk){
+  if(!vePat(liga))return '';
+  let r=on?(gk?'G':'L'):(p.gk?'G':'L');
+  if(!on&&!temPatente(liga,p,r))r=r==='G'?'L':'G';
+  return temPatente(liga,p,r)?patBadgeShort(liga,rt(p,r).rank):'';
+}
 /* troca o badge no lugar (a lista não é redesenhada ao tocar — reordenaria embaixo do dedo) */
-function presBadgeUpd(liga,chip,id,gk){const pb=chip&&chip.querySelector?chip.querySelector('.pb'):null;const p=P(liga,id);if(pb&&p)pb.innerHTML=presBadge(liga,p,gk)}
+function presBadgeUpd(liga,lv,chip,id){const pb=chip&&chip.querySelector?chip.querySelector('.pb'):null;const p=P(liga,id);
+  if(pb&&p)pb.innerHTML=presBadge(liga,p,lv.presentIds.indexOf(id)>=0,ehGkHoje(lv,id))}
 function viewPresenca(liga,lv){
   /* Ordem: quem já está marcado primeiro, depois quem mais aparece nos rachas —
      é assim que se acha rápido a galera de sempre numa lista de 50 nomes.     */
@@ -2012,7 +2022,7 @@ function viewPresenca(liga,lv){
         <div class="pcw" data-nm="${esc(p.name.toLowerCase())}">
           <button class="pchip ${on?'on':''}" data-a="pres" data-id="${p.id}">
             <span class="nm">${esc(p.name)}</span>
-            <span class="pb">${presBadge(liga,p,gk)}</span>
+            <span class="pb">${presBadge(liga,p,on,gk)}</span>
             ${p.sessions?`<span class="tiny muted num" title="rachas que jogou">${p.sessions}×</span>`:''}
           </button>
           <button class="gktog ${gk?'on':''}" data-a="presGk" data-id="${p.id}" title="veio de goleiro" aria-label="${esc(p.name)} veio de goleiro" aria-pressed="${gk?'true':'false'}">🧤</button>
@@ -3585,7 +3595,7 @@ const A={
     if(el.classList)el.classList.toggle('on');
     const gt=el.parentElement&&el.parentElement.querySelector?el.parentElement.querySelector('.gktog'):null;
     if(gt)gt.classList.toggle('on',lv.gkToday.indexOf(id)>=0);
-    presBadgeUpd(l,el,id,lv.gkToday.indexOf(id)>=0);
+    presBadgeUpd(l,lv,el,id);
     presCount(l,lv);save();
   },
   /* Quem veio de goleiro é decisão do dia, não do cadastro. */
@@ -3600,7 +3610,7 @@ const A={
     if(el.setAttribute)el.setAttribute('aria-pressed',lv.gkToday.indexOf(id)>=0?'true':'false');
     const chip=el.parentElement&&el.parentElement.querySelector?el.parentElement.querySelector('.pchip'):null;
     if(chip)chip.classList.add('on');
-    presBadgeUpd(l,chip,id,lv.gkToday.indexOf(id)>=0);
+    presBadgeUpd(l,lv,chip,id);
     presCount(l,lv);save();
   },
   addPlayer(){

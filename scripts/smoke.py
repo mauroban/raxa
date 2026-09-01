@@ -99,7 +99,16 @@ step('chip de presenca mostra o nivel do papel de hoje: gol com luva acesa, linh
   if(chip().indexOf(gRank)<0||chip().indexOf(lRank)>=0)throw new Error('luva acesa: esperava '+gRank+', veio '+chip());
   A.presGk({dataset:{id:p.id}});
   if(chip().indexOf(lRank)<0)throw new Error('desmarcou e nao voltou para '+lRank);
-  p.G.def=false;p.G.elo=l.cfg.startElo;p.G.rank=stepOf(p.G.elo);
+  /* ainda nao marcado: vale o costume — quem costuma ir ao gol mostra o do gol */
+  A.pres({dataset:{id:p.id}});
+  if(lv.presentIds.indexOf(p.id)>=0)throw new Error('esperava tirar da presenca');
+  if(chip().indexOf(lRank)<0)throw new Error('fora da presenca, sem costume de gol: esperava '+lRank);
+  p.gk=true;
+  if(chip().indexOf(gRank)<0)throw new Error('fora da presenca, costuma ir ao gol: esperava '+gRank);
+  p.G.def=false;p.G.elo=l.cfg.startElo;p.G.rank=stepOf(p.G.elo);p.G.games=0;
+  if(chip().indexOf(lRank)<0)throw new Error('costuma ir ao gol mas sem nivel no gol: esperava cair para '+lRank);
+  p.gk=false;A.pres({dataset:{id:p.id}});
+  if(lv.presentIds.indexOf(p.id)<0)throw new Error('esperava devolver a presenca');
 });
 step('montar times',()=>A.toTimes());
 step('lista real: 19 presentes no 5v5 viram 4 times de 4 + 3 goleiros no rodizio',()=>{

@@ -1305,6 +1305,10 @@ errada quando vinha de goleiro. Agora o badge é o do **papel em que a pessoa va
 no 🧤 ou ao marcar presença (que pode acender o 🧤 sozinho para quem costuma ir ao gol) —
 `presBadgeUpd` substitui só o `<span class="pb">` do chip, porque redesenhar a lista reordenaria
 embaixo do dedo (regra antiga da presença). Sem nível naquele papel, sem badge — igual à escada.
+**Antes de marcar** não existe papel de hoje, então o chip mostra **o padrão da pessoa**: quem
+"costuma ir ao gol" (cadastro) mostra o nível de goleiro, o resto o de linha; se o papel de
+costume ainda não tem nível, vale o outro — é o que ela tem para mostrar. Ao marcar, passa a
+valer o papel de hoje (e o 🧤 já acende para quem costuma).
 **Descartado:** mostrar os dois badges (ocupa o chip inteiro em 360px e a informação relevante é
 uma só: o papel de hoje); redesenhar a lista ao trocar (reordena embaixo do dedo).
 **Onde:** `presBadge`/`presBadgeUpd`, `viewPresenca`, handlers `pres` e `presGk` (`index.html`) ·
