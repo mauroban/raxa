@@ -4929,16 +4929,16 @@ const A={
     const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
     const r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
     const minha=p=>(rt(p,r).op||[]).find(o=>o.by===eu);
-    /* a prioridade é dar nota onde a pessoa JOGA: goleiro na aba Linha (e
-       vice-versa) vai para o fim, apagado e fora da conta               */
+    /* a nota é dada onde a pessoa JOGA: na aba Linha só aparece quem joga na
+       linha; na aba Gol, só quem vai ao gol (costuma, ou já pegou)         */
     const joga=p=>r==='G'?(p.gk||p.G.games>0):(!p.gk||p.L.games>0);
     if(OPV.r!==r||OPV.liga!==l.id||!OPV.ordem.length){
-      const todos=l.players.filter(p=>p.id!==eu).sort((a,b)=>(joga(b)-joga(a))||((!!minha(a))-(!!minha(b)))||a.name.localeCompare(b.name));
+      const todos=l.players.filter(p=>p.id!==eu&&joga(p)).sort((a,b)=>((!!minha(a))-(!!minha(b)))||a.name.localeCompare(b.name));
       OPV={r,liga:l.id,ordem:todos.map(p=>p.id),i:0};
     }
-    OPV.ordem=OPV.ordem.filter(id=>P(l,id));
+    OPV.ordem=OPV.ordem.filter(id=>P(l,id)&&joga(P(l,id)));
     if(el&&el.dataset&&el.dataset.i!==undefined)OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);
-    const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem.filter(joga),outros=ordem.filter(p=>!joga(p));
+    const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem;
     const n=fila.filter(minha).length,faltam=fila.length-n;
     /* a régua é "o que o time ganha com ele" (D-90), dita em comparação com um
        jogador médio do racha — nunca em pontos                            */
@@ -4950,7 +4950,7 @@ const A={
       'O melhor da quadra, quase sempre: num time parelho, ele sozinho vira o jogo. Raro — um ou dois no racha, se tanto.'];
     const p=OPV.i>=0?ordem[OPV.i]:null;
     let cartao;
-    if(!ordem.length)cartao='<div class="opcard"><div class="tiny muted">Ninguém para opinar ainda.</div></div>';
+    if(!ordem.length)cartao=`<div class="opcard"><div class="tiny muted">Ninguém para opinar ${r==='G'?'no gol — quem vai ao gol aparece aqui':'na linha'}.</div></div>`;
     else if(!p)cartao=`<div class="opcard done"><div class="big">✓</div><div class="nm">Todas as suas opiniões ${r==='G'?'no gol':'na linha'} estão dadas</div>
       <div class="tiny muted" style="margin-top:6px;line-height:1.5">Volte aqui quando alguém novo entrar — ou toque num nome abaixo para rever.</div></div>`;
     else{
@@ -4963,7 +4963,6 @@ const A={
             <div class="nm">${esc(p.name)}${p.gk?' 🧤':''}</div>
             <div class="tiny muted" style="margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${tem?'hoje '+patBadge(l,tr.rank):tr.games?'calibrando · '+calTxt(l,tr):'ainda sem nível'}${tr.dv?'<span style="color:var(--gold)">· ⚠️ opiniões divergem</span>':''}</div>
             ${outrasOp?`<div class="tiny muted" style="margin-top:4px">${outrasOp}</div>`:''}
-            ${!joga(p)?`<div class="tiny" style="margin-top:4px;color:var(--gold)">${r==='G'?'Não costuma ir ao gol':'Costuma ir ao gol'} — a nota dele conta mais na aba ${r==='G'?'Linha':'Gol'}.</div>`:''}
           </div>
         </div>
         <div class="k" style="margin:14px 0 4px">Como ${p.gk&&r==='G'?'ele pega':'ele joga'} ${r==='G'?'no gol':'na linha'}?</div>
@@ -4988,7 +4987,7 @@ const A={
       ${cartao}
       <div class="tiny muted" style="margin:12px 2px 0;line-height:1.5">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Um toque salva e passa para a próxima; tocar de novo na mesma tira.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
-      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
+      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}</div>`:''}`);
   },
   opNav(el){
     const d=+el.dataset.d||1,n=OPV.ordem.length;if(!n)return;

@@ -1681,8 +1681,9 @@ representa em termos do que o time ganha com a pessoa (o texto que corrige o olh
 não há legenda para ler nem lista de 16 × 5 botões para varrer. Um toque salva e passa para a
 próxima pessoa sem a sua opinião; anterior/pular andam na ordem, fixada ao abrir (quem falta
 primeiro, para ninguém pular de lugar); barra de progresso no topo; a lista de todos embaixo, com
-a opinião dada ao lado, para conferir e voltar. A prioridade é dar nota onde a pessoa joga — na
-aba Linha os goleiros vão para o fim, apagados e fora da conta, e na aba Gol o contrário. A
+a opinião dada ao lado, para conferir e voltar. A nota é dada onde a pessoa joga — na aba Linha
+só aparece quem joga na linha, na aba Gol só quem vai ao gol (mostrar os outros apagados no fim
+foi tentado e descartado: era ruído). A
 primeira versão (lista com escada de 5 botões por pessoa e uma legenda em texto no topo) foi
 descartada: repetitiva e cansativa de olhar. Sexta opção **"Não sei"** (`e` nulo: resposta dada,
 fora da conta — ninguém é cobrado por chutar); com **5+** pessoas esperando a sua opinião
