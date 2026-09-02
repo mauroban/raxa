@@ -353,7 +353,9 @@ Duas coisas que **não** são política de RLS e sim de API: o rating numérico 
 - Lançamento concorrente (dois celulares na mesma quadra) resolveria por `sessions.id` + `matches.ordem`
   com `unique (session_id, ordem)`: o segundo a gravar recebe conflito, recarrega e reordena. **Hoje** quem
   faz esse papel é a trava otimista de `leagues.version` no `save_parts` (compare-and-swap: quem grava com
-  versão velha recebe o delta e reenvia).
+  versão velha recebe o delta e reenvia). Para o `live`, o cliente que recebe o conflito **mescla** os eventos
+  da partida corrente antes de reenviar (união por carimbo, mesma largada — `mesclaLive`, D-92): o gol dos
+  dois aparelhos sobrevive; partida já encerrada no outro aparelho prevalece.
 - Realtime: um canal por `session_id` para a partida ao vivo, um por `liga_id` para ranking e histórico.
 
 ## 9. Offline (alvo — hoje o app precisa de rede)

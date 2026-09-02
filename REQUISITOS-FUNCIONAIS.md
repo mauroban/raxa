@@ -90,9 +90,10 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-04.3c | Marcar na presença **quem veio para ser goleiro hoje**, com 1 toque por pessoa, independente do cadastro | P0 | ✅ v1 |
 | RF-04.3d | Trocar quem está no gol durante o racha, em partidas específicas | P0 | ✅ v1 |
 | RF-04.4 | Adicionar quem chegou atrasado durante o racha, mandando direto para um time, para o rodízio de goleiros ou **para o fim da fila** | P0 | ✅ v1 |
+| RF-04.4b | Tirar alguém do racha: **foi embora** (conta presença) ou, se ainda não jogou hoje, **marcado por engano** (sai sem contar) | P1 | ✅ v1 |
 | RF-04.5 | Retomar o racha em andamento após fechar e reabrir o app | P0 | ✅ v1 |
-| RF-04.6 | Encerrar o racha com resumo: partidas, artilheiro e mudanças de patente | P1 | ✅ v1 |
-| RF-04.7 | Cancelar o racha preservando no histórico as partidas já lançadas | P2 | ✅ v1 |
+| RF-04.6 | Encerrar o racha com resumo: partidas, artilheiro e mudanças de patente — **confirmando antes**, porque não tem volta e o botão fica ao lado do "Começar partida" | P1 | ✅ v1 |
+| RF-04.7 | Cancelar o racha preservando no histórico as partidas já lançadas; confirma quando há presença marcada ou partidas | P2 | ✅ v1 |
 
 **Critério de aceite (RF-04.2c/2d/2e):** duas partidas no mesmo histórico, uma de racha curto e outra de racha de partida única, mantêm pesos diferentes depois de um recálculo integral; e alterar o padrão da liga deixa os deltas das partidas antigas idênticos. Coberto por teste.
 
@@ -154,13 +155,13 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-06.1 | Iniciar a partida em 1 toque, com escalações já prontas: entram os titulares, reservas ficam disponíveis | P0 | ✅ v1 |
 | RF-06.1b | O time que está esperando não entra na frente de quem ainda não jogou | P1 | ✅ v1 |
 | RF-06.2 | **Encerrar a partida em 1 toque**, gravando o resultado que está no placar; o botão mostra o resultado antes de confirmar | P0 | ✅ v1 |
-| RF-06.2b | Nem o 0-0 pergunta: é gravado como empate; encerrar leva direto para a tela de próxima partida, com um aviso curto do placar | P0 | ✅ v1 |
+| RF-06.2b | Nem o 0-0 pergunta: é gravado como empate; encerrar leva direto para a tela de próxima partida, com um aviso do placar que fica 7 s e leva um **↩ voltar** | P0 | ✅ v1 |
 | RF-06.2c | Corrigir/anular resultado fica no **Histórico → Revisar**, fora do fluxo do racha; no racha existe apenas "Desfazer a última" | P1 | ✅ v1 |
 | RF-06.3 | Marcar gol em 1 toque no bloco do time | P0 | ✅ v1 |
 | RF-06.4 | Registrar o autor do gol de forma opcional e não bloqueante, com opção de pular e desaparecimento automático | P1 | ✅ v1 |
 | RF-06.5 | Gols listados com minuto e autor, cada um com botão de remover | P0 | ✅ v1 |
 | RF-06.5b | Corrigir ou preencher o autor de um gol já registrado, tocando no nome | P1 | ✅ v1 |
-| RF-06.6 | Cronômetro com o alvo configurado na Liga (gols/minutos — o alvo é da Liga, o modo é do racha) e sinal visual quando o alvo é atingido | P1 | ✅ v1 |
+| RF-06.6 | Cronômetro com o alvo configurado na Liga (gols/minutos — o alvo é da Liga, o modo é do racha) e sinal visual quando o alvo é atingido; quando o **tempo** bate, o celular vibra e apita, uma vez por partida | P1 | ✅ v1 |
 | RF-06.7 | Substituir em 2 toques a partir de qualquer ponta: tocando em quem está em quadra ou em quem está no banco | P0 | ✅ v1 |
 | RF-06.7b | Escalação, reservas do time e quem está fora visíveis na própria tela da partida, com o time de origem | P0 | ✅ v1 |
 | RF-06.7c | As escalações definidas entram por padrão em toda partida, sem reconfirmação | P0 | ✅ v1 |
@@ -171,14 +172,15 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-06.10b | Trocar qualquer um dos dois times que vão entrar, em 2 toques, sem obedecer à fila | P0 | ✅ v1 |
 | RF-06.10c | Entre partidas, uma **tela de próxima partida** (não um modal) mostra o confronto, a chance de cada lado e as duas escalações | P0 | ✅ v1 |
 | RF-06.10d | Editar a escalação dos dois times que vão entrar antes do apito, por toque ou arraste, puxando gente de outro time ou de fora | P0 | ✅ v1 |
-| RF-06.11 | Desfazer a última partida inteira, revertendo patentes | P0 | ✅ v1 |
-| RF-06.11c | `↶` na barra da partida desfaz o último evento (gol, substituição, pausa) e, sem eventos, a última partida | P1 | ✅ v1 |
+| RF-06.11 | Desfazer a última partida inteira, revertendo patentes — **confirmando com o placar**, porque apagar não tem volta | P0 | ✅ v1 |
+| RF-06.11c | `↶` na barra da partida desfaz o último evento (gol, substituição, pausa) e, sem eventos, oferece apagar a partida anterior **perguntando antes** | P1 | ✅ v1 |
 | RF-06.11d | "Encerrar racha" **não fica na barra durante a partida**, para não disputar espaço com o "Fim" | P0 | ✅ v1 |
-| RF-06.18 | Tirar o último gol de um time em 1 toque, no próprio bloco do placar (`−`) | P1 | ✅ v1 |
+| RF-06.18 | Tirar o último gol de um time em 1 toque, no próprio bloco do placar (`−`); o `−` fica numa zona morta (toque perto dele não é gol) e toque duplo no placar não é dois gols | P1 | ✅ v1 |
+| RF-06.19 | Dois celulares na mesma partida: no conflito de gravação os eventos da partida corrente se **somam** (mesma largada); partida encerrada no outro aparelho prevalece | P1 | ✅ v1 |
 | RF-06.11b | Substituir arrastando um nome sobre o outro, com o toque como caminho alternativo | P1 | ✅ v1 |
 | RF-06.12 | Lançar partida retroativamente (sem cronômetro): entra como um trecho só, peso 1 — é o que acontece com qualquer partida encerrada com menos de 45 s de relógio | P2 | ✅ v1 |
 | RF-06.13 | **Pausar e retomar** a partida em 1 toque; o tempo parado não conta | P1 | ✅ v1 |
-| RF-06.14 | **Cancelar** a partida em andamento, com confirmação, descartando gols e tempo | P1 | ✅ v1 |
+| RF-06.14 | **Cancelar** a partida em andamento, com confirmação, descartando gols e tempo; devolve o rodízio de goleiros e deixa o mesmo confronto sugerido | P1 | ✅ v1 |
 | RF-06.15 | Empate com 3 ou 4 times: **os dois times saem** e entram os próximos da fila | P1 | ✅ v1 |
 | RF-06.16 | Mostrar a **chance esperada de vitória de cada lado**, sem destaque, na tela da partida e na tela de próxima partida; escondida quando as patentes estão fechadas | P2 | ✅ v1 |
 | RF-06.17 | Indicar na tela quando a partida está em um trecho novo, com o placar do trecho | P2 | ✅ v1 |

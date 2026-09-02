@@ -65,6 +65,7 @@ DRIVER = r"""
   if(w){document.documentElement.style.width=w+'px';document.body.style.width=w+'px';document.body.style.margin='0';}
   const LARG=w||innerWidth;
   try{localStorage.clear()}catch(e){}
+  window.confirm=()=>true;         /* encerrar racha etc. perguntam (D-92); um dialogo travaria o headless */
   S=defState();
   const tema=q.get('t');if(tema)S.ui.theme=tema;   /* escuro (padrao) ou claro */
   if(step===10){                   /* destaques do mes, na tela do racha */

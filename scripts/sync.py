@@ -400,6 +400,39 @@ await step('o outro aparelho recebe so o delta',async()=>{
   ok('e nao manda os 19 jogadores de novo',d.players.length===0,'players='+d.players.length);
 });
 
+console.log('\n[sync] dois celulares na mesma partida');
+await step('o gol dos dois aparelhos se somam em vez de um apagar o outro',async()=>{
+  A.startMatch();await sleep(700);
+  const c=L().live.cur;
+  ok('a partida subiu para o servidor',!!(DB.live[ligaId].data.cur&&DB.live[ligaId].data.cur.startedAt===c.startedAt));
+  /* o outro celular marca um gol do lado 1 e grava primeiro */
+  const row=srv(ligaId);
+  const lv=jclone(DB.live[ligaId].data);
+  const tOutro=Date.now()-200;
+  lv.cur.events.push({t:tOutro,type:'goal',side:1,pid:null});lv.cur.score=[0,1];
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  /* este celular, com a tela velha, marca um gol do lado 0 */
+  A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  const cur=L().live.cur;
+  ok('a tela ficou com os dois gols',cur&&cur.score[0]===1&&cur.score[1]===1,cur?cur.score.join('-'):'sem partida');
+  ok('os dois eventos estao na partida',cur&&cur.events.filter(e=>e.type==='goal').length===2);
+  await sleep(700);
+  const serv=DB.live[ligaId].data.cur;
+  ok('e o servidor recebeu a soma',serv&&serv.score[0]===1&&serv.score[1]===1,serv?serv.score.join('-'):'sem partida');
+  A.endMatch();await sleep(700);
+});
+await step('partida encerrada no outro aparelho manda: o gol atrasado daqui nao a reabre',async()=>{
+  A.startMatch();await sleep(700);
+  const row=srv(ligaId);
+  const lv=jclone(DB.live[ligaId].data);lv.cur=null;lv.matchIds=lv.matchIds.slice();
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  ok('a tela seguiu o outro aparelho (sem partida)',!L().live.cur);
+  ok('o servidor continua sem partida',!DB.live[ligaId].data.cur);
+});
+
 console.log('\n[sync] recarregar a pagina');
 await step('boot com sessao viva restaura tudo',async()=>{
   const antes=JSON.stringify(L().players.map(p=>p.name));

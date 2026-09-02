@@ -281,11 +281,63 @@ step('pausar e retomar a partida',()=>{
   if(c.paused)throw new Error('nao retomou');
 });
 step('cancelar a partida descarta tudo',()=>{
-  const n=L().matches.length;
+  const n=L().matches.length,lv=L().live,c=lv.cur;
+  const poolAntes=JSON.stringify(c.pre?c.pre.gkPool:lv.gkPool),par=[c.a,c.b];
   A.goal({dataset:{s:'0'}});
   A.cancelMatch();
-  if(L().live.cur)throw new Error('nao cancelou');
+  if(lv.cur)throw new Error('nao cancelou');
   if(L().matches.length!==n)throw new Error('cancelada nao pode entrar no historico');
+  if(JSON.stringify(lv.gkPool)!==poolAntes)throw new Error('cancelar devia devolver o rodizio de goleiros a antes da largada');
+  if(JSON.stringify(lv.nextPair)!==JSON.stringify(par))throw new Error('cancelar devia sugerir o mesmo confronto de novo');
+});
+step('toques que nao tem volta perguntam antes — e o "nao" segura tudo',()=>{
+  const l=L(),lv=l.live,n=l.matches.length,ult=lv.matchIds[lv.matchIds.length-1];
+  const confirm0=global.confirm;global.confirm=()=>false;
+  try{
+    A.endRacha();
+    if(!l.live)throw new Error('encerrar racha sem confirmar fechou a noite');
+    A.delMatch({dataset:{id:ult}});
+    if(l.matches.length!==n)throw new Error('desfazer a ultima sem confirmar apagou a partida');
+    A.startMatch();
+    if(!lv.cur)throw new Error('nao comecou');
+    A.undo();                                        // partida sem eventos: o ↶ cai na anterior — e pergunta
+    if(l.matches.length!==n)throw new Error('o ↶ por reflexo apagou a partida anterior sem perguntar');
+    if(!lv.cur)throw new Error('o ↶ nao devia mexer na partida corrente');
+    A.cancelMatch();
+    if(!lv.cur)throw new Error('cancelar partida sem confirmar descartou a partida');
+  }finally{global.confirm=confirm0}
+  A.cancelMatch();
+  if(lv.cur)throw new Error('confirmando, cancela');
+  A.delMatch({dataset:{id:ult,ok:'1'}});           // "ok" = quem chamou ja perguntou
+  if(l.matches.length!==n-1)throw new Error('delMatch com ok nao apagou');
+  A.startMatch();A.goal({dataset:{s:'0'}});A.endMatch();
+});
+step('o fim deixa um toast com "voltar" — e comecar outra partida o fecha',()=>{
+  if(!/voltar/.test(els['#toast'].innerHTML)||!/voltarPartida/.test(els['#toast'].innerHTML))throw new Error('toast do fim sem o botao de voltar');
+  A.startMatch();
+  if(/voltarPartida/.test(els['#toast'].innerHTML)&&els['#toast'].classList._s.has('on'))throw new Error('o toast de voltar devia fechar ao comecar outra partida');
+  A.goal({dataset:{s:'0'}});A.endMatch();
+});
+step('marcado por engano sai sem contar presenca; quem ja jogou sempre conta',()=>{
+  const l=L(),lv=l.live;
+  let p=l.players.find(x=>!lv.presentIds.includes(x.id));
+  if(!p){p=mkPlayer(l,'Fantasma',l.cfg.startElo,false);l.players.push(p)}
+  A.lateIn({dataset:{id:p.id}});A.lateFila({dataset:{id:p.id}});
+  if(!lv.presentIds.includes(p.id))throw new Error('chegou agora nao marcou presenca');
+  A.leaveRacha({dataset:{id:p.id}});
+  if(!/Marquei errado/.test(els['#sheet'].innerHTML))throw new Error('quem nao jogou devia ganhar a escolha "foi embora / marquei errado"');
+  A.leaveDo({dataset:{id:p.id,modo:'nao'}});
+  if(lv.presentIds.includes(p.id))throw new Error('nao saiu da presenca');
+  if((lv.leftIds||[]).includes(p.id))throw new Error('marcado por engano nao pode contar como presente');
+  A.lateIn({dataset:{id:p.id}});A.lateFila({dataset:{id:p.id}});
+  A.leaveDo({dataset:{id:p.id,modo:'foi'}});
+  if(!(lv.leftIds||[]).includes(p.id))throw new Error('quem esteve e foi embora tem que contar');
+  lv.leftIds=lv.leftIds.filter(x=>x!==p.id);       // era so teste: nao suja a sessao
+  const jogou=lv.matchIds.length?Object.keys(jogosHoje(l,lv)).find(id=>lv.presentIds.includes(id)):null;
+  if(jogou){const ti=lv.teams.findIndex(t=>t.ids.includes(jogou));
+    A.leaveRacha({dataset:{id:jogou}});           // confirm() do stub diz sim: sai direto, contando
+    if(!(lv.leftIds||[]).includes(jogou))throw new Error('quem ja jogou hoje tem que contar presenca ao sair');
+    lv.leftIds=lv.leftIds.filter(x=>x!==jogou);lv.presentIds.push(jogou);if(ti>=0)lv.teams[ti].ids.push(jogou)}
 });
 step('substituicao vira trecho proprio',()=>{
   A.startMatch();

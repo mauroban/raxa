@@ -327,6 +327,9 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .side.d{background:var(--bibD);color:#0F1F16}
 .scoreb.big .side{min-height:clamp(150px,30vh,240px);display:flex;flex-direction:column;justify-content:center;padding:22px 10px 16px}
 .scoreb.big .side .sc{font-size:clamp(76px,22vw,120px)}
+/* O "−" mora numa zona morta: toque perto dele (e fora dele) não vira gol — o
+   contrário do que a pessoa queria. A zona engole o toque sem fazer nada.  */
+.minuszone{position:absolute;top:0;right:0;width:66px;height:66px;cursor:default}
 .minus{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:11px;border:1.5px solid currentColor;
   opacity:.75;display:grid;place-items:center;font-size:22px;background:transparent;color:inherit;cursor:pointer}
 .minus:active{transform:scale(.92)}
@@ -588,6 +591,8 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
   padding:12px 16px;border-radius:11px;font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.05em;
   font-size:15px;z-index:200;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:12px}
+.toast.act button{font:inherit;color:inherit;background:transparent;border:1.5px solid currentColor;border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap}
 
 /* claro: coletes com texto branco precisam de cor fechada — já são; o D amarelo usa tinta */
 :root[data-theme="claro"] .side.d .hint,:root[data-theme="claro"] .side.d .nm{opacity:.85}
@@ -1881,7 +1886,7 @@ const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2441,7 +2446,7 @@ function viewJogo(liga,lv){
         <div class="nm">${esc(t[s].name)}</div>
         <div class="sc num">${c.score[s]}</div>
         <div class="hint">${ex?pct(ex[s])+' de chance':'toque = gol'}</div>
-        ${c.score[s]?`<button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button>`:''}
+        ${c.score[s]?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
       </div>`}).join('<div class="vs">VS</div>')}
   </div>
   <div id="scorer"></div>
@@ -2477,6 +2482,9 @@ function viewJogo(liga,lv){
   ${lv.matchIds.length?todayBlock(liga,lv):''}`;
 }
 function mmss(ms){const s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+"'"+String(s%60).padStart(2,'0')}
+/* "Time A 2-1" / "empate 1-1" — para confirmações e toasts falarem da partida certa */
+const placarDe=m=>m.result==='draw'?`empate ${m.score[0]}-${m.score[1]}`
+  :`${(m.names||[])[m.result]||'?'} ${Math.max(...m.score)}-${Math.min(...m.score)}`;
 function golsCard(liga,lv,c){
   const gols=c.events.filter(e=>e.type==='goal');
   if(!gols.length)return '';
@@ -3431,7 +3439,20 @@ function barFor(liga){
 }
 
 /* ---------- relógio ---------- */
-let clockTimer=null;
+let clockTimer=null,alvoAvisado=null,audioCtx=null;
+/* O apito precisa de um gesto do usuário para o navegador liberar o áudio:
+   o contexto nasce no "Começar partida" (um toque) e fica pronto para o alvo. */
+function preparaApito(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume()}catch(e){}}
+function avisaAlvo(){
+  try{navigator.vibrate&&navigator.vibrate([250,120,250,120,400])}catch(e){}
+  try{if(!audioCtx||audioCtx.state!=='running')return;
+    const t0=audioCtx.currentTime;
+    [[0,.18],[.28,.18],[.56,.5]].forEach(([dt,dur])=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type='square';o.frequency.value=1760;g.gain.setValueAtTime(.0001,t0+dt);g.gain.exponentialRampToValueAtTime(.25,t0+dt+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dt+dur);o.connect(g);g.connect(audioCtx.destination);o.start(t0+dt);o.stop(t0+dt+dur+.05)});
+  }catch(e){}
+}
 function tickClock(){
   clearInterval(clockTimer);
   const el=$('#clk');if(!el)return;
@@ -3441,6 +3462,9 @@ function tickClock(){
     el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
     const alvoGols=liga.cfg.targetGoals>0&&(c.score[0]>=liga.cfg.targetGoals||c.score[1]>=liga.cfg.targetGoals);
     el.classList.toggle('hit',!c.paused&&(s>=liga.cfg.targetMin*60||alvoGols));
+    /* o tempo bateu: ninguém está olhando a tela — o celular avisa (vibra e apita),
+       uma vez por partida. O alvo de gols é um toque da própria pessoa, não precisa. */
+    if(!c.paused&&s>=liga.cfg.targetMin*60&&alvoAvisado!==c.startedAt){alvoAvisado=c.startedAt;avisaAlvo()}
   };
   upd();
   if(!c.paused)clockTimer=setInterval(upd,1000);
@@ -3463,7 +3487,14 @@ function cuidaWake(){
 
 /* ---------- helpers de UI ---------- */
 let toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1900)}
+/* toast(msg) some em 1,9 s. toast(msg,{ms,act:{label,a,...dataset}}) fica mais
+   tempo e leva um botão de ação — é o "↩ voltar" logo depois do Fim.       */
+function toast(msg,opts){const t=$('#toast');opts=opts||{};clearTimeout(toastT);
+  if(opts.act){const ds=Object.keys(opts.act).filter(k=>k!=='label'&&k!=='a').map(k=>` data-${k}="${esc(String(opts.act[k]))}"`).join('');
+    t.innerHTML=`<span>${esc(msg)}</span><button data-a="${esc(opts.act.a)}"${ds}>${esc(opts.act.label)}</button>`;t.classList.add('act')}
+  else{t.textContent=msg;t.classList.remove('act')}
+  t.classList.add('on');toastT=setTimeout(()=>{t.classList.remove('on');t.classList.remove('act')},opts.ms||1900)}
+function fechaToast(){const t=$('#toast');if(!t)return;clearTimeout(toastT);t.classList.remove('on');t.classList.remove('act')}
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
 function closeSheet(){PD=null;
@@ -3546,10 +3577,15 @@ const A={
   /* ----- presença ----- */
   startRacha(){const l=L();l.live={id:uid(),mode:l.cfg.matchMode||'curtas',started:Date.now(),stage:'presenca',
     presentIds:[],gkToday:[],teams:[],queue:[],cur:null,matchIds:[],sel:null,lastWinner:null,gkPool:[],gkFlip:0};save();render()},
-  cancelRacha(){const l=L();if(!l.live)return;if(l.live.matchIds.length&&!confirm('Cancelar o racha? As partidas já lançadas continuam no histórico.'))return;l.live=null;save();render()},
+  cancelRacha(){const l=L(),lv=l.live;if(!lv)return;
+    const msg=lv.matchIds.length?'Cancelar o racha? As partidas já lançadas continuam no histórico.'
+      :lv.presentIds.length?`Cancelar o racha? A presença de ${pl(lv.presentIds.length,'pessoa')} e os times se perdem.`:null;
+    if(msg&&!confirm(msg))return;
+    l.live=null;save();render()},
   /* formato e modo são da LIGA e se escolhem na criação (D-44): não existe
      mais ação de trocar no meio do caminho.                                */
   clearSel(){const lv=L().live;if(!lv)return;lv.sel=null;save();render()},
+  nada(){},                          // zona morta em volta do "−": engole o toque
   /* ----- completar o time menor ----- */
   fillPick(el){
     const l=L(),lv=l.live,sd=+el.dataset.sd;
@@ -3644,6 +3680,10 @@ const A={
   cancelMatch(){
     const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
     if(!confirm('Cancelar esta partida? Os gols e o tempo dela são descartados e nada vai para o histórico.'))return;
+    /* a partida não existiu: o rodízio de goleiros volta a antes da largada e o
+       mesmo confronto fica sugerido — cancelar quase sempre é "recomeça essa" */
+    if(c.pre){lv.gkPool=[...(c.pre.gkPool||[])];lv.gkFlip=c.pre.gkFlip||0;lv.nextGks=c.pre.nextGks||null}
+    lv.nextPair=[c.a,c.b];
     lv.cur=null;save();render();toast('Partida cancelada');
   },
   delGoal(el){
@@ -3869,7 +3909,24 @@ const A={
      conta com um a menos, como aconteceu de verdade).                       */
   leaveRacha(el){
     const l=L(),lv=l.live,id=el.dataset.id;if(!lv)return;
+    /* Quem ainda não jogou pode ter sido marcado por engano: aí a saída não
+       conta presença (D-49 vale para quem ESTEVE). Quem já jogou, esteve.   */
+    const emQuadra=!!(lv.cur&&(lv.cur.lineups[0].includes(id)||lv.cur.lineups[1].includes(id)));
+    if(!emQuadra&&!(jogosHoje(l,lv)[id]>0)){
+      openSheet(`<h2>${esc(nameOf(l,id))}</h2>
+        <div class="tiny muted" style="margin-bottom:12px">Ainda não jogou hoje. Esteve aqui e precisou sair, ou foi marcado sem ter vindo?</div>
+        <div style="display:grid;gap:7px">
+          <button class="btn wide ghost" data-a="leaveDo" data-id="${id}" data-modo="foi">🚑 Foi embora — esteve no racha<span class="tiny muted" style="display:block;font-weight:400;text-transform:none;letter-spacing:0">conta presença no racha de hoje</span></button>
+          <button class="btn wide ghost" data-a="leaveDo" data-id="${id}" data-modo="nao">✕ Marquei errado — não veio<span class="tiny muted" style="display:block;font-weight:400;text-transform:none;letter-spacing:0">sai sem contar presença</span></button>
+          <button class="btn wide ghost" data-a="closeSheet">Cancelar</button>
+        </div>`);
+      return;
+    }
     if(!confirm(nameOf(l,id)+' foi embora? Sai do racha de hoje; o histórico fica.'))return;
+    A.leaveDo({dataset:{id,modo:'foi'}});
+  },
+  leaveDo(el){
+    const l=L(),lv=l.live,id=el.dataset.id,modo=el.dataset.modo||'foi';if(!lv)return;
     const c=lv.cur;
     if(c){
       [0,1].forEach(sd=>{
@@ -3882,14 +3939,16 @@ const A={
       if(Array.isArray(c.fill))c.fill=c.fill.map(x=>(x||[]).filter(x=>x!==id));
     }
     lv.teams.forEach(t=>{t.ids=t.ids.filter(x=>x!==id)});
-    /* saiu, mas ESTEVE: a presença do racha conta desde o começo, não a foto do fim */
-    lv.leftIds=lv.leftIds||[];if(!lv.leftIds.includes(id))lv.leftIds.push(id);
+    /* saiu, mas ESTEVE: a presença do racha conta desde o começo, não a foto do fim.
+       Marcado por engano ("não veio") não entra nessa conta.                  */
+    lv.leftIds=(lv.leftIds||[]).filter(x=>x!==id);
+    if(modo!=='nao')lv.leftIds.push(id);
     lv.presentIds=lv.presentIds.filter(x=>x!==id);
     lv.gkToday=(lv.gkToday||[]).filter(x=>x!==id);
     lv.gkPool=(lv.gkPool||[]).filter(x=>x!==id);
     if(Array.isArray(lv.fila))lv.fila=lv.fila.filter(x=>x!==id);
     if(Array.isArray(lv.fill))lv.fill=lv.fill.map(x=>(x||[]).filter(x=>x!==id));
-    closeSheet();save();render();toast(nameOf(l,id)+' saiu do racha');
+    closeSheet();save();render();toast(modo==='nao'?nameOf(l,id)+' tirado da presença':nameOf(l,id)+' saiu do racha');
   },
   lateFila(el){
     const l=L(),lv=l.live,id=el.dataset.id;
@@ -3957,6 +4016,7 @@ const A={
     lv.queue=fila.concat(all.filter(i=>i!==a&&i!==b&&!fila.includes(i)));
     lv.nextPair=null;
     lv.lastEnd=null;               // partida nova no relógio: a anterior não tem mais volta
+    fechaToast();                  // o "↩ voltar" da anterior não vale mais
     lv.stage='jogo';
     lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
     // ninguém joga com mais gente que o adversário: o time menor é completado
@@ -3964,10 +4024,13 @@ const A={
     const f=fillDe(l,lv,[a,b]);
     const esc0=[lv.teams[a].ids.slice(0,lv.per).concat(f[0]),lv.teams[b].ids.slice(0,lv.per).concat(f[1])];
     const per=Math.min(lv.per,esc0[0].length,esc0[1].length);
+    /* foto do rodízio antes da largada: cancelar a partida devolve isso */
+    const pre={gkPool:[...(lv.gkPool||[])],gkFlip:lv.gkFlip||0,nextGks:lv.nextGks?JSON.parse(JSON.stringify(lv.nextGks)):null};
     const gks=commitGks(l,lv,[a,b]);
     lv.cur={a,b,startedAt:Date.now(),score:[0,0],events:[],paused:false,
       lineups:[esc0[0].slice(0,per),esc0[1].slice(0,per)],gks,
-      fill:[f[0].slice(),f[1].slice()]};
+      fill:[f[0].slice(),f[1].slice()],pre};
+    preparaApito();
     resetFill(lv);
     [0,1].forEach(sd=>{
       const g=gks[sd];
@@ -4003,6 +4066,7 @@ const A={
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){c.events[i].pid=pid||null;c.events[i].own=own;break}
     clearTimeout(showScorer._t);
     save();render();                       // o card Gols precisa mostrar o autor na hora
+    if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);
     if(pid)toast((own?'Gol contra de ':'Gol de ')+nameOf(l,pid));
   },
   /* alterna a barra / a folha entre os nomes do time que marcou e os do outro (gol contra) */
@@ -4042,7 +4106,10 @@ const A={
     const c=lv.cur;
     if(!c||!c.events.length){
       if(!lv.matchIds.length)return toast('Nada para desfazer');
-      return A.delMatch({dataset:{id:lv.matchIds[lv.matchIds.length-1]}});
+      /* partida rodando sem nada nela: o ↶ por reflexo não pode apagar a anterior em silêncio */
+      const mid=lv.matchIds[lv.matchIds.length-1],m=l.matches.find(x=>x.id===mid);if(!m)return toast('Nada para desfazer');
+      if(!confirm(`Nada para desfazer nesta partida. Apagar a partida anterior (${placarDe(m)}) do histórico?`))return;
+      return A.delMatch({dataset:{id:mid,ok:'1'}});
     }
     const ev=c.events.pop();
     if(ev.type==='goal')c.score[ev.side]--;
@@ -4169,9 +4236,10 @@ const A={
     /* sem modal e sem falar de nível aqui: o que mudou aparece no fim do racha */
     const placar=result==='draw'?`Empate ${m.score[0]}-${m.score[1]}`
       :`${m.names[result]} ${Math.max(...m.score)}-${Math.min(...m.score)}`;
+    /* fica 7 s e leva o "↩ voltar": o Fim errado se desfaz sem rolar até o fim da página */
     toast(giros.length
       ?`${placar} · entra ${giros[0].r.entram.map(id=>nameOf(l,id).split(' ')[0]).join(', ')}`
-      :`${placar} · registrado`);
+      :`${placar} · registrado`,{ms:7000,act:{label:'↩ voltar',a:'voltarPartida'}});
   },
 
   /* ----- contestação e revisão ----- */
@@ -4472,7 +4540,10 @@ const A={
        apagar qualquer outra é revisão, e revisão é do admin */
     const ultimaDoRacha=!!(l.live&&l.live.matchIds.length&&l.live.matchIds[l.live.matchIds.length-1]===m.id);
     if(!ultimaDoRacha&&!souAdmin(l))return toast('Só o admin apaga partida do histórico');
-    if(i!==l.matches.length-1&&!confirm('Apagar esta partida? Os níveis são recalculados do zero.'))return;
+    /* Sempre pergunta — apagar não tem volta e o botão mora ao lado do "Voltar a
+       partida" (que tem). `ok` vem de quem já perguntou (o ↶).               */
+    if(el.dataset.ok!=='1'&&!confirm(ultimaDoRacha?`Apagar a última partida (${placarDe(m)})? Ela sai do histórico e não tem volta.`
+      :`Apagar esta partida (${placarDe(m)})? Os níveis são recalculados do zero.`))return;
     logAdd(l,'delMatch',{mid:m.id,ts0:m.ts,score:m.score,result:m.result,names:m.names,ultimaDoRacha});
     l.matches.splice(i,1);rebuildAll(l);
     if(l.live)l.live.matchIds=l.live.matchIds.filter(x=>x!==m.id);
@@ -4482,8 +4553,14 @@ const A={
 
   /* ----- fim de racha ----- */
   endRacha(){
-    const l=L(),lv=l.live;
-    if(lv.cur&&!confirm('Há uma partida em andamento. Encerrar o racha mesmo assim?'))return;
+    const l=L(),lv=l.live;if(!lv)return;
+    /* Fica ao lado do "Começar partida" na pré-partida: um toque errado não pode
+       fechar a noite sem perguntar — encerrar não tem volta.                 */
+    const n=lv.matchIds.length;
+    const msg=lv.cur?'Há uma partida em andamento — ela será descartada, sem ir para o histórico. Encerrar o racha?'
+      :n?`Encerrar o racha de hoje? ${pl(n,'partida')} registrada${n===1?'':'s'}. Depois disso não dá para voltar.`
+      :'Encerrar o racha sem nenhuma partida registrada?';
+    if(!confirm(msg))return;
     const ms=lv.matchIds.map(id=>l.matches.find(m=>m.id===id)).filter(Boolean);
     if(!ms.length){l.live=null;save();render();return}
     const gols={},net={};
@@ -4805,7 +4882,8 @@ function showScorer(side,contra){
     <div class="ch">${c.lineups[lado].map(id=>`<button class="tp big" data-a="scorer" data-id="${id}" data-own="${contra?1:0}">${esc(nameOf(l,id))}</button>`).join('')}
       <button class="tp big" data-a="scorer" data-id="" style="opacity:.6">pular</button></div></div>`;
   clearTimeout(showScorer._t);
-  showScorer._t=setTimeout(()=>{const s=$('#scorer');if(s)s.innerHTML=''},contra?12000:6000);
+  showScorer._t=setTimeout(()=>{const s=$('#scorer');if(s)s.innerHTML='';
+    if(typeof refetchPendentes==='function')refetchPendentes()},contra?12000:6000);
 }
 /* ==========================================================================
    PINTAR PRESENÇA — segurar num nome e arrastar marca (ou desmarca) todo
@@ -4992,11 +5070,14 @@ document.addEventListener('pointerup',e=>{
 });
 
 /* ---------- delegação de eventos ---------- */
+let goalTapAt=0;
 document.addEventListener('click',e=>{
   if(suppressClick)return;
   const el=e.target.closest('[data-a]');if(!el)return;
   const fn=A[el.dataset.a];if(!fn)return;
   e.stopPropagation();
+  /* toque duplo no placar não é dois gols: ninguém marca dois em meio segundo */
+  if(el.dataset.a==='goal'){const now=Date.now();if(now-goalTapAt<600)return;goalTapAt=now}
   const lg=L();
   if(lg&&ACOES_LANCAR.has(el.dataset.a)&&!podeLancar(lg))return toast('Você é Jogador nesta liga — peça ao admin para virar Lançador');
   if(lg&&ACOES_ADMIN.has(el.dataset.a)&&!souAdmin(lg))return toast('Só o admin mexe nos ajustes da liga');
@@ -5171,7 +5252,9 @@ function applyDelta(id,d){
     else{if(i>=0)l[key][i]=r.data;else l[key].push(r.data)}
     recalc=true})};
   ent('players',d.players);ent('matches',d.matches);ent('sessions',d.sessions);
-  if(d.live)l.live=d.live.data||null;
+  /* live mesclado: o snapshot guarda o que o SERVIDOR tem, para a soma subir na próxima gravação */
+  let liveRemoto=null,mesclou=false;
+  if(d.live){liveRemoto=d.live.data||null;const m=mesclaLive(l.live,liveRemoto,s.live);mesclou=m!==liveRemoto;l.live=m}
   /* Log é append (as outras entidades substituem por id): num conflito, as
      entradas que NÓS gravamos podem voltar no delta — sem dedup elas dobravam
      na tela. E o que ainda não subiu tem que continuar depois do cursor,
@@ -5194,11 +5277,60 @@ function applyDelta(id,d){
      ter edição local esperando para subir */
   const snapDe=(key,rows,facts)=>(rows||[]).forEach(r=>{if(r.deleted)return;const x=l[key].find(y=>y.id===r.id);if(x)s[key][r.id]=JSON.stringify(facts(x))});
   snapDe('players',d.players,playerFacts);snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);
-  if(d.live)s.live=JSON.stringify(l.live||null);
+  if(d.live)s.live=JSON.stringify(mesclou?liveRemoto:(l.live||null));
   if(d.cfg&&Object.keys(d.cfg).length)s.cfg=JSON.stringify(l.cfg);
   if(d.name)s.name=l.name;
   if(logSync!==null)s.log=logSync;
   if(s.log===0&&logSync===null)s.log=(l.log||[]).length;
+}
+/* ---------- dois celulares na mesma partida ----------
+   O `live` é um bloco só. Quando o servidor recusa a gravação porque o outro
+   aparelho gravou antes, substituir o local pelo remoto perdia o que este
+   aparelho acabou de lançar (o gol some, e o toast diz "atualizado por outra
+   pessoa"). Se os dois estão na MESMA partida (mesmo apito de largada), os
+   eventos se somam: união por carimbo, placar/escalação/goleiros refeitos a
+   partir da largada, como o `splitStints` faz. Fora disso (partida acabou
+   no outro, presença, times), vale o remoto — é o que já valia.            */
+function replayCur(c){
+  if(!c||!Array.isArray(c.startLineups))return c;
+  const lin=[c.startLineups[0].slice(),c.startLineups[1].slice()];
+  let gks=(c.startGks||[null,null]).slice();
+  const score=[0,0];let paused=false;
+  c.events.sort((a,b)=>a.t-b.t);
+  for(const ev of c.events){
+    if(ev.type==='goal'){score[ev.side]++;continue}
+    if(ev.type==='pause'){paused=true;continue}
+    if(ev.type==='resume'){paused=false;continue}
+    if(ev.type!=='sub'&&ev.type!=='gk')continue;
+    if(ev.type==='sub'){
+      const k=lin[ev.side].indexOf(ev.out);
+      if(!ev.in){if(k>=0)lin[ev.side].splice(k,1)}
+      else if(k>=0)lin[ev.side][k]=ev.in;else lin[ev.side].push(ev.in);
+    }
+    if(Array.isArray(ev.gks))gks=ev.gks.slice();
+    else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
+    else if(ev.type==='sub'&&gks[ev.side]===ev.out)gks[ev.side]=null;
+    if(ev.type==='gk')aplicaMv(lin,ev.mv||movesGk(lin,gks));
+  }
+  c.lineups=lin;c.gks=gks;c.score=score;c.paused=paused;
+  return c;
+}
+const chaveEv=e=>[e.t,e.type,e.side,e.out,e.in,e.id].map(x=>x===undefined||x===null?'':x).join('|');
+function mesclaLive(local,remoto,snapJson){
+  if(!local||!remoto||!local.cur||!remoto.cur)return remoto;
+  if(JSON.stringify(local)===snapJson)return remoto;            // nada pendente aqui
+  if(local.cur.startedAt!==remoto.cur.startedAt)return remoto;  // partidas diferentes
+  if(!Array.isArray(local.cur.startLineups)||!Array.isArray(remoto.cur.startLineups))return remoto;
+  const out=JSON.parse(JSON.stringify(remoto));
+  const vistos=new Set(out.cur.events.map(chaveEv));
+  let novos=0;
+  (local.cur.events||[]).forEach(e=>{const k=chaveEv(e);if(!vistos.has(k)){vistos.add(k);out.cur.events.push(JSON.parse(JSON.stringify(e)));novos++}});
+  /* autor de gol marcado aqui e ainda não lá: o gol é o mesmo, leva o autor */
+  (local.cur.events||[]).forEach(e=>{if(e.type!=='goal'||!e.pid)return;
+    const r=out.cur.events.find(x=>x.type==='goal'&&x.t===e.t&&x.side===e.side);if(r&&!r.pid){r.pid=e.pid;r.own=!!e.own}});
+  if(!novos)return out;
+  replayCur(out.cur);
+  return out;
 }
 /* compat: quem ainda chama aplicaRemoto (import antigo) recebe o documento inteiro como delta */
 function aplicaRemoto(id,data,name,code){
@@ -5271,7 +5403,9 @@ function ocupado(){
   if(['INPUT','TEXTAREA','SELECT'].indexOf(ae.tagName)>=0)return true;
   if(typeof drag!=='undefined'&&drag&&drag.active)return true;
   const sh=$('#sheet');
-  return !!(sh&&sh.classList.contains('on'));
+  if(sh&&sh.classList.contains('on'))return true;
+  const sc=$('#scorer');                     // tirinha "quem fez?" aberta: um delta a apagaria
+  return !!(sc&&String(sc.innerHTML||'').trim());
 }
 
 /* Aviso que chegou enquanto a pessoa digitava ou tinha uma folha aberta não se

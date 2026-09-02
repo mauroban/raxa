@@ -1550,6 +1550,51 @@ quadra continua ineditável); apagar o histórico junto (partidas são fatos, D-
 reaplica) e o registro de correções em `index.html` · `DOCUMENTACAO.md` §"Tirar o palpite" ·
 `scripts/smoke.py` ("tirar o palpite de quem ja jogou").
 
+### D-92 · Toque errado fora da partida pergunta; dois celulares somam; o celular avisa quando o tempo bate
+**02/09/2026.** Revisão do racha ao vivo pensando em erro e pressa, momento a momento. **(1)**
+Tudo que não tem volta e mora perto de um botão frequente passa a **perguntar**: "Encerrar racha"
+(ficava ao lado do "Começar partida" e fechava a noite em um toque, sem volta), "Desfazer a última"
+(ao lado do "Voltar a partida", que tem volta; a pergunta traz o placar), o `↶` numa partida ainda
+sem eventos (caía em apagar a partida anterior, sem confirmar) e "Cancelar racha" com presença
+marcada. O Fim continua sem confirmação (D-48): ganha um **toast de 7 s com "↩ voltar"**, e começar
+outra partida fecha o toast. **(2)** Placar: **toque duplo não é dois gols** (0,6 s, na camada de
+clique — o motor e os testes seguem chamando `goal` à vontade) e o `−` fica numa **zona morta**
+(`data-a="nada"`): errar por pouco não vira gol. **(3)** Bateu o **tempo**: vibra e apita, uma vez
+por partida — a tela está no chão da quadra. O alvo de gols não apita, é um toque da própria pessoa.
+O `AudioContext` nasce no "Começar partida" (gesto do usuário) para o navegador liberar o som.
+**(4)** Cancelar partida devolve o rodízio de goleiros (foto `cur.pre` tirada antes de `commitGks`)
+e deixa o mesmo confronto sugerido. **(5)** "Foi embora" para quem **ainda não jogou** vira uma
+escolha: *esteve no racha* (conta presença, D-49) ou *marquei errado* (`leaveDo` com `modo:'nao'`,
+não entra em `leftIds`); quem já jogou sai contando, sem pergunta nova. **(6)** **Dois celulares na
+mesma partida**: no conflito de versão o `live` local era substituído pelo remoto e a ação
+recém-lançada sumia em silêncio. Agora `mesclaLive` soma os eventos da partida corrente quando as
+duas têm a mesma largada (`startedAt`): união por chave (`t|type|side|out|in|id`), placar,
+escalação, goleiros e pausa refeitos por `replayCur` (o mesmo caminho do `splitStints`), autor de
+gol marcado só aqui levado junto; o snapshot guarda o remoto para a soma subir na gravação seguinte.
+Partida encerrada no outro aparelho prevalece; presença e times seguem "último que gravou". **(7)**
+A tirinha "quem fez?" conta como tela ocupada: um delta não a apaga; quando ela some, o que ficou
+pendente é buscado.
+**Por quê:** a tela da partida é usada 12 vezes por noite, em pé, com uma mão, e o Fim é de propósito
+um toque só. O que faltava era a proteção do que fica **em volta** dele: os toques errados mais caros
+eram justamente os sem confirmação e sem volta. E o cenário de dois celulares não era exótico — bastava
+uma folha aberta (o refetch espera ela fechar) para o gol do outro lado apagar o daqui.
+**Descartado:** confirmação no Fim (D-48); mover "Encerrar racha" para os Ajustes (a noite acaba na
+quadra, tem que estar ali — só precisa perguntar); trava de "quem está lançando" (um celular só) para
+resolver o conflito (a soma resolve o caso real sem impedir os dois de lançar); mesclar presença e
+times (fora da partida não há eventos com carimbo; substituir é previsível); espelho em
+`localStorage` para funcionar sem rede (é o desenho offline com fila, §8 da doc — decisão à parte);
+"Lançador corrige resultado das partidas de hoje" (RF-06.2c/D-22: correção é revisão, e revisão é
+do admin — vale discutir, mas não é "claramente melhoria"); fim retroativo no momento do gol
+decisivo (muda a duração da partida por conta própria).
+**Onde:** `endRacha`, `cancelRacha`, `delMatch` (`ok`), `undo`, `cancelMatch`/`startMatch` (`pre`,
+`preparaApito`), `leaveRacha`/`leaveDo`, `toast(msg,{ms,act})`/`fechaToast`, `avisaAlvo` em
+`tickClock`, o debounce no dispatcher de clique, `.minuszone`/`nada`, `ocupado`/`showScorer`,
+`mesclaLive`/`replayCur`/`chaveEv` em `applyDelta` — tudo em `index.html` · `smoke.py` ("toques que
+nao tem volta perguntam antes", "o fim deixa um toast com voltar", "marcado por engano sai sem contar
+presenca", "cancelar a partida descarta tudo") · `sync.py` ("dois celulares na mesma partida") ·
+DOCUMENTACAO §4.3/§4.4/§8 · RF-04.4b/04.6/04.7/06.2b/06.6/06.11/06.11c/06.14/06.18/06.19 ·
+BANCO-DE-DADOS §"concorrência".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
