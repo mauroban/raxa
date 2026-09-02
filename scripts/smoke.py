@@ -734,7 +734,10 @@ step('estabilidade nao e mais opcao da liga',()=>{
   if(L().cfg.rankMargin!==RANK_MARGIN||L().cfg.protectMatches!==PROTECT)throw new Error('margem/protecao fora do padrao fixo');
 });
 step('alternar contestacao',()=>A.toggleDispute());
-step('ranking de goleiro',()=>{S.ui.tab='ranking';A.rankRole({dataset:{v:'G'}});render();A.rankRole({dataset:{v:'L'}})});
+step('ranking de goleiro',()=>{S.ui.tab='ranking';A.rankRole({dataset:{v:'G'}});render();
+  const l=L(),novoGk=mkPlayer(l,'Luva Nova',null,true);l.players.push(novoGk);
+  if(viewEscada(l).indexOf('Luva Nova')<0)throw new Error('quem costuma ir ao gol e ainda nao pegou devia aparecer na escada de goleiro, em "sem nivel ainda"');
+  l.players.pop();A.rankRole({dataset:{v:'L'}})});
 step('patentes so para o admin',()=>{
   A.setVis({dataset:{v:'admin'}});S.ui.tab='ranking';render();
   A.setVis({dataset:{v:'todos'}});render();

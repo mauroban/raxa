@@ -2681,7 +2681,8 @@ function viewEscada(liga){
      precisa da ordem verdadeira antes de o rótulo existir), quantidade de
      partidas para os outros — que é o que a linha mostra ali. Quem ainda não
      jogou está todo no Elo de entrada, e aí o desempate é o nome.            */
-  const semNivel=liga.players.filter(p=>!temPatente(liga,p,role)&&(rt(p,role).games>0||role==='L'))
+  /* na escada de goleiro, quem costuma ir ao gol aparece em "sem nível ainda" mesmo antes de pegar */
+  const semNivel=liga.players.filter(p=>!temPatente(liga,p,role)&&(rt(p,role).games>0||role==='L'||(role==='G'&&p.gk)))
     .sort((a,b)=>(porElo?rt(b,role).elo-rt(a,role).elo:rt(b,role).games-rt(a,role).games)||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
