@@ -5006,6 +5006,8 @@ const A={
       <div class="tiny muted" style="margin:12px 2px 0;line-height:1.5">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Um toque salva e passa para a próxima; tocar de novo na mesma tira.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
       <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui; toque para abrir a ficha</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
+    /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
+    if(el&&el.dataset&&el.dataset.i!==undefined){const sh=$('#sheet');if(sh){try{sh.scrollTo({top:0,behavior:'smooth'})}catch(e){sh.scrollTop=0}}}
   },
   opNav(el){
     const d=+el.dataset.d||1,n=OPV.ordem.length;if(!n)return;
