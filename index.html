@@ -586,6 +586,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .card.pulse{animation:oppulse 2.2s ease-out infinite;border-color:color-mix(in srgb,var(--lime) 50%,var(--line))}
 #nav button{position:relative}
 .navdot{position:absolute;top:7px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--lime);animation:oppulse 2.2s ease-out infinite}
+.segn{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:#1a1200;font-size:11px;font-weight:800;margin-left:4px;vertical-align:1px}
 .opnav{display:flex;gap:8px;margin-top:12px;align-items:center}
 .oplist{display:grid;gap:4px}
 .oprowb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:var(--fill);border-radius:11px;padding:9px 11px;color:var(--chalk);font:inherit;cursor:pointer;min-height:42px}
@@ -734,11 +735,15 @@ function consolida(liga){
    posição em que joga (goleiro no gol, o resto na linha) — é o que faz o
    card e a aba pulsarem quando há muita avaliação pendente               */
 const OP_MUITOS=5;
-function opPendentes(liga){
-  if(!vePat(liga)||!podeOpinar(liga))return 0;
-  const eu=euId(liga);if(!eu)return 0;
-  return liga.players.filter(p=>p.id!==eu&&!(rt(p,p.gk?'G':'L').op||[]).some(o=>o.by===eu)).length;
+const jogaEm=(p,r)=>r==='G'?(p.gk||p.G.games>0):(!p.gk||p.L.games>0);
+function opPendentesPor(liga){
+  const out={L:0,G:0};
+  if(!vePat(liga)||!podeOpinar(liga))return out;
+  const eu=euId(liga);if(!eu)return out;
+  liga.players.forEach(p=>{if(p.id===eu)return;['L','G'].forEach(r=>{if(jogaEm(p,r)&&!(rt(p,r).op||[]).some(o=>o.by===eu))out[r]++})});
+  return out;
 }
+const opPendentes=liga=>{const o=opPendentesPor(liga);return o.L+o.G};
 function anulaOpinioes(liga,pid){
   let n=0;
   (liga.players||[]).forEach(p=>['L','G'].forEach(k=>{const tr=p[k];if(!tr||!Array.isArray(tr.op))return;
@@ -2629,13 +2634,13 @@ function opCard(liga){
   if(!vePat(liga)||!podeOpinar(liga))return '';
   const eu=euId(liga);if(!eu)return '';
   const r=S.ui.rankRole==='G'?'G':'L';
-  const outros=liga.players.filter(p=>p.id!==eu),n=outros.filter(p=>(rt(p,r).op||[]).some(o=>o.by===eu)).length;
-  if(!outros.length)return '';
-  const muitos=opPendentes(liga)>=OP_MUITOS;      // muita gente esperando a sua opinião: o card pulsa
-  return `<div class="card ${muitos?'pulse':''}" style="margin-bottom:10px"><div class="row" data-a="opSheet" style="cursor:pointer">
+  if(liga.players.length<2)return '';
+  const pend=opPendentesPor(liga),tot=pend.L+pend.G,muitos=tot>=OP_MUITOS;   // muita gente esperando a sua opinião: o card pulsa
+  const partes=[pend.L?`<b style="color:var(--gold)">${pend.L}</b> na linha`:'',pend.G?`<b style="color:var(--gold)">${pend.G}</b> no gol`:''].filter(Boolean);
+  return `<div class="card ${muitos?'pulse':''}" style="margin-bottom:10px"><div class="row" data-a="opSheet" data-go="1" style="cursor:pointer">
     <div style="min-width:0"><div class="k">Minhas opiniões sobre nível</div>
-      <div class="tiny muted" style="margin-top:3px">${n} de ${outros.length} ${r==='G'?'no gol':'na linha'}${n<outros.length?' — quanto mais gente opina, melhor a entrada':''}</div></div>
-    <div class="sp" style="color:var(--mute);font-size:18px">›</div></div></div>`;
+      <div class="tiny muted" style="margin-top:3px">${tot?`Faltam ${partes.join(' · ')} — toque para dar`:'Todas dadas ✓ — volte quando entrar gente nova'}</div></div>
+    <div class="sp" style="color:${tot?'var(--gold)':'var(--mute)'};font-size:18px">›</div></div></div>`;
 }
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
@@ -4930,7 +4935,11 @@ const A={
   opSheet(el){
     const l=L();if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
     const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
-    const r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
+    const pend=opPendentesPor(l);
+    let r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
+    /* vindo do card ("toque para dar"): abre na posição em que falta opinião,
+       na primeira pessoa pendente — a pessoa é guiada até o último passo   */
+    if(el&&el.dataset&&el.dataset.go){if(!pend[r]&&pend[r==='G'?'L':'G'])r=r==='G'?'L':'G';S.ui.opRole=r;OPV.ordem=[]}
     const minha=p=>(rt(p,r).op||[]).find(o=>o.by===eu);
     /* a nota é dada onde a pessoa JOGA: na aba Linha só aparece quem joga na
        linha; na aba Gol, só quem vai ao gol (costuma, ou já pegou)         */
@@ -4957,8 +4966,9 @@ const A={
     const p=OPV.i>=0?ordem[OPV.i]:null;
     let cartao;
     if(!ordem.length)cartao=`<div class="opcard"><div class="tiny muted">Ninguém para opinar ${r==='G'?'no gol — quem vai ao gol aparece aqui':'na linha'}.</div></div>`;
-    else if(!p)cartao=`<div class="opcard done"><div class="big">✓</div><div class="nm">Todas as suas opiniões ${r==='G'?'no gol':'na linha'} estão dadas</div>
-      <div class="tiny muted" style="margin-top:6px;line-height:1.5">Volte aqui quando alguém novo entrar — ou toque num nome abaixo para rever.</div></div>`;
+    else if(!p){const o=r==='G'?'L':'G';cartao=`<div class="opcard done"><div class="big">✓</div><div class="nm">Todas as suas opiniões ${r==='G'?'no gol':'na linha'} estão dadas</div>
+      ${pend[o]?`<button class="btn pri" data-a="opRole" data-v="${o}" style="margin-top:12px">Faltam ${pend[o]} ${o==='G'?'no gol':'na linha'} — ir para lá ›</button>`
+        :'<div class="tiny muted" style="margin-top:6px;line-height:1.5">Volte aqui quando alguém novo entrar — ou toque num nome abaixo para rever.</div>'}</div>`}
     else{
       const tr=rt(p,r),m=minha(p),ops=opsAtivas(l,tr).filter(o=>o.by!==eu&&o.e!==null),tem=temPatente(l,p,r);
       const outrasOp=ops.length?ops.map(o=>`${o.by?esc(nameOf(l,o.by).split(' ')[0]):'cadastro'} <b>${esc(patName(l,stepOf(o.e)))}</b>`).join(' · '):'';
@@ -4989,7 +4999,7 @@ const A={
     openSheet(`<h2>Minhas opiniões</h2>
       <div class="row" style="margin-top:2px"><div class="tiny muted">${n} de ${fila.length} ${r==='G'?'no gol':'na linha'}</div><div class="sp tiny" style="${faltam?'color:var(--gold)':'color:var(--mute)'}">${faltam?'faltam '+faltam:'todas dadas ✓'}</div></div>
       <div class="opbar"><i style="width:${fila.length?Math.round(100*n/fila.length):0}%"></i></div>
-      <div class="seg" style="margin-bottom:12px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol</button></div>
+      <div class="seg" style="margin-bottom:12px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha${pend.L?` <span class="segn">${pend.L}</span>`:''}</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol${pend.G?` <span class="segn">${pend.G}</span>`:''}</button></div>
       ${cartao}
       <div class="tiny muted" style="margin:12px 2px 0;line-height:1.5">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Um toque salva e passa para a próxima; tocar de novo na mesma tira.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>

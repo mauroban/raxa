@@ -1687,7 +1687,9 @@ fim da lista, apagados e sem cartão (tocar abre a ficha). A
 primeira versão (lista com escada de 5 botões por pessoa e uma legenda em texto no topo) foi
 descartada: repetitiva e cansativa de olhar. Sexta opção **"Não sei"** (`e` nulo: resposta dada,
 fora da conta — ninguém é cobrado por chutar); com **5+** pessoas esperando a sua opinião
-(`opPendentes`, cada uma na posição em que joga), o card e a aba Jogadores **pulsam** devagar. O cadastro pede "sua
+(`opPendentesPor`, por posição), o card e a aba Jogadores **pulsam** devagar — e guiam até o último
+passo: o card diz onde falta, o toque abre na posição certa e na primeira pessoa pendente, o
+seletor Linha/Gol carrega a contagem e o cartão final aponta para a outra posição. O cadastro pede "sua
 opinião" no lugar de "nível de entrada",
 com o autor registrado. "Editor" vira **Moderador** (`souModerador`, `PAPEL`, migração do papel
 gravado). Junção de cadastros (D-93) move as opiniões dadas pelo repetido para quem fica e as

@@ -564,6 +564,14 @@ step('minhas opinioes: a lista de quem lanca, um toque por pessoa',()=>{
   if(opPendentes(l)<OP_MUITOS)throw new Error('com quase todo mundo pendente, opPendentes devia passar do limite');
   S.ui.tab='ranking';render();
   if(!/class="card pulse"/.test(els['#app'].innerHTML))throw new Error('card de opinioes devia pulsar com muita avaliacao pendente');
+  if(!/Faltam <b/.test(els['#app'].innerHTML))throw new Error('o card devia dizer onde falta');
+  /* vindo do card: abre na posicao em que falta e na primeira pessoa pendente */
+  S.ui.opRole='G';l.players.forEach(x=>{if(x.id!==eu&&jogaEm(x,'G')&&!(x.G.op||[]).some(o=>o.by===eu))x.G.op=(x.G.op||[]).concat([{by:eu,e:null,ts:1}])});
+  A.opSheet({dataset:{go:'1'}});
+  if(S.ui.opRole!=='L')throw new Error('sem pendencia no gol, devia abrir na linha');
+  const primeiro=P(l,OPV.ordem[OPV.i]);if(!primeiro||(primeiro.L.op||[]).some(o=>o.by===eu))throw new Error('devia abrir na primeira pessoa pendente');
+  if(!/class="segn"/.test(els['#sheet'].innerHTML))throw new Error('a aba devia mostrar quantas faltam');
+  l.players.forEach(x=>{if(x.G&&x.G.op)x.G.op=x.G.op.filter(o=>!(o.by===eu&&o.e===null))});
   A.opSheet();
   A.opSheet({dataset:{i:'1'}});if(OPV.i!==1)throw new Error('ir para alguem pela lista nao funcionou');
   A.opRole({dataset:{v:'G'}});if(!/🧤 Gol/.test(els['#sheet'].innerHTML))throw new Error('trocar para gol nao redesenhou');
