@@ -1509,6 +1509,47 @@ navegação).
 `posEmpate` e os cinco rankings numerados (`index.html`) · `scripts/test.py` (posEmpate) ·
 `DOCUMENTACAO.md` §5.
 
+### D-90 · Nível de goleiro: a régua é a da linha, e a recomendação é NÃO dar palpite
+**01/09/2026.** Dificuldade real do dono: "não sei como goleiro se compara com jogador de linha"
+ao dar o palpite. A resposta conceitual: o Elo do goleiro entra na média do time como o de
+qualquer um (`lvlOf`), então o nível dele já É na régua da linha — mede o quanto o time ganha
+com ele, não a qualidade dele entre goleiros. Como "trocá-lo por um linha de que nível deixaria
+o time igual?" é pergunta difícil, medimos a alternativa na régua de sempre
+(`scripts/converge.py`-família): UM jogador **sem palpite** (entra 1500, K 64 assentando) numa
+liga calibrada, com cansaço: frequente chega a ±1 divisão em 53% no 1º mês, 69% no 3º, 79% no
+6º, sem viés (+0,1 degrau) — contra 24% → 43% de quem entra com palpite errado em uma patente.
+Esporádico (1 em 3): 40% → 56%, também melhor que o palpite errado. Conclusão: **na dúvida
+(típico em goleiro), sem nível é melhor que chute** — e virou a recomendação escrita: dica no
+painel de nível da ficha (só quando a trilha é a de goleiro) e no cadastro.
+Medida específica do goleiro de rodízio (`scripts/converge_gk.py`, motor real: liga inteira com
+palpite exato, goleiro entra sem nível e joga as 12 partidas da noite, ora num gol, ora no
+outro): ±1 divisão em 47% no 1º mês, 63% no 3º, 70–71% do 6º em diante — à frente do jogador
+de linha sem palpite no começo (41% no 1º mês), porque joga todas as partidas da noite, e no
+mesmo teto depois: a vantagem do rodízio é VOLUME (12 partidas/noite), não informação por
+partida — o sinal dele dilui na média do time como o de qualquer um. Goleiro que vem 1 racha em
+3: 38% → 67% no 9º mês. Goleiro muito acima/abaixo de Prata (≥1 patente) demora mais: 47% só
+no 3º mês — mais um motivo para o palpite errado não ficar preso (D-91).
+**Descartado:** escada de goleiro com régua própria "GK-Ouro ≠ Ouro" (quebraria a montagem de
+times, que soma tudo numa média só); multiplicador de impacto do goleiro (não há dado medido).
+**Onde:** dica em `pSheet` (painel de nível, role G) e na folha de novo jogador (`index.html`) ·
+`DOCUMENTACAO.md` §3.7 · `scripts/converge_gk.py` · números da simulação neste registro.
+
+### D-91 · Tirar o palpite vale para qualquer um — o histórico reaplica sem ele
+**01/09/2026.** "Tirar o nível — calibrar do zero" só existia para quem nunca tinha jogado;
+agora tirar o palpite vale para todos. A dor é a da D-90: o palpite de goleiro é o mais difícil
+de dar, e o palpite errado dado no cadastro ficava preso — a única correção era chutar OUTRA
+entrada. Agora o admin desfaz o chute: `def` desliga, `base` volta ao padrão e o histórico
+reaplica por cima (`rebuildAll`) com o K de quem calibra sem palpite (64 assentando) — as
+partidas mandam mais, e a própria D-90 mediu que sem palpite converge melhor que palpite errado.
+A prévia do hoje aparece antes de salvar, como em qualquer correção de entrada (D-86); quem
+ainda está em calibração volta a "sem nível" até completá-la. No registro de correções:
+"palpite removido — histórico reaplicado".
+**Descartado:** manter a trava "só quem não jogou" (protegia um palpite, não um fato — fato de
+quadra continua ineditável); apagar o histórico junto (partidas são fatos, D-74).
+**Onde:** `pSheet` (botão e prévia), `hojeCom`/`pdRank` (entrada 'none'), `pdSave` (ramo none
+reaplica) e o registro de correções em `index.html` · `DOCUMENTACAO.md` §"Tirar o palpite" ·
+`scripts/smoke.py` ("tirar o palpite de quem ja jogou").
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

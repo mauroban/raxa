@@ -1266,11 +1266,14 @@ function rebuildAll(liga){
    estava. Existe porque a relação entrada → hoje não é monotônica (baixar a
    entrada pode SUBIR o hoje: as vitórias do histórico passam a valer mais),
    e o admin precisa ver o resultado antes de salvar, não depois.
-   Quem nunca jogou: hoje = entrada.                                        */
+   Quem nunca jogou: hoje = entrada. Entrada 'none' (tirar o palpite, D-91):
+   reaplica sobre a entrada padrão com def desligado — o K de calibração.  */
 function hojeCom(liga,p,r,entrada){
-  if(!rt(p,r).games)return entrada;
+  if(!rt(p,r).games)return entrada==='none'?null:entrada;
   const base0=rt(p,r).base,def0=rt(p,r).def;
-  rt(p,r).base=stepMid(entrada);rt(p,r).def=true;rebuildAll(liga);   // rebuildAll troca o objeto da trilha: sempre rt() de novo
+  if(entrada==='none'){rt(p,r).base=liga.cfg.startElo;rt(p,r).def=false}
+  else{rt(p,r).base=stepMid(entrada);rt(p,r).def=true}
+  rebuildAll(liga);   // rebuildAll troca o objeto da trilha: sempre rt() de novo
   const res=rt(p,r).rank;
   rt(p,r).base=base0;rt(p,r).def=def0;rebuildAll(liga);
   return res;
@@ -3713,7 +3716,7 @@ const A={
         <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
-        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando.</small></div>
+        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando. Goleiro usa a mesma régua da linha (o quanto o time ganha com ele) — na dúvida, deixe sem nível (dá para dar ou tirar o palpite depois, na ficha).</small></div>
         <div class="ladder4 six">
           <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i><span>Sem nível</span></button>
           ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -4522,7 +4525,7 @@ const A={
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
     const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
     /* cards de cima e "hoje" do painel: a prévia do que a escolha produz (D-86) */
-    const rankDe=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'&&PD.res[r]!==null?PD.res[r]:rt(p,r).rank;
+    const rankDe=r=>PD.rank[r]!==null&&PD.res[r]!==null?PD.res[r]:rt(p,r).rank;
     /* o seletor edita o nível de ENTRADA (D-74): quem já jogou parte do base;
        quem nunca jogou tem base === elo e dá no mesmo                       */
     const rankSel=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(rt(p,r).games?stepOf(rt(p,r).base):rt(p,r).rank);
@@ -4530,7 +4533,7 @@ const A={
     const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
     const corAv=ver&&temPatente(l,p,'L')?patVars(rankDe('L')):ver&&temPatente(l,p,'G')?patVars(rankDe('G')):'--pc:var(--mute)';
     const divAv=ver&&temPatente(l,p,'L')?divCls(rankDe('L')):ver&&temPatente(l,p,'G')?divCls(rankDe('G')):'';
-    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=(temPatente(l,p,r)||PD.rank[r]!==null)&&!zerado(r);
+    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=zerado(r)?PD.res[r]!==null&&!calibrando(l,p,t):(temPatente(l,p,r)||PD.rank[r]!==null);
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
         <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
         ${tem?patBadge(l,rankDe(r),'big'):'<span class="none">sem nível</span>'}
@@ -4563,12 +4566,13 @@ const A={
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
       ${ver&&adm?`<div class="ps-panel">
         <div class="k">Nível de entrada (o palpite) ${role==='G'?'no gol':'na linha'}</div>
+        ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele — Ouro no gol ajuda a vencer como um Ouro de linha. Na dúvida, deixe sem nível: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90) — e um palpite dado pode ser tirado depois, aqui mesmo.</div>`:''}
         ${(()=>{const rv=rankingSurpresa(l,role),x=rv.pos[p.id],d=revisar(l,p,role,rv);if(!x)return '';
           return `<div class="tiny ${d?'':'muted'}" style="${d?'color:var(--gold);':''}margin:-4px 0 8px;line-height:1.4">${d?revisarTxt(d,x,rv)+(d>0?' Os resultados':' Os resultados')+(role==='G'?' no gol':' na linha')+' vêm consistentemente '+(d>0?'acima':'abaixo')+' do que o nível prevê.':`Nos últimos ${rv.rachas} rachas: ${x.pos}º de ${rv.total} em render acima do esperado (${x.n} partidas).`}</div>`})()}
         <div class="ladder4">
-          ${l.cfg.patNames.map((n,k)=>`<button class="${patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
+          ${l.cfg.patNames.map((n,k)=>`<button class="${!zerado(role)&&patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>
-        ${(()=>{const t=rt(p,role),ed=PD.rank[role]!==null&&PD.rank[role]!=='none',base=stepOf(t.base);
+        ${(()=>{const t=rt(p,role),ed=PD.rank[role]!==null,base=stepOf(t.base);
           const mudouHoje=ed&&PD.res[role]!==null&&PD.res[role]!==t.rank;
           return `<div class="lvedit">
           <div class="lbl">ENTRADA</div>
@@ -4581,9 +4585,9 @@ const A={
           ${t.games?`<div class="lbl">HOJE</div>
           <div class="ctl">${patBadge(l,t.rank)}${mudouHoje?`<span class="arr">→</span>${patBadge(l,PD.res[role])}<span class="sub">ao salvar</span>`:'<span class="sub">não se edita</span>'}</div>`:''}
           </div>`})()}
-        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:10px;line-height:1.5">Você edita a <b>entrada</b> (o palpite). O <b>hoje</b> sai das ${pl(rt(p,role).games,'partida','partidas')} reaplicadas por cima dela — pode andar diferente da entrada, porque cada partida passa a valer diferente. ${PD.rank[role]!==null&&PD.rank[role]!=='none'?`Com a entrada em <b>${esc(rankLabel(l,PD.rank[role]))}</b>, hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>.`:''} Fato de quadra ninguém edita à mão.</div>`:''}
-        ${!rt(p,role).games&&(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?'Vai calibrar do zero':'Tirar o nível — calibrar do zero'}</button>
-        <div class="tiny muted" style="margin-top:6px">Só dá para zerar quem ainda não jogou ${role==='G'?'no gol':'na linha'}. Ele volta a "sem nível" até completar a calibração.</div>`:''}
+        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:10px;line-height:1.5">Você edita a <b>entrada</b> (o palpite). O <b>hoje</b> sai das ${pl(rt(p,role).games,'partida','partidas')} reaplicadas por cima dela — pode andar diferente da entrada, porque cada partida passa a valer diferente. ${zerado(role)?`Sem o palpite, o histórico reaplica sobre a entrada padrão${PD.res[role]!==null?` e hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>`:''}.`:PD.rank[role]!==null?`Com a entrada em <b>${esc(rankLabel(l,PD.rank[role]))}</b>, hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>.`:''} Fato de quadra ninguém edita à mão.</div>`:''}
+        ${(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?(rt(p,role).games?'O palpite sai ao salvar':'Vai calibrar do zero'):(rt(p,role).games?'Tirar o palpite — valem só as partidas':'Tirar o nível — calibrar do zero')}</button>
+        <div class="tiny muted" style="margin-top:6px">${rt(p,role).games?`Sem palpite, o histórico ${role==='G'?'no gol':'na linha'} reaplica sobre a entrada padrão com o K maior de quem está calibrando — as partidas mandam mais.`:`Ele volta a "sem nível" até completar a calibração.`}</div>`:''}
       </div>`:''}
       <div style="height:6px"></div>
       <div class="trow">
@@ -4608,8 +4612,7 @@ const A={
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
   pdRank(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view;if(!p)return;
-    if(el.dataset.s==='none'){PD.rank[r]='none';PD.res[r]=null}
-    else pdEntrada(l,p,r,+el.dataset.s);
+    pdEntrada(l,p,r,el.dataset.s==='none'?'none':+el.dataset.s);
     A.pSheet({dataset:{id:PD.id}})},
   pdBump(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view,tr=rt(p,r);if(!p)return;
     const cur=PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(tr.games?stepOf(tr.base):tr.rank);
@@ -4664,10 +4667,12 @@ const A={
     ['L','G'].forEach(r=>{
       if(d.rank[r]===null)return;
       const tr=rt(p,r);
-      if(d.rank[r]==='none'){                            // zera: volta ao padrão e sem nível até calibrar
-        if(tr.games)return toast('Só dá para zerar quem ainda não jogou');
-        logAdd(l,'rank',{pid:p.id,role:r,from:tr.rank,to:null,fromElo:Math.round(tr.elo),toElo:l.cfg.startElo});
-        tr.base=l.cfg.startElo;tr.elo=l.cfg.startElo;tr.rank=stepOf(tr.elo);tr.peak=tr.rank;tr.protect=0;tr.def=false;
+      if(d.rank[r]==='none'){                            // tira o palpite: entrada padrão, def desligado (D-91)
+        if(!tr.def)return;                               // não tinha palpite — nada a desfazer
+        logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:tr.games?d.res[r]:null,fromElo:Math.round(tr.elo),toElo:l.cfg.startElo},tr.games?{desde:'entrada',entrada:null}:{}));
+        tr.base=l.cfg.startElo;tr.def=false;
+        if(tr.games)reaplicar=true;                      // histórico reaplica sem palpite (K de calibração)
+        else{tr.elo=l.cfg.startElo;tr.rank=stepOf(tr.elo);tr.peak=tr.rank;tr.protect=0}
         return;
       }
       const sN=d.rank[r],target=stepMid(sN);
@@ -5702,7 +5707,7 @@ function logCard(liga){
   const nome=pid=>{const p=P(liga,pid);return p?p.name:'(removido)'};
   const linha=e=>{
     let o=LOG_TXT[e.a]||e.a;
-    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.desde==='entrada'?(e.entrada!==undefined?` (entrada ${esc(rankLabel(liga,clamp(e.entrada,0,TOP)))} — histórico reaplicado)`:' (desde a entrada — histórico reaplicado)'):''}`;
+    if(e.a==='rank')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null?'sem nível (calibrar do zero)':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.desde==='entrada'?(e.entrada===null?' (palpite removido — histórico reaplicado)':e.entrada!==undefined?` (entrada ${esc(rankLabel(liga,clamp(e.entrada,0,TOP)))} — histórico reaplicado)`:' (desde a entrada — histórico reaplicado)'):''}`;
     else if(e.a==='result')o+=`: ${e.from==='draw'?'empate':'time '+(e.from+1)} → ${e.to==='draw'?'empate':'time '+(e.to+1)}`;
     else if(e.a==='role')o+=` de ${esc(nome(e.pid))}: ${PAPEL[e.from]||'Jogador'} → ${PAPEL[e.to]||'Jogador'}`;
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;

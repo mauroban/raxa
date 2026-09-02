@@ -410,6 +410,22 @@ step('corrigir nivel de quem ja jogou mexe no BASE, mostra a previa do hoje e re
   const lg=l.log[l.log.length-1]||{};
   if(p.L.games>0&&(lg.desde!=='entrada'||lg.entrada!==10||lg.to!==prev))throw new Error('log nao guardou hoje e entrada: '+JSON.stringify(lg));
 });
+step('tirar o palpite de quem ja jogou reaplica sem palpite (D-91)',()=>{
+  const l=L(),p=l.players.find(x=>x.L.games>0&&x.L.def);
+  if(!p)throw new Error('preciso de alguem com partidas e palpite');
+  const prev=hojeCom(l,p,'L','none');
+  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'none'}});
+  if(PD.rank.L!=='none'||PD.res.L!==prev)throw new Error('ficha nao guardou a previa do tirar palpite');
+  if(!/O palpite sai ao salvar/.test(els['#sheet'].innerHTML))throw new Error('botao de tirar palpite nao refletiu o estado');
+  A.pdSave();
+  if(p.L.def)throw new Error('def deveria desligar');
+  if(Math.round(p.L.base)!==l.cfg.startElo)throw new Error('base nao voltou ao padrao: '+p.L.base);
+  if(p.L.rank!==prev)throw new Error('hoje nao bateu com a previa: '+p.L.rank+' vs '+prev);
+  const lg=l.log[l.log.length-1]||{};
+  if(lg.desde!=='entrada'||lg.entrada!==null||lg.to!==prev)throw new Error('log nao marcou palpite removido: '+JSON.stringify(lg));
+  const e1=p.L.elo;rebuildAll(l);
+  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois de tirar o palpite');
+});
 step('corrigir nivel de quem NUNCA jogou entra direto no degrau',()=>{
   const l=L(),p=l.players.find(x=>!x.L.games);
   if(!p)return;
