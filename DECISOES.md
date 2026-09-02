@@ -1677,7 +1677,12 @@ lado, o aviso de divergência, a lista de opiniões com nome (todo mundo vê; o 
 dos outros) e, para quem lança, a escada "Sua opinião". Na aba Jogadores, o card **Minhas
 opiniões** (n de N) abre a lista de todo mundo: uma linha por pessoa, escada de 5 embaixo, quem
 ainda não tem a sua opinião marcado em dourado, linha/gol num seletor, ordem alfabética estável
-(a linha não pula debaixo do dedo). O cadastro pede "sua opinião" no lugar de "nível de entrada",
+(a linha não pula debaixo do dedo); no topo, uma barra de progresso e a **legenda do que cada
+patente representa** em termos do que o time ganha com a pessoa — o texto que corrige o olhar do
+drible — no lugar de instruções de uso; os botões sem opinião ficam quietos (sem borda, texto
+apagado) e o escolhido acende na cor; a prioridade é dar nota onde a pessoa joga — na aba Linha os
+goleiros vão para o fim, apagados e fora da conta, e na aba Gol o contrário. O cadastro pede "sua
+opinião" no lugar de "nível de entrada",
 com o autor registrado. "Editor" vira **Moderador** (`souModerador`, `PAPEL`, migração do papel
 gravado). Junção de cadastros (D-93) move as opiniões dadas pelo repetido para quem fica e as
 devolve ao separar (`opsMov`/`opsDrop` no registro).

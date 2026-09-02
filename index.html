@@ -555,12 +555,30 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
    e HOJE (atual → previsto) — para o admin ver de cara o que edita e o que
    é consequência.                                                            */
 .lvedit{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;margin-top:10px}
-/* "Minhas opiniões": uma linha por pessoa, a escada embaixo; quem ainda não tem a sua opinião fica marcado */
-.oprow{padding:9px 0 10px;border-bottom:1px solid var(--line)}
-.oprow.falta{padding-left:8px;border-left:3px solid var(--gold)}
+/* "Minhas opiniões": progresso, legenda do que cada patente significa e uma
+   linha por pessoa com a escada embaixo. Botão sem opinião é quieto (sem
+   borda, texto apagado); o escolhido acende na cor da patente. Quem ainda não
+   tem a sua opinião leva a marca dourada à esquerda.                         */
+.opbar{height:4px;border-radius:2px;background:var(--fill);margin:8px 0 12px;overflow:hidden}
+.opbar i{display:block;height:100%;border-radius:2px;background:var(--lime);transition:width .2s}
+.oplegend{display:grid;gap:7px;padding:12px;background:var(--fill);border-radius:12px;margin-bottom:6px}
+.oplegend>div{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.4;color:var(--mute)}
+.oplegend>div>i{flex:0 0 12px;width:12px;height:12px;border-radius:4px;margin-top:3px;background:var(--pc);box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.oplegend b{color:var(--chalk);font-family:var(--disp);text-transform:uppercase;letter-spacing:.04em;font-size:12px}
+.oplegend p{margin:0;font-size:12.5px;line-height:1.45;color:var(--chalk)}
+.oplegend p.intro{margin-bottom:2px}
+.oplegend p.intro b{font-size:12.5px;text-transform:none;letter-spacing:0;font-family:inherit}
+.oplegend p.muted{color:var(--mute);margin-top:2px}
+.oprow{padding:10px 0 11px;border-bottom:1px solid var(--line)}
+.oprow.falta{padding-left:9px;border-left:3px solid var(--gold);border-top-left-radius:4px;border-bottom-left-radius:4px}
 .oprow .nm{font-family:var(--disp);font-weight:700;font-size:15px}
-.ladder4.row5{grid-template-columns:repeat(5,1fr);margin-top:6px}
-.ladder4.row5 button{padding:7px 2px 6px;font-size:10.5px}
+.oprow.outro{opacity:.5}
+.oprow.outro .ladder4.row5 button{min-height:34px;padding:5px 2px 4px}
+.ladder4.row5{grid-template-columns:repeat(5,1fr);margin-top:7px;gap:5px}
+.ladder4.row5 button{padding:7px 2px 6px;font-size:10.5px;border-color:transparent;background:var(--fill);color:var(--mute);gap:5px;min-height:40px}
+.ladder4.row5 button i{opacity:.55}
+.ladder4.row5 button.on{border-color:var(--pc);color:var(--chalk);background:color-mix(in srgb,var(--pc) 18%,transparent)}
+.ladder4.row5 button.on i{opacity:1}
 .lvedit .lbl{font-size:10.5px;letter-spacing:.08em;color:var(--mute);font-weight:700;font-family:var(--body)}
 .lvedit .ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
 .lvedit .sq{width:36px;min-height:36px;padding:0;border-radius:9px;font-size:20px;line-height:1;flex:0 0 auto;border:1px solid var(--line2);background:var(--panel)}
@@ -4872,16 +4890,37 @@ const A={
     const l=L();if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
     const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
     const r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
-    const lista=l.players.filter(p=>p.id!==eu).map(p=>{const tr=rt(p,r);return{p,tr,m:(tr.op||[]).find(o=>o.by===eu)}})
-      .sort((a,b)=>a.p.name.localeCompare(b.p.name));
-    const n=lista.filter(x=>x.m).length;
-    openSheet(`<h2>Minhas opiniões <span class="muted" style="font-weight:400">${n}/${lista.length}</span></h2>
-      <div class="seg" style="margin-bottom:8px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol</button></div>
-      <div class="tiny muted" style="margin-bottom:10px;line-height:1.5">O nível que você acha que cada um tem ${r==='G'?'no gol':'na linha'}. Um toque salva, tocar de novo tira. A entrada de cada um é a média (2) ou a mediana (3+) das opiniões de quem lança — quanto mais gente opina, melhor.</div>
-      ${lista.map(({p,tr,m})=>`<div class="oprow ${m?'':'falta'}">
-        <div class="row"><div class="nm">${esc(p.name)}${p.gk?' 🧤':''}</div><div class="sp tiny muted">${m?'':'sem a sua opinião'}${temPatente(l,p,r)?(m?'':' · ')+'hoje '+patBadgeShort(l,tr.rank):tr.games?(m?'':' · ')+'calibrando':''}${tr.dv?' · ⚠️ divergem':''}</div></div>
-        <div class="ladder4 row5">${l.cfg.patNames.map((nm,k)=>`<button class="${m&&patOf(stepOf(m.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="${k*3+1}" data-back="lista"><i></i><span>${esc(nm)}</span></button>`).join('')}</div>
-      </div>`).join('')||'<div class="tiny muted">Ninguém para opinar.</div>'}`);
+    /* a prioridade é dar nota onde a pessoa JOGA: na aba Linha, os goleiros vão
+       para o fim, apagados e fora da conta; na aba Gol, o contrário            */
+    const joga=p=>r==='G'?(p.gk||p.G.games>0):(!p.gk||p.L.games>0);
+    const todos=l.players.filter(p=>p.id!==eu).map(p=>{const tr=rt(p,r);return{p,tr,m:(tr.op||[]).find(o=>o.by===eu),joga:joga(p)}})
+      .sort((a,b)=>(b.joga-a.joga)||a.p.name.localeCompare(b.p.name));
+    const lista=todos.filter(x=>x.joga),outros=todos.filter(x=>!x.joga);
+    const n=lista.filter(x=>x.m).length,faltam=lista.length-n;
+    /* o que cada patente representa — em termos do que o TIME ganha com a pessoa,
+       que é a régua do nível (D-90); a legenda é por posição na escada, com o
+       nome que a liga deu a cada degrau                                      */
+    const SIGNIF=[
+      'Bem abaixo da média do racha: o time dele entra em desvantagem clara.',
+      'Abaixo da média: o time precisa carregar um pouco.',
+      'A média do racha. A maioria está aqui — na dúvida, é aqui.',
+      'Acima da média: o time dele ganha mais do que perde.',
+      'Muito acima: com ele, um time parelho vence quase sempre. Raro — um ou dois no racha, se tanto.'];
+    openSheet(`<h2>Minhas opiniões</h2>
+      <div class="row" style="margin-top:2px"><div class="tiny muted">${n} de ${lista.length} ${r==='G'?'no gol':'na linha'}</div><div class="sp tiny ${faltam?'':'muted'}" style="${faltam?'color:var(--gold)':''}">${faltam?'faltam '+faltam:'todas dadas ✓'}</div></div>
+      <div class="opbar"><i style="width:${lista.length?Math.round(100*n/lista.length):0}%"></i></div>
+      <div class="seg" style="margin-bottom:12px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol</button></div>
+      <div class="oplegend">
+        <p class="intro">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Quem faz gol, quem marca, quem organiza: tudo isso vira resultado.</p>
+        ${l.cfg.patNames.map((nm,k)=>`<div style="--pc:${PATC[k]}"><i></i><div><b>${esc(nm)}</b> — ${SIGNIF[k]}</div></div>`).reverse().join('')}
+        <p class="muted">Um toque salva, tocar de novo tira. A pessoa entra no meio do que todo mundo que lança opinou. ${faltam?'Os marcados em dourado ainda não têm a sua.':''}</p>
+      </div>
+      ${(()=>{const linha=({p,tr,m,joga})=>`<div class="oprow ${joga?(m?'':'falta'):'outro'}">
+        <div class="row"><div class="nm">${esc(p.name)}${p.gk?' 🧤':''}</div><div class="sp tiny muted">${temPatente(l,p,r)?'hoje '+patBadgeShort(l,tr.rank):tr.games?'calibrando':''}${tr.dv?' · ⚠️ divergem':''}</div></div>
+        <div class="ladder4 row5">${l.cfg.patNames.map((nm,k)=>`<button class="${m&&patOf(stepOf(m.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="${k*3+1}" data-back="lista" aria-pressed="${m&&patOf(stepOf(m.e))===k?'true':'false'}"><i></i><span>${esc(nm)}</span></button>`).join('')}</div>
+      </div>`;
+        return (lista.map(linha).join('')||'<div class="tiny muted">Ninguém para opinar.</div>')
+          +(outros.length?`<div class="k" style="margin:14px 0 2px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— sem prioridade${r==='G'?'':': dê a nota deles na aba Gol'}</span></div>`+outros.map(linha).join(''):'')})()}`);
   },
   opRole(el){S.ui.opRole=el.dataset.v==='G'?'G':'L';saveUI();A.opSheet()},
   pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},  pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
