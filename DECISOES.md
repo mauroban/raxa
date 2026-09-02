@@ -1725,6 +1725,15 @@ ficha dos avaliados.
 **Onde:** `juntaOpinioes` em `index.html` · `scripts/test.py` [5b] ("cinco opinioes") ·
 DOCUMENTACAO §3.4.
 
+### D-97 · No card do último racha, o realizado conta empate como meio — a mesma base da chance
+**02/09/2026.** A linha `50% V (esp. 62%)` de cada time (D-77) comparava vitórias puras com a
+probabilidade de vitória do Elo. Só que a chance do Elo não tem empate: é o **placar esperado**, em
+que empate vale meio ponto. Comparar com vitórias puras puxava o "real" para baixo em toda noite
+com empates. Agora o realizado é `(V + E/2) / partidas`, rotulado `55% real (esp. 62%)` — as duas
+grandezas na mesma base. (A D-77 tinha descartado outra coisa: corrigir a *expectativa* pela taxa de
+empate da noite, que contaminava a régua com o resultado. Aqui muda só a conta do realizado.)
+**Onde:** card do último racha em `viewStats` (`index.html`) · DOCUMENTACAO §8 "Minutos e ritmo".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
