@@ -555,6 +555,12 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
    e HOJE (atual → previsto) — para o admin ver de cara o que edita e o que
    é consequência.                                                            */
 .lvedit{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;margin-top:10px}
+/* "Minhas opiniões": uma linha por pessoa, a escada embaixo; quem ainda não tem a sua opinião fica marcado */
+.oprow{padding:9px 0 10px;border-bottom:1px solid var(--line)}
+.oprow.falta{padding-left:8px;border-left:3px solid var(--gold)}
+.oprow .nm{font-family:var(--disp);font-weight:700;font-size:15px}
+.ladder4.row5{grid-template-columns:repeat(5,1fr);margin-top:6px}
+.ladder4.row5 button{padding:7px 2px 6px;font-size:10.5px}
 .lvedit .lbl{font-size:10.5px;letter-spacing:.08em;color:var(--mute);font-weight:700;font-family:var(--body)}
 .lvedit .ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
 .lvedit .sq{width:36px;min-height:36px;padding:0;border-radius:9px;font-size:20px;line-height:1;flex:0 0 auto;border:1px solid var(--line2);background:var(--panel)}
@@ -651,7 +657,52 @@ const FORMATS=[{n:5,l:'5v5',d:'Futsal'},{n:6,l:'6v6',d:'Society'},{n:7,l:'7v7',d
    o racha curto da partida única é o peso da unidade, não o K.             */
 const KMODE={curtas:{semPalpite:64,comPalpite:32,piso:20},unica:{semPalpite:64,comPalpite:32,piso:20}};
 const K_DECAI=3;
-function kFor(liga,km,tr){const c=calMeta(liga),prog=Math.min(1,c.de(tr)/(K_DECAI*c.n)),k0=tr.def?km.comPalpite:km.semPalpite;return Math.round(k0-(k0-km.piso)*prog)}
+/* opiniões que divergem (tr.dv) entram no meio, mas com o K de quem está sem palpite: as partidas mandam mais */
+function kFor(liga,km,tr){const c=calMeta(liga),prog=Math.min(1,c.de(tr)/(K_DECAI*c.n)),k0=tr.def&&!tr.dv?km.comPalpite:km.semPalpite;return Math.round(k0-(k0-km.piso)*prog)}
+/* ---------- opiniões sobre o nível de entrada (D-95) ----------
+   Cada trilha guarda `op`: uma opinião por pessoa que lança ({by, e, ts};
+   by null = o palpite do cadastro antes das opiniões existirem). A ENTRADA
+   (base/def/dv) é derivada delas em `consolida`, que roda no começo de todo
+   rebuildAll — nunca se edita base à mão. Como juntar:
+   - 1 opinião: vale ela. 2: a média (fica no meio, meio erro no pior caso).
+     3+: a mediana — uma opinião destoante não puxa a entrada.
+   - divergência (desvio MEDIANO ≥ 1 patente — uma só destoando não conta):
+     entra no meio, mas com o K de quem está sem palpite — os dados decidem.
+   - opinião de quem virou Jogador (ou saiu) não conta.                    */
+const PODE_OPINAR=['admin','moderador','lancador'];
+const OP_DIVERGE=200, OP_DESTOA=400;   // uma patente; duas patentes
+function juntaOpinioes(vals){
+  const v=vals.slice().sort((a,b)=>a-b),n=v.length;
+  if(!n)return{e:null,dv:false,desvio:0};
+  let e;
+  if(n===1)e=v[0];else if(n===2)e=(v[0]+v[1])/2;
+  else e=n%2?v[(n-1)/2]:(v[n/2-1]+v[n/2])/2;
+  const d=v.map(x=>Math.abs(x-e)).sort((a,b)=>a-b);
+  const desvio=n%2?d[(n-1)/2]:(d[n/2-1]+d[n/2])/2;   // mediana dos desvios
+  return{e,dv:n>1&&desvio>=OP_DIVERGE,desvio};
+}
+function opAtiva(liga,o){
+  if(o.by===null||o.by===undefined)return true;
+  const a=(liga.players||[]).find(p=>p.id===o.by);
+  return !!(a&&PODE_OPINAR.includes(a.role||'jogador'));
+}
+const opsAtivas=(liga,tr)=>(Array.isArray(tr.op)?tr.op:[]).filter(o=>opAtiva(liga,o));
+function consolida(liga){
+  const pad=liga.cfg.startElo;
+  (liga.players||[]).forEach(p=>['L','G'].forEach(k=>{const tr=p[k];if(!tr||!Array.isArray(tr.op))return;
+    const j=juntaOpinioes(opsAtivas(liga,tr).map(o=>o.e));
+    if(j.e===null){tr.base=pad;tr.def=false;tr.dv=false}
+    else{tr.base=j.e;tr.def=true;tr.dv=j.dv}
+    if(!tr.games){tr.elo=tr.base;tr.rank=stepOf(tr.base);tr.peak=tr.rank}
+  }));
+}
+/* quem deixa de lançar (vira Jogador, ou sai da liga) leva as opiniões junto */
+function anulaOpinioes(liga,pid){
+  let n=0;
+  (liga.players||[]).forEach(p=>['L','G'].forEach(k=>{const tr=p[k];if(!tr||!Array.isArray(tr.op))return;
+    const m=tr.op.length;tr.op=tr.op.filter(o=>o.by!==pid);n+=m-tr.op.length}));
+  return n;
+}
 const streakK=tr=>1;
 /* Histerese fixa: promove ao passar do corte + 21, rebaixa ao cair abaixo do
    corte − 21, sem proteção pós-promoção. A margem acompanha o K: precisa ser
@@ -798,7 +849,10 @@ function migPlayer(liga,p){
     const tr=q[k];
     if(tr.def===undefined||tr.def===null)tr.def=(k===(q.gk?'G':'L'));
     if(!tr.def&&!tr.games){tr.base=padrao;tr.elo=padrao;tr.rank=stepOf(padrao);tr.peak=tr.rank}
+    /* antes das opiniões (D-95) a entrada era um palpite só: vira uma opinião sem autor ("cadastro") */
+    if(!Array.isArray(tr.op))tr.op=tr.def?[{by:null,e:tr.base,ts:q.created||0}]:[];
   });
+  if(q.role==='editor')q.role='moderador';        // o papel mudou de nome (D-95)
   ['elo','base','rank','peakRank','protect','games','w','l','d','form','gkGames'].forEach(k=>delete q[k]);
   return q;
 }
@@ -1257,6 +1311,7 @@ function juncoesDe(liga,pid){
   return log.filter(e=>e.a==='merge'&&e.into===pid&&e.id&&!desfeitas.has(e.id));
 }
 function rebuildAll(liga){
+  consolida(liga);                    // a entrada sai das opiniões (D-95)
   liga.players.forEach(p=>{
     p.pm=0;
     ['L','G'].forEach(k=>{
@@ -1282,12 +1337,12 @@ function rebuildAll(liga){
    reaplica sobre a entrada padrão com def desligado — o K de calibração.  */
 function hojeCom(liga,p,r,entrada){
   if(!rt(p,r).games)return entrada==='none'?null:entrada;
-  const base0=rt(p,r).base,def0=rt(p,r).def;
-  if(entrada==='none'){rt(p,r).base=liga.cfg.startElo;rt(p,r).def=false}
-  else{rt(p,r).base=stepMid(entrada);rt(p,r).def=true}
+  /* a entrada sai das opiniões: simula com uma opinião só (ou nenhuma) e desfaz */
+  const op0=rt(p,r).op;
+  rt(p,r).op=entrada==='none'?[]:[{by:null,e:stepMid(entrada),ts:0}];
   rebuildAll(liga);   // rebuildAll troca o objeto da trilha: sempre rt() de novo
   const res=rt(p,r).rank;
-  rt(p,r).base=base0;rt(p,r).def=def0;rebuildAll(liga);
+  rt(p,r).op=op0;rebuildAll(liga);
   return res;
 }
 
@@ -1884,12 +1939,15 @@ function logAdd(liga,a,extra){
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
   delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol',
-  esc:'corrigiu escalação/trocas',merge:'juntou cadastros',unmerge:'separou cadastros'};
-/* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
-const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
+  esc:'corrigiu escalação/trocas',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
+/* moderador: corrige resultado de partida, edita jogador — não anula, não revisa, não dá papel */
+const souModerador=liga=>['admin','moderador'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
    Jogador só olha, vincula o próprio perfil e contesta. */
-const podeLancar=liga=>['admin','editor','lancador'].includes(meuPapel(liga));
+const podeLancar=liga=>['admin','moderador','lancador'].includes(meuPapel(liga));
+/* Opinar sobre o nível de entrada é de quem lança (admin, moderador, lançador):
+   quanto mais opiniões, melhor a entrada (D-95). Jogador só olha.          */
+const podeOpinar=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
@@ -2518,14 +2576,21 @@ function todayBlock(liga,lv){
 
 /* ---------- níveis ---------- */
 /* escolha do nível de ENTRADA na ficha: guarda a escolha e a prévia do hoje (D-86), com cache por entrada */
-function pdEntrada(l,p,r,entrada){
-  const k=r+':'+entrada;
-  if(PD.cache[k]===undefined)PD.cache[k]=hojeCom(l,p,r,entrada);
-  PD.rank[r]=entrada;PD.res[r]=PD.cache[k];
-}
 function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
-  return pendenciasCard(liga)+viewEscada(liga);
+  return pendenciasCard(liga)+opCard(liga)+viewEscada(liga);
+}
+/* Quem lança vê quantas opiniões já deu — e entra na lista de um toque. */
+function opCard(liga){
+  if(!vePat(liga)||!podeOpinar(liga))return '';
+  const eu=euId(liga);if(!eu)return '';
+  const r=S.ui.rankRole==='G'?'G':'L';
+  const outros=liga.players.filter(p=>p.id!==eu),n=outros.filter(p=>(rt(p,r).op||[]).some(o=>o.by===eu)).length;
+  if(!outros.length)return '';
+  return `<div class="card" style="margin-bottom:10px"><div class="row" data-a="opSheet" style="cursor:pointer">
+    <div style="min-width:0"><div class="k">Minhas opiniões sobre nível</div>
+      <div class="tiny muted" style="margin-top:3px">${n} de ${outros.length} ${r==='G'?'no gol':'na linha'}${n<outros.length?' — quanto mais gente opina, melhor a entrada':''}</div></div>
+    <div class="sp" style="color:var(--mute);font-size:18px">›</div></div></div>`;
 }
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
@@ -3342,8 +3407,8 @@ function viewHist(liga){
    Quem está na liga, com que conta e com que permissão. Jogador sem conta é
    só um nome no cadastro — alguém lança por ele. Tocar abre a ficha, onde o
    admin muda o papel.                                                        */
-const PAPEL={admin:'Admin',editor:'Editor',lancador:'Lançador',jogador:'Jogador'};
-const PAPEL_ORD={admin:0,editor:1,lancador:2,jogador:3};
+const PAPEL={admin:'Admin',moderador:'Moderador',lancador:'Lançador',jogador:'Jogador'};
+const PAPEL_ORD={admin:0,moderador:1,lancador:2,jogador:3};
 /* Na linha da escada (D-85): quem tem conta com papel acima de jogador leva o
    badge do papel; quem tem conta e é só jogador, o pontinho. Sem conta, nada. */
 const papelMarca=p=>!p.owner?'':(p.role&&p.role!=='jogador'
@@ -3525,19 +3590,23 @@ window.mergeFiltra=mergeFiltra;
    botão Salvar é habilitado direto no oninput, com a mesma conta de "mudou". */
 function pdNome(){
   const l=L(),p=PD?P(l,PD.id):null,b=$('#pdsalvar');if(!p||!b)return;
-  b.disabled=!(PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null);
+  b.disabled=!(PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null));
 }
 window.pdNome=pdNome;
 /* o ✕ da busca (D-88): achou e marcou, limpa num toque e segue para o próximo nome */
 function limparBusca(){const i=$('#q');if(i)i.value='';filterPlayers('');if(i&&i.focus)i.focus()}
 window.limparBusca=limparBusca;
-function mkPlayer(liga,name,elo,gk){
-  const e=elo||liga.cfg.startElo,pad=liga.cfg.startElo;
-  /* o palpite do cadastro vale para a valência em que a pessoa vai jogar; a
-     outra nasce SEM PATENTE e só existe quando ela jogar naquela posição —
-     até lá, se precisar entrar na conta, entra no nível de entrada padrão. */
-  return{id:uid(),name,gk:!!gk,L:newTrack(gk?pad:e,!gk),G:newTrack(gk?e:pad,!!gk),goals:0,
+function mkPlayer(liga,name,elo,gk,by){
+  const pad=liga.cfg.startElo,tem=elo!==undefined&&elo!==null,e=tem?elo:pad;
+  /* o palpite do cadastro é a OPINIÃO de quem cadastrou (D-95), e vale para a
+     valência em que a pessoa vai jogar; a outra nasce SEM PATENTE e só existe
+     quando ela jogar naquela posição — até lá, se precisar entrar na conta,
+     entra no nível de entrada padrão. `elo` nulo = sem opinião.            */
+  const q={id:uid(),name,gk:!!gk,L:newTrack(gk?pad:e,tem&&!gk),G:newTrack(gk?e:pad,tem&&!!gk),goals:0,
     sessions:0,lastSession:null,owner:null,role:'jogador',created:Date.now()};
+  q.L.op=tem&&!gk?[{by:by||null,e,ts:q.created}]:[];
+  q.G.op=tem&&gk?[{by:by||null,e,ts:q.created}]:[];
+  return q;
 }
 
 /* ==========================================================================
@@ -3763,7 +3832,7 @@ const A={
         <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
-        <div class="lbl">Nível de entrada<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: o palpite de quem conhece — entra na divisão 2 e ajusta jogando. Goleiro usa a mesma régua da linha (o quanto o time ganha com ele) — na dúvida, deixe sem nível (dá para dar ou tirar o palpite depois, na ficha).</small></div>
+        <div class="lbl">Sua opinião sobre o nível<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: a sua opinião — outros que lançam podem dar a deles na ficha, e a entrada fica no meio. Goleiro usa a mesma régua da linha (o quanto o time ganha com ele) — na dúvida, deixe sem nível.</small></div>
         <div class="ladder4 six">
           <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i><span>Sem nível</span></button>
           ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -3778,8 +3847,7 @@ const A={
   savePlayer(){
     const n=$('#pn').value.trim();if(!n)return toast('Digite o nome');
     const l=L(),sv=$('#ps').value,gk=$('#pg').value==='1';
-    const p=mkPlayer(l,n,sv===''?l.cfg.startElo:stepMid(+sv),gk);
-    if(sv===''){p.L.def=false;p.G.def=false}          // sem palpite: fica sem nível até calibrar
+    const p=mkPlayer(l,n,sv===''?null:stepMid(+sv),gk,euId(l));   // sem opinião: fica sem nível até calibrar
     l.players.push(p);
     if(l.live){
       if(!l.live.presentIds.includes(p.id))l.live.presentIds.push(p.id);
@@ -4513,7 +4581,7 @@ const A={
   },
   fixResult(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
-    if(!souEditor(l))return toast('Só admin ou editor corrige resultado');
+    if(!souModerador(l))return toast('Só admin ou moderador corrige resultado');
     const novo=el.dataset.r==='draw'?'draw':+el.dataset.r;
     logAdd(l,'result',{mid:m.id,from:m.result,to:novo,voided:m.voided});
     m.result=novo;
@@ -4602,26 +4670,17 @@ const A={
      mesmas checagens de papel e o mesmo registro no log das ações diretas. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
-    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null,
-      rank:{L:null,G:null},   /* nível de ENTRADA escolhido pelo admin (vai para o base) */
-      res:{L:null,G:null},    /* prévia: o nível de HOJE que essa entrada produz (D-86) */
-      cache:{}};
+    if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null};
     if(el.dataset.r==='G'||el.dataset.r==='L')PD.view=el.dataset.r;
-    const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souEditor(l);
-    /* cards de cima e "hoje" do painel: a prévia do que a escolha produz (D-86) */
-    const rankDe=r=>PD.rank[r]!==null&&PD.res[r]!==null?PD.res[r]:rt(p,r).rank;
-    /* o seletor edita o nível de ENTRADA (D-74): quem já jogou parte do base;
-       quem nunca jogou tem base === elo e dá no mesmo                       */
-    const rankSel=r=>PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(rt(p,r).games?stepOf(rt(p,r).base):rt(p,r).rank);
-    const zerado=r=>PD.rank[r]==='none';
-    const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null)||PD.rank.L!==null||PD.rank.G!==null;
-    const corAv=ver&&temPatente(l,p,'L')?patVars(rankDe('L')):ver&&temPatente(l,p,'G')?patVars(rankDe('G')):'--pc:var(--mute)';
-    const divAv=ver&&temPatente(l,p,'L')?divCls(rankDe('L')):ver&&temPatente(l,p,'G')?divCls(rankDe('G')):'';
-    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=zerado(r)?PD.res[r]!==null&&!calibrando(l,p,t):(temPatente(l,p,r)||PD.rank[r]!==null);
+    const role=PD.view,ver=vePat(l),tot=p.L.games+p.G.games,vit=p.L.w+p.G.w,emp=p.L.d+p.G.d,adm=souAdmin(l),edt=souModerador(l);
+    const mudou=PD.name!==p.name||PD.gk!==!!p.gk||PD.role!==(p.role||'jogador')||PD.owner!==(p.owner||null);
+    const corAv=ver&&temPatente(l,p,'L')?patVars(p.L.rank):ver&&temPatente(l,p,'G')?patVars(p.G.rank):'--pc:var(--mute)';
+    const divAv=ver&&temPatente(l,p,'L')?divCls(p.L.rank):ver&&temPatente(l,p,'G')?divCls(p.G.rank):'';
+    const cardNivel=(r,rotulo)=>{const t=rt(p,r),tem=temPatente(l,p,r);
       return `<button class="${role===r?'on':''}" data-a="pSheet" data-id="${p.id}" data-r="${r}">
-        <span class="k">${rotulo}${PD.rank[r]!==null?' <span style="color:var(--lime)">· editado</span>':''}</span>
-        ${tem?patBadge(l,rankDe(r),'big'):'<span class="none">sem nível</span>'}
-        ${temPatente(l,p,r)?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
+        <span class="k">${rotulo}</span>
+        ${tem?patBadge(l,t.rank,'big'):'<span class="none">sem nível</span>'}
+        ${tem?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
     const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;
@@ -4648,29 +4707,28 @@ const A={
       </div>
       ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
-      ${ver&&adm?`<div class="ps-panel">
-        <div class="k">Nível de entrada (o palpite) ${role==='G'?'no gol':'na linha'}</div>
-        ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele — Ouro no gol ajuda a vencer como um Ouro de linha. Na dúvida, deixe sem nível: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90) — e um palpite dado pode ser tirado depois, aqui mesmo.</div>`:''}
-        <div class="ladder4">
-          ${l.cfg.patNames.map((n,k)=>`<button class="${!zerado(role)&&patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
-        </div>
-        ${(()=>{const t=rt(p,role),ed=PD.rank[role]!==null,base=stepOf(t.base);
-          const mudouHoje=ed&&PD.res[role]!==null&&PD.res[role]!==t.rank;
-          return `<div class="lvedit">
+      ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).slice().sort((a,b)=>b.e-a.e),eu=euId(l),minha=ops.find(o=>o.by===eu),j=juntaOpinioes(ops.map(o=>o.e));
+        const nomeOp=o=>o.by?esc(nameOf(l,o.by))+(o.by===eu?' <span class="muted">(você)</span>':''):'<span class="muted">cadastro</span>';
+        const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
+        return `<div class="ps-panel">
+        <div class="k">Nível ${role==='G'?'no gol':'na linha'} — opiniões</div>
+        ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele. Na dúvida, não opine: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90).</div>`:''}
+        <div class="lvedit">
           <div class="lbl">ENTRADA</div>
-          <div class="ctl">
-            <button class="btn ghost sq" data-a="pdBump" data-d="-1" aria-label="uma divisão abaixo na entrada">−</button>
-            ${zerado(role)?'<span class="muted">sem nível</span>':patBadge(l,rankSel(role))}
-            <button class="btn ghost sq" data-a="pdBump" data-d="1" aria-label="uma divisão acima na entrada">+</button>
-            ${t.games&&ed&&PD.rank[role]!==base?`<span class="sub">era ${esc(rankLabel(l,base))}</span>`:t.games?'<span class="sub">o palpite</span>':''}
-          </div>
+          <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões')+(ops.length===2?' · a média':ops.length>2?' · a mediana':''):'sem opinião: calibra do zero'}</span></div>
           ${t.games?`<div class="lbl">HOJE</div>
-          <div class="ctl">${patBadge(l,t.rank)}${mudouHoje?`<span class="arr">→</span>${patBadge(l,PD.res[role])}<span class="sub">ao salvar</span>`:'<span class="sub">não se edita</span>'}</div>`:''}
-          </div>`})()}
-        ${rt(p,role).games?`<div class="tiny muted" style="margin-top:10px;line-height:1.5">Você edita a <b>entrada</b> (o palpite). O <b>hoje</b> sai das ${pl(rt(p,role).games,'partida','partidas')} reaplicadas por cima dela — pode andar diferente da entrada, porque cada partida passa a valer diferente. ${zerado(role)?`Sem o palpite, o histórico reaplica sobre a entrada padrão${PD.res[role]!==null?` e hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>`:''}.`:PD.rank[role]!==null?`Com a entrada em <b>${esc(rankLabel(l,PD.rank[role]))}</b>, hoje fica <b>${esc(rankLabel(l,PD.res[role]))}</b>.`:''} Fato de quadra ninguém edita à mão.</div>`:''}
-        ${(rt(p,role).def||PD.rank[role]!==null)?`<button class="btn sm wide ghost" data-a="pdRank" data-s="none" style="margin-top:8px" ${zerado(role)?'disabled':''}>${zerado(role)?(rt(p,role).games?'O palpite sai ao salvar':'Vai calibrar do zero'):(rt(p,role).games?'Tirar o palpite — valem só as partidas':'Tirar o nível — calibrar do zero')}</button>
-        <div class="tiny muted" style="margin-top:6px">${rt(p,role).games?`Sem palpite, o histórico ${role==='G'?'no gol':'na linha'} reaplica sobre a entrada padrão com o K maior de quem está calibrando — as partidas mandam mais.`:`Ele volta a "sem nível" até completar a calibração.`}</div>`:''}
-      </div>`:''}
+          <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')} por cima da entrada</span></div>`:''}
+        </div>
+        ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px;line-height:1.45">⚠️ Opiniões muito diferentes (${extremos}): entra no meio e as partidas mandam mais, como quem está sem nível.</div>`:''}
+        ${ops.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="flex:1;min-width:0">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadge(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:''}</div>`).join('')}</div>`:''}
+        ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
+          <div class="ladder4">
+            ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
+          </div>
+          ${minha?`<button class="btn sm wide ghost" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="" data-back="ficha" style="margin-top:8px">Tirar a minha opinião</button>`:''}
+          <div class="tiny muted" style="margin-top:6px;line-height:1.5">Um toque salva; tocar de novo tira. A entrada é a média (2) ou a mediana (3+) das opiniões de quem lança${t.games?', e o histórico reaplica por cima na hora':''}. Fato de quadra ninguém edita.</div>`
+          :eu===p.id?'<div class="tiny muted" style="margin-top:8px">Sobre você, quem opina são os outros.</div>':''}
+      </div>`})():''}
       <div style="height:6px"></div>
       <div class="trow">
         <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
@@ -4683,7 +4741,7 @@ const A={
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
         <div class="lbl">Permissão${adm?'':'<small>só o admin muda</small>'}</div>
-        ${adm?`<div class="seg">${[['admin','Admin'],['editor','Editor'],['lancador','Lançador'],['jogador','Jogador']]
+        ${adm?`<div class="seg">${[['admin','Admin'],['moderador','Moderador'],['lancador','Lançador'],['jogador','Jogador']]
             .map(x=>`<button class="${PD.role===x[0]?'on':''}" data-a="pdRole" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>`
           :`<div class="tiny">${PAPEL[p.role]||'Jogador'}</div>`}
       </div>
@@ -4734,6 +4792,18 @@ const A={
       sessions:ss.map(s=>JSON.parse(JSON.stringify(s))),
       live:l.live?(l.live.id||null):null,liveTinhaInto:!!(l.live&&temId(l.live,fica)),ownerMoved:false};
     if(!a.owner&&b.owner){a.owner=b.owner;entry.ownerMoved=true}
+    /* as opiniões que o cadastro repetido deu passam para quem fica; onde os
+       dois opinaram, fica a mais recente (a outra vai para o registro)     */
+    const opsMov=[],opsDrop=[];
+    l.players.forEach(p=>{if(p.id===some)return;['L','G'].forEach(k=>{const tr=p[k];if(!tr||!Array.isArray(tr.op))return;
+      const i=tr.op.findIndex(o=>o.by===some);if(i<0)return;
+      const j=tr.op.findIndex(o=>o.by===fica);
+      if(j<0){opsMov.push({pid:p.id,role:k,ts:tr.op[i].ts});tr.op[i]=Object.assign({},tr.op[i],{by:fica})}
+      else{const oi=tr.op[i],oj=tr.op[j],keepI=(oi.ts||0)>=(oj.ts||0);
+        opsDrop.push({pid:p.id,role:k,op:keepI?oj:oi,keptFromSome:keepI});
+        tr.op=tr.op.filter((o,x)=>x!==i&&x!==j).concat([keepI?{by:fica,e:oi.e,ts:oi.ts}:oj])}
+    })});
+    entry.opsMov=opsMov;entry.opsDrop=opsDrop;
     l.matches=l.matches.map(m=>ms.includes(m.id)?trocaId(m,some,fica):m);
     l.sessions=(l.sessions||[]).map(s=>temId(s,some)?trocaId(s,some,fica):s);
     if(l.live&&temId(l.live,some))l.live=trocaId(l.live,some,fica);
@@ -4754,30 +4824,77 @@ const A={
     if(l.live&&e.live&&l.live.id===e.live&&!e.liveTinhaInto)l.live=trocaId(l.live,fica,some);
     const q=mkPlayer(l,e.de.name,l.cfg.startElo,e.de.gk);
     q.id=some;q.owner=e.de.owner||null;q.role=e.de.role||'jogador';q.created=e.de.created||q.created;
-    ['L','G'].forEach(k=>{const t=e.de[k]||{};if(t.base!==undefined)q[k].base=t.base;q[k].def=!!t.def});
+    ['L','G'].forEach(k=>{const t=e.de[k]||{};
+      q[k].op=Array.isArray(t.op)?t.op.map(o=>Object.assign({},o)):(t.def&&t.base!==undefined?[{by:null,e:t.base,ts:0}]:[])});
     l.players.push(q);
+    /* as opiniões que ele tinha dado voltam a ser dele */
+    (e.opsMov||[]).forEach(x=>{const p=P(l,x.pid),tr=p&&p[x.role];if(!tr||!Array.isArray(tr.op))return;const o=tr.op.find(o=>o.by===fica&&o.ts===x.ts);if(o)o.by=some});
+    (e.opsDrop||[]).forEach(x=>{const p=P(l,x.pid),tr=p&&p[x.role];if(!tr||!Array.isArray(tr.op))return;
+      if(x.keptFromSome){const o=tr.op.find(o=>o.by===fica);if(o)o.by=some}
+      if(x.op&&!tr.op.some(o=>o.by===x.op.by))tr.op.push(Object.assign({},x.op))});
     if(e.ownerMoved){const a=P(l,fica);if(a&&a.owner===e.de.owner)a.owner=null}
     logAdd(l,'unmerge',{ref:e.id,pid:some,name:e.de.name,into:fica,intoName:e.intoName});
     PD=null;rebuildAll(l);closeSheet();save();render();
     toast(`${e.de.name} separado de ${e.intoName||'?'}`);
   },
-  pdRank(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view;if(!p)return;
-    pdEntrada(l,p,r,el.dataset.s==='none'?'none':+el.dataset.s);
-    A.pSheet({dataset:{id:PD.id}})},
-  pdBump(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view,tr=rt(p,r);if(!p)return;
-    const cur=PD.rank[r]!==null&&PD.rank[r]!=='none'?PD.rank[r]:(tr.games?stepOf(tr.base):tr.rank);
-    pdEntrada(l,p,r,clamp(cur+(+el.dataset.d),0,TOP));A.pSheet({dataset:{id:PD.id}})},
-  pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
+  /* ----- opiniões sobre o nível (D-95): um toque salva ----- */
+  opSet(el){
+    const l=L(),p=P(l,el.dataset.pid);if(!p)return;
+    if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
+    const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
+    if(eu===p.id)return toast('Sobre você, quem opina são os outros');
+    const r=el.dataset.r==='G'?'G':'L',tr=rt(p,r);if(!Array.isArray(tr.op))tr.op=[];
+    const s=el.dataset.s===''||el.dataset.s===undefined?null:+el.dataset.s;
+    const i=tr.op.findIndex(o=>o.by===eu),antes=i>=0?tr.op[i].e:null;
+    if(s===null){if(i<0)return;tr.op.splice(i,1)}
+    else{const e=stepMid(s);
+      if(antes!==null&&Math.round(antes)===Math.round(e))tr.op.splice(i,1);      // tocar de novo tira
+      else if(i>=0)tr.op[i]={by:eu,e,ts:Date.now()};else tr.op.push({by:eu,e,ts:Date.now()})}
+    const dep=tr.op.find(o=>o.by===eu);
+    logAdd(l,'op',{pid:p.id,role:r,by:eu,from:antes===null?null:stepOf(antes),to:dep?stepOf(dep.e):null});
+    rebuildAll(l);save();
+    if(el.dataset.back==='lista'){const sh=$('#sheet'),st=sh?sh.scrollTop:0;A.opSheet();if(sh)sh.scrollTop=st}
+    else A.pSheet({dataset:{id:p.id,r}});
+    render();
+    toast(dep?`Opinião salva · entrada ${rankLabel(l,stepOf(rt(p,r).base))}`:'Opinião retirada');
+  },
+  opDel(el){                          // admin anula a opinião de outra pessoa
+    const l=L(),p=P(l,el.dataset.pid);if(!p)return;
+    if(!souAdmin(l))return toast('Só o admin anula a opinião dos outros');
+    const r=el.dataset.r==='G'?'G':'L',tr=rt(p,r),by=el.dataset.by||null;
+    const i=(tr.op||[]).findIndex(o=>(o.by||null)===by);if(i<0)return;
+    const e=tr.op[i].e;tr.op.splice(i,1);
+    logAdd(l,'op',{pid:p.id,role:r,by,from:stepOf(e),to:null,adm:true});
+    rebuildAll(l);save();A.pSheet({dataset:{id:p.id,r}});render();toast('Opinião anulada');
+  },
+  /* a tela de quem lança: todo mundo numa lista, um toque por pessoa */
+  opSheet(){
+    const l=L();if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
+    const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
+    const r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
+    const lista=l.players.filter(p=>p.id!==eu).map(p=>{const tr=rt(p,r);return{p,tr,m:(tr.op||[]).find(o=>o.by===eu)}})
+      .sort((a,b)=>a.p.name.localeCompare(b.p.name));
+    const n=lista.filter(x=>x.m).length;
+    openSheet(`<h2>Minhas opiniões <span class="muted" style="font-weight:400">${n}/${lista.length}</span></h2>
+      <div class="seg" style="margin-bottom:8px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol</button></div>
+      <div class="tiny muted" style="margin-bottom:10px;line-height:1.5">O nível que você acha que cada um tem ${r==='G'?'no gol':'na linha'}. Um toque salva, tocar de novo tira. A entrada de cada um é a média (2) ou a mediana (3+) das opiniões de quem lança — quanto mais gente opina, melhor.</div>
+      ${lista.map(({p,tr,m})=>`<div class="oprow ${m?'':'falta'}">
+        <div class="row"><div class="nm">${esc(p.name)}${p.gk?' 🧤':''}</div><div class="sp tiny muted">${m?'':'sem a sua opinião'}${temPatente(l,p,r)?(m?'':' · ')+'hoje '+patBadgeShort(l,tr.rank):tr.games?(m?'':' · ')+'calibrando':''}${tr.dv?' · ⚠️ divergem':''}</div></div>
+        <div class="ladder4 row5">${l.cfg.patNames.map((nm,k)=>`<button class="${m&&patOf(stepOf(m.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="${k*3+1}" data-back="lista"><i></i><span>${esc(nm)}</span></button>`).join('')}</div>
+      </div>`).join('')||'<div class="tiny muted">Ninguém para opinar.</div>'}`);
+  },
+  opRole(el){S.ui.opRole=el.dataset.v==='G'?'G':'L';saveUI();A.opSheet()},
+  pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},  pdGk(){if(!PD)return;PD.gk=!PD.gk;A.pSheet({dataset:{id:PD.id}})},
   pdRole(el){if(!PD)return;PD.role=el.dataset.r;A.pSheet({dataset:{id:PD.id}})},
   pdOwner(){if(!PD)return;if(!PD.owner&&!S.me.name)return toast('Entre na sua conta primeiro');PD.owner=PD.owner?null:S.me.name;A.pSheet({dataset:{id:PD.id}})},
   pdCancel(){PD=null;closeSheet()},
   pdSave(){
     const l=L(),d=PD;if(!d)return;const p=P(l,d.id);if(!p){PD=null;closeSheet();return}
-    const adm=souAdmin(l),edt=souEditor(l);
+    const adm=souAdmin(l),edt=souModerador(l);
     /* nome */
     const nome=String(d.name||'').trim();
     if(nome!==p.name){
-      if(!edt)return toast('Só admin ou editor renomeia');
+      if(!edt)return toast('Só admin ou moderador renomeia');
       if(!nome)return toast('Digite o nome');
       if(l.players.some(x=>x.id!==p.id&&x.name.toLowerCase()===nome.toLowerCase()))return toast('Já existe alguém com esse nome');
     }
@@ -4792,13 +4909,12 @@ const A={
       if(p.owner&&!(p.owner===S.me.name||adm))return toast('Só o dono do perfil ou o admin desvincula');
       if(d.owner&&l.players.some(x=>x.id!==p.id&&x.owner===d.owner))return toast('Você já tem um perfil nesta liga — desvincule o outro antes');
     }
-    /* nível */
-    if((d.rank.L!==null||d.rank.G!==null)&&!adm)return toast('Só o admin corrige nível');
-    if(d.gk!==!!p.gk&&!edt)return toast('Só admin ou editor edita o jogador');
+    if(d.gk!==!!p.gk&&!edt)return toast('Só admin ou moderador edita o jogador');
 
     if(nome!==p.name){logAdd(l,'rename',{pid:p.id,from:p.name,to:nome});p.name=nome}
     if(d.gk!==!!p.gk)p.gk=d.gk;
-    if(d.role!==(p.role||'jogador')){logAdd(l,'role',{pid:p.id,from:p.role,to:d.role});p.role=d.role}
+    const papelAntes=p.role||'jogador';
+    if(d.role!==papelAntes){logAdd(l,'role',{pid:p.id,from:p.role,to:d.role});p.role=d.role}
     let msg='Salvo';
     if(d.owner!==(p.owner||null)){
       if(d.owner){
@@ -4808,31 +4924,13 @@ const A={
       }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
       p.owner=d.owner;
     }
-    /* Corrigir nível mexe SEMPRE no nível de ENTRADA (o palpite do cadastro,
-       D-74): o degrau escolhido vira o `base`, e para quem já jogou o
-       histórico reaplica por cima (rebuildAll) — a patente atual sai do
-       recálculo, nunca da mão do admin. Fato de quadra ninguém edita.
-       Quem nunca jogou tem elo === base, então entra direto no degrau.     */
+    /* Quem deixa de lançar leva as opiniões junto (D-95): elas deixam de
+       valer para todo mundo, e o histórico reaplica sem elas.             */
     let reaplicar=false;
-    ['L','G'].forEach(r=>{
-      if(d.rank[r]===null)return;
-      const tr=rt(p,r);
-      if(d.rank[r]==='none'){                            // tira o palpite: entrada padrão, def desligado (D-91)
-        if(!tr.def)return;                               // não tinha palpite — nada a desfazer
-        logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:tr.games?d.res[r]:null,fromElo:Math.round(tr.elo),toElo:l.cfg.startElo},tr.games?{desde:'entrada',entrada:null}:{}));
-        tr.base=l.cfg.startElo;tr.def=false;
-        if(tr.games)reaplicar=true;                      // histórico reaplica sem palpite (K de calibração)
-        else{tr.elo=l.cfg.startElo;tr.rank=stepOf(tr.elo);tr.peak=tr.rank;tr.protect=0}
-        return;
-      }
-      const sN=d.rank[r],target=stepMid(sN);
-      if(tr.def&&(tr.games?Math.round(tr.base)===Math.round(target):sN===tr.rank))return;
-      /* no registro: de onde para onde o HOJE vai (o que o admin pediu) e a entrada que faz isso */
-      logAdd(l,'rank',Object.assign({pid:p.id,role:r,from:tr.rank,to:tr.games&&d.res[r]!==null?d.res[r]:sN,fromElo:Math.round(tr.elo),toElo:target},tr.games?{desde:'entrada',entrada:sN}:{}));
-      tr.base=target;tr.def=true;
-      if(tr.games)reaplicar=true;
-      else{tr.elo=target;tr.rank=sN;tr.protect=l.cfg.protectMatches}
-    });
+    if(d.role!==papelAntes&&!PODE_OPINAR.includes(d.role)){
+      const n=anulaOpinioes(l,p.id);
+      if(n){logAdd(l,'opClear',{by:p.id,n});reaplicar=true}
+    }
     if(reaplicar)rebuildAll(l);                          // o histórico reaplica sobre o base novo
     PD=null;closeSheet();save();render();toast(msg);
   },
@@ -4840,11 +4938,13 @@ const A={
      rascunho com as mesmas checagens de papel — não há ações diretas.      */
   delPlayer(el){
     const l=L();
-    if(!souEditor(l))return toast('Só admin ou editor remove jogador');
+    if(!souModerador(l))return toast('Só admin ou moderador remove jogador');
     if(!confirm('Remover jogador? O histórico das partidas continua.'))return;
     const id=el.dataset.id,px=P(l,id);
     logAdd(l,'delPlayer',{pid:id,name:px?px.name:null,owner:px?px.owner:null});
     l.players=l.players.filter(p=>p.id!==id);
+    const nOp=anulaOpinioes(l,id);if(nOp)logAdd(l,'opClear',{by:id,n:nOp});   // as opiniões dele saem junto
+    rebuildAll(l);
     if(l.live){l.live.presentIds=l.live.presentIds.filter(x=>x!==id);
       l.live.gkToday=(l.live.gkToday||[]).filter(x=>x!==id);
       l.live.gkPool=(l.live.gkPool||[]).filter(x=>x!==id);
@@ -5221,7 +5321,8 @@ function loadUI(){
    e só os FATOS vão para lá. Nível, Elo, forma, gols e contagens são
    recalculados aqui (rebuildAll) a partir das partidas.                     */
 const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,
-  L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def)},G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def)}});
+  L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def),op:(p.L&&Array.isArray(p.L.op))?p.L.op:[]},
+  G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def),op:(p.G&&Array.isArray(p.G.op))?p.G.op:[]}});
 const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;return o};
 const factsDoc=l=>({name:l.name,cfg:l.cfg,players:(l.players||[]).map(playerFacts),
   matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],live:l.live||null,log:l.log||[]});
@@ -5921,6 +6022,8 @@ function logCard(liga){
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='esc')o+=`: ${esc(e.txt||'')}`;
+    else if(e.a==='op')o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${e.from===null||e.from===undefined?'sem opinião':esc(rankLabel(liga,clamp(e.from,0,TOP)))} → ${e.to===null||e.to===undefined?'sem opinião':esc(rankLabel(liga,clamp(e.to,0,TOP)))}${e.adm?' (anulada pelo admin)':''}${e.by&&e.by!==e.pid?' — opinião de '+esc(nome(e.by)):''}`;
+    else if(e.a==='opClear')o+=` de ${esc(nome(e.by))} (${pl(e.n||0,'opinião','opiniões')})`;
     else if(e.a==='merge')o+=`: ${esc(e.de&&e.de.name||'?')} → ${esc(e.intoName||nome(e.into))} (${pl((e.matches||[]).length,'partida')})`;
     else if(e.a==='unmerge')o+=`: ${esc(e.name||'?')} separado de ${esc(e.intoName||nome(e.into))}`;
     else if(e.a==='goal')o+=`: ${e.from?esc(nome(e.from))+(e.fromOwn?' (contra)':''):'sem autor'} → ${e.to?esc(nome(e.to))+(e.toOwn?' (contra)':''):'sem autor'}`;

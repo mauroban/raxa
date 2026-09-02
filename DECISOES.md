@@ -1653,6 +1653,50 @@ não testada por isso).
 **Onde:** `applyMatch`, escada (`viewRanking`), `pSheet`, card de ajuda em `index.html` ·
 `scripts/test.py` (bloco D-83 removido) · `scripts/aviso.py` (régua) · DOCUMENTACAO §3.4/§3.8.
 
+### D-95 · A entrada é a junção das opiniões de quem lança; "Editor" vira "Moderador"
+**02/09/2026.** A D-94 mostrou que os resultados não corrigem um erro grosseiro de palpite em
+menos de meses, e que nenhum aviso automático enxerga isso antes. Os erros grosseiros que existem
+de verdade (o que domina a bola mas não decide; o que erra gol mas faz muitos; o que marca e
+organiza sem aparecer nos gols) têm uma marca em comum: **olhares diferentes discordam**. Então a
+entrada deixa de ser o palpite de uma pessoa e passa a ser a **junção das opiniões de quem lança**
+(admin, moderador, lançador — "quanto mais opiniões da patente base, melhor").
+**O motor de juntar** (`juntaOpinioes`, `consolida`): cada trilha guarda `op` = uma opinião por
+pessoa ({by, e, ts}; `by` nulo é o palpite do cadastro de antes). A ENTRADA (`base`/`def`/`dv`)
+é **derivada** no começo de todo `rebuildAll` — base nunca mais se edita à mão. 1 opinião vale
+ela; 2, a **média** (fica no meio: erro de patente inteira vira meio erro, que o motor corrige
+em semanas); 3+, a **mediana** (uma destoante não puxa). **Divergência** = desvio *mediano* ≥ uma
+patente (200 pts): Prata × Diamante, ou Bronze/Ouro/Lenda; Prata/Prata/Lenda não é (a mediana
+está firme, e a Lenda aparece como "destoa"). Divergente entra no meio com o **K de quem está sem
+palpite** (`kFor` lê `tr.dv`): os dados decidem rápido, e a ficha avisa. Opinião de quem virou
+Jogador não conta (`opAtiva`); rebaixar a Jogador, ou remover o jogador, **anula** as opiniões
+dele (`anulaOpinioes`, registro `opClear`) e o histórico reaplica sem elas. Ninguém opina sobre
+si. Toda mudança de opinião reaplica o histórico na hora (a prévia da D-86 vira o resultado
+mostrado depois de um toque — sem rascunho: opinião é um toque, tocar de novo tira).
+**UX:** na ficha, um painel só — ENTRADA (badge, quantas opiniões, média/mediana) e HOJE lado a
+lado, o aviso de divergência, a lista de opiniões com nome (todo mundo vê; o admin pode anular a
+dos outros) e, para quem lança, a escada "Sua opinião". Na aba Jogadores, o card **Minhas
+opiniões** (n de N) abre a lista de todo mundo: uma linha por pessoa, escada de 5 embaixo, quem
+ainda não tem a sua opinião marcado em dourado, linha/gol num seletor, ordem alfabética estável
+(a linha não pula debaixo do dedo). O cadastro pede "sua opinião" no lugar de "nível de entrada",
+com o autor registrado. "Editor" vira **Moderador** (`souModerador`, `PAPEL`, migração do papel
+gravado). Junção de cadastros (D-93) move as opiniões dadas pelo repetido para quem fica e as
+devolve ao separar (`opsMov`/`opsDrop` no registro).
+**Descartado:** opinião por divisão (o olho não distingue Ouro I de Ouro II; a entrada cai numa
+divisão sozinha, pela média); média em vez de mediana com 3+ (uma opinião absurda puxava a
+entrada); divergência pelo desvio médio (marcava Prata/Prata/Lenda como incerto — a mediana não
+está); manter a opinião de quem virou Jogador "guardada" para voltar se for promovido (voltava
+sem ninguém pedir, e apareceria na lista como fantasma — anular é o combinado); só moderador
+opina (a base melhora com mais olhares, e o lançador é quem vê o jogo); rascunho + Salvar para a
+opinião (na lista de 19 pessoas seria 19 salvamentos).
+**Onde:** `PODE_OPINAR`, `OP_DIVERGE`/`OP_DESTOA`, `juntaOpinioes`, `opAtiva`/`opsAtivas`,
+`consolida`, `anulaOpinioes`, `kFor` (dv), `hojeCom` (simula por opinião), `migPlayer` (op e
+papel), `playerFacts` (op), `mkPlayer` (opinião do cadastro com autor), ações `opSet`/`opDel`/
+`opSheet`/`opRole`, `opCard`, `pSheet` (painel), `pdSave`/`delPlayer` (anulação), `mergeDo`/
+`unmerge` (opsMov/opsDrop), `LOG_TXT`/`logCard` em `index.html` · `scripts/test.py` [5b] ·
+`scripts/smoke.py` ("opinar sobre o nivel", "rebaixar quem opinou", "minhas opinioes") ·
+`scripts/visual.py` (tela 12) · DOCUMENTACAO §3.4, §3.6, §3.8, §7.5, §8 · RF-02.2/02.5/02.5b/
+03.1d/09.5.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

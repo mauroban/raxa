@@ -49,6 +49,7 @@ TELAS = {
     9: 'completar',
     10: 'destaques',
     11: 'ficha admin',
+    12: 'minhas opinioes',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -94,18 +95,24 @@ DRIVER = r"""
     if(step>=5){                     /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
-    if(step===11)S.ui.tab='ranking';
+    if(step===11||step===12)S.ui.tab='ranking';
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';
     if(step===8)S.ui.tab='stats';
   }
   render();closeSheet();
-  if(step===11){                   /* ficha do admin com a entrada editada: previa do hoje (D-86) */
+  if(step===11){                   /* ficha do admin: opinioes sobre o nivel (D-95) */
     const l=L(),eu=l.players[1];eu.role='admin';
     const p=l.players.find(x=>x.L.games>0&&x!==eu)||l.players[0];
-    A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:String(Math.max(0,p.L.rank-2))}});
+    A.pSheet({dataset:{id:p.id}});
     const sh=document.querySelector('#sheet');if(sh)sh.scrollTop=380;
+  }
+  if(step===12){                   /* a lista de quem lanca: uma opiniao por pessoa (D-95) */
+    const l=L(),eu=l.players[1];eu.role='admin';
+    const a=l.players[0];a.role='lancador';
+    l.players.slice(2,8).forEach((p,i)=>{p.L.op=(p.L.op||[]).filter(o=>o.by!==eu.id);if(i%2)p.L.op.push({by:eu.id,e:stepMid(4+3*(i%3)),ts:1})});
+    rebuildAll(l);render();A.opSheet();
   }
   const problemas=[];
   const nome=e=>e.tagName.toLowerCase()+(e.className?'.'+String(e.className).trim().split(/\s+/).join('.'):'');

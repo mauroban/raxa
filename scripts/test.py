@@ -248,6 +248,25 @@ ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquida
   ok(pe.join(',')==='1,2,2,4','empate divide a posicao: 1,2,2,4 (D-89)');
   liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));rebuildAll(liga);
 }
+console.log('\n[5b] opinioes sobre o nivel de entrada (D-95)');
+{ const j1=juntaOpinioes([1500]);ok(j1.e===1500&&!j1.dv,'uma opiniao: vale ela');
+  const j2=juntaOpinioes([stepMid(4),stepMid(7)]);ok(Math.round(j2.e)===Math.round((stepMid(4)+stepMid(7))/2)&&!j2.dv,'duas opinioes de patentes vizinhas: a media, sem divergencia');
+  const j3=juntaOpinioes([stepMid(4),stepMid(4),stepMid(13)]);ok(Math.round(j3.e)===Math.round(stepMid(4))&&!j3.dv,'tres opinioes com uma destoando: a mediana ignora a destoante');
+  const j4=juntaOpinioes([stepMid(1),stepMid(7),stepMid(13)]);ok(Math.round(j4.e)===Math.round(stepMid(7))&&j4.dv,'bronze, ouro e lenda: entra no meio, marcado como divergente');
+  const j5=juntaOpinioes([stepMid(4),stepMid(10)]);ok(j5.dv,'duas opinioes a duas patentes de distancia: divergente');
+  const j6=juntaOpinioes([stepMid(4),stepMid(7),stepMid(7),stepMid(10)]);ok(Math.round(j6.e)===Math.round(stepMid(7))&&!j6.dv,'quatro opinioes: a media das duas do meio');
+  ok(juntaOpinioes([]).e===null,'sem opiniao: nada');
+  const liga2={cfg:defCfg(),players:[],matches:[]};
+  const a=mk('Autor',1500,0),b=mk('Alvo',1500,0);a.role='lancador';liga2.players.push(a,b);
+  b.L.op=[{by:a.id,e:stepMid(10),ts:1}];consolida(liga2);
+  ok(b.L.def&&Math.round(b.L.base)===Math.round(stepMid(10))&&b.L.rank===10,'opiniao de lancador vale, e quem nunca jogou entra direto no degrau');
+  a.role='jogador';consolida(liga2);
+  ok(!b.L.def&&b.L.base===liga2.cfg.startElo,'autor rebaixado a jogador: a opiniao deixa de valer');
+  a.role='moderador';b.L.op.push({by:null,e:stepMid(4),ts:0});consolida(liga2);
+  ok(b.L.def&&b.L.dv&&Math.round(b.L.base)===Math.round((stepMid(10)+stepMid(4))/2),'moderador + palpite antigo do cadastro divergindo: media, divergente');
+  const km=KMODE.curtas;ok(kFor(liga2,km,{games:0,def:true,dv:true})===64&&kFor(liga2,km,{games:0,def:true,dv:false})===32,'entrada divergente entra com o K de quem esta sem palpite (64)');
+  ok(anulaOpinioes(liga2,a.id)===1&&b.L.op.length===1,'anular as opinioes de alguem tira so as dele');
+}
 console.log('\n[6] calibracao');
 liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});
 const novato=mk('Novato',1500,0);liga.players.push(novato);

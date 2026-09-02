@@ -30,10 +30,11 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | # | Requisito | Pri | Status |
 |---|---|---|---|
 | RF-02.1 | Cadastrar jogador com nome, sem sair da tela em que se está | P0 | ✅ v1 |
-| RF-02.2 | Definir a patente inicial no cadastro, escolhendo entre as 5 patentes (entra na divisão 2) | P0 | ✅ v1 |
+| RF-02.2 | Dar a própria opinião de patente no cadastro, escolhendo entre as 5 patentes (vale como a divisão 2) — é a primeira opinião, não a entrada definitiva | P0 | ✅ v1 |
 | RF-02.3 | Marcar no cadastro que a pessoa **costuma ir ao gol** — só como sugestão para a presença | P1 | ✅ v1 |
 | RF-02.4 | Buscar jogador por nome em lista de até ~50 nomes | P1 | ✅ v1 |
-| RF-02.5 | Corrigir a patente de um jogador (admin), escolhendo o degrau ou movendo ±1 divisão | P1 | ✅ v1 |
+| RF-02.5 | A entrada de um jogador é a **junção das opiniões** de quem lança: 1 = ela; 2 = média; 3+ = mediana; divergência (desvio mediano ≥ 1 patente) entra no meio com o K de quem está sem palpite; opiniões visíveis a todos; quem vira Jogador ou sai perde as opiniões; ninguém opina sobre si | P0 | ✅ v1 |
+| RF-02.5b | Tela **Minhas opiniões** para quem lança: todos os jogadores, um toque por pessoa, contagem de quantas faltam, linha e gol | P1 | ✅ v1 |
 | RF-02.6 | Remover jogador preservando o histórico das partidas em que ele jogou | P2 | ✅ v1 |
 | RF-02.6b | **Juntar dois cadastros** da mesma pessoa (admin): partidas, sessões e racha em andamento passam para o que fica; recusa quem esteve na mesma partida ou está em duas contas; **reversível** pela ficha ("Separar de novo") | P1 | ✅ v1 |
 | RF-02.7 | Ver a ficha do jogador: **as duas patentes** (linha e goleiro), partidas, aproveitamento, gols, melhor patente, V/E/D separados por papel, forma recente | P1 | ✅ v1 |
@@ -49,7 +50,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 |---|---|---|---|
 | RF-03.1 | Toda pessoa tem **duas patentes por Liga** — linha e goleiro — cada uma numa escada de 5 patentes × 3 divisões, independentes entre si | P0 | ✅ v1 |
 | RF-03.1c | Quem **nunca jogou** numa das valências não tem patente nela: fica fora daquela escada e a ficha diz "sem patente". Se entrar naquela posição, vale o **nível de entrada padrão** até construir a própria | P0 | ✅ v1 |
-| RF-03.1d | O palpite de patente do cadastro vale só para a valência em que a pessoa vai jogar (linha, ou gol se marcada como goleiro) | P0 | ✅ v1 |
+| RF-03.1d | A opinião de patente do cadastro vale só para a valência em que a pessoa vai jogar (linha, ou gol se marcada como goleiro); as demais opiniões são por valência | P0 | ✅ v1 |
 | RF-03.1b | A patente que se move é a do **papel que a pessoa fez naquele trecho**: quem estava no gol move a de goleiro, o resto move a de linha | P0 | ✅ v1 |
 | RF-03.2 | **O rating numérico nunca é exibido**, para nenhum papel, em nenhuma tela — nem o valor, nem a distância para o corte, nem a variação da partida | P0 | ✅ v1 |
 | RF-03.3 | A patente muda **apenas** em função de vitória, empate e derrota, considerando o nível do próprio time e o do adversário | P0 | ✅ v1 |
@@ -244,7 +245,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-09.2b | **Um membro corresponde a exatamente um jogador** na Liga: nem conta com dois perfis, nem perfil de duas contas — garantido no banco, não só na tela | P0 | ⬜ v2 |
 | RF-09.3 | Um usuário acompanha, em um só lugar, suas patentes em todas as Ligas de que participa | P1 | ⬜ v2 |
 | RF-09.4 | Admin pode vincular e desvincular um perfil de uma conta; desvinculado, o perfil volta a ser "sem dono" | P1 | 🔶 v1 parcial |
-| RF-09.5 | Papéis: Admin, Editor, Lançador e Jogador, atribuíveis pelo admin | P0 | 🔶 v1 parcial |
+| RF-09.5 | Papéis: Admin, Moderador, Lançador e Jogador, atribuíveis pelo admin | P0 | 🔶 v1 parcial |
 | RF-09.6 | Novo membro entra como Lançador por padrão | P1 | 🔶 v1 parcial |
 | RF-09.7 | As permissões são aplicadas de fato no servidor | P0 | ⬜ v2 |
 | RF-09.8 | O admin **remove um membro** sem apagar o jogador: histórico, patente e estatística ficam; só o acesso sai | P0 | ⬜ v2 |

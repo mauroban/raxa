@@ -66,8 +66,8 @@ step('toda acao tem classificacao de papel',()=>{
   const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk',
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
-    'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
-    'mergeSheet','mergePick','mergeDo','unmerge',
+    'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
+    'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
@@ -484,44 +484,6 @@ step('juntar dois cadastros da mesma pessoa — e separar de novo',()=>{
   /* limpa o cenario */
   l.matches=l.matches.filter(m=>m.id!==clone.id);l.players=l.players.filter(p=>p.id!==dup.id);rebuildAll(l);closeSheet();
 });
-step('corrigir nivel de quem ja jogou mexe no BASE, mostra a previa do hoje e reaplica (D-74/D-86)',()=>{
-  const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[0];
-  const elo0=p.L.elo,base0=p.L.base,prev=hojeCom(l,p,'L',10);
-  if(p.L.elo!==elo0||p.L.base!==base0)throw new Error('hojeCom deixou rastro');
-  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'10'}});
-  if(PD.rank.L!==10||PD.res.L!==prev)throw new Error('ficha nao guardou entrada e previa');
-  if(!/hoje fica <b>/.test(els['#sheet'].innerHTML))throw new Error('ficha nao mostra a previa do hoje antes de salvar');
-  A.pdSave();
-  if(Math.round(p.L.base)!==Math.round(stepMid(10)))throw new Error('base nao virou o meio do degrau: '+p.L.base);
-  if(p.L.rank!==prev)throw new Error('hoje nao bateu com a previa: '+p.L.rank+' vs '+prev);
-  if(!p.L.def)throw new Error('def deveria ligar');
-  const e1=p.L.elo;rebuildAll(l);
-  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois da correcao');
-  const lg=l.log[l.log.length-1]||{};
-  if(p.L.games>0&&(lg.desde!=='entrada'||lg.entrada!==10||lg.to!==prev))throw new Error('log nao guardou hoje e entrada: '+JSON.stringify(lg));
-});
-step('tirar o palpite de quem ja jogou reaplica sem palpite (D-91)',()=>{
-  const l=L(),p=l.players.find(x=>x.L.games>0&&x.L.def);
-  if(!p)throw new Error('preciso de alguem com partidas e palpite');
-  const prev=hojeCom(l,p,'L','none');
-  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'none'}});
-  if(PD.rank.L!=='none'||PD.res.L!==prev)throw new Error('ficha nao guardou a previa do tirar palpite');
-  if(!/O palpite sai ao salvar/.test(els['#sheet'].innerHTML))throw new Error('botao de tirar palpite nao refletiu o estado');
-  A.pdSave();
-  if(p.L.def)throw new Error('def deveria desligar');
-  if(Math.round(p.L.base)!==l.cfg.startElo)throw new Error('base nao voltou ao padrao: '+p.L.base);
-  if(p.L.rank!==prev)throw new Error('hoje nao bateu com a previa: '+p.L.rank+' vs '+prev);
-  const lg=l.log[l.log.length-1]||{};
-  if(lg.desde!=='entrada'||lg.entrada!==null||lg.to!==prev)throw new Error('log nao marcou palpite removido: '+JSON.stringify(lg));
-  const e1=p.L.elo;rebuildAll(l);
-  if(p.L.elo!==e1)throw new Error('recalculo nao e estavel depois de tirar o palpite');
-});
-step('corrigir nivel de quem NUNCA jogou entra direto no degrau',()=>{
-  const l=L(),p=l.players.find(x=>!x.L.games);
-  if(!p)return;
-  A.pSheet({dataset:{id:p.id}});A.pdRank({dataset:{s:'4'}});A.pdSave();
-  if(p.L.rank!==4||Math.round(p.L.elo)!==Math.round(stepMid(4)))throw new Error('sem historico, o degrau escolhido deveria valer na hora');
-});
 step('assumir perfil (Sou eu): o primeiro vinculado vira admin',()=>{
   S.me.name=S.me.name||'tester';
   A.pSheet({dataset:{id:L().players[0].id}});A.pdOwner();A.pdSave();
@@ -534,6 +496,60 @@ step('nao da para tirar o ultimo admin',()=>{
   if(L().players[0].role!=='admin')throw new Error('o ultimo admin foi rebaixado');
   A.pdCancel();
 });
+step('opinar sobre o nivel: um toque salva, a entrada e media/mediana e o historico reaplica (D-95)',()=>{
+  const l=L(),eu=euId(l);if(!eu)throw new Error('sem perfil vinculado');
+  const p=l.players.find(x=>x.L.games>0&&x.id!==eu);
+  A.pSheet({dataset:{id:p.id}});
+  if(!/data-a="opSet"/.test(els['#sheet'].innerHTML))throw new Error('ficha sem a escada de opiniao');
+  const prev=hojeCom(l,p,'L',10);
+  p.L.op=[];rebuildAll(l);
+  A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});
+  if(Math.round(p.L.base)!==Math.round(stepMid(10)))throw new Error('uma opiniao: base devia ser o meio do degrau: '+p.L.base);
+  if(p.L.rank!==prev)throw new Error('hoje nao bateu com a reaplicacao: '+p.L.rank+' vs '+prev);
+  if(!p.L.def)throw new Error('def deveria ligar');
+  const lg=l.log[l.log.length-1]||{};if(lg.a!=='op'||lg.to!==10||lg.by!==eu)throw new Error('log nao registrou a opiniao: '+JSON.stringify(lg));
+  const outro=l.players.find(x=>x.id!==eu&&x.id!==p.id);const papel0=outro.role;outro.role='lancador';
+  p.L.op.push({by:outro.id,e:stepMid(4),ts:Date.now()});rebuildAll(l);
+  if(Math.round(p.L.base)!==Math.round((stepMid(10)+stepMid(4))/2))throw new Error('duas opinioes: base devia ser a media');
+  if(!p.L.dv)throw new Error('duas patentes de distancia: devia marcar divergencia');
+  A.pSheet({dataset:{id:p.id}});
+  if(!/Opiniões muito diferentes/.test(els['#sheet'].innerHTML))throw new Error('ficha nao avisou a divergencia');
+  A.opDel({dataset:{pid:p.id,r:'L',by:outro.id}});
+  if(p.L.op.some(o=>o.by===outro.id))throw new Error('opDel nao tirou');
+  A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});          // tocar de novo tira
+  if(p.L.op.length||p.L.def)throw new Error('tocar de novo devia tirar a opiniao');
+  const e1=p.L.elo;rebuildAll(l);if(p.L.elo!==e1)throw new Error('recalculo nao e estavel');
+  outro.role=papel0;A.pdCancel();
+});
+step('rebaixar quem opinou a jogador anula as opinioes dele',()=>{
+  const l=L(),eu=euId(l);
+  const autor=l.players.find(x=>x.id!==eu&&x.role!=='admin');const papel0=autor.role;autor.role='lancador';
+  const alvo=l.players.find(x=>x.id!==eu&&x.id!==autor.id);
+  alvo.L.op=[{by:autor.id,e:stepMid(13),ts:1}];rebuildAll(l);
+  if(!alvo.L.def)throw new Error('opiniao do lancador nao valeu');
+  A.pSheet({dataset:{id:autor.id}});A.pdRole({dataset:{r:'jogador'}});A.pdSave();
+  if(autor.role!=='jogador')throw new Error('papel nao mudou');
+  if(alvo.L.op.length||alvo.L.def)throw new Error('as opinioes do rebaixado deviam ser anuladas');
+  const lg=l.log[l.log.length-1]||{};if(lg.a!=='opClear')throw new Error('log nao registrou a anulacao: '+JSON.stringify(lg));
+  autor.role=papel0;rebuildAll(l);
+});
+step('minhas opinioes: a lista de quem lanca, um toque por pessoa',()=>{
+  const l=L(),eu=euId(l);
+  S.ui.tab='ranking';render();
+  if(!/data-a="opSheet"/.test(els['#app'].innerHTML))throw new Error('aba Jogadores sem o card de opinioes');
+  A.opSheet();
+  const h=els['#sheet'].innerHTML;
+  if(!/Minhas opiniões/.test(h)||!/data-back="lista"/.test(h))throw new Error('folha de opinioes nao abriu');
+  if(new RegExp('data-pid="'+eu+'"').test(h))throw new Error('nao se opina sobre si mesmo');
+  const alvo=l.players.find(x=>x.id!==eu);
+  A.opSet({dataset:{pid:alvo.id,r:'L',s:'7',back:'lista'}});
+  if(!(alvo.L.op||[]).some(o=>o.by===eu))throw new Error('opinar pela lista nao salvou');
+  if(!/Minhas opiniões/.test(els['#sheet'].innerHTML))throw new Error('a lista devia continuar aberta');
+  A.opRole({dataset:{v:'G'}});if(!/🧤 Gol/.test(els['#sheet'].innerHTML))throw new Error('trocar para gol nao redesenhou');
+  A.opRole({dataset:{v:'L'}});
+  A.opSet({dataset:{pid:alvo.id,r:'L',s:'7',back:'lista'}});   // tira de novo
+  closeSheet();S.ui.tab='racha';render();
+});
 step('admin ve o elo cru, discreto, na escada',()=>{
   if(viewEscada(L()).indexOf('Elo — só o admin vê')<0)throw new Error('elo sutil nao apareceu para o admin');
 });
@@ -544,8 +560,8 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   if(viewEscada(l).indexOf('Elo — só o admin vê')>=0)throw new Error('quem nao e admin nao pode ver o elo cru');
   const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
   if(m.result!==antes)throw new Error('lancador corrigiu resultado');
-  const r0=eu.L.rank;A.pSheet({dataset:{id:eu.id,r:'L'}});A.pdBump({dataset:{d:'1'}});A.pdSave();
-  if(eu.L.rank!==r0)throw new Error('lancador mexeu na propria patente');
+  const r0=eu.L.rank;A.opSet({dataset:{pid:eu.id,r:'L',s:'13',back:'ficha'}});
+  if(eu.L.rank!==r0||(eu.L.op||[]).some(o=>o.by===eu.id))throw new Error('lancador opinou sobre si mesmo');
   A.pdCancel();
   S.ui.tab='hist';render();if(/data-a="review"/.test(document.querySelector('#app').innerHTML))throw new Error('botao Revisar aparece para lancador');
   eu.role='admin';l.players[1].owner=null;l.players[1].role='lancador';S.ui.tab='racha';render();
