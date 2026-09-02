@@ -1710,6 +1710,21 @@ papel), `playerFacts` (op), `mkPlayer` (opinião do cadastro com autor), ações
 `scripts/visual.py` (tela 12) · DOCUMENTACAO §3.4, §3.6, §3.8, §7.5, §8 · RF-02.2/02.5/02.5b/
 03.1d/09.5.
 
+### D-96 · Com 3+ opiniões, média aparada (sem a mais alta e a mais baixa), não a mediana pura
+**02/09/2026.** Com 5 opiniões, a mediana usa uma só e joga fora quatro — inclusive as duas
+vizinhas, que concordam entre si. Agora `juntaOpinioes` tira a mais alta e a mais baixa e faz a
+média do resto: com 3 é a mediana, com 4 as duas centrais, com 5 as três centrais, com 6 as
+quatro. Uma destoante continua não puxando; as do meio pesam todas. Divergência segue pelo desvio
+mediano (D-95).
+**Descartado:** aparar mais de uma ponta de cada lado (com 5 a 7 opiniões sobraria quase nada);
+média simples (a destoante puxa); pesar ou reescalar a opinião de quem dá muito Ferro e Diamante
+(viés e escala por avaliador) — fica para depois, com a régua: precisa de 8+ opiniões por
+avaliador sobre gente com 2+ outras opiniões para estimar sem ruído, e tem que aparecer para a
+própria pessoa ("suas notas ficam meia patente acima das dos outros; o app compensa"), não na
+ficha dos avaliados.
+**Onde:** `juntaOpinioes` em `index.html` · `scripts/test.py` [5b] ("cinco opinioes") ·
+DOCUMENTACAO §3.4.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

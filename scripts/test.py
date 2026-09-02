@@ -251,10 +251,12 @@ ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquida
 console.log('\n[5b] opinioes sobre o nivel de entrada (D-95)');
 { const j1=juntaOpinioes([1500]);ok(j1.e===1500&&!j1.dv,'uma opiniao: vale ela');
   const j2=juntaOpinioes([stepMid(4),stepMid(7)]);ok(Math.round(j2.e)===Math.round((stepMid(4)+stepMid(7))/2)&&!j2.dv,'duas opinioes de patentes vizinhas: a media, sem divergencia');
-  const j3=juntaOpinioes([stepMid(4),stepMid(4),stepMid(13)]);ok(Math.round(j3.e)===Math.round(stepMid(4))&&!j3.dv,'tres opinioes com uma destoando: a mediana ignora a destoante');
+  const j3=juntaOpinioes([stepMid(4),stepMid(4),stepMid(13)]);ok(Math.round(j3.e)===Math.round(stepMid(4))&&!j3.dv,'tres opinioes com uma destoando: fica a do meio, a destoante nao puxa');
   const j4=juntaOpinioes([stepMid(1),stepMid(7),stepMid(13)]);ok(Math.round(j4.e)===Math.round(stepMid(7))&&j4.dv,'bronze, ouro e lenda: entra no meio, marcado como divergente');
   const j5=juntaOpinioes([stepMid(4),stepMid(10)]);ok(j5.dv,'duas opinioes a duas patentes de distancia: divergente');
   const j6=juntaOpinioes([stepMid(4),stepMid(7),stepMid(7),stepMid(10)]);ok(Math.round(j6.e)===Math.round(stepMid(7))&&!j6.dv,'quatro opinioes: a media das duas do meio');
+  const j7=juntaOpinioes([stepMid(1),stepMid(4),stepMid(7),stepMid(10),stepMid(13)]);ok(Math.round(j7.e)===Math.round(stepMid(7)),'cinco opinioes: a media das tres do meio (D-96)');
+  const j8=juntaOpinioes([stepMid(4),stepMid(4),stepMid(7),stepMid(7),stepMid(13)]);ok(Math.round(j8.e)===Math.round((stepMid(4)+stepMid(7)+stepMid(7))/3)&&!j8.dv,'cinco com uma destoando: a destoante sai, as do meio pesam todas');
   ok(juntaOpinioes([]).e===null,'sem opiniao: nada');
   const liga2={cfg:defCfg(),players:[],matches:[]};
   const a=mk('Autor',1500,0),b=mk('Alvo',1500,0);a.role='lancador';liga2.players.push(a,b);

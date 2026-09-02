@@ -698,7 +698,9 @@ function kFor(liga,km,tr){const c=calMeta(liga),prog=Math.min(1,c.de(tr)/(K_DECA
    (base/def/dv) é derivada delas em `consolida`, que roda no começo de todo
    rebuildAll — nunca se edita base à mão. Como juntar:
    - 1 opinião: vale ela. 2: a média (fica no meio, meio erro no pior caso).
-     3+: a mediana — uma opinião destoante não puxa a entrada.
+     3+: tira a mais alta e a mais baixa e faz a média do resto (média
+     aparada — D-96): com 3 é a mediana, com 4 as 2 centrais, com 5 as 3
+     centrais. Uma opinião destoante não puxa; as do meio pesam todas.
    - divergência (desvio MEDIANO ≥ 1 patente — uma só destoando não conta):
      entra no meio, mas com o K de quem está sem palpite — os dados decidem.
    - opinião de quem virou Jogador (ou saiu) não conta.
@@ -709,8 +711,8 @@ function juntaOpinioes(vals){
   const v=vals.slice().sort((a,b)=>a-b),n=v.length;
   if(!n)return{e:null,dv:false,desvio:0};
   let e;
-  if(n===1)e=v[0];else if(n===2)e=(v[0]+v[1])/2;
-  else e=n%2?v[(n-1)/2]:(v[n/2-1]+v[n/2])/2;
+  if(n<=2)e=v.reduce((a,x)=>a+x,0)/n;
+  else{const c=v.slice(1,n-1);e=c.reduce((a,x)=>a+x,0)/c.length}   // média aparada: sem a mais alta e a mais baixa
   const d=v.map(x=>Math.abs(x-e)).sort((a,b)=>a-b);
   const desvio=n%2?d[(n-1)/2]:(d[n/2-1]+d[n/2])/2;   // mediana dos desvios
   return{e,dv:n>1&&desvio>=OP_DIVERGE,desvio};
@@ -4765,7 +4767,7 @@ const A={
         ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele. Na dúvida, não opine: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90).</div>`:''}
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
-          <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões')+(ops.length===2?' · a média':ops.length>2?' · a mediana':''):'sem opinião: calibra do zero'}</span></div>
+          <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões')+(ops.length===2?' · a média':ops.length>2?' · a média sem a mais alta e a mais baixa':''):'sem opinião: calibra do zero'}</span></div>
           ${t.games?`<div class="lbl">HOJE</div>
           <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')} por cima da entrada</span></div>`:''}
         </div>
@@ -4777,7 +4779,7 @@ const A={
             <button class="${minha&&minha.e===null?'on':''}" style="--pc:var(--mute)" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="ns" data-back="ficha"><i></i><span>Não sei</span></button>
           </div>
           ${minha?`<button class="btn sm wide ghost" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="" data-back="ficha" style="margin-top:8px">Tirar a minha opinião</button>`:''}
-          <div class="tiny muted" style="margin-top:6px;line-height:1.5">Um toque salva; tocar de novo tira. A entrada é a média (2) ou a mediana (3+) das opiniões de quem lança${t.games?', e o histórico reaplica por cima na hora':''}. Fato de quadra ninguém edita.</div>`
+          <div class="tiny muted" style="margin-top:6px;line-height:1.5">Um toque salva; tocar de novo tira. A entrada é a média das opiniões de quem lança — com 3 ou mais, sem a mais alta e a mais baixa${t.games?', e o histórico reaplica por cima na hora':''}. Fato de quadra ninguém edita.</div>`
           :eu===p.id?'<div class="tiny muted" style="margin-top:8px">Sobre você, quem opina são os outros.</div>':''}
       </div>`})():''}
       <div style="height:6px"></div>
