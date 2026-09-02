@@ -4914,7 +4914,10 @@ const A={
     if(!souAdmin(l))return toast('Só o admin anula a opinião dos outros');
     const r=el.dataset.r==='G'?'G':'L',tr=rt(p,r),by=el.dataset.by||null;
     const i=(tr.op||[]).findIndex(o=>(o.by||null)===by);if(i<0)return;
-    const e=tr.op[i].e;tr.op.splice(i,1);
+    const e=tr.op[i].e,quem=by?nameOf(l,by):'o cadastro';
+    /* o ✕ fica ao lado de cada opinião: um toque errado não pode apagar a opinião de outra pessoa */
+    if(!confirm(`Anular a opinião de ${quem} sobre ${p.name} (${e===null?'não sabe':patName(l,stepOf(e))})? Só ${by?'ele':'o admin'} pode dar de novo.`))return;
+    tr.op.splice(i,1);
     logAdd(l,'op',{pid:p.id,role:r,by,from:stepOf(e),to:null,adm:true});
     rebuildAll(l);save();A.pSheet({dataset:{id:p.id,r}});render();toast('Opinião anulada');
   },

@@ -514,6 +514,9 @@ step('opinar sobre o nivel: um toque salva, a entrada e media/mediana e o histor
   if(!p.L.dv)throw new Error('duas patentes de distancia: devia marcar divergencia');
   A.pSheet({dataset:{id:p.id}});
   if(!/Opiniões muito diferentes/.test(els['#sheet'].innerHTML))throw new Error('ficha nao avisou a divergencia');
+  const c0=global.confirm;global.confirm=()=>false;
+  try{A.opDel({dataset:{pid:p.id,r:'L',by:outro.id}});if(!p.L.op.some(o=>o.by===outro.id))throw new Error('anular sem confirmar apagou a opiniao do outro')}
+  finally{global.confirm=c0}
   A.opDel({dataset:{pid:p.id,r:'L',by:outro.id}});
   if(p.L.op.some(o=>o.by===outro.id))throw new Error('opDel nao tirou');
   A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});          // tocar de novo tira
