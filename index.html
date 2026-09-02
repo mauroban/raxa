@@ -2662,7 +2662,10 @@ function viewEscada(liga){
           ${p.goals?`<span class="num">⚽ ${p.goals}</span>`:''}</div></div></div>`).join('')}</div>`;
   }
   const role=S.ui.rankRole==='G'?'G':'L';
-  const lista=liga.players.filter(p=>temPatente(liga,p,role));   // sem nível na valência, fora da escada
+  /* cada escada mostra quem é daquela posição (goleiro no gol, o resto na linha)
+     e quem já ATUOU nela — goleiro que nunca jogou na linha fica fora da escada de linha */
+  const daPos=p=>(role==='G'?!!p.gk:!p.gk)||rt(p,role).games>0;
+  const lista=liga.players.filter(p=>daPos(p)&&temPatente(liga,p,role));   // sem nível na valência, fora da escada
   /* Ordem dentro do degrau: para o admin — que já vê o Elo cru na linha — manda
      o Elo, que é o desempate honesto (a divisão só muda com histerese, então dois
      do mesmo degrau podem estar longe um do outro). Para os outros continua
@@ -2681,8 +2684,7 @@ function viewEscada(liga){
      precisa da ordem verdadeira antes de o rótulo existir), quantidade de
      partidas para os outros — que é o que a linha mostra ali. Quem ainda não
      jogou está todo no Elo de entrada, e aí o desempate é o nome.            */
-  /* na escada de goleiro, quem costuma ir ao gol aparece em "sem nível ainda" mesmo antes de pegar */
-  const semNivel=liga.players.filter(p=>!temPatente(liga,p,role)&&(rt(p,role).games>0||role==='L'||(role==='G'&&p.gk)))
+  const semNivel=liga.players.filter(p=>daPos(p)&&!temPatente(liga,p,role))
     .sort((a,b)=>(porElo?rt(b,role).elo-rt(a,role).elo:rt(b,role).games-rt(a,role).games)||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
