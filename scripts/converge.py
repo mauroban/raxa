@@ -10,6 +10,7 @@ Uso:  python scripts/converge.py [bom|misto|nada] [rachas] [ligas] [cansaço]
   cansaço = pts que o time perde por partida seguida em quadra (até 3); 0 = sem; 50 = forte
   bom   = todo mundo entra com palpite bom (±1 divisão)
   misto = palpites bons, mas 25% errados em uma patente inteira (e são justamente os esporádicos)
+  poucos = palpites bons (±1 divisão) e só 2 de 20, assíduos, errados em uma patente inteira
   nada  = ninguém com palpite (todos 1500)
 
 Modelo do racha: grupo de 20 com habilidade ~N(1500, 200); presença variável
@@ -18,7 +19,7 @@ pelo Elo ATUAL; vencedor fica (empate com 4 times: os dois saem); remontagem
 no meio da noite em 25% dos rachas; 12 partidas curtas; resultado sorteado
 pela habilidade VERDADEIRA com gols Poisson (2 gols ou 7 min). Sem goleiro.
 
-Célula: todos %±1div · erro médio (pts) · esporádicos %±1div · desequilíbrio
+Célula: todos %±1div · erro médio (pts) · esporádicos %±1div · errados-de-patente %±1div · desequilíbrio
 REAL entre os times montados (pts de média; entre parênteses, o que o app
 montaria sabendo a verdade). "TETO" é um reajuste em lote com todo o histórico
 (máxima verossimilhança com prior no palpite): o melhor que dá para extrair dos
@@ -68,13 +69,14 @@ function runLiga(R){
   kFor=R.k;
   const liga={id:'x',name:'t',cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
   if(R.batch)liga.cfg.rankMargin=0;
-  const truth={},freq={},prior={},sig={};
+  const truth={},freq={},prior={},sig={},ruimDe={};
   for(let i=0;i<POOL;i++){
     const t=clamp(Math.round(1500+gauss()*200),1000,1999);
     let elo,def=true;
     if(CEN==='nada'){elo=1500;def=false}
-    else{const ruim=CEN==='misto'&&i<5;const e=ruim?(Math.random()<.5?-3:3):(Math.random()<.5?0:(Math.random()<.5?-1:1));elo=stepMid(clamp(stepOf(t)+e,0,TOP))}
+    else{const ruim=(CEN==='misto'&&i<5)||(CEN==='poucos'&&(i===4||i===5));const e=ruim?(Math.random()<.5?-3:3):(Math.random()<.5?0:(Math.random()<.5?-1:1));elo=stepMid(clamp(stepOf(t)+e,0,TOP));}
     const p=mk('j'+i,elo,def);truth[p.id]=t;prior[p.id]=elo;sig[p.id]=def?100:300;
+    if(CEN!=='nada'&&Math.abs(stepOf(elo)-stepOf(t))>=2)ruimDe[p.id]=1;
     freq[p.id]=i<4?0.33:0.6+0.35*Math.random();
     liga.players.push(p);
   }
@@ -110,20 +112,21 @@ function runLiga(R){
     if(R.batch)refit(liga,hist,prior,sig);
     const el=liga.players.map(p=>p.L.elo),tv=liga.players.map(p=>truth[p.id]);
     const meanE=el.reduce((a,b)=>a+b,0)/POOL,meanT=tv.reduce((a,b)=>a+b,0)/POOL;
-    let ok=0,err=0,okE=0,nE=0;
+    let ok=0,err=0,okE=0,nE=0,okR=0,nR=0,errR=0;
     liga.players.forEach(p=>{const st=stepOf(truth[p.id]-meanT+meanE);const d=Math.abs(p.L.rank-st),e=Math.abs(p.L.elo-meanE-(truth[p.id]-meanT));
-      if(d<=1)ok++;err+=e;if(freq[p.id]<0.4){nE++;if(d<=1)okE++}});
-    out.push({ok:ok/POOL,err:err/POOL,okE:okE/nE,gReal,gOra});
+      if(d<=1)ok++;err+=e;if(freq[p.id]<0.4){nE++;if(d<=1)okE++}
+      if(ruimDe[p.id]){nR++;errR+=e;if(d<=1)okR++}});
+    out.push({ok:ok/POOL,err:err/POOL,okE:okE/nE,okR:nR?okR/nR:1,errR:nR?errR/nR:0,gReal,gOra});
   }
   return out;
 }
 console.log('cenário: '+CEN+' · '+LIGAS+' ligas · 20 no grupo (4 vêm a cada 3 semanas), 13–18 por racha, vencedor fica, remontagem em 25% · cansaço -'+FAD+'/partida seguida');
-console.log('célula = todos %±1div · erro pts · esporádicos %±1div · desequilíbrio REAL entre times (pts; entre parênteses, com a verdade)');
+console.log('célula = todos %±1div · erro pts · esporádicos %±1div · errados-de-patente %±1div(erro pts) · desequilíbrio REAL entre times (pts; entre parênteses, com a verdade)');
 console.log('regra'.padEnd(50)+'| racha 3 | racha 5 | racha 10 | racha 20 | racha 40');
 for(const nome in REGRAS){
-  const acc=Array.from({length:RACHAS},()=>({ok:0,err:0,okE:0,gReal:0,gOra:0}));
+  const acc=Array.from({length:RACHAS},()=>({ok:0,err:0,okE:0,okR:0,errR:0,gReal:0,gOra:0}));
   for(let l=0;l<LIGAS;l++){const o=runLiga(REGRAS[nome]);o.forEach((x,i)=>{for(const k in x)acc[i][k]+=x[k]})}
-  const cel=i=>{const a=acc[i];return Math.round(100*a.ok/LIGAS)+'%·'+Math.round(a.err/LIGAS)+'·'+Math.round(100*a.okE/LIGAS)+'%·'+Math.round(a.gReal/LIGAS)+'('+Math.round(a.gOra/LIGAS)+')'};
+  const cel=i=>{const a=acc[i];return Math.round(100*a.ok/LIGAS)+'%·'+Math.round(a.err/LIGAS)+'·'+Math.round(100*a.okE/LIGAS)+'%·'+Math.round(100*a.okR/LIGAS)+'%('+Math.round(a.errR/LIGAS)+')·'+Math.round(a.gReal/LIGAS)+'('+Math.round(a.gOra/LIGAS)+')'};
   console.log(nome.padEnd(50)+'| '+[2,4,9,19,39].filter(i=>i<RACHAS).map(cel).join(' | '));
 }
 """
