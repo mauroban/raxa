@@ -591,8 +591,10 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .oplist{display:grid;gap:4px}
 .oprowb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:var(--fill);border-radius:11px;padding:9px 11px;color:var(--chalk);font:inherit;cursor:pointer;min-height:42px}
 .oprowb .nm{flex:1;min-width:0;font-family:var(--disp);font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.oprowb .none{color:var(--mute);padding:0 8px}
-.oprowb .cnt{flex:0 0 auto;font-size:11.5px;color:var(--mute);margin-right:8px;white-space:nowrap}
+/* colunas fixas: a contagem e o badge alinham de linha em linha, seja Ferro ou Diamante */
+.oprowb .pat,.oprowb .none{flex:0 0 96px;width:96px;justify-content:center;text-align:center;box-sizing:border-box}
+.oprowb .none{color:var(--mute);padding:0}
+.oprowb .cnt{flex:0 0 84px;text-align:right;font-size:11.5px;color:var(--mute);margin-right:4px;white-space:nowrap}
 .oprowb .cnt.zero{opacity:.55;font-style:italic}
 .oprowb.cur{box-shadow:0 0 0 1.5px var(--chalk) inset}
 .oprowb.outro{opacity:.55}
