@@ -1623,6 +1623,36 @@ de fatos: revisão, e revisão é do admin — D-22).
 `smoke.py` ("juntar dois cadastros da mesma pessoa — e separar de novo") · DOCUMENTACAO §6 e §8 ·
 RF-02.6b.
 
+### D-94 · Sai o aviso "revisar palpite?" — ele apontava quem estava certo tanto quanto quem estava errado
+**02/09/2026.** Pergunta: "em quanto tempo o aviso da D-83 pega um jogador uma patente inteira
+fora?". Régua nova, `scripts/aviso.py` (mesmo modelo do `converge.py`, 200 ligas, motor real,
+ranking da D-83 reimplementado): o errado assíduo entra nas 3 pontas pela primeira vez em mediana
+no racha 4 (69% até o 8) — mas **num racha qualquer ele é apontado em 29% das vezes, e uma pessoa
+certa (±1 divisão) também em 29%**; "apontado em 4 dos últimos 8" acontece com 32% dos errados e
+26% dos certos; a deriva do Elo desde a entrada (≥100 pts no racha 16) com 44% dos errados e 19%
+dos certos. Ou seja: 6 nomes por semana, 5 sem nada a revisar, e o admin sem como saber qual é
+qual. A D-83 avaliou o aviso por "apareceu no top 5 alguma vez em 2–3 meses" — critério que
+qualquer pessoa certa também cumpre. Mais remontagens por noite (0 a 3) aceleram a convergência
+do Elo (35% → 46% dentro de ±1 divisão no racha 10) e não mudam nada no aviso. Também medido:
+**K que sobe quando o Elo se afasta do palpite** (≥67/100/134 pts → K 32/48) é *pior* para o
+errado (23–36% contra 48% dentro de ±1 divisão no racha 10) — o K maior vira ruído antes de
+virar correção, o mesmo motivo do piso 20 na D-83. É limite de informação: ~0,07 de sinal por
+partida de 5v5, contra um ruído de rating de ~1 divisão com 100 partidas.
+**Decidido:** remover `rankingSurpresa`/`revisar`/`revisarTxt`, as constantes `REVISAR_*`, o
+`m.overR` do `applyMatch` e o texto na escada, na ficha e no card de ajuda. A ficha do admin
+continua mostrando **entrada** e **hoje** lado a lado (D-86) — o fato, sem chamada para agir.
+Para os poucos erros grosseiros (quem "domina a bola" mas não decide, quem erra gol mas faz
+muitos, quem marca bem e organiza sem aparecer nos gols), o caminho é humano: a **segunda
+opinião** de quem vê o jogo — e, se a liga quiser um sinal automático, o único honesto é a
+distância entre hoje e entrada depois de meses, que a ficha já mostra.
+**Descartado:** limiar mais duro nas pontas (k≥6 dos últimos 8: 16% contra 10% — mesma razão,
+menos avisos); manter o ranking "acima/abaixo do esperado nos últimos 8 rachas" como número na
+Stats (a Stats já tem o "além do esperado" do período — dois números parecidos com nomes
+parecidos confundem); K por deriva (acima); volatilidade à la Glicko (mesmo sinal, mesmo ruído —
+não testada por isso).
+**Onde:** `applyMatch`, escada (`viewRanking`), `pSheet`, card de ajuda em `index.html` ·
+`scripts/test.py` (bloco D-83 removido) · `scripts/aviso.py` (régua) · DOCUMENTACAO §3.4/§3.8.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -760,33 +760,11 @@ const rt=(p,role)=>role==='G'?p.G:p.L;
    patente na escada e ainda estar "calibrando · 12/15" na mesma linha.
    Enquanto calibra sem nível manual, o rating existe por baixo (monta time,
    entra na conta) mas não vira rótulo.                                      */
-/* Surpresa persistente = pista para o ADMIN revisar o palpite, nunca para o
-   motor mexer sozinho (D-82/D-83). Com times equilibrados, sequências contra
-   o esperado acontecem por acaso toda noite — automático amplifica ruído;
-   como aviso a uma correção humana, ataca justamente o caso que os dados
-   não corrigem (palpite errado em uma patente inteira). Um limiar absoluto
-   não funciona: esse jogador rende só +0,07 por partida acima do esperado
-   (o time dilui), indistinguível do ruído numa média móvel. O que funciona é
-   POSIÇÃO: soma de (resultado − esperado) nos últimos 8 rachas, normalizada
-   por √partidas, e as 3 pontas de cada lado — em simulação, quem está uma
-   patente fora aparece no top 5 em ~2/3 dos casos com 2–3 meses.           */
-const REVISAR_RACHAS=8, REVISAR_MIN=10, REVISAR_PONTAS=3;
-function rankingSurpresa(liga,role){
-  const ms=(liga.matches||[]).filter(m=>!m.voided&&m.overR).sort((a,b)=>a.ts-b.ts);
-  const sids=[];ms.forEach(m=>{const sid=m.sessionId||m.id;if(sids.indexOf(sid)<0)sids.push(sid)});
-  const ult=sids.slice(-REVISAR_RACHAS),acc={};
-  ms.forEach(m=>{if(ult.indexOf(m.sessionId||m.id)<0)return;
-    for(const k in m.overR){if(k.slice(-1)!==role)continue;const pid=k.slice(0,-1);const a=acc[pid]||(acc[pid]={pid,soma:0,n:0});a.soma+=m.overR[k];a.n++}});
-  const lista=Object.keys(acc).map(pid=>acc[pid]).filter(a=>a.n>=REVISAR_MIN).map(a=>({pid:a.pid,soma:a.soma,n:a.n,z:a.soma/Math.sqrt(a.n)})).sort((a,b)=>b.z-a.z);
-  const out={total:lista.length,rachas:ult.length,pos:{}};
-  lista.forEach((a,i)=>out.pos[a.pid]={pos:i+1,n:a.n,soma:a.soma});
-  return out;
-}
-/* +1: entre os 3 que mais renderam acima do esperado; -1: entre os 3 abaixo;
-   0: nada. Só com gente suficiente na lista (6+), senão todo mundo é ponta. */
-const revisar=(liga,p,role,rv)=>{rv=rv||rankingSurpresa(liga,role);const x=rv.pos[p.id];
-  if(!x||rv.total<2*REVISAR_PONTAS||!temPatente(liga,p,role))return 0;return x.pos<=REVISAR_PONTAS?1:x.pos>rv.total-REVISAR_PONTAS?-1:0};
-const revisarTxt=(d,x,rv)=>`${d>0?'📈':'📉'} ${x.pos}º de ${rv.total} em render ${d>0?'acima':'abaixo'} do esperado nos últimos ${rv.rachas} rachas — revisar palpite?`;
+/* Não existe aviso automático de "palpite errado" (D-94, que tira o da D-83):
+   com times equilibrados uma partida de 5v5 diz ~0,07 sobre uma pessoa, e
+   em simulação o ranking de surpresa apontava quem estava certo tanto quanto
+   quem estava uma patente fora. Quem corrige o palpite grosseiro é quem
+   conhece o jogador, na ficha — o app mostra entrada e hoje lado a lado.  */
 const temPatente=(liga,p,role)=>{const t=rt(p,role);
   return !!(t&&(t.def||!calibrando(liga,p,t)))};
 function fixTrack(t,e){
@@ -1205,7 +1183,7 @@ function unidadesNivel(liga,m){
   return ordem;
 }
 function applyMatch(liga,m){
-  const seen={};m.deltas={};m.over={};m.overR={};m.pre=m.pre||{};
+  const seen={};m.deltas={};m.over={};m.pre=m.pre||{};
   for(const st of unidadesNivel(liga,m)){
     const part=st.part;
     const r=computeElo(liga,part,st.S,m.mode,st.w);
@@ -1221,7 +1199,6 @@ function applyMatch(liga,m){
          Vale 1 = uma vitoria inteira a mais do que o confronto indicava.      */
       const Sv=st.S[part[pid].side];
       m.over[pid]=(m.over[pid]||0)+(Sv-r.exp[part[pid].side])*(part[pid].w||1)*st.w;
-      m.overR[k]=(m.overR[k]||0)+(Sv-r.exp[part[pid].side])*(part[pid].w||1)*st.w;   // o mesmo, por trilha (pid+papel) — alimenta o ranking de revisão (D-83)
       updateRank(liga,p,tr);
       seen[k].rank=tr.rank;
     }
@@ -2593,7 +2570,6 @@ function viewEscada(liga){
       </div>`}).join('')}</div>
     <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
   if(!ps.length)return html+(semNivel.length?blocoSem:`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`);
-  const rv=souAdmin(liga)?rankingSurpresa(liga,role):null;   // aviso de revisão (D-83), uma conta por render
   let lastPat=-1;
   for(const p of ps){
     const tr=rt(p,role),pt=patOf(tr.rank);
@@ -2611,7 +2587,6 @@ function viewEscada(liga){
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
           ${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}
-          ${rv&&revisar(liga,p,role,rv)?`<span class="prov">${revisarTxt(revisar(liga,p,role,rv),rv.pos[p.id],rv)}</span>`:''}
         </div>
       </div>
       <div style="color:var(--mute);font-size:18px">›</div>
@@ -3386,7 +3361,7 @@ function viewCfgBody(liga){
   <div class="card">
     <div class="k" style="margin-bottom:6px">Como o nível anda</div>
     <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo de time. O peso de cada partida acompanha a incerteza: quem entra sem nível anda rápido (K 64) e vai assentando (K 20) conforme joga; quem entra com palpite anda na metade disso (K 32 → 20). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
-      A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>; o peso continua assentando até 3× isso. Vale separado para o nível de linha e o de goleiro.${souAdmin(liga)?' Quando os resultados de alguém vêm persistentemente contra o nível, a escada e a ficha avisam <b>revisar palpite?</b> — só para você; o app não mexe sozinho.':''}</div>
+      A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>; o peso continua assentando até 3× isso. Vale separado para o nível de linha e o de goleiro.${souAdmin(liga)?' O app não avisa "palpite errado" — com times equilibrados os resultados não dizem isso mais rápido que meses (D-94); quem conhece o jogador corrige na ficha.':''}</div>
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:8px">Quem vê os níveis</div>
@@ -4676,8 +4651,6 @@ const A={
       ${ver&&adm?`<div class="ps-panel">
         <div class="k">Nível de entrada (o palpite) ${role==='G'?'no gol':'na linha'}</div>
         ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele — Ouro no gol ajuda a vencer como um Ouro de linha. Na dúvida, deixe sem nível: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90) — e um palpite dado pode ser tirado depois, aqui mesmo.</div>`:''}
-        ${(()=>{const rv=rankingSurpresa(l,role),x=rv.pos[p.id],d=revisar(l,p,role,rv);if(!x)return '';
-          return `<div class="tiny ${d?'':'muted'}" style="${d?'color:var(--gold);':''}margin:-4px 0 8px;line-height:1.4">${d?revisarTxt(d,x,rv)+(d>0?' Os resultados':' Os resultados')+(role==='G'?' no gol':' na linha')+' vêm consistentemente '+(d>0?'acima':'abaixo')+' do que o nível prevê.':`Nos últimos ${rv.rachas} rachas: ${x.pos}º de ${rv.total} em render acima do esperado (${x.n} partidas).`}</div>`})()}
         <div class="ladder4">
           ${l.cfg.patNames.map((n,k)=>`<button class="${!zerado(role)&&patOf(rankSel(role))===k?'on':''}" style="--pc:${PATC[k]}" data-a="pdRank" data-s="${k*3+1}"><i></i><span>${esc(n)}</span></button>`).join('')}
         </div>

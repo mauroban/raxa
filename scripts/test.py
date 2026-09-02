@@ -241,25 +241,12 @@ ok(vitLiq>=6.5&&vitLiq<=7,'assentado (K=20) uma divisao pede ~7 vitorias liquida
   ok(RANK_MARGIN>KMODE.curtas.piso/2,'a margem de histerese e maior que meia vitoria parelha assentada — sem ioio V-D-V-D no corte');
   liga.matches.length=0;rebuildAll(liga);
 }
-{ /* aviso de revisao por RANKING (D-83): soma de (resultado - esperado) por trilha nos ultimos 8 rachas, 3 pontas de cada lado */
+{ /* utilitarios da ficha e dos rankings */
   const bk=liga.matches.slice();liga.matches.length=0;
-  const ids=liga.players.map(p=>p.id);
-  const fake=(id,sid,ts)=>{const overR={};ids.forEach((pid,i)=>{overR[pid+'L']=i===0?0.3:i===1?-0.3:(8-i)*0.01});return {id,sessionId:sid,ts,overR}};
-  for(let s=0;s<10;s++)liga.matches.push(fake('f'+s,'s'+s,s));
-  ok(rankingSurpresa(liga,'L').total===0,'com menos de 10 partidas na janela ninguem entra no ranking');
-  for(let s=0;s<10;s++)liga.matches.push(fake('g'+s,'s'+s,s+0.5));
-  const rv=rankingSurpresa(liga,'L');
-  ok(rv.rachas===8&&rv.total===ids.length&&rv.pos[ids[0]].n===16,'janela de 8 rachas (dos 10): todo mundo com 16 partidas entra');
-  ok(rv.pos[ids[0]].pos===1&&rv.pos[ids[1]].pos===ids.length,'quem mais rendeu acima e o 1o; quem mais rendeu abaixo e o ultimo');
-  liga.players.forEach(p=>{p.L.def=true;p.L.games=20});
-  ok(revisar(liga,liga.players[0],'L',rv)===1&&revisar(liga,liga.players[1],'L',rv)===-1&&revisar(liga,liga.players[8],'L',rv)===0,'aviso so nas 3 pontas de cada lado');
-  ok(rankingSurpresa(liga,'G').total===0,'trilha de goleiro sem partidas: ranking vazio, sem aviso');
-  liga.matches.push({id:'v','sessionId':'s9',ts:99,voided:true,overR:{[ids[5]+'L']:9}});
-  ok(rankingSurpresa(liga,'L').pos[ids[5]].pos!==1,'partida anulada nao conta');
   ok(hojeCom(liga,liga.players[3],'L',7)===7,'hojeCom: quem nunca jogou, hoje = entrada (D-86)');
   const pe=posEmpate([{v:9},{v:7},{v:7},{v:3}],x=>x.v);
   ok(pe.join(',')==='1,2,2,4','empate divide a posicao: 1,2,2,4 (D-89)');
-  liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));liga.players.forEach(p=>{p.L.def=false;p.L.games=0});rebuildAll(liga);
+  liga.matches.length=0;bk.forEach(m=>liga.matches.push(m));rebuildAll(liga);
 }
 console.log('\n[6] calibracao');
 liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});
