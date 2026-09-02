@@ -4939,6 +4939,9 @@ const A={
     OPV.ordem=OPV.ordem.filter(id=>P(l,id)&&joga(P(l,id)));
     if(el&&el.dataset&&el.dataset.i!==undefined)OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);
     const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem;
+    /* quem não joga nesta posição não ganha cartão, mas aparece no fim da lista,
+       apagado — tocar abre a ficha (a opinião dele se dá na outra aba)      */
+    const outros=l.players.filter(p=>p.id!==eu&&!joga(p)).sort((a,b)=>a.name.localeCompare(b.name));
     const n=fila.filter(minha).length,faltam=fila.length-n;
     /* a régua é "o que o time ganha com ele" (D-90), dita em comparação com um
        jogador médio do racha — nunca em pontos                            */
@@ -4978,7 +4981,7 @@ const A={
         </div>
       </div>`;
     }
-    const linha=(q,outro)=>{const m=minha(q);return `<button class="oprowb ${outro?'outro':''} ${q===p?'cur':''}" data-a="opSheet" data-i="${OPV.ordem.indexOf(q.id)}">
+    const linha=(q,outro)=>{const m=minha(q);return `<button class="oprowb ${outro?'outro':''} ${q===p?'cur':''}" ${outro?`data-a="pSheet" data-id="${q.id}"`:`data-a="opSheet" data-i="${OPV.ordem.indexOf(q.id)}"`}>
       <span class="nm">${esc(q.name)}${q.gk?' 🧤':''}</span>${m?(m.e===null?'<span class="none">não sei</span>':patBadgePat(l,stepOf(m.e))):'<span class="none">—</span>'}</button>`};
     openSheet(`<h2>Minhas opiniões</h2>
       <div class="row" style="margin-top:2px"><div class="tiny muted">${n} de ${fila.length} ${r==='G'?'no gol':'na linha'}</div><div class="sp tiny" style="${faltam?'color:var(--gold)':'color:var(--mute)'}">${faltam?'faltam '+faltam:'todas dadas ✓'}</div></div>
@@ -4987,7 +4990,7 @@ const A={
       ${cartao}
       <div class="tiny muted" style="margin:12px 2px 0;line-height:1.5">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Um toque salva e passa para a próxima; tocar de novo na mesma tira.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
-      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}</div>`:''}`);
+      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui; toque para abrir a ficha</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
   },
   opNav(el){
     const d=+el.dataset.d||1,n=OPV.ordem.length;if(!n)return;
