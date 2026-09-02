@@ -67,7 +67,7 @@ step('toda acao tem classificacao de papel',()=>{
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
-    'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole',
+    'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
@@ -541,10 +541,28 @@ step('minhas opinioes: a lista de quem lanca, um toque por pessoa',()=>{
   const h=els['#sheet'].innerHTML;
   if(!/Minhas opiniões/.test(h)||!/data-back="lista"/.test(h))throw new Error('folha de opinioes nao abriu');
   if(new RegExp('data-pid="'+eu+'"').test(h))throw new Error('nao se opina sobre si mesmo');
-  const alvo=l.players.find(x=>x.id!==eu);
+  /* um cartao por vez: a pessoa da vez e a primeira da ordem; salvar avanca para a proxima sem a minha opiniao */
+  const alvo=P(l,OPV.ordem[0]);if(!alvo)throw new Error('cartao sem pessoa');
+  if(!/data-a="opopt"|class="opopt/.test(h))throw new Error('cartao sem as opcoes grandes');
+  if((h.match(/data-a="opSet"/g)||[]).length!==6)throw new Error('o cartao devia ter exatamente 6 opcoes: 5 patentes e "nao sei" (uma pessoa por vez)');
   A.opSet({dataset:{pid:alvo.id,r:'L',s:'7',back:'lista'}});
-  if(!(alvo.L.op||[]).some(o=>o.by===eu))throw new Error('opinar pela lista nao salvou');
-  if(!/Minhas opiniões/.test(els['#sheet'].innerHTML))throw new Error('a lista devia continuar aberta');
+  if(!(alvo.L.op||[]).some(o=>o.by===eu))throw new Error('opinar pelo cartao nao salvou');
+  if(!/Minhas opiniões/.test(els['#sheet'].innerHTML))throw new Error('a folha devia continuar aberta');
+  if(OPV.i===0&&OPV.ordem.length>1)throw new Error('devia ter avancado para a proxima pessoa');
+  A.opNav({dataset:{d:'-1'}});if(OPV.i!==0)throw new Error('anterior nao voltou');
+  /* "nao sei": conta como resposta, nao como opiniao */
+  const seg=P(l,OPV.ordem[1]);const def0=seg.L.def,base0=seg.L.base;
+  A.opSet({dataset:{pid:seg.id,r:'L',s:'ns',back:'lista'}});
+  const ns=(seg.L.op||[]).find(o=>o.by===eu);if(!ns||ns.e!==null)throw new Error('nao sei nao foi anotado');
+  if(seg.L.def!==def0||seg.L.base!==base0)throw new Error('nao sei mexeu na entrada');
+  if(!/não sei/.test(els['#sheet'].innerHTML))throw new Error('a lista nao mostra o nao sei');
+  A.opSet({dataset:{pid:seg.id,r:'L',s:'ns',back:'lista'}});
+  if((seg.L.op||[]).some(o=>o.by===eu))throw new Error('tocar de novo em nao sei devia tirar');
+  if(opPendentes(l)<OP_MUITOS)throw new Error('com quase todo mundo pendente, opPendentes devia passar do limite');
+  S.ui.tab='ranking';render();
+  if(!/class="card pulse"/.test(els['#app'].innerHTML))throw new Error('card de opinioes devia pulsar com muita avaliacao pendente');
+  A.opSheet();
+  A.opSheet({dataset:{i:'1'}});if(OPV.i!==1)throw new Error('ir para alguem pela lista nao funcionou');
   A.opRole({dataset:{v:'G'}});if(!/🧤 Gol/.test(els['#sheet'].innerHTML))throw new Error('trocar para gol nao redesenhou');
   A.opRole({dataset:{v:'L'}});
   A.opSet({dataset:{pid:alvo.id,r:'L',s:'7',back:'lista'}});   // tira de novo

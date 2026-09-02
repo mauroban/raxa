@@ -266,6 +266,8 @@ console.log('\n[5b] opinioes sobre o nivel de entrada (D-95)');
   ok(b.L.def&&b.L.dv&&Math.round(b.L.base)===Math.round((stepMid(10)+stepMid(4))/2),'moderador + palpite antigo do cadastro divergindo: media, divergente');
   const km=KMODE.curtas;ok(kFor(liga2,km,{games:0,def:true,dv:true})===64&&kFor(liga2,km,{games:0,def:true,dv:false})===32,'entrada divergente entra com o K de quem esta sem palpite (64)');
   ok(anulaOpinioes(liga2,a.id)===1&&b.L.op.length===1,'anular as opinioes de alguem tira so as dele');
+  consolida(liga2);const base1=b.L.base;b.L.op.push({by:null,e:null,ts:3});consolida(liga2);
+  ok(b.L.base===base1&&b.L.def,'"nao sei" (e nulo) e resposta dada, mas fica fora da conta');
 }
 console.log('\n[6] calibracao');
 liga.players.forEach(p=>{p.L.games=30;p.L.sessions=6});

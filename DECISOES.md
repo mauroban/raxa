@@ -1675,13 +1675,18 @@ mostrado depois de um toque — sem rascunho: opinião é um toque, tocar de nov
 **UX:** na ficha, um painel só — ENTRADA (badge, quantas opiniões, média/mediana) e HOJE lado a
 lado, o aviso de divergência, a lista de opiniões com nome (todo mundo vê; o admin pode anular a
 dos outros) e, para quem lança, a escada "Sua opinião". Na aba Jogadores, o card **Minhas
-opiniões** (n de N) abre a lista de todo mundo: uma linha por pessoa, escada de 5 embaixo, quem
-ainda não tem a sua opinião marcado em dourado, linha/gol num seletor, ordem alfabética estável
-(a linha não pula debaixo do dedo); no topo, uma barra de progresso e a **legenda do que cada
-patente representa** em termos do que o time ganha com a pessoa — o texto que corrige o olhar do
-drible — no lugar de instruções de uso; os botões sem opinião ficam quietos (sem borda, texto
-apagado) e o escolhido acende na cor; a prioridade é dar nota onde a pessoa joga — na aba Linha os
-goleiros vão para o fim, apagados e fora da conta, e na aba Gol o contrário. O cadastro pede "sua
+opiniões** (n de N) abre **uma pessoa por vez, num cartão**: avatar, nome, nível de hoje, o que os
+outros opinaram, e as cinco patentes como **opções grandes** com o badge de metal e o que cada uma
+representa em termos do que o time ganha com a pessoa (o texto que corrige o olhar do drible) —
+não há legenda para ler nem lista de 16 × 5 botões para varrer. Um toque salva e passa para a
+próxima pessoa sem a sua opinião; anterior/pular andam na ordem, fixada ao abrir (quem falta
+primeiro, para ninguém pular de lugar); barra de progresso no topo; a lista de todos embaixo, com
+a opinião dada ao lado, para conferir e voltar. A prioridade é dar nota onde a pessoa joga — na
+aba Linha os goleiros vão para o fim, apagados e fora da conta, e na aba Gol o contrário. A
+primeira versão (lista com escada de 5 botões por pessoa e uma legenda em texto no topo) foi
+descartada: repetitiva e cansativa de olhar. Sexta opção **"Não sei"** (`e` nulo: resposta dada,
+fora da conta — ninguém é cobrado por chutar); com **5+** pessoas esperando a sua opinião
+(`opPendentes`, cada uma na posição em que joga), o card e a aba Jogadores **pulsam** devagar. O cadastro pede "sua
 opinião" no lugar de "nível de entrada",
 com o autor registrado. "Editor" vira **Moderador** (`souModerador`, `PAPEL`, migração do papel
 gravado). Junção de cadastros (D-93) move as opiniões dadas pelo repetido para quem fica e as
