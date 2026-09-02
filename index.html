@@ -4940,12 +4940,14 @@ const A={
     if(el&&el.dataset&&el.dataset.i!==undefined)OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);
     const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem.filter(joga),outros=ordem.filter(p=>!joga(p));
     const n=fila.filter(minha).length,faltam=fila.length-n;
+    /* a régua é "o que o time ganha com ele" (D-90), dita em comparação com um
+       jogador médio do racha — nunca em pontos                            */
     const SIGNIF=[
-      'Bem abaixo da média do racha: o time dele entra em desvantagem clara.',
-      'Abaixo da média: o time precisa carregar um pouco.',
-      'A média do racha. A maioria está aqui — na dúvida, é aqui.',
-      'Acima da média: o time dele ganha mais do que perde.',
-      'Muito acima: com ele, um time parelho vence quase sempre. Raro — um ou dois no racha.'];
+      'Bem abaixo: o time joga quase com um a menos. Quem está começando, ou parou faz tempo.',
+      'Um pouco abaixo da média: cumpre, mas o time cobre algo por ele — marcar, ou criar.',
+      'A média do racha: joga de igual para igual com a maioria. Na dúvida, é aqui.',
+      'Nitidamente acima da média: num time parelho, ter ele no lugar de um jogador médio pesa a favor. Faz falta quando não vem.',
+      'O melhor da quadra, quase sempre: num time parelho, ele sozinho vira o jogo. Raro — um ou dois no racha, se tanto.'];
     const p=OPV.i>=0?ordem[OPV.i]:null;
     let cartao;
     if(!ordem.length)cartao='<div class="opcard"><div class="tiny muted">Ninguém para opinar ainda.</div></div>';
