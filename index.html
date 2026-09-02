@@ -4765,7 +4765,7 @@ const A={
           <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')} por cima da entrada</span></div>`:''}
         </div>
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px;line-height:1.45">⚠️ Opiniões muito diferentes (${extremos}): entra no meio e as partidas mandam mais, como quem está sem nível.</div>`:''}
-        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="flex:1;min-width:0">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadge(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:''}</div>`).join('')}${nsabe.length?`<div class="tiny muted" style="padding:5px 0">${nsabe.map(o=>nomeOp(o)).join(', ')}: não sabe${nsabe.length>1?'m':''}</div>`:''}</div>`:''}
+        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="flex:1;min-width:0">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:''}</div>`).join('')}${nsabe.length?`<div class="tiny muted" style="padding:5px 0">${nsabe.map(o=>nomeOp(o)).join(', ')}: não sabe${nsabe.length>1?'m':''}</div>`:''}</div>`:''}
         ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
           <div class="ladder4">
             ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&minha.e!==null&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -6133,7 +6133,7 @@ function logCard(liga){
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='esc')o+=`: ${esc(e.txt||'')}`;
-    else if(e.a==='op'){const rl=x=>x===null||x===undefined?'sem opinião':x==='ns'?'não sabe':esc(rankLabel(liga,clamp(x,0,TOP)));o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${rl(e.from)} → ${rl(e.to)}${e.adm?' (anulada pelo admin)':''}${e.by&&e.by!==e.pid?' — opinião de '+esc(nome(e.by)):''}`}
+    else if(e.a==='op'){const rl=x=>x===null||x===undefined?'sem opinião':x==='ns'?'não sabe':esc(patName(liga,clamp(x,0,TOP)));o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${rl(e.from)} → ${rl(e.to)}${e.adm?' (anulada pelo admin)':''}${e.by&&e.by!==e.pid?' — opinião de '+esc(nome(e.by)):''}`}
     else if(e.a==='opClear')o+=` de ${esc(nome(e.by))} (${pl(e.n||0,'opinião','opiniões')})`;
     else if(e.a==='merge')o+=`: ${esc(e.de&&e.de.name||'?')} → ${esc(e.intoName||nome(e.into))} (${pl((e.matches||[]).length,'partida')})`;
     else if(e.a==='unmerge')o+=`: ${esc(e.name||'?')} separado de ${esc(e.intoName||nome(e.into))}`;
