@@ -1595,6 +1595,34 @@ presenca", "cancelar a partida descarta tudo") · `sync.py` ("dois celulares na 
 DOCUMENTACAO §4.3/§4.4/§8 · RF-04.4b/04.6/04.7/06.2b/06.6/06.11/06.11c/06.14/06.18/06.19 ·
 BANCO-DE-DADOS §"concorrência".
 
+### D-93 · Juntar dois cadastros da mesma pessoa — reversível pela ficha
+**02/09/2026.** Erro fácil de acontecer: o lançador não acha o jogador na presença e cadastra
+outro; o repetido joga a noite e o histórico da pessoa se divide. Agora o admin junta os dois pela
+ficha ("⇆ É a mesma pessoa que outro cadastro…" → escolhe o outro → diz **qual fica**). `mergeDo`
+reescreve os fatos: `trocaId` troca o id do que some pelo do que fica em todas as partidas onde ele
+aparece (escalação, trechos, goleiros, gols, eventos), nas sessões e no racha em andamento (listas de
+ids sem repetir), move a conta se só o que some tinha, apaga o cadastro repetido e recalcula do zero.
+**Reversível de verdade:** a entrada `merge` do registro de correções guarda os fatos do cadastro
+que sumiu (`playerFacts`), os ids das partidas reescritas, a foto das sessões tocadas e se o
+cadastro que ficou já estava no racha em andamento. "Separar de novo" (`unmerge`, na ficha de quem
+ficou) recria o cadastro com o mesmo id, troca o id de volta nas partidas listadas, restaura as
+sessões pela foto, devolve a conta e recalcula. **Guardas:** só dá para juntar quem **nunca esteve
+na mesma partida** (aí são duas pessoas — e é essa condição que torna a volta exata: nas partidas
+reescritas só havia o que sumiu) e quem não está ligado a **duas contas diferentes**.
+**Por quê:** a alternativa "apaga o repetido e corrige a escalação partida por partida" é o que
+ninguém faz. E como o histórico é a fonte da verdade (D-21), juntar é reescrever fatos — o que exige
+o caminho de volta gravado junto.
+**Descartado:** apelido (`mergedInto`) resolvido na leitura em vez de reescrever (todo lugar que lê
+id teria que resolver — motor, estatística, sessões, live — e o histórico deixaria de ser
+auto-suficiente); guardar a cópia inteira das partidas reescritas no log (a condição "nunca juntos"
+já torna a troca de volta exata, e o log sobe para todo aparelho); juntar durante o racha sem tocar
+o live (o cenário típico é descobrir o repetido no meio da noite); permitir para Editor (é reescrita
+de fatos: revisão, e revisão é do admin — D-22).
+**Onde:** `trocaId`, `temId`, `partidasCom`, `juntaveis`, `juncoesDe`, ações `mergeSheet`,
+`mergePick`, `mergeDo`, `unmerge`, `mergeFiltra`, `LOG_TXT`/`logCard` em `index.html` ·
+`smoke.py` ("juntar dois cadastros da mesma pessoa — e separar de novo") · DOCUMENTACAO §6 e §8 ·
+RF-02.6b.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

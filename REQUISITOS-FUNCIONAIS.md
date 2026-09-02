@@ -35,6 +35,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-02.4 | Buscar jogador por nome em lista de até ~50 nomes | P1 | ✅ v1 |
 | RF-02.5 | Corrigir a patente de um jogador (admin), escolhendo o degrau ou movendo ±1 divisão | P1 | ✅ v1 |
 | RF-02.6 | Remover jogador preservando o histórico das partidas em que ele jogou | P2 | ✅ v1 |
+| RF-02.6b | **Juntar dois cadastros** da mesma pessoa (admin): partidas, sessões e racha em andamento passam para o que fica; recusa quem esteve na mesma partida ou está em duas contas; **reversível** pela ficha ("Separar de novo") | P1 | ✅ v1 |
 | RF-02.7 | Ver a ficha do jogador: **as duas patentes** (linha e goleiro), partidas, aproveitamento, gols, melhor patente, V/E/D separados por papel, forma recente | P1 | ✅ v1 |
 | RF-02.8 | Editar o nome e o "costuma ir ao gol" de quem já está cadastrado | P2 | ⬜ v2 |
 

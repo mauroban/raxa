@@ -1249,6 +1249,36 @@ function applyMatch(liga,m){
 }
 /* Recalcula tudo do zero a partir do nível de entrada de cada jogador — é o
    que permite corrigir ou anular uma partida antiga sem deixar resíduo.     */
+/* ---------- juntar dois cadastros da mesma pessoa ----------
+   Quem lança na pressa não acha o "Rodrigo" e cadastra outro. A junção passa
+   tudo que o cadastro repetido fez (partidas, sessões, racha em andamento)
+   para o cadastro que fica, e apaga o repetido. É REVERSÍVEL: o registro de
+   correções guarda os fatos do cadastro que sumiu, em quais partidas/sessões
+   ele estava e a foto das sessões — "separar de novo" refaz tudo.
+   Só dá para juntar quem NUNCA esteve na mesma partida (aí são duas pessoas)
+   e quem não está ligado a duas contas diferentes.                          */
+function trocaId(x,de,para){
+  if(Array.isArray(x)){const out=[];x.forEach(v=>{const nv=trocaId(v,de,para);
+    if(typeof nv==='string'&&nv===para&&out.includes(nv))return;   // lista de ids: sem repetir
+    out.push(nv)});return out}
+  if(x&&typeof x==='object'){const o={};Object.keys(x).forEach(k=>{o[k===de?para:k]=trocaId(x[k],de,para)});return o}
+  return x===de?para:x;
+}
+const temId=(obj,id)=>JSON.stringify(obj||null).indexOf('"'+id+'"')>=0;
+const partidasCom=(liga,id)=>(liga.matches||[]).filter(m=>temId(matchFacts(m),id));
+function juntaveis(liga,fica,some){
+  const a=P(liga,fica),b=P(liga,some);
+  if(!a||!b||a===b)return 'escolha dois cadastros diferentes';
+  if(a.owner&&b.owner&&a.owner!==b.owner)return `cada um está ligado a uma conta (@${a.owner} e @${b.owner}) — desvincule uma antes`;
+  const juntos=(liga.matches||[]).find(m=>temId(matchFacts(m),fica)&&temId(matchFacts(m),some));
+  if(juntos)return `${a.name} e ${b.name} estiveram na mesma partida (${new Date(juntos.ts).toLocaleDateString('pt-BR')}) — não são a mesma pessoa`;
+  return null;
+}
+/* junções ainda em pé que apontam para este cadastro (para a ficha oferecer "separar") */
+function juncoesDe(liga,pid){
+  const log=liga.log||[],desfeitas=new Set(log.filter(e=>e.a==='unmerge').map(e=>e.ref));
+  return log.filter(e=>e.a==='merge'&&e.into===pid&&e.id&&!desfeitas.has(e.id));
+}
 function rebuildAll(liga){
   liga.players.forEach(p=>{
     p.pm=0;
@@ -1877,7 +1907,7 @@ function logAdd(liga,a,extra){
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
   delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol',
-  esc:'corrigiu escalação/trocas'};
+  esc:'corrigiu escalação/trocas',merge:'juntou cadastros',unmerge:'separou cadastros'};
 /* editor: corrige resultado de partida — não corrige nível, não anula, não revisa, não dá papel */
 const souEditor=liga=>['admin','editor'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
@@ -3514,6 +3544,8 @@ function presCount(liga,lv){
 function filterPlayers(q){q=q.toLowerCase().trim();$$('#plist .pcw').forEach(el=>el.classList.toggle('hide',q&&!el.dataset.nm.includes(q)));
   const x=$('#qx');if(x)x.hidden=!q;}
 window.filterPlayers=filterPlayers;
+function mergeFiltra(q){q=q.toLowerCase().trim();$$('#mlist [data-nm]').forEach(el=>el.classList.toggle('hide',!!q&&!el.dataset.nm.includes(q)))}
+window.mergeFiltra=mergeFiltra;
 /* Digitar o nome na ficha não redesenha a folha (o cursor pularia) — então o
    botão Salvar é habilitado direto no oninput, com a mesma conta de "mudou". */
 function pdNome(){
@@ -4686,7 +4718,75 @@ const A={
         <button class="btn ghost" data-a="pdCancel">Cancelar</button>
         <button class="btn pri" id="pdsalvar" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
       </div>
+      ${adm?`<button class="btn wide ghost" data-a="mergeSheet" data-id="${p.id}" style="margin-top:10px">⇆ É a mesma pessoa que outro cadastro…</button>`:''}
+      ${adm&&juncoesDe(l,p.id).length?`<div style="margin-top:10px"><div class="k" style="margin-bottom:6px">Cadastros juntados aqui</div>
+        ${juncoesDe(l,p.id).map(e=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="min-width:0"><b>${esc(e.de.name)}</b> <span class="muted">· ${pl((e.matches||[]).length,'partida')} · ${new Date(e.ts).toLocaleDateString('pt-BR')}</span></div>
+          <button class="btn sm ghost sp" data-a="unmerge" data-ref="${esc(e.id)}">Separar de novo</button></div>`).join('')}
+        <div class="tiny muted" style="margin-top:6px">Separar recria o cadastro e devolve as partidas dele — entendeu errado, desfaz.</div></div>`:''}
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
+  },
+  /* ----- juntar cadastros ----- */
+  mergeSheet(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souAdmin(l))return toast('Só o admin junta cadastros');
+    const jogos=x=>x.L.games+x.G.games;
+    const outros=l.players.filter(x=>x.id!==p.id).sort((a,b)=>a.name.localeCompare(b.name));
+    openSheet(`<h2>${esc(p.name)} é a mesma pessoa que…</h2>
+      <div class="tiny muted" style="margin-bottom:10px">Alguém cadastrou de novo quem já existia? Escolha o outro cadastro. Nada muda até confirmar, e dá para separar depois.</div>
+      <div class="qwrap"><input id="mq" placeholder="Buscar…" oninput="mergeFiltra(this.value)" autocomplete="off"></div>
+      <div style="height:8px"></div>
+      <div class="chips" id="mlist">${outros.map(x=>`<button class="tp big" data-a="mergePick" data-id="${p.id}" data-o="${x.id}" data-nm="${esc(x.name.toLowerCase())}">${esc(x.name)} <small>${pl(jogos(x),'partida')}</small></button>`).join('')||'<span class="tiny muted">Não há outro cadastro.</span>'}</div>`);
+    setTimeout(()=>$('#mq')&&$('#mq').focus(),120);
+  },
+  mergePick(el){
+    const l=L(),a=P(l,el.dataset.id),b=P(l,el.dataset.o);if(!a||!b)return;
+    if(!souAdmin(l))return toast('Só o admin junta cadastros');
+    const jogos=x=>x.L.games+x.G.games,problema=juntaveis(l,a.id,b.id);
+    const opc=(fica,some)=>`<button class="btn wide ghost" data-a="mergeDo" data-fica="${fica.id}" data-some="${some.id}" style="flex-direction:column;align-items:flex-start;gap:2px;white-space:normal;text-align:left;line-height:1.3">
+        Fica <b>&nbsp;${esc(fica.name)}</b><span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(some.name)} some; ${pl(jogos(some),'partida')} dele passa${jogos(some)===1?'':'m'} para ${esc(fica.name)}${some.owner&&!fica.owner?'; a conta @'+esc(some.owner)+' vai junto':''}</span></button>`;
+    openSheet(`<h2>Juntar os dois cadastros</h2>
+      <div class="tiny muted" style="margin-bottom:12px"><b>${esc(a.name)}</b> (${pl(jogos(a),'partida')}) e <b>${esc(b.name)}</b> (${pl(jogos(b),'partida')}). Um fica com tudo — nome, nível de entrada, conta — e o outro some. As partidas dos dois viram de quem fica e os níveis são recalculados do zero.</div>
+      ${problema?`<div class="card" style="border-color:rgba(245,197,66,.45);margin-bottom:12px">⚠️ Não dá para juntar: ${esc(problema)}.</div>`
+        :`<div style="display:grid;gap:7px;margin-bottom:12px">${opc(a,b)}${opc(b,a)}</div>
+        <div class="tiny muted">Entendeu errado? A ficha de quem ficou mostra <b>Separar de novo</b>: recria o cadastro e devolve as partidas.</div>`}
+      <div style="height:12px"></div><button class="btn wide ghost" data-a="pSheet" data-id="${a.id}">Voltar à ficha</button>`);
+  },
+  mergeDo(el){
+    const l=L(),fica=el.dataset.fica,some=el.dataset.some,a=P(l,fica),b=P(l,some);if(!a||!b)return;
+    if(!souAdmin(l))return toast('Só o admin junta cadastros');
+    const problema=juntaveis(l,fica,some);if(problema)return toast('Não dá para juntar: '+problema);
+    const ms=partidasCom(l,some).map(m=>m.id);
+    const ss=(l.sessions||[]).filter(s=>temId(s,some));
+    const entry={id:uid(),into:fica,intoName:a.name,de:playerFacts(b),matches:ms,
+      sessions:ss.map(s=>JSON.parse(JSON.stringify(s))),
+      live:l.live?(l.live.id||null):null,liveTinhaInto:!!(l.live&&temId(l.live,fica)),ownerMoved:false};
+    if(!a.owner&&b.owner){a.owner=b.owner;entry.ownerMoved=true}
+    l.matches=l.matches.map(m=>ms.includes(m.id)?trocaId(m,some,fica):m);
+    l.sessions=(l.sessions||[]).map(s=>temId(s,some)?trocaId(s,some,fica):s);
+    if(l.live&&temId(l.live,some))l.live=trocaId(l.live,some,fica);
+    l.players=l.players.filter(p=>p.id!==some);
+    logAdd(l,'merge',entry);
+    PD=null;rebuildAll(l);closeSheet();save();render();
+    toast(`${b.name} juntado em ${a.name} · ${pl(ms.length,'partida')}`);
+  },
+  unmerge(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin separa cadastros');
+    const e=(l.log||[]).find(x=>x.a==='merge'&&x.id===el.dataset.ref);if(!e)return toast('Junção não encontrada');
+    if((l.log||[]).some(x=>x.a==='unmerge'&&x.ref===e.id))return toast('Já separado');
+    const some=e.de.id,fica=e.into;
+    if(P(l,some))return toast('Esse cadastro já existe');
+    /* as partidas listadas só tinham o cadastro que sumiu (era condição para juntar): trocar de volta é exato */
+    l.matches=l.matches.map(m=>e.matches.includes(m.id)?trocaId(m,fica,some):m);
+    (e.sessions||[]).forEach(s0=>{const i=(l.sessions||[]).findIndex(s=>s.id===s0.id);if(i>=0)l.sessions[i]=JSON.parse(JSON.stringify(s0))});
+    if(l.live&&e.live&&l.live.id===e.live&&!e.liveTinhaInto)l.live=trocaId(l.live,fica,some);
+    const q=mkPlayer(l,e.de.name,l.cfg.startElo,e.de.gk);
+    q.id=some;q.owner=e.de.owner||null;q.role=e.de.role||'jogador';q.created=e.de.created||q.created;
+    ['L','G'].forEach(k=>{const t=e.de[k]||{};if(t.base!==undefined)q[k].base=t.base;q[k].def=!!t.def});
+    l.players.push(q);
+    if(e.ownerMoved){const a=P(l,fica);if(a&&a.owner===e.de.owner)a.owner=null}
+    logAdd(l,'unmerge',{ref:e.id,pid:some,name:e.de.name,into:fica,intoName:e.intoName});
+    PD=null;rebuildAll(l);closeSheet();save();render();
+    toast(`${e.de.name} separado de ${e.intoName||'?'}`);
   },
   pdRank(el){if(!PD)return;const l=L(),p=P(l,PD.id),r=PD.view;if(!p)return;
     pdEntrada(l,p,r,el.dataset.s==='none'?'none':+el.dataset.s);
@@ -5848,6 +5948,8 @@ function logCard(liga){
     else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='esc')o+=`: ${esc(e.txt||'')}`;
+    else if(e.a==='merge')o+=`: ${esc(e.de&&e.de.name||'?')} → ${esc(e.intoName||nome(e.into))} (${pl((e.matches||[]).length,'partida')})`;
+    else if(e.a==='unmerge')o+=`: ${esc(e.name||'?')} separado de ${esc(e.intoName||nome(e.into))}`;
     else if(e.a==='goal')o+=`: ${e.from?esc(nome(e.from))+(e.fromOwn?' (contra)':''):'sem autor'} → ${e.to?esc(nome(e.to))+(e.toOwn?' (contra)':''):'sem autor'}`;
     else if((e.a==='delMatch'||e.a==='backMatch')&&e.names)o+=`: ${esc(e.names[0])} ${e.score?e.score.join('-'):''} ${esc(e.names[1])}`;
     return `<div class="tiny" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="muted num">${new Date(e.ts).toLocaleDateString('pt-BR')} · @${esc(e.by||'?')}</span><br>${o}</div>`;

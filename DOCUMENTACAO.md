@@ -445,6 +445,8 @@ Quem lança resultado no meio de um racha erra — e às vezes o outro time disc
 - **Toda correção recalcula a liga inteira do zero**, a partir do nível de entrada de cada jogador e de todas as partidas válidas em ordem. Corrigir uma partida de três semanas atrás não deixa resíduo em ninguém — é a mesma matemática rodando de novo. Isso é testado: recálculo do zero bate exatamente com o cálculo incremental.
 - Corrigir o vencedor de uma partida com substituições muda **o trecho que fechou a partida** — os trechos anteriores já tinham vencedor próprio, cada um com o seu placar.
 
+- **Dois cadastros da mesma pessoa.** Quem lança na pressa não acha o "Rodrigo" e cadastra outro; o repetido joga uma noite e o histórico se divide. Na ficha de qualquer um dos dois o admin toca em **"⇆ É a mesma pessoa que outro cadastro…"**, escolhe o outro e diz **qual fica**: as partidas, sessões e o racha em andamento do que some passam para quem fica (a conta vai junto, se só um tinha), o cadastro repetido é apagado e os níveis são recalculados do zero. O app **recusa** juntar quem já esteve na mesma partida (são duas pessoas) e quem está ligado a duas contas diferentes. **Entendeu errado, separa:** a ficha de quem ficou lista os cadastros juntados ali com **"Separar de novo"** — recria o cadastro (mesmo id, nome, nível de entrada, conta) e devolve as partidas e sessões dele. Tudo fica no registro de correções ("juntou cadastros" / "separou cadastros").
+
 *A decidir na v2:* se muitas contestações devem **obrigar** revisão antes de a partida valer (hoje é a opção "Suspende") e se a contestação deve exigir um motivo em texto.
 
 ---
@@ -556,6 +558,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 - Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
 - Editar nome, nível, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar)
+- **Juntar dois cadastros** da mesma pessoa (admin), reversível pela ficha ("Separar de novo")
 - **Corrigir escalação e trocas** de partida encerrada, reescrevendo os trechos (D-61); registro de correções por liga
 - Exportar/importar a liga inteira em JSON, com migração automática de ligas gravadas por versões anteriores
 - **Tudo no Supabase** (Postgres + Auth + Realtime): sync incremental por versão, só fatos no banco, tempo real entre os celulares do racha — precisa de internet; no aparelho fica só a preferência de aba/tema

@@ -67,6 +67,7 @@ step('toda acao tem classificacao de papel',()=>{
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdRank','pdBump','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
+    'mergeSheet','mergePick','mergeDo','unmerge',
     'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
     'cancelPend','delLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
@@ -446,6 +447,43 @@ step('cancelar selecao',()=>{A.sel({dataset:{id:L().live.teams[0].ids[0]},classL
 step('recomecar partida',()=>A.startMatch());
 step('aba patentes',()=>{S.ui.tab='ranking';render()});
 step('ficha do jogador',()=>A.pSheet({dataset:{id:L().players[0].id}}));
+step('juntar dois cadastros da mesma pessoa — e separar de novo',()=>{
+  const l=L();
+  const ult=[...l.matches].sort((a,b)=>a.ts-b.ts).pop();if(!ult)throw new Error('sem partida para o teste');
+  const jogos=p=>p.L.games+p.G.games;
+  /* o "Rodrigo" de verdade e o cadastro repetido que jogou UMA partida no lugar dele */
+  const real=l.players.find(p=>jogos(p)>0&&!ult.lineups.flat().includes(p.id)&&ult.lineups[0].length);
+  const dup=mkPlayer(l,real.name+' (repetido)',l.cfg.startElo,false);l.players.push(dup);
+  const clone=trocaId(JSON.parse(JSON.stringify(ult)),ult.lineups[0][0],dup.id);
+  clone.id=uid();clone.ts=ult.ts+1000;clone.sessionId='sess-dup';delete clone.deltas;delete clone.moves;
+  l.matches.push(clone);rebuildAll(l);
+  const jReal=jogos(real),jDup=jogos(dup);
+  if(!jDup)throw new Error('o cadastro repetido devia ter 1 partida');
+  if(juntaveis(l,real.id,dup.id))throw new Error('devia poder juntar: '+juntaveis(l,real.id,dup.id));
+  /* quem esteve na mesma partida nao e a mesma pessoa */
+  const outro=ult.lineups[0][1]||ult.lineups[1][0];
+  if(!juntaveis(l,outro,dup.id))throw new Error('dois que jogaram a mesma partida nao podem ser juntados');
+  A.mergeSheet({dataset:{id:dup.id}});
+  if(!/mergePick/.test(els['#sheet'].innerHTML))throw new Error('folha de juntar sem a lista');
+  A.mergePick({dataset:{id:dup.id,o:real.id}});
+  if(!/mergeDo/.test(els['#sheet'].innerHTML))throw new Error('folha de confirmacao sem as opcoes');
+  A.mergeDo({dataset:{fica:real.id,some:dup.id}});
+  if(P(l,dup.id))throw new Error('o repetido devia ter sumido');
+  if(jogos(real)!==jReal+jDup)throw new Error('as partidas do repetido deviam contar para quem ficou: '+jogos(real)+' vs '+(jReal+jDup));
+  if(!temId(l.matches.find(m=>m.id===clone.id),real.id))throw new Error('a partida nao foi reescrita');
+  const e=juncoesDe(l,real.id)[0];if(!e)throw new Error('a ficha de quem ficou nao sabe da juncao');
+  A.pSheet({dataset:{id:real.id}});
+  if(!/Separar de novo/.test(els['#sheet'].innerHTML))throw new Error('ficha sem o "separar de novo"');
+  A.unmerge({dataset:{ref:e.id}});
+  const volta=P(l,dup.id);
+  if(!volta||volta.name!==dup.name)throw new Error('separar devia recriar o cadastro com o mesmo id e nome');
+  if(jogos(volta)!==jDup||jogos(real)!==jReal)throw new Error('separar devia devolver as partidas: real '+jogos(real)+'/'+jReal+' dup '+jogos(volta)+'/'+jDup);
+  if(juncoesDe(l,real.id).length)throw new Error('a juncao desfeita ainda aparece como em pe');
+  A.unmerge({dataset:{ref:e.id}});                  // segunda vez: nao duplica nada
+  if(l.players.filter(p=>p.id===dup.id).length!==1)throw new Error('separar duas vezes duplicou o cadastro');
+  /* limpa o cenario */
+  l.matches=l.matches.filter(m=>m.id!==clone.id);l.players=l.players.filter(p=>p.id!==dup.id);rebuildAll(l);closeSheet();
+});
 step('corrigir nivel de quem ja jogou mexe no BASE, mostra a previa do hoje e reaplica (D-74/D-86)',()=>{
   const l=L(),p=l.players.find(x=>x.L.games>0)||l.players[0];
   const elo0=p.L.elo,base0=p.L.base,prev=hojeCom(l,p,'L',10);
