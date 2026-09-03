@@ -1938,6 +1938,20 @@ biblioteca de gráficos — colunas em CSS puro bastam, seguem o tema e não pes
 `.posrow`, `.rates`, `.pbar`, `.ic` em `index.html` · `scripts/.tmp/shot_stats.py` fotografa a
 aba com 10 rachas de demonstração · DOCUMENTACAO §5.2. `smoke.py` cobre o toggle "Sem goleiros".
 
+### D-109 · Gols por tempo só sobre minutos de linha; destaque nos rankings é o dono do perfil
+**03/09/2026.** Duas correções na D-108, do mesmo dia. (1) A média da liga em "gols a cada
+10 min" somava os minutos de quem estava no gol — no rodízio, todo mundo tem minutos de goleiro,
+e ninguém marca de lá. A média saía baixa e a comparação enganava. Agora gols por tempo (o cartão
+da pessoa, a média da liga e o ranking "Gols a cada 10 min") usam **tempo de linha** = tempo em
+quadra − tempo no gol; com o chip "Sem goleiros" ligado o tempo já vem sem o gol. "Sofridos a
+cada 10 min" já era só sobre tempo no gol, para a pessoa e para a liga — posição com posição.
+Os dois cartões de ritmo seguem a posição: taxa de linha só com 1 min de linha (goleiro fixo não
+tem), taxa de goleiro só com 1 min no gol, e "gols por partida" completa a dupla.
+(2) Na aba Racha, a linha destacada em verde era a do jogador **selecionado** na aba Jogador
+("Trocar"); virou a do **dono do perfil** neste aparelho. Ver os números de outra pessoa não faz
+dela "você" no ranking.
+**Onde:** `minL`, `rkRitmo`, `ratesHtml` e `rkBars` em `viewStats` · DOCUMENTACAO §5.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
