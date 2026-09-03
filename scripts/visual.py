@@ -50,6 +50,7 @@ TELAS = {
     10: 'destaques',
     11: 'ficha admin',
     12: 'minhas opinioes',
+    13: 'ficha com opinioes',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -95,7 +96,7 @@ DRIVER = r"""
     if(step>=5){                     /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
-    if(step===11||step===12)S.ui.tab='ranking';
+    if(step===11||step===12||step===13)S.ui.tab='ranking';
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';
@@ -107,6 +108,14 @@ DRIVER = r"""
     const p=l.players.find(x=>x.L.games>0&&x!==eu)||l.players[0];
     A.pSheet({dataset:{id:p.id}});
     const sh=document.querySelector('#sheet');if(sh)sh.scrollTop=380;
+  }
+  if(step===13){                   /* ficha do admin com opinioes de varias pessoas, uma divergente e um "nao sei" */
+    const l=L(),eu=l.players[1];eu.role='admin';
+    const p=l.players.find(x=>x.L.games>0&&x!==eu)||l.players[0];
+    const rat=l.players.filter(x=>x!==eu&&x!==p).slice(0,4);rat.forEach(x=>x.role='lancador');
+    p.L.op=[{by:null,e:stepMid(7),ts:1},{by:eu.id,e:stepMid(7),ts:2},{by:rat[0].id,e:stepMid(4),ts:3},{by:rat[1].id,e:stepMid(13),ts:4},{by:rat[2].id,e:stepMid(7),ts:5},{by:rat[3].id,e:null,ts:6}];
+    rebuildAll(l);render();A.pSheet({dataset:{id:p.id,r:'L'}});
+    const sh=document.querySelector('#sheet');if(sh)sh.scrollTop=430;
   }
   if(step===12){                   /* a lista de quem lanca: uma opiniao por pessoa (D-95) */
     const l=L(),eu=l.players[1];eu.role='admin';

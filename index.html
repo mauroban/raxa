@@ -555,6 +555,12 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
    e HOJE (atual → previsto) — para o admin ver de cara o que edita e o que
    é consequência.                                                            */
 .lvedit{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;margin-top:10px}
+/* ficha: uma linha por opinião, em colunas fixas — nome, badge, ✕ (ou o espaço dele) */
+.oprow2{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.oprow2 .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oprow2 .pat{flex:0 0 96px;width:96px;justify-content:center;box-sizing:border-box}
+.oprow2 .pat.none{background:var(--fill);color:var(--mute);box-shadow:none;font-size:11px}
+.oprow2 .x,.oprow2 .xs{flex:0 0 32px;width:32px}
 /* "Minhas opiniões" (D-95): uma pessoa por vez num cartão; as cinco patentes
    são opções grandes com o badge de metal e o que significam; a lista de
    todos fica embaixo, para conferir e voltar.                              */
@@ -2645,7 +2651,7 @@ function opCard(liga){
   const partes=[pend.L?`<b style="color:var(--gold)">${pend.L}</b> na linha`:'',pend.G?`<b style="color:var(--gold)">${pend.G}</b> no gol`:''].filter(Boolean);
   return `<div class="card ${muitos?'pulse':''}" style="margin-bottom:10px"><div class="row" data-a="opSheet" data-go="1" style="cursor:pointer">
     <div style="min-width:0"><div class="k">Minhas opiniões sobre nível</div>
-      <div class="tiny muted" style="margin-top:3px">${tot?`Faltam ${partes.join(' · ')} — toque para dar`:'Todas dadas ✓ — volte quando entrar gente nova'}</div></div>
+      <div class="tiny muted" style="margin-top:3px">${tot?`Faltam ${partes.join(' · ')}`:'Todas dadas ✓'}</div></div>
     <div class="sp" style="color:${tot?'var(--gold)':'var(--mute)'};font-size:18px">›</div></div></div>`;
 }
 /* a escada de níveis: linha ou goleiro */
@@ -3891,7 +3897,7 @@ const A={
         <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
       </div>
       <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
-        <div class="lbl">Sua opinião sobre o nível<small>Sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}. Com nível: a sua opinião — outros que lançam podem dar a deles na ficha, e a entrada fica no meio. Goleiro usa a mesma régua da linha (o quanto o time ganha com ele) — na dúvida, deixe sem nível.</small></div>
+        <div class="lbl">Sua opinião sobre o nível<small>Na dúvida, deixe sem nível: o app descobre em ${calMeta(l).n} ${calMeta(l).u}.</small></div>
         <div class="ladder4 six">
           <button class="on" data-a="pickPat" data-s="" style="--pc:var(--mute)"><i></i><span>Sem nível</span></button>
           ${l.cfg.patNames.map((n,i)=>`<button data-a="pickPat" data-s="${i*3+1}" style="--pc:${PATC[i]}"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -4035,7 +4041,7 @@ const A={
     const l=L(),lv=l.live;
     const emQuadra=lv.cur?[...lv.cur.lineups[0],...lv.cur.lineups[1]]:[];
     openSheet(`<h2>Quem foi embora?</h2>
-      <div class="tiny muted" style="margin-bottom:10px">Machucou, precisou sair: toque no nome e a pessoa sai da presença, do time, da fila e do rodízio. As partidas que já jogou continuam valendo.</div>
+      <div class="tiny muted" style="margin-bottom:10px">Sai da presença, do time, da fila e do rodízio. O que já jogou continua valendo.</div>
       <div class="chips">${lv.presentIds.map(id=>`<button class="tp big" data-a="leaveRacha" data-id="${id}">${esc(nameOf(l,id))}${emQuadra.includes(id)?' <small>em quadra</small>':''}</button>`).join('')}</div>`);
   },
   /* Sai do racha no meio: presença, time, fila, rodízio de goleiro — e, se
@@ -4771,22 +4777,23 @@ const A={
         const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
         return `<div class="ps-panel">
         <div class="k">Nível ${role==='G'?'no gol':'na linha'} — opiniões</div>
-        ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px;line-height:1.45">A régua é a MESMA da linha: o nível diz o quanto o time ganha com ele. Na dúvida, não opine: em ${calMeta(l).n} ${calMeta(l).u} o app acha o lugar sozinho (D-90).</div>`:''}
+        ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px">No gol, na dúvida, não opine: o app acha o lugar em ${calMeta(l).n} ${calMeta(l).u}.</div>`:''}
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
-          <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões')+(ops.length===2?' · a média':ops.length>2?' · a média sem a mais alta e a mais baixa':''):'sem opinião: calibra do zero'}</span></div>
+          <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões'):'sem opinião'}</span></div>
           ${t.games?`<div class="lbl">HOJE</div>
-          <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')} por cima da entrada</span></div>`:''}
+          <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')}</span></div>`:''}
         </div>
-        ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px;line-height:1.45">⚠️ Opiniões muito diferentes (${extremos}): entra no meio e as partidas mandam mais, como quem está sem nível.</div>`:''}
-        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="flex:1;min-width:0">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:''}</div>`).join('')}${nsabe.length?`<div class="tiny muted" style="padding:5px 0">${nsabe.map(o=>nomeOp(o)).join(', ')}: não sabe${nsabe.length>1?'m':''}</div>`:''}</div>`:''}
+        ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
+        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:'<span class="xs"></span>'}</div>`).join('')}${nsabe.length?`<div class="oprow2"><div class="who tiny muted">${nsabe.map(o=>nomeOp(o)).join(', ')}</div><span class="pat none">não sabe${nsabe.length>1?'m':''}</span><span class="xs"></span></div>`:''}</div>`:''}
         ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
           <div class="ladder4">
             ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&minha.e!==null&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
-            <button class="${minha&&minha.e===null?'on':''}" style="--pc:var(--mute)" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="ns" data-back="ficha"><i></i><span>Não sei</span></button>
           </div>
-          ${minha?`<button class="btn sm wide ghost" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="" data-back="ficha" style="margin-top:8px">Tirar a minha opinião</button>`:''}
-          <div class="tiny muted" style="margin-top:6px;line-height:1.5">Um toque salva; tocar de novo tira. A entrada é a média das opiniões de quem lança — com 3 ou mais, sem a mais alta e a mais baixa${t.games?', e o histórico reaplica por cima na hora':''}. Fato de quadra ninguém edita.</div>`
+          <div class="row" style="gap:6px;margin-top:8px">
+            <button class="btn sm ${minha&&minha.e===null?'':'ghost'}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="ns" data-back="ficha">Não sei</button>
+            ${minha?`<button class="btn sm ghost sp" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="" data-back="ficha">Tirar a minha opinião</button>`:''}
+          </div>`
           :eu===p.id?'<div class="tiny muted" style="margin-top:8px">Sobre você, quem opina são os outros.</div>':''}
       </div>`})():''}
       <div style="height:6px"></div>
@@ -4813,7 +4820,7 @@ const A={
       ${adm&&juncoesDe(l,p.id).length?`<div style="margin-top:10px"><div class="k" style="margin-bottom:6px">Cadastros juntados aqui</div>
         ${juncoesDe(l,p.id).map(e=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="min-width:0"><b>${esc(e.de.name)}</b> <span class="muted">· ${pl((e.matches||[]).length,'partida')} · ${new Date(e.ts).toLocaleDateString('pt-BR')}</span></div>
           <button class="btn sm ghost sp" data-a="unmerge" data-ref="${esc(e.id)}">Separar de novo</button></div>`).join('')}
-        <div class="tiny muted" style="margin-top:6px">Separar recria o cadastro e devolve as partidas dele — entendeu errado, desfaz.</div></div>`:''}
+        </div>`:''}
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
   },
   /* ----- juntar cadastros ----- */
@@ -4823,7 +4830,7 @@ const A={
     const jogos=x=>x.L.games+x.G.games;
     const outros=l.players.filter(x=>x.id!==p.id).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>${esc(p.name)} é a mesma pessoa que…</h2>
-      <div class="tiny muted" style="margin-bottom:10px">Alguém cadastrou de novo quem já existia? Escolha o outro cadastro. Nada muda até confirmar, e dá para separar depois.</div>
+      <div class="tiny muted" style="margin-bottom:10px">Escolha o outro cadastro. Nada muda até confirmar.</div>
       <div class="qwrap"><input id="mq" placeholder="Buscar…" oninput="mergeFiltra(this.value)" autocomplete="off"></div>
       <div style="height:8px"></div>
       <div class="chips" id="mlist">${outros.map(x=>`<button class="tp big" data-a="mergePick" data-id="${p.id}" data-o="${x.id}" data-nm="${esc(x.name.toLowerCase())}">${esc(x.name)} <small>${pl(jogos(x),'partida')}</small></button>`).join('')||'<span class="tiny muted">Não há outro cadastro.</span>'}</div>`);
@@ -4839,7 +4846,7 @@ const A={
       <div class="tiny muted" style="margin-bottom:12px"><b>${esc(a.name)}</b> (${pl(jogos(a),'partida')}) e <b>${esc(b.name)}</b> (${pl(jogos(b),'partida')}). Um fica com tudo — nome, nível de entrada, conta — e o outro some. As partidas dos dois viram de quem fica e os níveis são recalculados do zero.</div>
       ${problema?`<div class="card" style="border-color:rgba(245,197,66,.45);margin-bottom:12px">⚠️ Não dá para juntar: ${esc(problema)}.</div>`
         :`<div style="display:grid;gap:7px;margin-bottom:12px">${opc(a,b)}${opc(b,a)}</div>
-        <div class="tiny muted">Entendeu errado? A ficha de quem ficou mostra <b>Separar de novo</b>: recria o cadastro e devolve as partidas.</div>`}
+        <div class="tiny muted">Dá para separar depois, na ficha de quem ficou.</div>`}
       <div style="height:12px"></div><button class="btn wide ghost" data-a="pSheet" data-id="${a.id}">Voltar à ficha</button>`);
   },
   mergeDo(el){
@@ -4976,8 +4983,7 @@ const A={
     let cartao;
     if(!ordem.length)cartao=`<div class="opcard"><div class="tiny muted">Ninguém para opinar ${r==='G'?'no gol — quem vai ao gol aparece aqui':'na linha'}.</div></div>`;
     else if(!p){const o=r==='G'?'L':'G';cartao=`<div class="opcard done"><div class="big">✓</div><div class="nm">Todas as suas opiniões ${r==='G'?'no gol':'na linha'} estão dadas</div>
-      ${pend[o]?`<button class="btn pri" data-a="opRole" data-v="${o}" style="margin-top:12px">Faltam ${pend[o]} ${o==='G'?'no gol':'na linha'} — ir para lá ›</button>`
-        :'<div class="tiny muted" style="margin-top:6px;line-height:1.5">Volte aqui quando alguém novo entrar — ou toque num nome abaixo para rever.</div>'}</div>`}
+      ${pend[o]?`<button class="btn pri" data-a="opRole" data-v="${o}" style="margin-top:12px">Faltam ${pend[o]} ${o==='G'?'no gol':'na linha'} ›</button>`:''}</div>`}
     else{
       const tr=rt(p,r),m=minha(p),ops=opsAtivas(l,tr).filter(o=>o.by!==eu&&o.e!==null),tem=temPatente(l,p,r);
       const outrasOp=ops.length?ops.map(o=>`${o.by?esc(nameOf(l,o.by).split(' ')[0]):'cadastro'} <b>${esc(patName(l,stepOf(o.e)))}</b>`).join(' · '):'';
@@ -4995,7 +5001,7 @@ const A={
           return `<button class="opopt ${on?'on':''}" style="${patVars(st)}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="${st}" data-back="lista" aria-pressed="${on?'true':'false'}">
             ${patBadgePat(l,st)}<span class="desc">${SIGNIF[k]}</span>${on?'<span class="chk">✓</span>':''}</button>`}).reverse().join('')}
         <button class="opopt ns ${m&&m.e===null?'on':''}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="ns" data-back="lista" aria-pressed="${m&&m.e===null?'true':'false'}">
-          <span class="pat none">?</span><span class="desc"><b>Não sei</b> — nunca vi jogar direito. Fica de fora da conta, e você não é cobrado.</span>${m&&m.e===null?'<span class="chk">✓</span>':''}</button>
+          <span class="pat none">?</span><span class="desc"><b>Não sei</b> — nunca vi jogar direito.</span>${m&&m.e===null?'<span class="chk">✓</span>':''}</button>
         <div class="opnav">
           <button class="btn sm ghost" data-a="opNav" data-d="-1" ${OPV.i<=0?'disabled':''}>‹ Anterior</button>
           <div class="tiny muted" style="align-self:center">${OPV.i+1} de ${ordem.length}</div>
@@ -5011,7 +5017,7 @@ const A={
       <div class="opbar"><i style="width:${fila.length?Math.round(100*n/fila.length):0}%"></i></div>
       <div class="seg" style="margin-bottom:12px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha${pend.L?` <span class="segn">${pend.L}</span>`:''}</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol${pend.G?` <span class="segn">${pend.G}</span>`:''}</button></div>
       ${cartao}
-      <div class="tiny muted" style="margin:12px 2px 0;line-height:1.5">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Um toque salva e passa para a próxima; tocar de novo na mesma tira.</div>
+      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Tocar de novo tira.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
       <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui; toque para abrir a ficha</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
