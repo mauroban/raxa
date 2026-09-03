@@ -245,6 +245,11 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .teamwrap.cols2 .team .bd{flex-direction:column;flex-wrap:nowrap;gap:4px;padding:6px;min-height:0}
 .teamwrap.cols2 .tp.big{width:100%;justify-content:flex-start;min-height:36px;font-size:13.5px;padding:0 9px;box-sizing:border-box}
 .tp .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* quem está fora (ao vivo e na pré-partida): colunas por time de origem, um nome por linha */
+.foragrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.foragrid .grp{display:flex;flex-direction:column;gap:4px;min-width:0}
+.foragrid .grp .teamtag{align-self:flex-start;margin-bottom:2px}
+.foragrid .tp.big{width:100%;justify-content:flex-start;min-height:36px;font-size:13.5px;padding:0 9px;box-sizing:border-box}
 .team{border:0;border-radius:var(--r);overflow:hidden;background:var(--panel);box-shadow:0 1px 2px rgba(15,31,22,.05)}
 .team .hd{display:flex;align-items:center;gap:8px;padding:10px 14px;font-family:var(--disp);font-weight:800;
   text-transform:uppercase;letter-spacing:.06em;font-size:17px;color:#fff}
@@ -2518,10 +2523,10 @@ function viewProxima(liga,lv){
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
     <div class="row"><div class="k">Fora desta partida</div>
       <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+outros.reduce((a,i)=>a+lv.teams[i].ids.length,0)}</div></div>
-    ${outros.map(i=>`<div style="margin-top:8px">
+    ${outros.length?`<div class="foragrid" style="margin-top:8px">${outros.map(i=>`<div class="grp">
       <div class="teamtag ${TEAMBG[i]}">${esc(lv.teams[i].name)}</div>
-      <div class="chips">${lv.teams[i].ids.map(id=>tpChip(liga,lv,id,false)).join('')||'<span class="tiny muted">vazio</span>'}</div>
-    </div>`).join('')}
+      ${lv.teams[i].ids.map(id=>tpChip(liga,lv,id,true)).join('')||'<span class="tiny muted">vazio</span>'}
+    </div>`).join('')}</div>`:''}
     ${soltos.length?`<div style="margin-top:8px">
       <div class="row" style="margin-bottom:6px"><div class="k">Fila — os próximos a entrar</div>
         <div class="sp tiny muted">entram no lugar de quem sair</div></div>
@@ -2592,17 +2597,19 @@ function viewJogo(liga,lv){
   <div class="card" style="margin-top:10px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
-    ${[0,1].map(s=>{const res=reservasDe(s);return res.length?`
-      <div style="margin-bottom:10px">
+    ${(()=>{const res=[0,1].map(s=>reservasDe(s));return res.some(x=>x.length)?`<div class="foragrid" style="margin-bottom:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
-        <div class="chips">${res.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}" style="opacity:.85">${esc(nameOf(liga,o.id))}</button>`).join('')}</div>
-      </div>`:''}).join('')}
+        ${res[s].map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"><span class="nm">${esc(nameOf(liga,o.id))}</span></button>`).join('')}
+      </div>`:'').join('')}</div>`:''})()}
     <div class="row"><div class="k">Fora — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
-    <div class="chips" style="margin-top:8px">
-      ${fora.length?fora.map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}">${esc(nameOf(liga,o.id))}${o.from?' <small>'+esc(o.from)+'</small>':''}</button>`).join('')
-        :'<span class="tiny muted">Ninguém de fora.</span>'}
-    </div>
+    ${(()=>{if(!fora.length)return '<div class="tiny muted" style="margin-top:8px">Ninguém de fora.</div>';
+      /* agrupado pelo time de origem, em colunas, um nome por linha (D-98) */
+      const grupos=[];fora.forEach(o=>{let g=grupos.find(x=>x.ti===o.ti);if(!g){g={ti:o.ti,from:o.from,ids:[]};grupos.push(g)}g.ids.push(o.id)});
+      return `<div class="foragrid" style="margin-top:8px">${grupos.map(g=>`<div class="grp">
+        ${g.ti>=0?`<div class="teamtag ${TEAMBG[g.ti]}">${esc(g.from)}</div>`:'<div class="teamtag">Sem time</div>'}
+        ${g.ids.map(id=>`<button class="tp big" data-a="inPick" data-id="${id}" data-drag="1" data-drop-player="${id}"><span class="nm">${esc(nameOf(liga,id))}</span></button>`).join('')}
+      </div>`).join('')}</div>`})()}
     ${(()=>{const descansa=(lv.gkPool||[]).filter(id=>id!==c.gks[0]&&id!==c.gks[1]);
       return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
     <div class="hr"></div>
@@ -5352,14 +5359,21 @@ document.addEventListener('pointerdown',e=>{
   endDrag(false);
   drag={el,id:el.dataset.id,x0:e.clientX,y0:e.clientY,pid:e.pointerId,active:false,timer:null};
   if(e.pointerType==='mouse')return;                       // no mouse, arrasta ao mover
-  drag.timer=setTimeout(()=>{if(drag)beginDrag(e)},180);   // no toque, segura e arrasta
+  /* no toque: segura e arrasta — mesma régua da presença (D-88): 150 ms e
+     20 px de tolerância à tremida do polegar                            */
+  drag.timer=setTimeout(()=>{if(drag&&!drag.active)beginDrag(e)},150);
 });
+/* Com o arraste ligado, o dedo não pode rolar a página: preventDefault no
+   pointermove não segura a rolagem no toque — só no touchmove (não passivo).
+   Sem isso o navegador assumia o gesto, disparava pointercancel e o nome
+   voltava para o lugar no meio do caminho.                               */
+document.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault()},{passive:false});
 document.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.pid)return;
   const dx=e.clientX-drag.x0,dy=e.clientY-drag.y0,dist=Math.hypot(dx,dy);
   if(!drag.active){
     if(e.pointerType==='mouse'&&dist>6)beginDrag(e);
-    else if(dist>12){endDrag(false);return}                // rolou a tela: deixa o navegador cuidar
+    else if(dist>20){endDrag(false);return}                // rolou a tela de verdade: deixa o navegador cuidar
     if(!drag||!drag.active)return;
   }
   e.preventDefault();

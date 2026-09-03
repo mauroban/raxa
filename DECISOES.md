@@ -1740,10 +1740,18 @@ em duas linhas por time e não cabiam quatro times na tela. Agora a montagem usa
 **duas colunas** (`.teamwrap.cols2`): cada time é um cartão vertical, um nome por linha (nome
 longo corta com reticências), cabeçalho mais baixo. Toque e arraste continuam iguais. A
 pré-partida (escalação por colunas) não muda.
+O mesmo desenho vale para **quem está fora** na partida ao vivo e na pré-partida (`.foragrid`:
+colunas por time de origem, um nome por linha) — os chips soltos com "TIME C" atrás do nome
+quebravam em três linhas. E o **arrastar no toque** ganha a régua da presença (D-88): segurar
+150 ms, 20 px de tolerância à tremida, e um `touchmove` não passivo que segura a rolagem
+enquanto o arraste está ligado — `preventDefault` no `pointermove` não segura rolagem no toque,
+então o navegador assumia o gesto, disparava `pointercancel` e o nome voltava no meio do caminho.
 **Descartado:** cartões na horizontal com rolagem lateral (esconde time); uma coluna com chips
-menores (continuava quebrando).
-**Onde:** `viewTimes`/`timeCard`/`tpChip` e CSS `.teamwrap.cols2` em `index.html` ·
-`scripts/visual.py` (tela 2) · DOCUMENTACAO §4.2.
+menores (continuava quebrando); `touch-action:none` nos chips (impediria rolar a tela quando o
+dedo começa em cima de um nome, que é quase sempre).
+**Onde:** `viewTimes`/`timeCard`/`tpChip`, `viewJogo`/`viewProxima` (fora), CSS `.teamwrap.cols2`
+e `.foragrid`, e os handlers de arraste (`pointerdown`/`touchmove`/`pointermove`) em
+`index.html` · `scripts/visual.py` (telas 2, 3, 4) · DOCUMENTACAO §4.2.
 
 ## Como registrar uma decisão nova
 
