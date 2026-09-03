@@ -1734,6 +1734,17 @@ grandezas na mesma base. (A D-77 tinha descartado outra coisa: corrigir a *expec
 empate da noite, que contaminava a régua com o resultado. Aqui muda só a conta do realizado.)
 **Onde:** card do último racha em `viewStats` (`index.html`) · DOCUMENTACAO §8 "Minutos e ritmo".
 
+### D-98 · Montagem: times em duas colunas, um nome por linha
+**02/09/2026.** No celular, os cartões de time empilhados com os nomes em chips soltos quebravam
+em duas linhas por time e não cabiam quatro times na tela. Agora a montagem usa uma grade de
+**duas colunas** (`.teamwrap.cols2`): cada time é um cartão vertical, um nome por linha (nome
+longo corta com reticências), cabeçalho mais baixo. Toque e arraste continuam iguais. A
+pré-partida (escalação por colunas) não muda.
+**Descartado:** cartões na horizontal com rolagem lateral (esconde time); uma coluna com chips
+menores (continuava quebrando).
+**Onde:** `viewTimes`/`timeCard`/`tpChip` e CSS `.teamwrap.cols2` em `index.html` ·
+`scripts/visual.py` (tela 2) · DOCUMENTACAO §4.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -273,7 +273,7 @@ Cada cartão de time mostra, ao lado do nome, a **patente média do time** (D-87
 
 **Mexer nos times é a operação mais frequente depois da presença**, então ela é a mais visível da tela:
 
-- todos os nomes ficam em botões grandes, e **quem está de fora tem card próprio com contador** — nunca escondido;
+- todos os nomes ficam em botões grandes, e **quem está de fora tem card próprio com contador** — nunca escondido; na montagem os times ficam **lado a lado, em duas colunas, um nome por linha** (D-98), para todos caberem na tela do celular sem nome quebrando;
 - **arraste um nome sobre o outro para trocar de lugar**, ou arraste para dentro de um time, para o card "fora" ou para o card de goleiros — no celular, segure um instante antes de arrastar;
 - quem preferir tocar: toca em um jogador e em outro para trocar; toca no espaço de um time (ou no card "fora") para mover;
 - enquanto alguém está selecionado, uma barra fixa no topo mostra quem é e permite cancelar;

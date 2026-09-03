@@ -237,6 +237,14 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 
 /* ---------- times como coletes ---------- */
 .teamwrap{display:grid;gap:10px}
+/* montagem: os times lado a lado, em duas colunas, um nome por linha — todos os
+   times cabem na tela do celular sem nome quebrando em duas linhas (D-98) */
+.teamwrap.cols2{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.teamwrap.cols2 .team .hd{padding:7px 10px;font-size:13px;gap:6px}
+.teamwrap.cols2 .team .hd .pat{font-size:9.5px;padding:1px 5px}
+.teamwrap.cols2 .team .bd{flex-direction:column;flex-wrap:nowrap;gap:4px;padding:6px;min-height:0}
+.teamwrap.cols2 .tp.big{width:100%;justify-content:flex-start;min-height:36px;font-size:13.5px;padding:0 9px;box-sizing:border-box}
+.tp .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .team{border:0;border-radius:var(--r);overflow:hidden;background:var(--panel);box-shadow:0 1px 2px rgba(15,31,22,.05)}
 .team .hd{display:flex;align-items:center;gap:8px;padding:10px 14px;font-family:var(--disp);font-weight:800;
   text-transform:uppercase;letter-spacing:.06em;font-size:17px;color:#fff}
@@ -2293,9 +2301,9 @@ function viewTimes(liga,lv){
       ${rod?pool.map(id=>`<button class="tp big ${lv.sel===id?'sel':''}" data-a="sel" data-id="${id}">🧤 ${esc(nameOf(liga,id))}</button>`).join('')
         :'<span class="tiny muted">Cada goleiro está escalado dentro de um time.</span>'}
     </div>
-    ${rod?'<div class="tiny muted" style="margin-top:8px">Trocam de lado a cada partida. Toque num goleiro e depois num time para fixá-lo.</div>':''}
+    ${rod?'<div class="tiny muted" style="margin-top:8px">Trocam de lado a cada partida.</div>':''}
   </div>`:''}
-  <div class="teamwrap" style="margin-top:10px">
+  <div class="teamwrap cols2" style="margin-top:10px">
     ${lv.teams.map((t,i)=>timeCard(liga,lv,i,per)).join('')}
   </div>
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
@@ -2433,7 +2441,7 @@ function tpChip(liga,lv,id,big){
   const p=P(liga,id);if(!p)return '';
   const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(liga,p,role)&&vePat(liga);
   return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}">
-    ${tem?patDot(liga,rt(p,role).rank):''}${esc(p.name)}${gk?' 🧤':''}</button>`;
+    ${tem?patDot(liga,rt(p,role).rank):''}<span class="nm">${esc(p.name)}${gk?' 🧤':''}</span></button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
 /* Time com gente a menos mostra uma VAGA por lugar vazio, dentro do próprio
