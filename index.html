@@ -208,16 +208,18 @@ label.f .k{display:block;margin-bottom:6px}
 .pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
 /* uma bola ⚽ por gol na "partida a partida" — a mesma da linha "gols a cada 10 min";
-   gol contra é a MESMA bola, vermelha (D-107). Emoji não aceita color, então a cor
-   vem de filtro: grayscale tira o azulado do ⚽ do Windows, brightness(.75) baixa o
-   branco para um cinza que aceita tinta (branco puro satura em rosa), sepia tinge,
-   saturate+hue-rotate(-45) levam ao vermelho; os gomos escuros ficam escuros.
-   Conferido em print no Chrome (scripts/visual.py não cobre a Stats da pessoa). */
+   gol contra é a MESMA bola com os gomos vermelhos e o branco intacto (D-107). Emoji não
+   aceita color, e a bola muda por aparelho: no celular (Android/iPhone) é preta e branca,
+   no Windows é azul e branca. Dois passos no filter cobrem os dois:
+   · hue-rotate(135°) gira o azul do Windows para vermelho; não mexe em preto nem branco;
+   · url(#gcred) é uma matriz de cor (SVG inline no fim do body) que manda preto para
+     vermelho e deixa branco branco — é o que pinta os gomos no celular.
+   Conferido em print no Chrome com o ⚽ do Windows e uma bola preta e branca desenhada. */
+.gball{display:inline-block;font-size:14px;line-height:1;margin-left:2px;font-style:normal}
+.gball.own{filter:hue-rotate(135deg) saturate(1.3) url(#gcred)}
 /* 14px (do tamanho do placar ao lado) e SEM vertical-align: o emoji desce da linha de
    base de um jeito diferente em cada aparelho, então quem centraliza é o flex da célula. */
-.gball{display:inline-block;font-size:14px;line-height:1;margin-left:2px;font-style:normal}
 .gcell{display:inline-flex;align-items:center;justify-content:flex-end;min-width:44px;white-space:nowrap}
-.gball.own{filter:grayscale(1) brightness(.75) sepia(1) saturate(6) hue-rotate(-45deg)}
 /* sem sinal há mais de 1 min: o que lança fica apagado — a tela pode estar velha */
 body.travado .scoreb .side,body.travado .esc2 .pl,body.travado .tp,body.travado .btn.pri{opacity:.55;filter:grayscale(.5)}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
@@ -6630,5 +6632,7 @@ document.addEventListener('focusout',()=>setTimeout(refetchPendentes,80));
 
 boot();
 </script>
+<!-- filtro de cor do gol contra (.gball.own): preto → vermelho, branco fica. Ver .gball no CSS. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="gcred" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.2 0 0 0 0.8  0 0.85 0 0 0.15  0 0 0.85 0 0.15  0 0 0 1 0"/></filter></svg>
 </body>
 </html>

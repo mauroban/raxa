@@ -1905,6 +1905,13 @@ racha · DOCUMENTACAO §5.2. Sem teste automático de cor; `layout.py` cobre a e
 caindo abaixo da linha no celular, porque o glifo do emoji desce da linha de base de um jeito
 diferente em cada aparelho. Agora é 14px (tamanho do placar ao lado) e a célula (`.gcell`) é
 `inline-flex` centralizado, sem `vertical-align`.
+**Segundo ajuste, mesmo dia:** o pedido era a parte **azul** da bola ficar vermelha, não a
+branca. Trocado o tingimento (sepia) por `hue-rotate(135deg)`, que gira só o que tem cor e
+preserva branco e preto. Como no Android/iPhone o ⚽ é preto e branco e o giro não faz nada,
+e o celular é o que importa, entra um segundo passo: `url(#gcred)`, filtro SVG inline
+(`feColorMatrix`) que manda preto para vermelho e deixa branco branco. Resultado: no celular a
+bola fica branca com gomos vermelhos; no Windows, o azul vira vermelho. Descartado o `drop-shadow`
+vermelho (halo borrado em 14px, e não pinta os gomos).
 
 ## Como registrar uma decisão nova
 
