@@ -329,6 +329,18 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .clock .t.pause{color:var(--mute);opacity:.6}
 @keyframes pulse{to{opacity:.45}}
 .stintline{margin:-4px 0 9px;text-align:center}
+/* ao vivo, mais compacto (D-98): relógio em evidência, placar mais baixo,
+   escalação e "fora" mais apertados — a tela toda cabe com menos rolagem   */
+.livetop{padding:2px 0 8px}
+.livetop .t{font-size:58px}
+.livetop .iconbtn{width:40px;height:40px;font-size:15px}
+.esc2{gap:6px;margin-top:6px}
+.esc2 .pl{min-height:38px;margin-top:4px;font-size:13.5px}
+.foragrid .tp.big{min-height:32px;font-size:13px}
+.livetop .meta .k{white-space:nowrap}
+.acts3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.acts3 .btn{padding-left:6px;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+@media(max-height:620px){.livetop .t{font-size:44px}}
 .scoreb{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
 .side{border-radius:16px;padding:14px 10px 12px;text-align:center;cursor:pointer;position:relative;overflow:hidden;
   border:0;transition:transform .08s;color:#fff}
@@ -338,8 +350,9 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .side .hint{font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
 .side.a{background:var(--bibA)} .side.b{background:var(--bibB)} .side.c{background:var(--bibC)}
 .side.d{background:var(--bibD);color:#0F1F16}
-.scoreb.big .side{min-height:clamp(150px,30vh,240px);display:flex;flex-direction:column;justify-content:center;padding:22px 10px 16px}
-.scoreb.big .side .sc{font-size:clamp(76px,22vw,120px)}
+.scoreb.big .side{min-height:clamp(96px,17vh,148px);display:flex;flex-direction:column;justify-content:center;padding:12px 10px 10px}
+.scoreb.big .side .sc{font-size:clamp(52px,14vw,76px);margin:2px 0}
+.scoreb.big .side .nm{font-size:14px}
 /* O "−" mora numa zona morta: toque perto dele (e fora dele) não vira gol — o
    contrário do que a pessoa queria. A zona engole o toque sem fazer nada.  */
 .minuszone{position:absolute;top:0;right:0;width:66px;height:66px;cursor:default}
@@ -378,6 +391,21 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .form i{width:7px;height:7px;border-radius:2px;background:var(--mute2);display:block}
 .form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
 /* card de subida/queda: neutro, o badge dentro dele dá a cor */
+/* resumo do fim do racha (D-99): uma linha por item, colunas fixas; seta verde sobe, vermelha cai */
+.sumrow{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.sumrow:last-child{border-bottom:0}
+.sumrow .pos{font-family:var(--disp);font-weight:800;font-size:14px;color:var(--mute2);text-align:center}
+.sumrow.top .pos{color:var(--gold)}
+.sumrow .nm{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sumrow .nm small{display:block;font-weight:400;color:var(--mute);font-size:11px;margin-top:1px;white-space:normal}
+.sumrow .val{font-family:var(--disp);font-weight:800;font-size:16px;white-space:nowrap;text-align:right}
+.sumrow .val small{font-weight:500;color:var(--mute);margin-left:4px;font-size:10.5px;font-family:var(--body)}
+.sumrow .val .vedx{font-size:14px;letter-spacing:.02em}
+.sumrow .val .vedx b{font-weight:800}.sumrow .val .vedx .v{color:var(--lime)}.sumrow .val .vedx .d{color:var(--coral)}
+.sumrow .val small.gols{display:block;margin:2px 0 0}
+.sumrow .val.lv{display:flex;align-items:center;gap:5px}
+.sumrow .val .to{color:var(--mute);font-weight:400;font-size:13px}
+.sumrow .arr{font-size:15px;text-align:center}.sumrow .arr.up{color:var(--lime)}.sumrow .arr.dn{color:var(--coral)}
 .promo{border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;background:var(--fill)}
 .promo .t{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--chalk);text-transform:uppercase}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -2534,10 +2562,10 @@ function viewProxima(liga,lv){
       </div>`:''}
     ${!outros.length&&!soltos.length?'<div class="tiny muted" style="margin-top:8px">Todo mundo entra nesta partida.</div>':''}
   </div>
-  <div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">
-    <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
-    <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
-    <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
+  <div class="acts3" style="margin-top:10px">
+    <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
+    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
+    <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
   </div>
   ${lv.matchIds.length?todayBlock(liga,lv):''}`;
 }
@@ -2562,11 +2590,13 @@ function viewJogo(liga,lv){
   const reservasDe=s=>banco.filter(o=>o.ti===(s===0?c.a:c.b));
   const fora=banco.filter(o=>o.ti!==c.a&&o.ti!==c.b);
   const alvo=liga.cfg.targetGoals>0
-    ? liga.cfg.targetGoals+' gols ou '+liga.cfg.targetMin+' min'
+    ? liga.cfg.targetGoals+' gols · '+liga.cfg.targetMin+' min'
     : liga.cfg.targetMin+' min';
   const trechos=splitStints(c,Date.now(),liga.cfg,lv.mode||liga.cfg.matchMode);
   const atual=trechos[trechos.length-1];
   const ex=chanceDeLineups(liga,lv,c.lineups,c.gks);
+  /* quem está fora leva o ponto do nível, como todo nome nas outras telas */
+  const dotF=id=>{const p=P(liga,id);if(!p||!vePat(liga))return '';const r=ehGkHoje(lv,id)?'G':'L';return temPatente(liga,p,r)?patDot(liga,rt(p,r).rank):''};
   return `
   <div class="livetop">
     <div class="t num ${c.paused?'pause':''}" id="clk">0:00</div>
@@ -2593,13 +2623,13 @@ function viewJogo(liga,lv){
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
       {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
   </div>
-  <div class="tiny muted" style="margin:10px 2px 0">Toque num nome para substituir</div>
-  <div class="card" style="margin-top:10px">
+  <div class="tiny muted" style="margin:6px 2px 0">Toque num nome para substituir</div>
+  <div class="card" style="margin-top:8px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
     ${(()=>{const res=[0,1].map(s=>reservasDe(s));return res.some(x=>x.length)?`<div class="foragrid" style="margin-bottom:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
-        ${res[s].map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"><span class="nm">${esc(nameOf(liga,o.id))}</span></button>`).join('')}
+        ${res[s].map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}">${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}</span></button>`).join('')}
       </div>`:'').join('')}</div>`:''})()}
     <div class="row"><div class="k">Fora — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
@@ -2608,15 +2638,15 @@ function viewJogo(liga,lv){
       const grupos=[];fora.forEach(o=>{let g=grupos.find(x=>x.ti===o.ti);if(!g){g={ti:o.ti,from:o.from,ids:[]};grupos.push(g)}g.ids.push(o.id)});
       return `<div class="foragrid" style="margin-top:8px">${grupos.map(g=>`<div class="grp">
         ${g.ti>=0?`<div class="teamtag ${TEAMBG[g.ti]}">${esc(g.from)}</div>`:'<div class="teamtag">Sem time</div>'}
-        ${g.ids.map(id=>`<button class="tp big" data-a="inPick" data-id="${id}" data-drag="1" data-drop-player="${id}"><span class="nm">${esc(nameOf(liga,id))}</span></button>`).join('')}
+        ${g.ids.map(id=>`<button class="tp big" data-a="inPick" data-id="${id}" data-drag="1" data-drop-player="${id}">${dotF(id)}<span class="nm">${esc(nameOf(liga,id))}</span></button>`).join('')}
       </div>`).join('')}</div>`})()}
     ${(()=>{const descansa=(lv.gkPool||[]).filter(id=>id!==c.gks[0]&&id!==c.gks[1]);
       return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
     <div class="hr"></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap">
-      <button class="btn sm ghost" data-a="lateSheet">＋ Chegou agora</button>
-      <button class="btn sm ghost" data-a="leaveSheet">🚑 Foi embora</button>
-      <button class="btn sm ghost sp" data-a="teamsBack">Refazer times</button>
+    <div class="acts3">
+      <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
+      <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
+      <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
     </div>
   </div>
   ${golsCard(liga,lv,c)}
@@ -3565,6 +3595,60 @@ function viewCfgBody(liga){
   </div>`;
 }
 
+/* ---------- resumo do fim do racha (D-99) ----------
+   É a tela que vai para o grupo: a noite inteira num relance — times com
+   V/E/D, gols e realizado × esperado; artilheiros; quem mais ganhou; quem
+   subiu (verde) e quem caiu (vermelho) de nível, de onde para onde. É o
+   único lugar em que o app fala de nível durante um racha (D-18/§4.4).   */
+function resumoRacha(liga,sess,ms){
+  ms=ms||(sess.matchIds||[]).map(id=>liga.matches.find(m=>m.id===id)).filter(Boolean);
+  const ver=vePat(liga);
+  const gols={},J={},net={};
+  let totGols=0,totMs=0;
+  ms.forEach(m=>{
+    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1});
+    totGols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];
+    const part={};matchStints(liga,m).forEach(st=>{totMs+=0;[0,1].forEach(sd=>(st.lineups[sd]||[]).forEach(id=>part[id]=sd))});
+    totMs+=matchStints(liga,m).reduce((a,st)=>a+(st.dur||0),0);
+    for(const id in part){const j=J[id]||(J[id]={v:0,e:0,d:0});if(m.result==='draw')j.e++;else if(m.result===part[id])j.v++;else j.d++}
+    (m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');const n=net[k]||(net[k]={pid:x.pid,role:x.role||'L',from:x.from});n.dir=(n.dir||0)+(x.dir||0)});
+  });
+  /* times da noite: pela composição original (D-59), como na aba Stats */
+  const orig=timesDoRacha(liga,ms,sess);
+  const T=orig.map(t=>({name:t.name,ids:t.ids,v:0,e:0,d:0,gp:0,gc:0,esp:0,jE:0}));
+  ms.forEach(m=>[0,1].forEach(s=>{const dono=timeDoLado(liga,m,s,orig);if(!dono)return;const t=T.find(x=>x.name===dono.name);if(!t)return;
+    t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++;
+    const c2=chanceHist(liga,m);if(c2){t.esp+=c2[s];t.jE++}}));
+  T.sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
+  const art=Object.entries(gols).map(([pid,g])=>({pid,g})).sort((a,b)=>b.g-a.g).slice(0,3);
+  const venc=Object.entries(J).map(([pid,j])=>Object.assign({pid,n:j.v+j.e+j.d},j)).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v||a.d-b.d||b.n-a.n).slice(0,3);
+  const mudou=ver?Object.values(net).filter(x=>x.dir&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role)).map(x=>{const tr=rt(P(liga,x.pid),x.role);return Object.assign({},x,{de:clamp(typeof x.from==='number'?x.from:tr.rank-x.dir,0,TOP),para:tr.rank})}).filter(x=>x.de!==x.para):[];
+  const subiu=mudou.filter(x=>x.para>x.de).sort((a,b)=>(b.para-b.de)-(a.para-a.de)),caiu=mudou.filter(x=>x.para<x.de).sort((a,b)=>(a.para-a.de)-(b.para-b.de));
+  const pres=(sess.presentIds||[]).length;
+  const nome=pid=>esc(nameOf(liga,pid));
+  const rotulo=t=>(liga.cfg.format<=5&&(t.ids||[]).length)?esc(nomesCurtos(liga,t.ids).join(', ')):esc(t.name);
+  const pos=posEmpate(T,t=>t.v*1e6+(t.gp-t.gc));
+  const quando=new Date(sess.ts||Date.now());
+  const sec=(titulo,html)=>html?`<div class="sec"><div class="k2">${titulo}</div>${html}</div>`:'';
+  return `<h2>Racha encerrado</h2>
+    <div class="tiny muted" style="margin:2px 0 12px">${quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${fmtMin(totMs)} de bola rolando</div>
+    <div class="stat four">
+      <div><b>${ms.length}</b><span>partidas</span></div>
+      <div><b>${totGols}</b><span>gols</span></div>
+      <div><b>${pres}</b><span>pessoas</span></div>
+      <div><b>${MINS(totMs)}</b><span>min</span></div>
+    </div>
+    ${sec('🏆 Times da noite',T.length?T.map((t,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${pos[i]}</span>
+        <div class="nm">${rotulo(t)}<small>${esc(t.name)}${ver&&t.jE?` · ${Math.round((t.v+t.e/2)/Math.max(1,t.v+t.e+t.d)*100)}% real, ${Math.round(t.esp/t.jE*100)}% esperado`:''}</small></div>
+        <div class="val"><span class="vedx"><b class="v">${t.v}</b>V <b>${t.e}</b>E <b class="d">${t.d}</b>D</span><small class="gols">${t.gp}·${t.gc} gols</small></div></div>`).join(''):'')}
+    ${sec('⚽ Artilheiros',art.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
+    ${sec('🔥 Quem mais ganhou',venc.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}<small>${x.e}E ${x.d}D</small></div><div class="val">${x.v}<small>V · ${aprDe(x.v,x.e,x.n)}%</small></div></div>`).join(''))}
+    ${sec('📈 Subiu de nível',subiu.map(x=>`<div class="sumrow"><span class="arr up">▲</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
+    ${sec('📉 Caiu de nível',caiu.map(x=>`<div class="sumrow"><span class="arr dn">▼</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
+    ${ver&&!mudou.length?'<div class="tiny muted" style="margin-top:14px">Ninguém mudou de nível hoje.</div>':''}
+    <div style="height:14px"></div>
+    <button class="btn wide pri" data-a="closeSheet">Fechar</button>`;
+}
 /* ---------- barra inferior ---------- */
 function barFor(liga){
   const lv=liga.live;
@@ -4730,17 +4814,7 @@ const A={
       teams:lv.teams.map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids)]})),
       gkPool:[...(lv.gkPool||[])]});
     l.live=null;save();render();
-    openSheet(`<h2>Racha encerrado</h2>
-      <div class="stat" style="margin-bottom:14px">
-        <div><b>${ms.length}</b><span>partidas</span></div>
-        <div><b>${top?esc(nameOf(l,top[0]).split(' ')[0]):'—'}</b><span>artilheiro ${top?top[1]:''}</span></div>
-        <div><b>${ups.length}</b><span>mudanças de nível</span></div>
-      </div>
-      ${vePat(l)?ups.map(x=>{const [pid,role]=x[0].split('|'),p=P(l,pid);if(!p||!temPatente(l,p,role))return '';
-        const tr=rt(p,role);return `<div class="promo ${divCls(tr.rank)}" style="${patVars(tr.rank)}">
-        <div class="t">${x[1]>0?'🔺':'🔻'} ${esc(p.name)}${role==='G'?' 🧤':''}</div>
-        <div class="tiny muted" style="display:flex;align-items:center;gap:6px">agora é ${patBadge(l,tr.rank)}${role==='G'?' no gol':''}</div></div>`}).join(''):''}
-      <button class="btn wide pri" data-a="closeSheet">Fechar</button>`);
+    openSheet(resumoRacha(l,l.sessions[l.sessions.length-1],ms));
   },
 
   /* ----- jogador ----- */
@@ -5335,6 +5409,8 @@ function onDrop(fromId,target){
   if(!podeLancar(l))return;            // o arraste não passa pelo dispatcher de [data-a]
   const alvo=target.dataset.dropPlayer,zona=target.dataset.dropZone;
   if(alvo===fromId)return;
+  /* soltar em "Foi embora": passa pela mesma confirmação do toque */
+  if(zona==='leave')return A.leaveRacha({dataset:{id:fromId}});
   if(lv.stage==='jogo'&&lv.cur){
     const c=lv.cur;
     if(!alvo)return toast('Solte em cima de quem vai sair');

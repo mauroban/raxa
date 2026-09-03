@@ -51,6 +51,7 @@ TELAS = {
     11: 'ficha admin',
     12: 'minhas opinioes',
     13: 'ficha com opinioes',
+    14: 'fim de racha',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -108,6 +109,17 @@ DRIVER = r"""
     const p=l.players.find(x=>x.L.games>0&&x!==eu)||l.players[0];
     A.pSheet({dataset:{id:p.id}});
     const sh=document.querySelector('#sheet');if(sh)sh.scrollTop=380;
+  }
+  if(step===14){                   /* o resumo que vai para o grupo: uma noite inteira (D-99) */
+    A.demo();A.startRacha();
+    const l=L();l.live.presentIds=l.players.map(p=>p.id);
+    A.toTimes();A.startJogo();
+    for(let k=0;k<8;k++){A.startMatch();const c=l.live.cur;c.startedAt=Date.now()-6*60000;
+      const s=k%3===2?'1':'0';A.goal({dataset:{s}});if(k%4===1)A.goal({dataset:{s}});
+      const g=c.events.find(e=>e.type==='goal');A.setGoalScorer({dataset:{t:String(g.t),id:c.lineups[+s][k%4]}});closeSheet();
+      if(k===5)A.goal({dataset:{s:s==='0'?'1':'0'}});
+      A.endMatch();closeSheet();}
+    A.endRacha();
   }
   if(step===13){                   /* ficha do admin com opinioes de varias pessoas, uma divergente e um "nao sei" */
     const l=L(),eu=l.players[1];eu.role='admin';

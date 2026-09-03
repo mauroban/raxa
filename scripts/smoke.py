@@ -402,7 +402,7 @@ step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos
   const lv=L().live,c=lv.cur;if(!c)return;
   const id=c.lineups[1][c.lineups[1].length-1],antes=c.lineups[1].length,tam=lv.presentIds.length;
   saiuNoMeio=id;
-  A.leaveRacha({dataset:{id}});
+  onDrop(id,{dataset:{dropZone:'leave'}});          // arrastar o nome até "Foi embora" (confirm() do stub diz sim)
   if(c.lineups[1].length!==antes-1)throw new Error('deveria ter saido da quadra');
   if(lv.presentIds.length!==tam-1||lv.presentIds.includes(id))throw new Error('deveria ter saido da presenca');
   if(!(lv.leftIds||[]).includes(id))throw new Error('quem saiu deveria ficar registrado como presente do racha');

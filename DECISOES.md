@@ -1746,12 +1746,27 @@ quebravam em três linhas. E o **arrastar no toque** ganha a régua da presença
 150 ms, 20 px de tolerância à tremida, e um `touchmove` não passivo que segura a rolagem
 enquanto o arraste está ligado — `preventDefault` no `pointermove` não segura rolagem no toque,
 então o navegador assumia o gesto, disparava `pointercancel` e o nome voltava no meio do caminho.
+Ao vivo, o relógio cresce (58 px) e o placar encolhe na vertical; o botão **"Foi embora"** vira
+alvo de arraste (`data-drop-zone="leave"`), com a mesma confirmação do toque.
 **Descartado:** cartões na horizontal com rolagem lateral (esconde time); uma coluna com chips
 menores (continuava quebrando); `touch-action:none` nos chips (impediria rolar a tela quando o
 dedo começa em cima de um nome, que é quase sempre).
 **Onde:** `viewTimes`/`timeCard`/`tpChip`, `viewJogo`/`viewProxima` (fora), CSS `.teamwrap.cols2`
 e `.foragrid`, e os handlers de arraste (`pointerdown`/`touchmove`/`pointermove`) em
 `index.html` · `scripts/visual.py` (telas 2, 3, 4) · DOCUMENTACAO §4.2.
+
+### D-99 · O resumo do fim do racha conta a noite inteira
+**02/09/2026.** O resumo tinha três números e uma lista de "mudanças de nível" com a mesma seta
+para quem subiu e quem caiu. Agora (`resumoRacha`): data e tempo de bola rolando; partidas, gols,
+pessoas e minutos; **times da noite** pela composição original (D-59), com V/E/D (V verde, D
+vermelho), gols marcados·sofridos e realizado × esperado (D-77/D-97); **artilheiros** e **quem
+mais ganhou** (top 3, mínimo 2 partidas); **subiu** (▲ verde) e **caiu** (▼ vermelho) de nível,
+cada um com o badge de onde saiu → onde chegou (o `from` do primeiro movimento da noite e o nível
+atual). Tudo em linhas de colunas fixas (`.sumrow`), a mesma gramática dos rankings da Stats.
+**Descartado:** repetir aqui o card inteiro do "Último racha" da Stats (tempo em quadra, menos
+vazado, gols contra…): o resumo é para mandar no grupo, cabe numa tela; o resto está na Stats.
+**Onde:** `resumoRacha` (chamado por `endRacha`) e CSS `.sumrow` em `index.html` ·
+`scripts/visual.py` (tela 14) · DOCUMENTACAO §4.4.
 
 ## Como registrar uma decisão nova
 
