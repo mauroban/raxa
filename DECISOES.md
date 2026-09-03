@@ -1990,6 +1990,9 @@ lado do time, o adversário (até o 5v5, quem estava em quadra do outro lado, co
 D-60) e a **chance no apito** (D-75; some com as patentes fechadas), com o V/E/D somado no
 cabeçalho. A partida é do time pela composição em quadra (`timeDoLado`, D-59), a mesma regra do
 card — então o V/E/D da folha bate com o da lista. Racha em andamento usa os times do próprio racha.
+**Ajuste no mesmo dia:** o rótulo é "prob. de vitória", nunca "chance no apito" (o app inteiro fala
+em probabilidade de vitória); a dica do card virou "toque para ver detalhes"; e as linhas dos
+times ficaram compactas (12,5px, menos respiro) — ocupavam a tela como se fossem cards.
 **Onde:** `A.rachaTime` em `index.html` · DOCUMENTACAO §5.2 · `scripts/.tmp/shot_stats.py time`.
 
 ## Como registrar uma decisão nova

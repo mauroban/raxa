@@ -566,9 +566,12 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk3 .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rk3 .nm small{font-weight:400;color:var(--mute);font-size:11px;margin-left:6px}
 /* time da noite: o rótulo é a escalação original, então pode ocupar duas linhas */
-.rk3.time{align-items:start;padding:9px 0}
-.rk3.time .nm{white-space:normal;overflow:visible;line-height:1.3}
-.rk3.time .nm small{display:block;margin:3px 0 0}
+/* compacto: os nomes do time cabem em duas linhas de 12.5px, sem virar cartão */
+.rk3.time{align-items:start;padding:6px 0;font-size:12.5px}
+.rk3.time .nm{white-space:normal;overflow:visible;line-height:1.25;font-weight:500}
+.rk3.time .nm small{display:block;margin:1px 0 0;font-size:10.5px}
+.rk3.time .val{font-size:14px}
+.rk3.time .val .tiny{font-size:10.5px}
 .rk3 .val{font-family:var(--disp);font-weight:800;font-size:15px;white-space:nowrap}
 .rk3 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:10px;font-family:var(--body)}
 .more{display:block;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:10px 0 2px;cursor:pointer;text-align:left;min-height:36px}
@@ -3253,7 +3256,7 @@ ${cardRR}${cardPP}  <div class="card">
       <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
-    ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver a escalação</span></div>
+    ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver detalhes</span></div>
       ${(()=>{const pos=posEmpate(times,t=>t.v*1e6+(t.gp-t.gc));return times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${pos[i]}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num" style="text-align:right">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small>${(t.v+t.e+t.d)?`<span class="tiny muted" style="display:block;font-weight:400;letter-spacing:0" title="resultado da noite (empate vale meio) · probabilidade média de vitória no apito — mesma base: a chance do Elo já é o placar esperado, com empate valendo meio">${Math.round((t.v+t.e/2)/(t.v+t.e+t.d)*100)}% <small>real</small>${t.jE?' <span style="opacity:.75">(esp. '+Math.round(t.esp/t.jE*100)+'%)</span>':''}</span>`:''}</span></div>`).join('')})()}
       ${semDono?`<div class="tiny muted" style="margin-top:7px">${pl(semDono,'formação','formações')} não ${semDono===1?'contou':'contaram'} para nenhum time: mais da metade do time original não estava em quadra.</div>`:''}</div>`:''}
   </div>
@@ -3375,7 +3378,7 @@ function mrow(liga,m,compact,eu){
   const ch=chanceHist(liga,m);
   /* a chance fica colada à esquerda do placar: por lado no 5v5 (uma linha por
      time), e "62% × 38%" acima dele, onde o placar é um só                 */
-  const chTxt=sd=>ch?`<span class="tiny muted num sp" style="margin-right:7px" title="chance no apito">${porNome?pct(ch[sd]):pct(ch[0])+' × '+pct(ch[1])}</span>`:'';
+  const chTxt=sd=>ch?`<span class="tiny muted num sp" style="margin-right:7px" title="prob. de vitória no apito">${porNome?pct(ch[sd]):pct(ch[0])+' × '+pct(ch[1])}</span>`:'';
   /* Até o 5v5 o time é a lista de quem entrou em quadra, não o apelido da cor
      (mesmo motivo do card da noite, D-60): semanas depois ninguém lembra qual
      time era o "Time A". O nome da cor continua na linha de baixo, no
@@ -5422,7 +5425,7 @@ const A={
       ${gks.length?`<div class="k" style="margin:12px 0 6px">${ic('shield')} Rodízio do racha</div>
         <div class="chips">${gks.map(id=>chip(id,'G',false)).join('')}</div>`:''}
       ${linhas.length?`<div class="row" style="margin:16px 0 4px"><div class="k">Partidas do time</div>
-          <div class="sp tiny muted num">${rec.v}V ${rec.e}E ${rec.d}D${vePat(l)?' · % = chance no apito':''}</div></div>
+          <div class="sp tiny muted num">${rec.v}V ${rec.e}E ${rec.d}D${vePat(l)?' · % = prob. de vitória':''}</div></div>
         ${linhas.join('')}`:'<div class="tiny muted" style="margin-top:12px">Nenhuma partida contou para este time.</div>'}`);
   },
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
