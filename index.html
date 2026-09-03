@@ -841,11 +841,17 @@ function opAtiva(liga,o){
   return !!(a&&PODE_OPINAR.includes(a.role||'jogador'));
 }
 const opsAtivas=(liga,tr)=>(Array.isArray(tr.op)?tr.op:[]).filter(o=>opAtiva(liga,o));
+/* Improviso no gol (D-110): jogador de linha SEM opinião como goleiro entra
+   no gol uma patente abaixo da entrada padrão (Bronze 2 na escada padrão:
+   1300), ainda calibrando e com o K de quem não tem palpite. É mais difícil
+   no gol para quem não é goleiro, e o padrão (Prata 2) superestimava o time
+   dele. Goleiro fixo segue no padrão; uma opinião de goleiro substitui isso. */
+const entradaImproviso=pad=>stepMid(clamp(stepOf(pad)-3,0,TOP));
 function consolida(liga){
   const pad=liga.cfg.startElo;
   (liga.players||[]).forEach(p=>['L','G'].forEach(k=>{const tr=p[k];if(!tr||!Array.isArray(tr.op))return;
     const j=juntaOpinioes(opsAtivas(liga,tr).filter(o=>o.e!==null).map(o=>o.e));
-    if(j.e===null){tr.base=pad;tr.def=false;tr.dv=false}
+    if(j.e===null){tr.base=k==='G'&&!p.gk?entradaImproviso(pad):pad;tr.def=false;tr.dv=false}
     else{tr.base=j.e;tr.def=true;tr.dv=j.dv}
     if(!tr.games){tr.elo=tr.base;tr.rank=stepOf(tr.base);tr.peak=tr.rank}
   }));
@@ -968,7 +974,8 @@ function defState(){return{v:2,me:{id:uid(),name:''},ligas:[],active:null,ui:{ta
    fez naquele trecho de partida — quem improvisou no gol mexe a do gol.      */
 /* `def` = o nível desta valência foi definido (no cadastro ou pelo admin).
    Quem nunca jogou na linha, ou nunca pegou no gol, simplesmente NÃO TEM
-   nível naquela valência — e entra valendo o nível de entrada padrão. */
+   nível naquela valência — e entra valendo o nível de entrada padrão (no
+   gol, para quem não é goleiro, uma patente abaixo — D-110). */
 function newTrack(e,def){return{elo:e,base:e,rank:stepOf(e),peak:stepOf(e),protect:0,def:!!def,
   games:0,w:0,l:0,d:0,sessions:0,lastSession:null,form:[]};}
 const rt=(p,role)=>role==='G'?p.G:p.L;
@@ -1238,6 +1245,14 @@ function matchStints(liga,m){
     score:m.score||[0,0],result:m.result,ended:'apito'}];
 }
 
+/* A função de quem marcou NO INSTANTE do gol: gol feito de dentro do gol é
+   estatística de goleiro, não de linha (D-110). Trecho sem carimbo de tempo
+   (partida antiga, um trecho só) usa a função da escalação gravada.        */
+function roleNoGol(liga,m,g){
+  const sts=matchStints(liga,m);let st=sts[0];
+  if(g.t!==undefined)sts.forEach(x=>{if(x.from!==undefined&&x.from<=g.t)st=x});
+  const x=st&&stintPart(st)[g.pid];return x?x.role:'L';
+}
 /* ---------- corrigir escalação e trocas de uma partida encerrada ----------
    O que a partida gravou (escalação de largada + log de eventos) é o que gera
    os trechos. Corrigir qualquer um dos dois é reescrever os trechos com a
@@ -1786,7 +1801,7 @@ function statsLiga(liga,periodo,semGk){
   /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
      best: maior sequência do período · ultimos: últimos 5 resultados, do mais
      novo para o mais velho · sofridos: gols levados enquanto estava no gol      */
-  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,ultimos:[],min:0,minGk:0,pm:0});
+  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,ultimos:[],min:0,minGk:0,pm:0});
   const par=(o,a,b)=>{const m=o[a]||(o[a]={});return m[b]||(m[b]={n:0,v:0,e:0,d:0})};
   [...(liga.matches||[])].sort((a,b)=>a.ts-b.ts).forEach(m=>{   // em ordem: sequência depende dela
     if(m.voided||!noPeriodo(m,periodo))return;
@@ -1831,7 +1846,9 @@ function statsLiga(liga,periodo,semGk){
       for(const o in e.contra){const y=par(DU,pid,o);y.n++;y[res]++}
     }
     plusMinus(liga,m,(pid,d,role)=>{if(semGk&&role==='G')return;j(pid).pm+=d});
-    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)j(g.pid).gols++});
+    /* gols: de linha e de goleiro em contas separadas (D-110) — fazer gol do
+       gol é outra façanha, e misturar inflava a artilharia de quem reveza  */
+    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else j(g.pid).gols++}});
   });
   return{J,DU,PA};
 }
@@ -1891,7 +1908,7 @@ function destaques(liga,dias){
       if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
     }
     for(const pid in (m.over||{}))add(pid).over+=m.over[pid];
-    (m.goals||[]).forEach(g=>{gols++;if(g.pid){comDono++;if(!g.own)add(g.pid).gols++}});
+    (m.goals||[]).forEach(g=>{gols++;if(g.pid){comDono++;if(!g.own&&roleNoGol(liga,m,g)!=='G')add(g.pid).gols++}});   // artilheiro: gols de linha (D-110)
   });
   const gente=Object.keys(G).map(k=>G[k]);
   /* A valência que a pessoa mais jogou no período é a que representa ela aqui:
@@ -2954,6 +2971,7 @@ function viewStats(liga){
   const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos);
   const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos);
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
+  const rkGolsGk=[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk||a.minGk-b.minGk);   // gol feito do gol (D-110)
   const rkMin=[...todos].filter(x=>x.min>0).sort((a,b)=>b.min-a.min);
   const MIN_RITMO=60*60000;                          // ritmo só com 1 h em quadra: menos que isso é sorte
   /* gols por tempo só contam o tempo DE LINHA: quem revezou no gol não marca
@@ -3058,7 +3076,8 @@ function viewStats(liga){
     naLinha?`<div class="rate"><b class="num">${por10(me.gols,minL(me))}</b><span>gols / 10 min</span>
         <small class="${cmp(r10(me.gols,minL(me)),r10(ligaGols,ligaMin),true)}">liga na linha: ${por10(ligaGols,ligaMin)}</small></div>`:null,
     noGol?`<div class="rate"><b class="num">${por10(me.sofridos,me.minGk)}</b><span>sofridos / 10 min</span>
-        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">liga no gol: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small></div>`:null,
+        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">liga no gol: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small>
+        ${me.golsGk?`<small style="color:var(--gold)">${pl(me.golsGk,'gol')} feito${me.golsGk===1?'':'s'} do gol</small>`:''}</div>`:null,
     naLinha&&jogosL(me)?`<div class="rate"><b class="num">${dec2(me.gols/jogosL(me))}</b><span>gols por partida</span>
         <small class="${cmp(me.gols/jogosL(me),ligaGols/Math.max(1,ligaJogosL),true)}">liga na linha: ${dec2(ligaGols/Math.max(1,ligaJogosL))} · ${pl(jogosL(me),'partida')}</small></div>`:null
   ].filter(Boolean).slice(0,2);
@@ -3068,7 +3087,7 @@ function viewStats(liga){
   const posDe=(lista,num)=>{const i=lista.findIndex(x=>x.pid===who);return i<0?null:posEmpate(lista,num)[i]};
   const posicoes=[longa?['pm',rkPm,x=>x.pm,'+/−']:null,['pct',rkPct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],['vit',rkVit,x=>x.v,'vitórias'],
       ['gols',rkGols,x=>x.gols,'gols'],['pres',rkRachas,x=>x.nR,'presenças'],['ritmo',rkRitmo,x=>x.gols/minL(x),'ritmo'],
-      ['min',rkMin,x=>x.min,'tempo'],['seq',rkSeq,x=>x.best,'sequência'],['gk',rkGk,x=>1/(1+x.sofridos/x.minGk),'no gol']]
+      ['min',rkMin,x=>x.min,'tempo'],['seq',rkSeq,x=>x.best,'sequência'],['gk',rkGk,x=>1/(1+x.sofridos/x.minGk),'no gol'],['golsgk',rkGolsGk,x=>x.golsGk,'gols do gol']]
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,de:l.length,pos:posDe(l,num)})).filter(x=>x.pos);
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${rot}</span></div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab} <small>de ${x.de}</small></span></div>`).join('')}</div>`:'';
@@ -3120,7 +3139,7 @@ function viewStats(liga){
       ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${me.jogos}</b><span>partidas</span></div>
-      <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>${me.golsGk?'gols de linha':'gols'}</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>
     </div>
     ${ratesHtml}
@@ -3216,6 +3235,7 @@ ${cardRR}${cardPP}  <div class="card">
     const pm=[...todos].filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
     const secPmRacha=`<div class="sec"><div class="k2"><span>${ic('bars','var(--cyan)')}Melhor +/−</span>${ordBtn('rpm')}</div>${(()=>{const b=inv('rpm')?[...pm].reverse():pm,pos=posEmpate(b,x=>x.pm);return corta(pm,'rpm').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${pos[i]}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D</small></div><span class="val num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span></div>`).join('')})()+mais(pm,'rpm')}</div>`;
     const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
+    const artGk=[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk);   // gol feito do gol (D-110)
     const tempo=[...todos].sort((a,b)=>b.min-a.min);
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
     const rendeu=Object.keys(over).map(pid=>({pid,over:over[pid],j:(J[pid]||{}).jogos||0})).filter(x=>x.j>=3).sort((a,b)=>b.over-a.over);
@@ -3244,6 +3264,7 @@ ${cardRR}${cardPP}  <div class="card">
     ${venc.length?`<div class="sec"><div class="k2"><span>${ic('trophy','var(--gold)')}Quem mais ganhou</span>${ordBtn('rvenc')}</div>${(()=>{const b=inv('rvenc')?[...venc].reverse():venc,pos=posEmpate(b,x=>x.v);return corta(venc,'rvenc').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${pos[i]}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')})()+mais(venc,'rvenc')}</div>`:''}
     ${pm.length&&!longa?secPmRacha:''}
     ${art.length?`<div class="sec"><div class="k2"><span>⚽ Artilheiro</span>${ordBtn('rart')}</div>${corta(art,'rart').map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')+mais(art,'rart')}</div>`:''}
+    ${artGk.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--gold)')}Gol de goleiro <span class="tiny muted">feito de dentro do gol</span></span></div>${artGk.map(x=>lin(x,pl(x.golsGk,'gol'),fmtMin(x.minGk)+' no gol')).join('')}</div>`:''}
     ${rendeu.length?`<div class="sec"><div class="k2"><span>${ic('up','var(--ok)')}Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></span>${ordBtn('rrendeu')}</div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2"><span>${ic('clock','var(--coral)')}Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
     ${gks.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--cyan)')}Menos vazado <span class="tiny muted">mín. 20 min no gol</span></span>${ordBtn('rgk')}</div>${corta(gks,'rgk').map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')+mais(gks,'rgk')}</div>`:''}
@@ -3311,6 +3332,8 @@ ${cardJuntos}  <div class="card">
       ${rkBars(rkRitmo,x=>x.gols/minL(x),x=>por10(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha','Ninguém com 1 h de linha e gol marcado ainda.','ritmo')}</div>`,
         gk:`<div class="sec"><div class="k2"><span>${ic('shield','var(--cyan)')}Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></span>${ordBtn('gk')}</div>
       ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>`,
+        golsgk:rkGolsGk.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--gold)')}Gols de goleiro <span class="tiny muted">feitos de dentro do gol</span></span>${ordBtn('golsgk')}</div>
+      ${rkBars(rkGolsGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol',null,'golsgk')}</div>`:'',
         seq:`<div class="sec"><div class="k2"><span>${ic('flame','var(--coral)')}Maior sequência <span class="tiny muted">3 ou mais</span></span>${ordBtn('seq')}</div>
       ${rkBars(rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.','seq')}</div>`,
         duplas:`<div class="sec"><div class="k2"><span>${ic('star','var(--gold)')}Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('duplas')}</div>
@@ -3320,9 +3343,9 @@ ${cardJuntos}  <div class="card">
         <span class="val">${x.pct}%</span></div>`).join('')})()+(duplas.length>3?`<button class="more" data-a="statsSec" data-k="duplas">${aberto.duplas?'▴ menos':'▾ ver até '+Math.min(10,duplas.length)}</button>`:'')
         :`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>`
       };
-      const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','duplas']
-        :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','duplas']
-        :['pres','pct','vit','gols','seq','der','min','pm','ritmo','gk','duplas'];
+      const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','golsgk','duplas']
+        :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','golsgk','duplas']
+        :['pres','pct','vit','gols','seq','der','min','pm','ritmo','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`;
@@ -3931,7 +3954,7 @@ function mkPlayer(liga,name,elo,gk,by){
      valência em que a pessoa vai jogar; a outra nasce SEM PATENTE e só existe
      quando ela jogar naquela posição — até lá, se precisar entrar na conta,
      entra no nível de entrada padrão. `elo` nulo = sem opinião.            */
-  const q={id:uid(),name,gk:!!gk,L:newTrack(gk?pad:e,tem&&!gk),G:newTrack(gk?e:pad,tem&&!!gk),goals:0,
+  const q={id:uid(),name,gk:!!gk,L:newTrack(gk?pad:e,tem&&!gk),G:newTrack(gk?e:entradaImproviso(pad),tem&&!!gk),goals:0,
     sessions:0,lastSession:null,owner:null,role:'jogador',created:Date.now()};
   q.L.op=tem&&!gk?[{by:by||null,e,ts:q.created}]:[];
   q.G.op=tem&&gk?[{by:by||null,e,ts:q.created}]:[];

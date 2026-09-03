@@ -582,6 +582,21 @@ console.log('\n[15] dupla inseparavel');
   ok(!j.some(d=>d.a===outros[0]&&d.b===outros[1]&&d.pct<JUNTOS_PCT),'quem tambem jogou separado nao e apontado');
 }
 
+console.log('\n[16] improviso no gol e gol de goleiro (D-110)');
+{
+  const lin=mk('Linha',stepMid(7),0);lin.L.op=[{by:null,e:stepMid(7),ts:1}];lin.G.op=[];
+  const gol=mk('Fixo',stepMid(7),1);gol.G.op=[{by:null,e:stepMid(7),ts:1}];gol.L.op=[];
+  liga.players.push(lin,gol);liga.matches.length=0;rebuildAll(liga);
+  ok(lin.G.base===entradaImproviso(liga.cfg.startElo)&&lin.G.base===stepMid(4),'linha sem opiniao de goleiro entra no gol uma patente abaixo (Bronze 2 = 1300)');
+  ok(lin.L.base===stepMid(7),'e a linha dele segue na entrada dele');
+  ok(gol.G.base===stepMid(7)&&gol.L.base===liga.cfg.startElo,'goleiro fixo: gol pela opiniao, linha no padrao');
+  ok(!temPatente(liga,lin,'G')&&calibrando(liga,lin,lin.G)&&!lin.G.def,'improviso continua sem patente, calibrando e com K de quem nao tem palpite');
+  const m={ts:Date.now(),stints:[{from:100,to:200,dur:100,w:1,counted:true,lineups:[['a','b'],['c','d']],gks:['a','c'],score:[2,0],result:0}],
+    goals:[{pid:'a',side:0,own:false,t:150},{pid:'b',side:0,own:false,t:150}]};
+  ok(roleNoGol(liga,m,m.goals[0])==='G'&&roleNoGol(liga,m,m.goals[1])==='L','gol do goleiro e gol de linha separados pela funcao no instante do gol');
+  liga.players=liga.players.filter(p=>p!==lin&&p!==gol);rebuildAll(liga);
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """

@@ -1958,6 +1958,27 @@ cartão de linha. Um cartão só ocupa a largura toda.
 dela "você" no ranking.
 **Onde:** `minL`, `rkRitmo`, `ratesHtml` e `rkBars` em `viewStats` · DOCUMENTACAO §5.2.
 
+### D-110 · Gol de goleiro é conta de goleiro; improviso no gol entra uma patente abaixo
+**03/09/2026.** Dois pedidos do mesmo dia, ambos sobre separar linha e gol.
+**Gol feito de dentro do gol.** Alguns goleiros fazem gol, e é façanha maior que gol de linha —
+então conta à parte: `roleNoGol` acha o trecho da partida em que o gol caiu e lê a função de quem
+marcou naquele instante (trecho antigo sem carimbo usa a escalação gravada). `statsLiga` separa
+`gols` (linha) de `golsGk` (gol); a artilharia (rankings, destaques do mês, último racha) é só de
+linha; o gol de goleiro aparece em dourado no cartão de goleiro da pessoa, no tile "gols de linha"
+e nos rankings **Gols de goleiro** (temporada e último racha). A ficha (`p.goals`) e o "ano a
+ano" seguem com o total — são contagens da pessoa, não da função.
+**Improviso no gol.** Jogador de linha sem opinião como goleiro entrava no gol valendo a entrada
+padrão (Prata 2, 1500). Isso superestimava o time dele: no gol é mais difícil para quem não é
+goleiro. Agora entra **uma patente abaixo** (`entradaImproviso`: Bronze 2 na escada padrão,
+1300), ainda "calibrando" (sem patente visível até as 15 partidas) e com o K de quem não tem
+palpite (64 → 20), como antes. Goleiro fixo segue no padrão; qualquer opinião de goleiro
+substitui a entrada automática — é a mesma `consolida` de sempre, só o padrão mudou.
+**Descartado:** entrada no Ferro (duas abaixo) — o K alto já corrige rápido, e no Ferro o time
+dele ficava subestimado na montagem; marcar gol de goleiro na "partida a partida" com outra cor —
+a linha é do jogo da pessoa, não da função. `converge.py` não modela goleiro, então não mede isso.
+**Onde:** `entradaImproviso`, `consolida`, `mkPlayer`, `roleNoGol`, `statsLiga`, `viewStats` em
+`index.html` · `scripts/test.py` [16] · DOCUMENTACAO §2 (patente de goleiro) e §5.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
