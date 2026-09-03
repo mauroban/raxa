@@ -1982,6 +1982,16 @@ a linha é do jogo da pessoa, não da função. `converge.py` não modela goleir
 **Onde:** `entradaImproviso`, `consolida`, `mkPlayer`, `roleNoGol`, `statsLiga`, `viewStats` em
 `index.html` · `scripts/test.py` [16] · DOCUMENTACAO §2 (patente de goleiro) e §5.2.
 
+### D-111 · Folha do time do racha: patentes e as partidas do time
+**03/09/2026.** Em Stats → Último racha, tocar num time mostrava só a lista de nomes. Agora cada
+nome vem com o mini-badge de patente (o da presença, D-88; goleiro do rodízio pela trilha de
+goleiro) e embaixo entra **Partidas do time**: uma linha por partida com resultado, placar pelo
+lado do time, o adversário (até o 5v5, quem estava em quadra do outro lado, como no histórico —
+D-60) e a **chance no apito** (D-75; some com as patentes fechadas), com o V/E/D somado no
+cabeçalho. A partida é do time pela composição em quadra (`timeDoLado`, D-59), a mesma regra do
+card — então o V/E/D da folha bate com o da lista. Racha em andamento usa os times do próprio racha.
+**Onde:** `A.rachaTime` em `index.html` · DOCUMENTACAO §5.2 · `scripts/.tmp/shot_stats.py time`.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

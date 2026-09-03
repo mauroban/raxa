@@ -5385,21 +5385,45 @@ const A={
   /* Times do racha (aba Números): toque no time mostra quem eram os jogadores */
   rachaTime(el){
     const l=L(),sid=el.dataset.sid,nome=el.dataset.n;
-    const sess=(l.sessions||[]).find(x=>x.id===sid);
-    const t=sess&&Array.isArray(sess.teams)?sess.teams.find(x=>x.name===nome):null;
-    let ids=t?t.ids.slice():null,daMontagem=!!t;
-    if(!ids){    // racha gravado antes de a sessão guardar os times: vale a primeira partida
-      const ms=(l.matches||[]).filter(m=>!m.voided&&(m.sessionId||m.id)===sid).sort((a,b)=>a.ts-b.ts);
-      for(const m of ms){const s=(m.names||[]).indexOf(nome);
-        if(s>=0){ids=((m.startLineups||m.lineups)[s]||[]).slice();break}}
-    }
-    if(!ids||!ids.length)return toast('Não achei a escalação desse time');
-    const gks=daMontagem&&sess&&Array.isArray(sess.gkPool)?sess.gkPool:[];
+    const ms=(l.matches||[]).filter(m=>!m.voided&&(m.sessionId||m.id)===sid).sort((a,b)=>a.ts-b.ts);
+    /* racha ainda aberto não tem sessão gravada: os times vêm do racha em andamento (mesma regra do card) */
+    const lv=l.live;
+    const sess=(l.sessions||[]).find(x=>x.id===sid)
+      ||(lv&&lv.id===sid?{teams:(lv.teams||[]).map(t=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice()})),gkPool:(lv.gkPool||[]).slice()}:null);
+    const daMontagem=!!(sess&&Array.isArray(sess.teams)&&sess.teams.length);
+    const orig=timesDoRacha(l,ms,sess),t=orig.find(x=>x.name===nome);
+    const ids=t?t.ids.slice():[];
+    if(!ids.length)return toast('Não achei a escalação desse time');
+    const gks=sess&&Array.isArray(sess.gkPool)?sess.gkPool:[];
+    /* patente de cada um, no mini-badge da presença (D-88); goleiro do rodízio pela trilha de goleiro */
+    const dot=(p,r)=>{if(!vePat(l))return '';if(!temPatente(l,p,r))r=r==='G'?'L':'G';return temPatente(l,p,r)?patDot(l,rt(p,r).rank):''};
+    const chip=(id,r,big)=>{const p=P(l,id);return p?`<button class="tp ${big?'big':''}" data-a="pSheet" data-id="${id}">${dot(p,r)}<span class="nm">${esc(p.name)}</span></button>`:''};
+    /* as partidas do time (D-111): o time é reconhecido pela composição
+       (timeDoLado, D-59), não pelo nome no placar; até o 5v5 o adversário é
+       a lista de quem estava em quadra do outro lado, como no histórico   */
+    const porNome=l.cfg.format<=5,rec={v:0,e:0,d:0};
+    const linhas=[];
+    ms.forEach(m=>[0,1].forEach(sd=>{
+      const dono=timeDoLado(l,m,sd,orig);if(!dono||dono.name!==nome)return;
+      const sc=m.score||[0,0],ch=chanceHist(l,m),res=m.result==='draw'?'E':(m.result===sd?'V':'D');
+      rec[res.toLowerCase()]++;
+      const outro=(((m.startLineups||m.lineups)||[[],[]])[1-sd])||[];
+      const adv=porNome&&outro.length?nomesCurtos(l,outro).join(', '):((m.names||[])[1-sd]||'—');
+      linhas.push(`<div class="goalrow" style="gap:8px">
+        <span class="mine" style="color:${res==='V'?'var(--ok)':res==='D'?'var(--bad)':'var(--mute)'}">${res}</span>
+        <span class="num" style="min-width:32px">${sc[sd]}-${sc[1-sd]}</span>
+        <div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(adv)}"><span class="muted">×</span> ${esc(adv)}</div>
+        ${ch?`<span class="tiny muted num" style="flex:0 0 auto" title="prob. de vitória no apito">${pct(ch[sd])}</span>`:''}
+      </div>`);
+    }));
     openSheet(`<h2>${esc(nome)}</h2>
       <div class="tiny muted" style="margin-bottom:10px">${daMontagem?'Como o time foi montado no racha.':'Escalação da primeira partida (racha antigo: a montagem não ficou gravada).'}</div>
-      <div class="chips">${ids.map(id=>`<button class="tp big" data-a="pSheet" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}</div>
-      ${gks.length?`<div class="k" style="margin:12px 0 6px">🧤 Rodízio do racha</div>
-        <div class="chips">${gks.map(id=>`<button class="tp" data-a="pSheet" data-id="${id}">🧤 ${esc(nameOf(l,id))}</button>`).join('')}</div>`:''}`);
+      <div class="chips">${ids.map(id=>chip(id,'L',true)).join('')}</div>
+      ${gks.length?`<div class="k" style="margin:12px 0 6px">${ic('shield')} Rodízio do racha</div>
+        <div class="chips">${gks.map(id=>chip(id,'G',false)).join('')}</div>`:''}
+      ${linhas.length?`<div class="row" style="margin:16px 0 4px"><div class="k">Partidas do time</div>
+          <div class="sp tiny muted num">${rec.v}V ${rec.e}E ${rec.d}D${vePat(l)?' · % = chance no apito':''}</div></div>
+        ${linhas.join('')}`:'<div class="tiny muted" style="margin-top:12px">Nenhuma partida contou para este time.</div>'}`);
   },
   statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
   ppPage(el){S.ui.ppPage=Math.max(0,(S.ui.ppPage||0)+(+el.dataset.d));render()},   // pagina do partida-a-partida
