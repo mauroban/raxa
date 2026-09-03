@@ -3080,7 +3080,7 @@ function viewStats(liga){
         <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">média da liga: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small>
         ${me.golsGk?`<small style="color:var(--gold)">${pl(me.golsGk,'gol')} feito${me.golsGk===1?'':'s'} do gol</small>`:''}</div>`:null,
     naLinha&&jogosL(me)?`<div class="rate"><b class="num">${dec2(me.gols/jogosL(me))}</b><span>gols por partida</span>
-        <small class="${cmp(me.gols/jogosL(me),ligaGols/Math.max(1,ligaJogosL),true)}">média da liga: ${dec2(ligaGols/Math.max(1,ligaJogosL))} · ${pl(jogosL(me),'partida')}</small></div>`:null
+        <small class="${cmp(me.gols/jogosL(me),ligaGols/Math.max(1,ligaJogosL),true)}">média da liga: ${dec2(ligaGols/Math.max(1,ligaJogosL))}</small></div>`:null
   ].filter(Boolean).slice(0,2);
   const ratesHtml=cartoes.length?`<div class="rates${cartoes.length===1?'" style="grid-template-columns:1fr':''}">${cartoes.join('')}</div>`:'';
   /* --- a posição da pessoa em cada ranking do período (D-108): responde
