@@ -599,7 +599,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .chart{display:flex;align-items:flex-end;gap:5px;height:112px;padding-top:18px;margin-top:10px;position:relative}
 .chart .col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;position:relative}
 .chart .col i{display:block;width:100%;border-radius:2px;min-height:2px}
-.chart .col i.v{background:var(--ok)} .chart .col i.e{background:var(--mute2)} .chart .col i.d{background:var(--bad)} .chart .col i.g{background:var(--gold)}
+.chart .col i.g{background:var(--gold)}
 .chart .col.cur i.g{background:var(--lime)}
 .chart .col em{position:absolute;left:-4px;right:-4px;bottom:100%;text-align:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:12px;color:var(--mute);margin-bottom:3px;line-height:1}
 .chart .avg{position:absolute;left:0;right:0;border-top:1px dashed var(--mute2);pointer-events:none}
@@ -3093,22 +3093,9 @@ function viewStats(liga){
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${rot}</span></div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
-  /* --- racha a racha (D-108): uma coluna por racha, V/E/D empilhados (altura
-     = partidas) e os gols em cima. É o gráfico que a lista de partidas não
-     conta: a temporada de relance. Últimos 12 rachas do período.           */
-  const porRacha=(()=>{const M={},ord=[];
-    pps.forEach(x=>{const sid=x.m.sessionId||x.m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:x.m.ts,v:0,e:0,d:0,gols:0};ord.push(r)}
-      r[x.res.toLowerCase()]++;r.gols+=x.gols;if(x.m.ts<r.ts)r.ts=x.m.ts});
-    return ord.reverse().slice(-12)})();
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const eixoX=arr=>`<div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?dd(r.ts):''}</span>`).join('')}</div>`;
-  const cardRR=porRacha.length>=2?(()=>{const maxJ=Math.max(1,...porRacha.map(r=>r.v+r.e+r.d)),h=n=>(n/maxJ*100).toFixed(1)+'%';
-    return `<div class="card">
-    <div class="row"><div class="k">Racha a racha</div><div class="sp tiny muted">${porRacha.length<me.nR?'últimos '+porRacha.length+' · ':''}altura = partidas · número = gols</div></div>
-    <div class="chart">${porRacha.map(r=>`<div class="col"><em>${r.gols||''}</em>${r.d?`<i class="d" style="height:${h(r.d)}"></i>`:''}${r.e?`<i class="e" style="height:${h(r.e)}"></i>`:''}${r.v?`<i class="v" style="height:${h(r.v)}"></i>`:''}</div>`).join('')}</div>
-    ${eixoX(porRacha)}
-    <div class="legend"><span><i style="background:var(--ok)"></i>vitórias</span><span><i style="background:var(--mute2)"></i>empates</span><span><i style="background:var(--bad)"></i>derrotas</span></div>
-  </div>`})():'';
+
 
   const cardsJogador=`
   <div class="card">
@@ -3153,7 +3140,7 @@ function viewStats(liga){
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
-${cardRR}${cardPP}  <div class="card">
+${cardPP}  <div class="card">
     <div class="k2" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="k">Duelos — quem ${esc(quem)} enfrenta</span>${ordBtn('duelOrd')}</div>
     ${carrasco||fregues?`<div class="duo">
       ${carrasco?`<div class="hl bad"><div class="t">${ic('swords')}Maior carrasco</div>

@@ -1917,9 +1917,9 @@ vermelho (halo borrado em 14px, e não pinta os gomos).
 **03/09/2026.** O pedido foi "mais cara de dashboard profissional e interessante de usar". A aba
 já tinha os números certos, mas era uma pilha de listas iguais, com emoji nos títulos. Mudanças,
 sem mexer no motor nem no que é contado:
-- **Racha a racha** (aba Jogador): gráfico de colunas, uma por racha (últimos 12 do período),
-  V/E/D empilhados com altura = partidas e o total de gols em cima. É a temporada de relance —
-  a lista "partida a partida" continua logo abaixo para o detalhe.
+- ~~**Racha a racha** (aba Jogador)~~ — gráfico de colunas V/E/D por racha. **Removido no mesmo
+  dia**: ficou horrível na tela (colunas empilhadas de três cores num espaço de 12 rachas viram
+  ruído). A "partida a partida" já conta essa história; o gráfico que fica é só o da liga.
 - **Gols por racha** (aba Racha): coluna por racha, o último em verde, média do período tracejada.
 - **Posição nos rankings** (aba Jogador): fichas roláveis "4º aproveit. · 1º vitórias…", pódio em
   dourado. Sem "de N" (tirado no mesmo dia): cada ranking lista só quem tem o número que ordena
