@@ -38,8 +38,8 @@ global.document={
   activeElement:{tagName:'BODY'},
   visibilityState:'visible',
 };
-global.window={};
-global.navigator={};
+global.window={addEventListener(){}};
+global.navigator={onLine:true};
 const store={};
 global.localStorage={getItem:k=>(k in store?store[k]:null),setItem:(k,v)=>store[k]=String(v),
                      removeItem:k=>{delete store[k]}};
@@ -68,6 +68,7 @@ function applyParts(lid,parts,nv){
   if(parts.name)l.name=parts.name;if(parts.cfg)l.cfg=jclone(parts.cfg);
 }
 let RT=[];                                  // assinantes de realtime
+const REDE={caida:false,pendura:0};         // simula sinal caido / pedido pendurado
 const uuid=(n=>()=>'uuid-'+(++n))(0);
 const jclone=o=>JSON.parse(JSON.stringify(o));
 let CODEN=0;
@@ -151,6 +152,7 @@ function fakeClient(){
 
   class Q{
     constructor(t){this.t=t;this.op='select';this.f={}}
+    abortSignal(){return this}
     select(){this.op='select';return this}
     delete(){this.op='delete';return this}
     eq(k,v){this.f[k]=v;return this}
@@ -158,6 +160,7 @@ function fakeClient(){
     maybeSingle(){this.single=true;return this.run()}
     then(res,rej){return this.run().then(res,rej)}
     async run(){
+      if(REDE.caida)return{data:null,error:{message:'TypeError: Failed to fetch',code:''}};
       let rows=DB[this.t==='leagues'?'leagues':this.t==='profiles'?'profiles':'members'];
       rows=rows.filter(r=>Object.keys(this.f).every(k=>r[k]===this.f[k]));
       if(this.t==='leagues')rows=rows.filter(r=>isMember(r.id));            // RLS
@@ -193,6 +196,8 @@ function fakeClient(){
     },
     from:t=>new Q(t),
     async rpc(name,args){
+      if(REDE.caida)return{data:null,error:{message:'TypeError: Failed to fetch',code:''}};
+      if(REDE.pendura)await new Promise(r=>setTimeout(r,REDE.pendura));   // pedido que nao responde
       const f=rpcs[name];
       if(!f)return{data:null,error:{message:'rpc '+name+' nao existe'}};
       return f(args||{});
@@ -218,6 +223,7 @@ async function step(label,fn){
   catch(e){fails++;console.log('  QUEBROU em "'+label+'": '+e.message+'\n    '+String(e.stack).split('\n')[1])}
 }
 const srv=id=>DB.leagues.find(l=>l.id===id);
+document.body.appendChild=el=>{if(el.id)els['#'+el.id]=el};   // o aviso "salvando / sem conexão" fica achavel
 const val=(el,v)=>{els[el]=Object.assign(els[el]||new El(el),{value:v});return els[el]};
 
 (async()=>{
@@ -444,6 +450,131 @@ await step('boot com sessao viva restaura tudo',async()=>{
   ok('a ultima liga aberta foi lembrada',S.active===ligaId);
 });
 
+console.log('\n[sync] na quadra: sinal caindo');
+await step('sem rede, o gol fica no aparelho e sobe quando o sinal volta',async()=>{
+  A.openLiga({dataset:{id:ligaId}});
+  A.startMatch();await sleep(700);
+  const v0=srv(ligaId).version;
+  REDE.caida=true;
+  A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  ok('o servidor nao recebeu (sem rede)',srv(ligaId).version===v0);
+  ok('a liga continua suja',dirty.has(ligaId));
+  ok('o aviso diz que ficou guardado no aparelho',/guardado no aparelho/.test(document.querySelector('#sync').textContent));
+  const copia=JSON.parse(localStorage.getItem('raxa_liga_'+ME.id));
+  ok('a copia no aparelho tem o gol',copia&&copia.ligas[0].live.cur.score[0]===1,copia?JSON.stringify(copia.ligas[0].live.cur.score):'sem copia');
+  ok('e sabe que a liga esta pendente',copia&&copia.dirty.includes(ligaId));
+  REDE.caida=false;
+  tentativas=0;clearTimeout(syncT);await flush();
+  ok('com rede, o gol subiu',DB.live[ligaId].data.cur.score[0]===1);
+  ok('a liga ficou limpa',!dirty.has(ligaId));
+});
+
+await step('pedido pendurado nao trava o sincronizador para sempre',async()=>{
+  const RPC0=RPC_MS_TESTE;                       // prazo curto so no teste
+  REDE.pendura=2000;
+  A.goal({dataset:{s:'1'}});
+  await sleep(600);                             // passa o debounce: o pedido esta em voo
+  ok('gravacao em voo',syncing);
+  await sleep(RPC0+300);
+  ok('o prazo soltou o sincronizador',!syncing);
+  ok('e marcou como sem rede',netErr);
+  REDE.pendura=0;
+  tentativas=0;clearTimeout(syncT);await flush();
+  ok('depois grava normalmente',DB.live[ligaId].data.cur.score[1]===1,JSON.stringify(DB.live[ligaId].data.cur.score));
+  await sleep(1500);                            // o pedido pendurado termina (chega velho e nao atropela)
+  ok('a resposta atrasada nao atropelou nada',DB.live[ligaId].data.cur.score.join('-')==='1-1',JSON.stringify(DB.live[ligaId].data.cur.score));
+});
+
+await step('a aba morreu no meio do racha: reabrir sem sinal mostra a copia e continua lancando',async()=>{
+  A.goal({dataset:{s:'0'}});                    // gol que ainda nao subiu quando a aba morre
+  cacheAgora();
+  const placar=L().live.cur.score.slice();
+  const v0=srv(ligaId).version;
+  S=defState();ME=null;dirty.clear();
+  REDE.caida=true;
+  await boot();
+  ok('abriu sem rede, com a liga da copia',!!ME&&S.ligas.length===1,'ligas='+S.ligas.length);
+  ok('a partida esta na tela com o placar de antes',L()&&L().live&&L().live.cur&&L().live.cur.score.join('-')===placar.join('-'),L()&&L().live&&L().live.cur?L().live.cur.score.join('-'):'sem partida');
+  ok('o gol pendente continua pendente',dirty.has(ligaId));
+  A.goal({dataset:{s:'1'}});                    // continua lancando sem rede
+  await sleep(700);
+  ok('o servidor ainda nao viu nada',srv(ligaId).version===v0);
+  REDE.caida=false;
+  recarregaEm=0;await recarrega();
+  await sleep(200);
+  ok('a rede voltou: a lista veio do servidor',carregado);
+  ok('e os dois gols subiram',DB.live[ligaId].data.cur.score.join('-')===L().live.cur.score.join('-')&&DB.live[ligaId].data.cur.score[1]===2,JSON.stringify(DB.live[ligaId].data.cur.score));
+  ok('a versao local acompanhou',VER[ligaId]===srv(ligaId).version);
+});
+
+await step('reabrir com rede traz so o delta desde a copia',async()=>{
+  const chamadas=[];const rpc0=sb.rpc.bind(sb);
+  sb.rpc=(n,a)=>{chamadas.push([n,a]);return rpc0(n,a)};
+  S=defState();ME=null;
+  await boot();
+  const d=chamadas.find(c=>c[0]==='league_delta');
+  ok('pediu o delta desde a versao conhecida, nao do zero',d&&d[1].p_since>0,d?'p_since='+d[1].p_since:'sem league_delta');
+  ok('a liga esta inteira',L()&&L().players.length===19);
+  sb.rpc=rpc0;
+  A.endMatch();await sleep(700);
+});
+
+await step('partida comecada aqui sem rede nao some quando o outro celular so marcou presenca',async()=>{
+  REDE.caida=true;
+  A.startMatch();A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  const meuApito=L().live.cur.startedAt;
+  /* enquanto isso o outro celular, com rede, marcou um presente a mais */
+  const row=srv(ligaId);
+  const lv=jclone(DB.live[ligaId].data);
+  const novo=L().players.find(p=>!lv.presentIds.includes(p.id));
+  lv.presentIds.push(novo.id);
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  REDE.caida=false;
+  tentativas=0;clearTimeout(syncT);await flush();
+  ok('a partida daqui continuou na tela',!!(L().live.cur&&L().live.cur.startedAt===meuApito));
+  ok('com o gol',L().live.cur.score[0]===1);
+  ok('e com a presenca marcada la',L().live.presentIds.includes(novo.id));
+  ok('o servidor ficou com a partida',!!(DB.live[ligaId].data.cur&&DB.live[ligaId].data.cur.startedAt===meuApito));
+});
+
+await step('gol atrasado numa partida que o outro celular ja encerrou: avisa o que se perdeu',async()=>{
+  const toasts=[];const toast0=toast;toast=(m,o)=>{toasts.push(m);return toast0(m,o)};
+  const row=srv(ligaId);
+  const lv=jclone(DB.live[ligaId].data);lv.cur=null;
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  ok('a tela seguiu o outro aparelho',!L().live.cur);
+  ok('o aviso diz que o gol nao entrou',toasts.some(m=>/gol lançado aqui não entrou/.test(m)),toasts.join(' | '));
+  toast=toast0;
+});
+
+await step('os dois celulares marcam o mesmo gol: soma e avisa',async()=>{
+  const toasts=[];const toast0=toast;toast=(m,o)=>{toasts.push(m);return toast0(m,o)};
+  A.startMatch();await sleep(700);
+  const row=srv(ligaId);
+  const lv=jclone(DB.live[ligaId].data);
+  lv.cur.events.push({t:Date.now()-1500,type:'goal',side:0,pid:null});lv.cur.score=[1,0];
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  A.goal({dataset:{s:'0'}});
+  await sleep(700);
+  ok('os dois gols ficaram (o app nao decide sozinho qual apagar)',L().live.cur.score[0]===2,L().live.cur.score.join('-'));
+  ok('mas avisou que pode ser gol dobrado',toasts.some(m=>/também marcou gol/.test(m)),toasts.join(' | '));
+  toast=toast0;
+  A.endMatch();await sleep(700);
+});
+
+await step('a batida de rede confere a liga quando o realtime ficou mudo',async()=>{
+  const row=srv(ligaId);
+  row.cfg=JSON.parse(JSON.stringify(row.cfg));row.cfg.targetMin=77;row.version++;
+  CONTATO[ligaId]=0;                              // faz tempo que o servidor nao fala
+  pulso();
+  await sleep(300);
+  ok('a mudanca chegou sem aviso do realtime',L().cfg.targetMin===77,'targetMin='+L().cfg.targetMin);
+});
+
 console.log('\n[sync] sair da liga e apagar');
 await step('quem nao e dono so sai',async()=>{
   await A.logout();
@@ -472,5 +603,6 @@ process.exit(fails?1:0);
 """
 
 out = os.path.join(SP, 'sync.js')
+js = js.replace('const RPC_MS=12000;', 'const RPC_MS=800;const RPC_MS_TESTE=800;')
 io.open(out, 'w', encoding='utf-8').write(stub + js + teste)
 sys.exit(subprocess.run(['node', out]).returncode)

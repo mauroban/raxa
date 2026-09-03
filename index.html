@@ -290,6 +290,8 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .tp.dragging{opacity:.35}
 .dragghost{position:fixed!important;pointer-events:none;z-index:300}
 .dropok{outline:2px dashed var(--ok);outline-offset:3px;border-radius:10px}
+/* substituição por toque: com um nome marcado, quem pode ser o par dele ganha o mesmo tracejado do arraste */
+.esc2 .pl[data-alvo],.tp[data-alvo]{outline:2px dashed var(--ok);outline-offset:2px}
 .dropzone{outline:2px dashed color-mix(in srgb,var(--ok) 55%,transparent);outline-offset:2px}
 
 /* ---------- próxima partida / escalação ---------- */
@@ -2068,7 +2070,7 @@ const podeOpinar=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','outPick','inPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2597,6 +2599,15 @@ function viewJogo(liga,lv){
   const banco=benchList(liga,lv);
   const reservasDe=s=>banco.filter(o=>o.ti===(s===0?c.a:c.b));
   const fora=banco.filter(o=>o.ti!==c.a&&o.ti!==c.b);
+  /* substituição por toque (D-103): um nome marcado em quadra pede alguém de
+     fora; um nome marcado fora pede alguém de quadra. O par elegível ganha o
+     tracejado do arraste; a dica abaixo da escalação diz o próximo passo.    */
+  const selQuadra=!!(lv.sel&&(c.lineups[0].includes(lv.sel)||c.lineups[1].includes(lv.sel)));
+  const selFora=!!(lv.sel&&!selQuadra&&banco.some(o=>o.id===lv.sel));
+  const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${selQuadra?' data-alvo="1"':''}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}</span></button>`;
+  const dicaSub=selQuadra?`Sai ${esc(nameOf(liga,lv.sel))} — toque em quem entra`
+    :selFora?`${esc(nameOf(liga,lv.sel))} entra — toque em quem sai`
+    :'Toque ou arraste num nome para substituir';
   const alvo=liga.cfg.targetGoals>0
     ? liga.cfg.targetGoals+' gols · '+liga.cfg.targetMin+' min'
     : liga.cfg.targetMin+' min';
@@ -2631,15 +2642,15 @@ function viewJogo(liga,lv){
     return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">⚠️ ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
   <div class="esc2">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
-      {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
+      {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${selFora?' data-alvo="1"':''}`})).join('')}
   </div>
-  <div class="tiny muted" style="margin:6px 2px 0">Toque num nome para substituir</div>
+  <div class="tiny ${selQuadra||selFora?'':'muted'}" style="margin:6px 2px 0">${dicaSub}</div>
   <div class="card" style="margin-top:8px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
     ${(()=>{const res=[0,1].map(s=>reservasDe(s));return res.some(x=>x.length)?`<div class="foragrid" style="margin-bottom:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
-        ${res[s].map(o=>`<button class="tp big" data-a="inPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}">${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}</span></button>`).join('')}
+        ${res[s].map(chipFora).join('')}
       </div>`:'').join('')}</div>`:''})()}
     <div class="row"><div class="k">Fora — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
@@ -2648,7 +2659,7 @@ function viewJogo(liga,lv){
       const grupos=[];fora.forEach(o=>{let g=grupos.find(x=>x.ti===o.ti);if(!g){g={ti:o.ti,from:o.from,ids:[]};grupos.push(g)}g.ids.push(o.id)});
       return `<div class="foragrid" style="margin-top:8px">${grupos.map(g=>`<div class="grp">
         ${g.ti>=0?`<div class="teamtag ${TEAMBG[g.ti]}">${esc(g.from)}</div>`:'<div class="teamtag">Sem time</div>'}
-        ${g.ids.map(id=>`<button class="tp big" data-a="inPick" data-id="${id}" data-drag="1" data-drop-player="${id}">${dotF(id)}<span class="nm">${esc(nameOf(liga,id))}</span></button>`).join('')}
+        ${g.ids.map(id=>chipFora({id})).join('')}
       </div>`).join('')}</div>`})()}
     ${(()=>{const descansa=(lv.gkPool||[]).filter(id=>id!==c.gks[0]&&id!==c.gks[1]);
       return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
@@ -3939,7 +3950,7 @@ const A={
        mesmo confronto fica sugerido — cancelar quase sempre é "recomeça essa" */
     if(c.pre){lv.gkPool=[...(c.pre.gkPool||[])];lv.gkFlip=c.pre.gkFlip||0;lv.nextGks=c.pre.nextGks||null}
     lv.nextPair=[c.a,c.b];
-    lv.cur=null;save();render();toast('Partida cancelada');
+    lv.cur=null;lv.sel=null;save();render();toast('Partida cancelada');
   },
   delGoal(el){
     const l=L(),c=l.live&&l.live.cur;if(!c)return;
@@ -4284,6 +4295,7 @@ const A={
     lv.cur={a,b,startedAt:Date.now(),score:[0,0],events:[],paused:false,
       lineups:[esc0[0].slice(0,per),esc0[1].slice(0,per)],gks,
       fill:[f[0].slice(),f[1].slice()],pre};
+    lv.sel=null;
     preparaApito();
     resetFill(lv);
     [0,1].forEach(sd=>{
@@ -4385,23 +4397,24 @@ const A={
     }
     save();render();toast('Desfeito');
   },
-  outPick(el){                      // toquei em quem está em quadra
-    const l=L(),lv=l.live;if(!lv.cur)return;
-    const s=+el.dataset.s,out=el.dataset.id,opts=benchList(l,lv);
-    openSheet(`<h2>Sai ${esc(nameOf(l,out))} — quem entra?</h2>
-      <div class="chips">${opts.length
-        ?opts.map(o=>`<button class="tp big" data-a="doSub" data-s="${s}" data-out="${out}" data-id="${o.id}">
-          ${esc(nameOf(l,o.id))}${o.from?' <small>'+esc(o.from)+'</small>':''}</button>`).join('')
-        :'<span class="tiny muted">Ninguém no banco. Use “chegou agora” ou marque mais gente na presença.</span>'}</div>
-      <div style="height:12px"></div><button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
-  },
-  inPick(el){                       // toquei em quem está fora
-    const l=L(),lv=l.live,c=lv.cur;if(!c)return;
-    const inn=el.dataset.id;
-    openSheet(`<h2>${esc(nameOf(l,inn))} entra no lugar de quem?</h2>
-      ${[0,1].map(s=>`<div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">${esc(lv.teams[s===0?c.a:c.b].name)}</div>
-        <div class="chips" style="margin-bottom:12px">${c.lineups[s].map(x=>`<button class="tp big" data-a="doSub" data-s="${s}" data-out="${x}" data-id="${inn}">${esc(nameOf(l,x))}</button>`).join('')}</div>`).join('')}
-      <button class="btn wide ghost" data-a="closeSheet">Cancelar</button>`);
+  /* Substituição por toque, sem folha (D-103): o primeiro toque marca o nome
+     (em quadra ou fora), o segundo, no par dele, faz a troca. Tocar no mesmo
+     nome desmarca; tocar em outro do mesmo lado move a marca. A escalação e
+     quem está fora continuam na tela o tempo todo — a folha escondia isso.   */
+  subPick(el){
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+    const id=el.dataset.id;if(!id)return;
+    const ladoDe=x=>[0,1].find(sd=>c.lineups[sd].includes(x));
+    const emQuadra=ladoDe(id)!==undefined;
+    if(lv.sel===id){lv.sel=null;render();return}
+    if(lv.sel){
+      const selQuadra=ladoDe(lv.sel)!==undefined,selFora=!selQuadra&&benchList(l,lv).some(o=>o.id===lv.sel);
+      if(selQuadra!==emQuadra&&(selQuadra||selFora)){
+        const out=emQuadra?id:lv.sel,inn=emQuadra?lv.sel:id;
+        return A.doSub({dataset:{s:String(ladoDe(out)),out,id:inn}});
+      }
+    }
+    lv.sel=id;render();
   },
   doSub(el){
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
@@ -4420,7 +4433,7 @@ const A={
     }
     if(c.gks[s]===out)c.gks[s]=pool.includes(inn)?inn:null;
     c.events.push({t:Date.now(),type:'sub',side:s,out,in:inn,gks:[...c.gks]});
-    closeSheet();save();render();toast('Entrou '+nameOf(l,inn));
+    lv.sel=null;closeSheet();save();render();toast('Entrou '+nameOf(l,inn));
   },
   finish(el){
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
@@ -4452,7 +4465,7 @@ const A={
       events:c.events.map(e=>Object.assign({},e)),
       disputes:[],voided:false};
     applyMatch(l,m);
-    l.matches.push(m);lv.matchIds.push(m.id);
+    l.matches.push(m);lv.matchIds.push(m.id);lv.sel=null;
     /* instantâneo para "Voltar a partida": o Fim sem querer tem volta — guarda a
        partida e o estado da rodada ANTES do giro (times, fila, vencedor, goleiros) */
     lv.lastEnd={mid:m.id,endedAt,cur:JSON.parse(JSON.stringify(c)),
@@ -5432,6 +5445,7 @@ function onDrop(fromId,target){
     const sai=[0,1].find(sd=>c.lineups[sd].includes(alvo));
     if(sai===undefined)return toast('Solte em cima de quem está em quadra');
     if(c.lineups[0].includes(fromId)||c.lineups[1].includes(fromId))return toast('Esse já está em quadra');
+    lv.sel=null;
     A.doSub({dataset:{s:String(sai),out:alvo,id:fromId}});
     return;
   }
@@ -5477,8 +5491,12 @@ document.addEventListener('pointermove',e=>{
 document.addEventListener('pointerup',e=>{
   if(!drag||e.pointerId!==drag.pid)return;
   if(!drag.active){endDrag(false);return}
-  const from=drag.id,t=dropTargetAt(e.clientX,e.clientY);
+  const from=drag.id,el=drag.el,t=dropTargetAt(e.clientX,e.clientY);
+  /* segurou o nome (o arraste armou) mas soltou no lugar: é um toque, não um
+     arraste — antes isso caía no vazio e o nome "não respondia" (D-103)       */
+  const parado=Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<12||(t&&t.dataset.dropPlayer===from);
   endDrag(true);
+  if(parado){dispara(el);return}
   onDrop(from,t);
 });
 document.addEventListener('pointercancel',()=>endDrag(false));
@@ -5503,17 +5521,25 @@ document.addEventListener('pointerup',e=>{
 
 /* ---------- delegação de eventos ---------- */
 let goalTapAt=0;
-document.addEventListener('click',e=>{
-  if(suppressClick)return;
-  const el=e.target.closest('[data-a]');if(!el)return;
+/* Um botão [data-a] acionado — pelo clique ou por um "segurar e soltar no
+   lugar" que o arraste devolveu como toque. As travas (toque duplo no placar,
+   papel de Lançador/admin) valem pelos dois caminhos.                       */
+function dispara(el){
+  if(!el||!el.dataset)return;
   const fn=A[el.dataset.a];if(!fn)return;
-  e.stopPropagation();
   /* toque duplo no placar não é dois gols: ninguém marca dois em meio segundo */
   if(el.dataset.a==='goal'){const now=Date.now();if(now-goalTapAt<600)return;goalTapAt=now}
   const lg=L();
   if(lg&&ACOES_LANCAR.has(el.dataset.a)&&!podeLancar(lg))return toast('Você é Jogador nesta liga — peça ao admin para virar Lançador');
   if(lg&&ACOES_ADMIN.has(el.dataset.a)&&!souAdmin(lg))return toast('Só o admin mexe nos ajustes da liga');
   fn(el);
+}
+document.addEventListener('click',e=>{
+  if(suppressClick)return;
+  const el=e.target.closest('[data-a]');if(!el)return;
+  if(!A[el.dataset.a])return;
+  e.stopPropagation();
+  dispara(el);
 });
 document.addEventListener('change',e=>{
   const el=e.target,l=L();if(!l)return;
@@ -5562,6 +5588,98 @@ async function loadSize(id){
 const VER={}, SNAP={}, CODE={};    // por liga: versão do servidor, último doc gravado, código de convite
 let syncT=null, syncing=false, netErr=false, chan=null;
 const dirty=new Set();
+const CONTATO={};                  // por liga: quando o servidor respondeu por último (batida de rede)
+const contato=id=>{CONTATO[id]=Date.now()};
+let carregado=false;               // a lista de ligas veio do servidor nesta sessão
+let avisouErro=false;              // "não consegui gravar" já foi dito desde a última gravação boa
+
+/* ---------- chamadas com prazo ----------
+   Na quadra o sinal oscila: um pedido que fica pendurado (rede meio morta)
+   travava o sincronizador por minutos — nada mais gravava nem chegava. Todo
+   pedido ao servidor tem 12 s; passou, conta como "sem rede" e o backoff cuida. */
+const RPC_MS=12000;
+function comPrazo(q,ms){
+  ms=ms||RPC_MS;
+  const ac=typeof AbortController!=='undefined'?new AbortController():null;
+  if(ac&&q&&typeof q.abortSignal==='function')q=q.abortSignal(ac.signal);
+  let t=null;
+  /* corrida entre o pedido e o prazo: se o abort não pegar, o prazo vence do
+     mesmo jeito. Resposta que chega depois é ignorada — se a gravação tiver
+     entrado no servidor, a próxima tentativa recebe o conflito e mescla.    */
+  const prazo=new Promise(r=>{t=setTimeout(()=>{try{if(ac)ac.abort()}catch(e){}
+    r({data:null,error:{message:'sem resposta em '+Math.round(ms/1000)+' s',code:''}})},ms)});
+  const pedido=Promise.resolve(q).then(r=>r||{data:null,error:{message:'sem resposta',code:''}},e=>({data:null,error:{message:String(e&&e.message||e),code:''}}));
+  return Promise.race([pedido,prazo]).finally(()=>clearTimeout(t));
+}
+const rpcT=(name,args,ms)=>comPrazo(sb.rpc(name,args),ms);
+/* erro de rede (fetch falhou, prazo estourou) não tem código; erro do servidor
+   (não é membro, liga não existe) vem com código do Postgres */
+const ehRede=err=>!(err&&err.code);
+
+/* ---------- cópia da liga no aparelho ----------
+   Só a preferência de aba ficava no aparelho; a liga vivia na memória e na
+   rede. Na quadra isso quebrava de dois jeitos: o navegador do celular mata a
+   aba em segundo plano e, ao reabrir sem sinal, o app não abria ("não consegui
+   carregar as ligas") — e o que não tinha subido ia junto. Agora a liga inteira
+   (só fatos, como no servidor) fica no localStorage a cada mudança, com a
+   versão que o servidor conhece e o que ainda não subiu. Abrir o app mostra a
+   cópia na hora; a rede só traz o delta desde ela (D-102).
+
+   O snapshot do servidor (SNAP) não é gravado inteiro — seria a liga em dobro.
+   Fica só a DIFERENÇA entre ele e a cópia local (o que está pendente); na
+   volta, o snapshot é refeito a partir da cópia e a diferença é aplicada.   */
+const CACHEPREF='raxa_liga_';
+const cacheKey=()=>ME?CACHEPREF+ME.id:null;
+let cacheT=null,cacheFalhou=false;
+function cacheSnapDiff(l){
+  const s=SNAP[l.id];if(!s)return null;
+  const d={players:{},matches:{},sessions:{},log:s.log};
+  const ent=(key,arr,facts)=>{const seen={};
+    arr.forEach(x=>{seen[x.id]=1;const j=JSON.stringify(facts(x));if(s[key][x.id]!==j)d[key][x.id]=s[key][x.id]===undefined?null:s[key][x.id]});
+    Object.keys(s[key]).forEach(id=>{if(!seen[id])d[key][id]=s[key][id]})};   // está no servidor, apagado aqui
+  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);
+  const live=JSON.stringify(l.live||null);if(live!==s.live)d.live=s.live;
+  const cfg=JSON.stringify(l.cfg);if(cfg!==s.cfg)d.cfg=s.cfg;
+  if(l.name!==s.name)d.name=s.name;
+  return d;
+}
+function cacheAgora(){
+  clearTimeout(cacheT);cacheT=null;
+  const k=cacheKey();if(!k||cacheFalhou)return;
+  try{
+    const ligas=S.ligas.filter(l=>VER[l.id]!==undefined)
+      .map(l=>Object.assign({id:l.id,createdAt:l.createdAt,ver:VER[l.id],code:CODE[l.id]||null,snap:cacheSnapDiff(l)},factsDoc(l)));
+    localStorage.setItem(k,JSON.stringify({v:1,at:Date.now(),ligas,dirty:[...dirty]}));
+  }catch(e){cacheFalhou=true}          // sem espaço ou sem localStorage: segue só com a rede
+}
+function cacheSave(){if(cacheT)return;cacheT=setTimeout(cacheAgora,800)}
+function cacheLoad(){
+  const k=cacheKey();if(!k)return false;
+  let o=null;try{o=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
+  if(!o||o.v!==1||!Array.isArray(o.ligas)||!o.ligas.length)return false;
+  o.ligas.forEach(c=>{
+    if(!c.id||typeof c.ver!=='number')return;
+    S.ligas.push({id:c.id,createdAt:c.createdAt||Date.now(),name:c.name||'Liga',cfg:c.cfg||defCfg(),
+      players:c.players||[],matches:c.matches||[],sessions:c.sessions||[],live:c.live||null,log:c.log||[]});
+    VER[c.id]=c.ver;if(c.code)CODE[c.id]=c.code;
+  });
+  S=normalize(S);
+  o.ligas.forEach(c=>{
+    const l=S.ligas.find(x=>x.id===c.id);if(!l)return;
+    l.matches.sort((a,b)=>a.ts-b.ts);rebuildAll(l);
+    const sn=SNAP[c.id]=snapNovo(),d=c.snap||{players:{},matches:{},sessions:{}};
+    const ent=(key,arr,facts)=>{arr.forEach(x=>sn[key][x.id]=JSON.stringify(facts(x)));
+      Object.keys(d[key]||{}).forEach(id=>{if(d[key][id]===null)delete sn[key][id];else sn[key][id]=d[key][id]})};
+    ent('players',l.players,playerFacts);ent('matches',l.matches,matchFacts);ent('sessions',l.sessions,x=>x);
+    sn.live=d.live!==undefined?d.live:JSON.stringify(l.live||null);
+    sn.cfg=d.cfg!==undefined?d.cfg:JSON.stringify(l.cfg);
+    sn.name=d.name!==undefined?d.name:l.name;
+    sn.log=typeof d.log==='number'?d.log:(l.log||[]).length;
+  });
+  (o.dirty||[]).forEach(id=>{if(S.ligas.some(l=>l.id===id))dirty.add(id)});
+  return S.ligas.length>0;
+}
+function cacheDrop(){const k=cacheKey();if(k)try{localStorage.removeItem(k)}catch(e){}}
 
 /* ---------- preferência de aparelho (não é dado do racha) ---------- */
 const UIKEY='raxa_ui';
@@ -5613,7 +5731,7 @@ function commitSnap(id,snap){
   if(snap.name!==undefined)s.name=snap.name;
   if(snap.log!==undefined)s.log=snap.log;
 }
-function markDirty(id){if(!id)return;dirty.add(id);agenda()}
+function markDirty(id){if(!id)return;dirty.add(id);agenda();cacheSave()}
 /* Sem rede, a nova tentativa espaça (0,45 s → 1 s → 2 s … até 30 s) em vez de
    martelar o servidor a cada meio segundo; a primeira gravação boa zera.   */
 let tentativas=0;
@@ -5623,7 +5741,7 @@ function agenda(){
   syncT=setTimeout(flush,espera);
 }
 
-function syncDot(estado){              // salvando | erro | limpo
+function syncDot(estado,txt){          // salvando | erro | limpo
   let el=$('#sync');
   if(!el){el=document.createElement('div');el.id='sync';
     el.style.cssText='position:fixed;left:10px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:120;'
@@ -5632,7 +5750,7 @@ function syncDot(estado){              // salvando | erro | limpo
     document.body.appendChild(el)}
   if(estado==='limpo'){el.style.opacity='0';return}
   el.style.opacity='1';
-  el.textContent=estado==='erro'?'sem conexão':'salvando';
+  el.textContent=txt||(estado==='erro'?(dirty.size?'sem conexão · guardado no aparelho':'sem conexão'):'salvando');
   el.style.background=estado==='erro'?'var(--bad,#FF5F5F)':'var(--panel,#111917)';
   el.style.color=estado==='erro'?'#1a0a0a':'var(--mute,#84998E)';
 }
@@ -5650,21 +5768,27 @@ async function flush(){
       const {parts,snap}=diffParts(l);
       if(!Object.keys(parts).length)continue;      // save() sem mudança real (trocar de aba, abrir liga)
       syncDot('salvando');
-      const {data,error}=await sb.rpc('save_parts',{p_id:id,p_version:VER[id]||1,p_parts:parts});
-      if(error){netErr=true;tentativas++;syncDot('erro');dirty.add(id);break}   // sem rede: espera o backoff
-      netErr=false;tentativas=0;
+      const {data,error}=await rpcT('save_parts',{p_id:id,p_version:VER[id]||1,p_parts:parts});
+      if(error){                                   // sem rede: espera o backoff; o servidor recusou: avisa uma vez
+        netErr=true;tentativas++;dirty.add(id);
+        if(ehRede(error))syncDot('erro');
+        else{syncDot('erro','erro ao gravar');if(!avisouErro){avisouErro=true;toast('Não consegui gravar: '+traduz(error),{ms:4000})}}
+        break;
+      }
+      netErr=false;tentativas=0;avisouErro=false;contato(id);
       if(data&&data.ok===false){                   // alguém gravou antes: aplica o delta e reenvia o que sobrou
         applyDelta(id,data.delta);
-        toast('Atualizado por outra pessoa');
+        const aviso=MESCLA.aviso;MESCLA.aviso=null;
+        toast(aviso||'Atualizado por outra pessoa',aviso?{ms:4500}:undefined);
         render();dirty.add(id);
       }else if(data){
         VER[id]=data.version;commitSnap(id,snap);if(data.code)CODE[id]=data.code;
       }
     }
   }finally{
-    syncing=false;
+    syncing=false;cacheSave();
     if(dirty.size){agenda();syncDot(netErr?'erro':'salvando')}
-    else syncDot(netErr?'erro':'limpo');
+    else{syncDot(netErr?'erro':'limpo');setTimeout(refetchPendentes,0)}   // aviso que esperou a gravação
   }
 }
 
@@ -5715,6 +5839,7 @@ function applyDelta(id,d){
   if(d.name)s.name=l.name;
   if(logSync!==null)s.log=logSync;
   if(s.log===0&&logSync===null)s.log=(l.log||[]).length;
+  cacheSave();
 }
 /* ---------- dois celulares na mesma partida ----------
    O `live` é um bloco só. Quando o servidor recusa a gravação porque o outro
@@ -5749,19 +5874,50 @@ function replayCur(c){
   return c;
 }
 const chaveEv=e=>[e.t,e.type,e.side,e.out,e.in,e.id].map(x=>x===undefined||x===null?'':x).join('|');
+/* O que a mesclagem tem a dizer para quem está com o celular na mão: gol que
+   ficou de fora porque o outro aparelho já tinha encerrado, ou gol que os
+   dois marcaram quase junto (provável gol dobrado). O flush mostra no toast. */
+const MESCLA={aviso:null};
 function mesclaLive(local,remoto,snapJson){
-  if(!local||!remoto||!local.cur||!remoto.cur)return remoto;
+  MESCLA.aviso=null;
+  if(!local||!remoto||!local.cur)return remoto;
   if(JSON.stringify(local)===snapJson)return remoto;            // nada pendente aqui
-  if(local.cur.startedAt!==remoto.cur.startedAt)return remoto;  // partidas diferentes
-  if(!Array.isArray(local.cur.startLineups)||!Array.isArray(remoto.cur.startLineups))return remoto;
+  let snap=null;try{snap=JSON.parse(snapJson||'null')}catch(e){}
+  const snapMesma=!!(snap&&snap.cur&&snap.cur.startedAt===local.cur.startedAt);
+  const conhecidos=new Set(snapMesma?(snap.cur.events||[]).map(chaveEv):[]);
+  const pendentes=(local.cur.events||[]).filter(e=>!conhecidos.has(chaveEv(e)));
+  const golsPend=pendentes.filter(e=>e.type==='goal').length;
+  const mesma=!!(remoto.cur&&local.cur.startedAt===remoto.cur.startedAt
+    &&Array.isArray(local.cur.startLineups)&&Array.isArray(remoto.cur.startLineups));
+  if(!mesma){
+    /* partida que COMEÇOU aqui (o servidor nunca a viu) e lá ainda não há
+       partida, com os mesmos times e o mesmo tanto de partidas jogadas: foi só
+       um toque de fora (presença, chegou alguém) que gravou antes — a partida
+       daqui fica, senão o apito e os gols sumiam da tela de quem está lançando */
+    if(!snapMesma&&!remoto.cur&&remoto.stage==='jogo'&&(remoto.matchIds||[]).length===(local.matchIds||[]).length
+       &&JSON.stringify(remoto.teams)===JSON.stringify(local.teams)){
+      const out=JSON.parse(JSON.stringify(remoto));
+      /* a partida e o que a largada mexeu (rodízio de goleiros, completar) vêm daqui */
+      ['cur','gkFlip','gkPool','nextGks','nextPair','fill','fillMan','fillOff','sel'].forEach(k=>{if(local[k]!==undefined)out[k]=JSON.parse(JSON.stringify(local[k]))});
+      return out;
+    }
+    if(golsPend)MESCLA.aviso=pl(golsPend,'gol lançado','gols lançados')+' aqui não '+(golsPend===1?'entrou':'entraram')
+      +': a partida já tinha sido encerrada no outro celular';
+    return remoto;
+  }
   const out=JSON.parse(JSON.stringify(remoto));
   const vistos=new Set(out.cur.events.map(chaveEv));
+  const novosRemotos=out.cur.events.filter(e=>e.type==='goal'&&!conhecidos.has(chaveEv(e)));
   let novos=0;
   (local.cur.events||[]).forEach(e=>{const k=chaveEv(e);if(!vistos.has(k)){vistos.add(k);out.cur.events.push(JSON.parse(JSON.stringify(e)));novos++}});
   /* autor de gol marcado aqui e ainda não lá: o gol é o mesmo, leva o autor */
   (local.cur.events||[]).forEach(e=>{if(e.type!=='goal'||!e.pid)return;
     const r=out.cur.events.find(x=>x.type==='goal'&&x.t===e.t&&x.side===e.side);if(r&&!r.pid){r.pid=e.pid;r.own=!!e.own}});
   if(!novos)return out;
+  /* os dois celulares marcaram gol do mesmo lado com menos de 8 s de diferença:
+     quase sempre é o MESMO gol, visto de dois lugares */
+  const dobrado=pendentes.some(a=>a.type==='goal'&&novosRemotos.some(b=>b.side===a.side&&Math.abs(b.t-a.t)<8000));
+  if(dobrado)MESCLA.aviso='O outro celular também marcou gol do mesmo time quase na mesma hora — confira o placar';
   replayCur(out.cur);
   return out;
 }
@@ -5773,22 +5929,58 @@ function aplicaRemoto(id,data,name,code){
     sessions:(doc.sessions||[]).map(x=>({id:x.id,data:x})),live:{data:doc.live||null},log:doc.log||[]});
 }
 
+/* Carga: a lista de ligas do servidor e, para cada uma, só o que mudou desde a
+   versão que a cópia do aparelho conhece (tudo, se não há cópia). Liga que
+   saiu da lista (saiu dela, foi apagada) sai da cópia. Falha de rede aqui
+   deixa a cópia como está — quem chamou decide se mostra ou desiste.        */
 async function loadAll(){
-  const {data,error}=await sb.from('leagues').select('id,name,code,version').order('created_at');
+  const {data,error}=await comPrazo(sb.from('leagues').select('id,name,code,version').order('created_at'));
   if(error)throw error;
-  S.ligas=[];
-  Object.keys(SNAP).forEach(k=>delete SNAP[k]);
   const rows=data||[];
-  const deltas=await Promise.all(rows.map(row=>sb.rpc('league_delta',{p_id:row.id,p_since:0})));
+  const temLocal=id=>S.ligas.some(l=>l.id===id)&&VER[id]!==undefined;
+  const deltas=await Promise.all(rows.map(row=>rpcT('league_delta',{p_id:row.id,p_since:temLocal(row.id)?VER[row.id]:0})));
+  let falhas=0;
   rows.forEach((row,i)=>{
     const r=deltas[i];
-    if(r.error||!r.data){toast('Não consegui carregar '+row.name);return}
-    CODE[row.id]=row.code;
+    if(r.error||!r.data){falhas++;if(!temLocal(row.id))toast('Não consegui carregar '+row.name);return}
+    CODE[row.id]=row.code;contato(row.id);
+    if(temLocal(row.id)&&VER[row.id]>=r.data.version)return;   // a cópia já está em dia
     applyDelta(row.id,r.data);
   });
+  S.ligas=S.ligas.filter(l=>VER[l.id]===undefined||rows.some(r=>r.id===l.id));
+  Object.keys(SNAP).forEach(k=>{if(!S.ligas.some(l=>l.id===k))delete SNAP[k]});
   S=normalize(S);
+  carregado=!falhas;
   await loadPend();
+  cacheSave();
 }
+/* A carga inicial falhou (abriu sem sinal) ou a rede voltou: tenta de novo,
+   sem empilhar tentativas. */
+let recarregando=false,recarregaEm=0;
+async function recarrega(){
+  if(recarregando||!ME||!sb||Date.now()<recarregaEm)return;
+  recarregando=true;recarregaEm=Date.now()+10000;
+  try{await loadAll();netErr=false;if(!dirty.size)syncDot('limpo');if(!ocupado())render();if(dirty.size){tentativas=0;clearTimeout(syncT);flush()}}
+  catch(e){}
+  finally{recarregando=false}
+}
+/* ---------- batida de rede ----------
+   O aviso do Realtime se perde quando o celular dorme, o app vai para segundo
+   plano ou o sinal cai — e a reconexão não reenvia o que passou. Então a liga
+   aberta é conferida por conta própria: a cada 15 s com o racha ao vivo, a
+   cada 60 s fora dele, e só se nada chegou do servidor nesse intervalo. A
+   resposta sem novidade é uma linha (versão e listas vazias).                */
+let pulsoT=null;
+function pulso(){
+  if(!sb||!ME||typeof document==='undefined'||document.visibilityState!=='visible')return;
+  if(!carregado){recarrega();return}
+  const l=L();if(!l||VER[l.id]===undefined)return;
+  const gap=aoVivo(l)?15000:60000;
+  if(Date.now()-(CONTATO[l.id]||0)<gap)return;
+  contato(l.id);                             // não empilha pedidos enquanto este não responde
+  refetch(l.id);
+}
+function ligaPulso(){clearInterval(pulsoT);pulsoT=setInterval(pulso,5000);if(pulsoT&&pulsoT.unref)pulsoT.unref()}
 async function loadPend(){
   try{const r=await sb.rpc('my_requests');PEND=(r.data||[])}catch(e){PEND=[]}
 }
@@ -5827,7 +6019,12 @@ function watch(){
         S=normalize(S);saveUI();render();
       }
     })
-    .subscribe();
+    .subscribe(status=>{
+      /* voltou a assinar depois de cair: o que passou no escuro é buscado agora */
+      if(status!=='SUBSCRIBED')return;
+      if(watch.assinou&&S.active)refetch(S.active);
+      watch.assinou=true;
+    });
 }
 
 /* Não redesenha por cima de digitação, arrasto ou folha aberta. */
@@ -5857,8 +6054,10 @@ async function refetch(id,tent){
     setTimeout(()=>refetch(id,tent),700);return;
   }
   if(ocupado()){pendente.add(id);return}                                // não redesenha por cima de digitação
-  const {data,error}=await sb.rpc('league_delta',{p_id:id,p_since:VER[id]||0});
-  if(error||!data)return;
+  const {data,error}=await rpcT('league_delta',{p_id:id,p_since:VER[id]||0});
+  if(error||!data){if(error&&ehRede(error)){netErr=true;syncDot('erro')}return}
+  contato(id);
+  if(netErr&&!dirty.size&&!syncing){netErr=false;syncDot('limpo')}   // a rede voltou, e quem só olha fica sabendo
   if((VER[id]||0)>=data.version)return;             // eco da nossa própria gravação
   applyDelta(id,data);
   render();
@@ -5941,11 +6140,20 @@ async function afterLogin(session){
   try{localStorage.setItem('raxa_last_user',ME.username)}catch(e){}
   S=defState();
   S.me={id:ME.id,name:ME.username};
+  [VER,SNAP,CODE].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));dirty.clear();carregado=false;
   loadUI();
+  /* a cópia do aparelho aparece na hora; a rede só traz o que mudou desde ela */
+  const temCopia=cacheLoad();
+  if(temCopia)render();
   try{await loadAll()}
-  catch(e){renderAuth('Não consegui carregar as ligas: '+traduz(e));return}
+  catch(e){
+    if(!temCopia){renderAuth('Não consegui carregar as ligas: '+traduz(e));return}
+    netErr=true;syncDot('erro');toast('Sem conexão — mostrando a cópia do aparelho',{ms:3500});
+  }
   watch();
   render();
+  ligaPulso();
+  if(dirty.size){tentativas=0;agenda()}     // o que não subiu antes de a aba fechar sobe agora
 }
 
 async function boot(){
@@ -6037,9 +6245,11 @@ Object.assign(A,{
 
   async logout(){
     if(chan){sb.removeChannel(chan);chan=null}
+    clearInterval(pulsoT);
     await flush();
+    cacheDrop();                                   // a cópia é desta conta; outra conta no mesmo aparelho não a vê
     try{await sb.auth.signOut()}catch(e){}
-    ME=null;S=defState();
+    ME=null;S=defState();carregado=false;
     dirty.clear();pendente.clear();[VER,SNAP,CODE].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));
     try{localStorage.removeItem(UIKEY)}catch(e){}
     authMode='entrar';renderAuth();
@@ -6319,14 +6529,23 @@ document.addEventListener('keydown',e=>{
    mudou enquanto estava fora. */
 document.addEventListener('visibilitychange',()=>{
   if(!ME)return;
-  if(document.visibilityState==='hidden'){clearTimeout(syncT);flush()}
+  if(document.visibilityState==='hidden'){clearTimeout(syncT);cacheAgora();flush()}
+  else if(!carregado)recarrega();
   else if(S.active)refetch(S.active);
 });
-/* Fechar a aba / o app no celular: última chance de gravar o que está sujo. */
+/* Fechar a aba / o app no celular: última chance de gravar o que está sujo —
+   e a cópia do aparelho vai ao disco agora, sem esperar o debounce. */
 const onWin=(ev,fn)=>{try{window.addEventListener(ev,fn)}catch(e){}};   // os testes rodam sem window de verdade
-onWin('pagehide',()=>{if(ME&&dirty.size){clearTimeout(syncT);flush()}});
-/* A rede voltou: grava agora, sem esperar o backoff. */
-onWin('online',()=>{if(ME&&dirty.size){tentativas=0;clearTimeout(syncT);flush()}});
+onWin('pagehide',()=>{if(!ME)return;cacheAgora();if(dirty.size){clearTimeout(syncT);flush()}});
+/* A rede voltou: grava agora, sem esperar o backoff; quem só olha busca o que perdeu. */
+onWin('online',()=>{
+  if(!ME)return;tentativas=0;clearTimeout(syncT);
+  if(!carregado)return recarrega();
+  if(dirty.size)flush();else{netErr=false;syncDot('limpo')}
+  if(S.active)refetch(S.active);
+});
+/* O aparelho avisou que caiu: quem está só olhando fica sabendo que a tela pode estar velha. */
+onWin('offline',()=>{if(ME)syncDot('erro')});
 /* Soltou o campo de texto: se chegou atualização enquanto digitava, busca agora. */
 document.addEventListener('focusout',()=>setTimeout(refetchPendentes,80));
 

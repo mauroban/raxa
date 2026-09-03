@@ -109,8 +109,10 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
   gravar depois, com a versão certa, fica; quem estava com a versão velha recebe o
   delta do servidor, perde a alteração local **só nas partes que o outro também
   mexeu** e reenvia o resto (a tela avisa *"Atualizado por outra pessoa"*).
-- **Não funciona offline.** O protótipo funcionava; esta versão precisa de rede.
-  Se a quadra não tiver sinal, é um problema real a resolver antes de valer como produto.
+- **Sinal caindo na quadra é esperado.** A liga fica copiada no aparelho (localStorage,
+  por conta); sem rede o app abre com a cópia, continua lançando e sobe tudo quando a
+  rede volta. Cada pedido ao servidor tem prazo de 12 s. O que ainda exige rede é
+  **entrar** (login) e a primeira carga de uma liga que o aparelho nunca viu.
 - **O projeto gratuito do Supabase hiberna** depois de ~7 dias sem nenhum acesso.
   O primeiro acesso depois disso demora alguns segundos a mais. Nada se perde.
 

@@ -1791,6 +1791,54 @@ um bloqueio.
 (tempo) e CSS `.scorerbar` em `index.html` · `scripts/smoke.py` ("gol sem autor avisa") ·
 DOCUMENTACAO §4.2/§4.3.
 
+### D-102 · Pronto para a quadra: cópia da liga no aparelho, prazo por pedido, batida de rede e avisos de mesclagem
+**02/09/2026.** Revisão do racha ao vivo para o cenário real — várias pessoas ao mesmo tempo e sinal
+que vai e volta. O que quebrava: (1) o navegador do celular mata a aba em segundo plano; reabrir sem
+sinal caía em "não consegui carregar as ligas" e o que não tinha subido ia junto; (2) um pedido
+pendurado numa rede meio morta travava o sincronizador por minutos (nada gravava, nada chegava);
+(3) o aviso do Realtime se perde enquanto o celular dorme, e só a troca de aba buscava o que passou;
+(4) a mesclagem descartava em silêncio: partida começada aqui sumia se o outro celular só marcou
+presença antes, gol atrasado se perdia com um "atualizado por outra pessoa" genérico, e o mesmo gol
+marcado nos dois celulares virava dois sem ninguém saber.
+**Decidido:** a liga inteira (só fatos, como no servidor) fica no `localStorage` a cada mudança, por
+conta, com a versão conhecida e a **diferença** para o que o servidor tem (não o snapshot inteiro —
+seria a liga em dobro). Abrir mostra a cópia na hora; a carga pede só o delta desde ela; sem rede
+segue lançando e sobe depois. Todo pedido ao servidor tem prazo de 12 s (corrida entre pedido e
+prazo, além do abort). Batida de rede: a liga aberta é conferida a cada 15 s com racha ao vivo (60 s
+fora) se nada chegou nesse intervalo, e ao reassinar o Realtime. Quem só olha vê "sem conexão" quando
+o aparelho cai; quem lança vê "sem conexão · guardado no aparelho". Erro do servidor (com código) vira
+"erro ao gravar" + toast uma vez, em vez de fingir que é rede. Mesclagem: partida começada aqui, sem
+o servidor a conhecer, fica por cima de um `live` remoto sem partida com os mesmos times e o mesmo
+tanto de partidas (levando o que a largada mexeu: rodízio de goleiros, completar); gol que não entrou
+porque a partida acabou lá é dito com o número; gol do mesmo lado nos dois celulares com menos de
+8 s de diferença fica (os dois) com aviso para conferir.
+**Descartado:** IndexedDB (mais código para o mesmo ganho num racha de poucos MB); reescrever a
+partida já encerrada no outro celular para encaixar o gol atrasado (mexe em vencedor, rodízio e
+fila — o aviso e a correção pelo histórico são mais honestos); apagar sozinho o "gol dobrado" (dois
+gols em 8 s acontecem de verdade); entrar sem rede com sessão vencida (raro: a sessão renova sozinha
+com o app aberto).
+**Onde:** `cacheAgora`/`cacheLoad`/`cacheSnapDiff`, `comPrazo`/`rpcT`, `loadAll` (incremental),
+`recarrega`, `pulso`/`ligaPulso`, `mesclaLive` (`MESCLA.aviso`), `flush`, `refetch`, `afterLogin` e
+os eventos `online`/`offline`/`pagehide` em `index.html` · `scripts/sync.py` (bloco "na quadra:
+sinal caindo", 8 cenários) · DOCUMENTACAO §4.3/§8/§8.1 · DEPLOY.md · RNF-03.
+
+### D-103 · Substituição por toque sem folha: marca um, toca no par
+**02/09/2026.** A substituição por toque abria uma folha ("Sai Fulano — quem entra?") que escondia a
+escalação e quem estava fora — justamente o que a pessoa precisa olhar para escolher. E segurar um
+nome sem arrastar (o dedo demora mais de 150 ms, comum com a mão suada) armava o arraste, soltava no
+lugar e caía no vazio: o nome "não respondia". Agora o toque marca o nome (em quadra ou fora), o par
+elegível ganha o tracejado verde do arraste, a dica abaixo da escalação diz o próximo passo ("Sai
+Fulano — toque em quem entra" / "Fulano entra — toque em quem sai"), e o segundo toque faz a troca.
+Mesmo nome desmarca; outro do mesmo lado move a marca (dois em quadra nunca trocam de time por
+toque). Segurar e soltar no lugar vale como toque. A dica padrão passou a "Toque ou arraste num nome
+para substituir". Mesma gramática da montagem de times (D-101).
+**Descartado:** manter a folha como segundo caminho (dois jeitos de fazer a mesma coisa confundem);
+toast a cada marca (a dica já muda no lugar).
+**Onde:** `A.subPick` (substitui `outPick`/`inPick`), `viewJogo` (`chipFora`, `dicaSub`,
+`data-alvo`), `dispara` + `pointerup` do arraste e CSS `[data-alvo]` em `index.html` ·
+`scripts/smoke.py` (marca/desmarca, troca pelos dois lados, dois em quadra só movem a marca) ·
+`scripts/layout.py` ("partida com nome marcado para substituir") · DOCUMENTACAO §4.3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

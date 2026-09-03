@@ -186,9 +186,22 @@ step('troca gravada pela versao antiga (sem mover escalacao) e curada ao recarre
   if(c3.gks[0]!==a||c3.gks[1]!==b||!c3.lineups[0].includes(a)||!c3.lineups[1].includes(b))
     throw new Error('undo do evento antigo nao devolveu os lados');
 });
-step('abrir substituicao (toque em quem esta em quadra)',()=>A.outPick({dataset:{s:'0',id:L().live.cur.lineups[0][0]}}));
-step('abrir substituicao (toque em quem esta fora)',()=>{
-  const b=benchList(L(),L().live);if(b.length)A.inPick({dataset:{id:b[0].id}});
+step('toque em quem esta em quadra marca o nome; o segundo toque desmarca',()=>{
+  const id=L().live.cur.lineups[0][0];
+  A.subPick({dataset:{s:'0',id}});
+  if(L().live.sel!==id)throw new Error('o nome nao ficou marcado');
+  if(!/Sai .* — toque em quem entra/.test(els['#app'].innerHTML))throw new Error('a dica nao diz o proximo passo');
+  if(!/data-alvo="1"/.test(els['#app'].innerHTML))throw new Error('quem esta fora nao ficou marcado como par');
+  A.subPick({dataset:{s:'0',id}});
+  if(L().live.sel)throw new Error('tocar de novo deveria desmarcar');
+  if(!/Toque ou arraste num nome para substituir/.test(els['#app'].innerHTML))throw new Error('a dica padrao nao voltou');
+});
+step('toque em quem esta fora marca o nome',()=>{
+  const b=benchList(L(),L().live);if(!b.length)return;
+  A.subPick({dataset:{id:b[0].id}});
+  if(L().live.sel!==b[0].id)throw new Error('o nome de fora nao ficou marcado');
+  if(!/entra — toque em quem sai/.test(els['#app'].innerHTML))throw new Error('a dica nao diz quem sai');
+  A.subPick({dataset:{id:b[0].id}});
 });
 
 step('corrigir autor do gol pela lista',()=>{
@@ -403,10 +416,14 @@ step('partida unica com goleiro fixo: escalacao sem vaga fantasma',()=>{
 });
 step('modo varias curtas',()=>setMatchMode('curtas'));
 step('comecar partida para as substituicoes',()=>A.startMatch());
-step('substituir tocando em quem esta em quadra',()=>{
-  A.outPick({dataset:{s:'0',id:L().live.cur.lineups[0][0]}});
-  const fora=benchList(L(),L().live);
-  if(fora.length)A.doSub({dataset:{s:'0',out:L().live.cur.lineups[0][0],id:fora[0].id}});
+step('substituir tocando em quem esta em quadra e depois em quem entra',()=>{
+  const out=L().live.cur.lineups[0][0],fora=benchList(L(),L().live);
+  if(!fora.length)return;
+  A.subPick({dataset:{s:'0',id:out}});
+  A.subPick({dataset:{id:fora[0].id}});
+  const c=L().live.cur;
+  if(c.lineups[0].includes(out)||!c.lineups[0].includes(fora[0].id))throw new Error('a troca nao aconteceu');
+  if(L().live.sel)throw new Error('a marca deveria sumir depois da troca');
 });
 step('substituicao nao mexe no time: quem entrou emprestado nao vira titular',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;
@@ -432,10 +449,20 @@ step('quem nao e do time original leva o icone de substituto',()=>{
   const estranho=c.lineups[0].find(id=>!orig.includes(id)&&id!==c.gks[0]);
   if(estranho&&!/⇄/.test(els['#app'].innerHTML))throw new Error('substituto sem o icone ⇄');
 });
-step('substituir tocando em quem esta fora',()=>{
-  const fora=benchList(L(),L().live);
-  if(fora.length){A.inPick({dataset:{id:fora[0].id}});
-    A.doSub({dataset:{s:'1',out:L().live.cur.lineups[1][0],id:fora[0].id}});}
+step('substituir tocando em quem esta fora e depois em quem sai',()=>{
+  const fora=benchList(L(),L().live),out=L().live.cur.lineups[1][0];
+  if(!fora.length)return;
+  A.subPick({dataset:{id:fora[0].id}});
+  A.subPick({dataset:{s:'1',id:out}});
+  const c=L().live.cur;
+  if(c.lineups[1].includes(out)||!c.lineups[1].includes(fora[0].id))throw new Error('a troca nao aconteceu');
+});
+step('dois toques em quadra so movem a marca (nao trocam ninguem de time)',()=>{
+  const c=L().live.cur,a=c.lineups[0][0],b=c.lineups[1][0],antes=JSON.stringify(c.lineups);
+  A.subPick({dataset:{s:'0',id:a}});A.subPick({dataset:{s:'1',id:b}});
+  if(L().live.sel!==b)throw new Error('a marca deveria ir para o segundo nome');
+  if(JSON.stringify(c.lineups)!==antes)throw new Error('a escalacao nao podia mudar');
+  A.subPick({dataset:{s:'1',id:b}});
 });
 step('ninguem duplicado apos substituicoes',()=>{
   const c=L().live.cur,todos=[...c.lineups[0],...c.lineups[1]];
