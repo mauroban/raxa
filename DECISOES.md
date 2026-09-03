@@ -1945,8 +1945,14 @@ e ninguém marca de lá. A média saía baixa e a comparação enganava. Agora g
 da pessoa, a média da liga e o ranking "Gols a cada 10 min") usam **tempo de linha** = tempo em
 quadra − tempo no gol; com o chip "Sem goleiros" ligado o tempo já vem sem o gol. "Sofridos a
 cada 10 min" já era só sobre tempo no gol, para a pessoa e para a liga — posição com posição.
-Os dois cartões de ritmo seguem a posição: taxa de linha só com 1 min de linha (goleiro fixo não
-tem), taxa de goleiro só com 1 min no gol, e "gols por partida" completa a dupla.
+**Ajuste no mesmo dia — linha e gol estanques.** O que a pessoa fez no gol não entra em nenhum
+número de linha, nem o contrário, e cada função se compara só com a liga na mesma função:
+"gols / 10 min" e "gols por partida" usam gols, minutos de linha e **partidas sem passar pelo gol**
+(jogos − jogos em que esteve no gol), contra a liga na linha; "sofridos / 10 min" usa gols
+sofridos e minutos no gol, contra a liga no gol (soma de todo mundo enquanto estava no gol,
+ponderada pelo tempo). Piso de **20 min em cada função** (o mesmo do "Menos vazado" do racha):
+3 min no gol de um jogador de linha não geram cartão; goleiro fixo sem tempo de linha não vê
+cartão de linha. Um cartão só ocupa a largura toda.
 (2) Na aba Racha, a linha destacada em verde era a do jogador **selecionado** na aba Jogador
 ("Trocar"); virou a do **dono do perfil** neste aparelho. Ver os números de outra pessoa não faz
 dela "você" no ranking.

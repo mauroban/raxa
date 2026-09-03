@@ -3042,23 +3042,27 @@ function viewStats(liga){
   /* --- ritmo com a média da liga ao lado (D-108): o número sozinho não diz
      se 0,39 é muito ou pouco; a liga inteira no mesmo período diz          */
   const r10=(n,ms)=>ms>0?n/(ms/600000):null;
-  const ligaGols=todos.reduce((a,x)=>a+x.gols,0),ligaMin=todos.reduce((a,x)=>a+minL(x),0),ligaJogos=todos.reduce((a,x)=>a+x.jogos,0);
+  const ligaGols=todos.reduce((a,x)=>a+x.gols,0),ligaMin=todos.reduce((a,x)=>a+minL(x),0);
   const ligaSof=todos.reduce((a,x)=>a+x.sofridos,0),ligaMinGk=todos.reduce((a,x)=>a+x.minGk,0);
   const cmp=(meu,liga,maiorMelhor)=>meu===null||liga===null||meu===liga?'':((meu>liga)===maiorMelhor?'up':'dn');
   const dec2=v=>v.toFixed(2).replace('.',',');
-  const noGol=me.gk&&me.minGk>=60000;     // com menos de 1 min no gol a taxa é ruído (dava 21052,63)
-  const naLinha=minL(me)>=60000;          // goleiro fixo não tem tempo de linha: a taxa não existe para ele
-  /* dois cartões: o que fizer sentido para a posição da pessoa, na ordem
-     linha → gol → gols por partida (D-109)                                */
+  /* Linha e gol são leituras estanques (D-109): o que a pessoa fez no gol não
+     entra no cartão de linha, nem o contrário — e cada um se compara só com
+     a liga na mesma função. Piso de 20 min em cada função (o mesmo do "Menos
+     vazado" do racha): 3 min no gol de um jogador de linha não viram cartão. */
+  const PISO_FUNCAO=20*60000;
+  const jogosL=x=>Math.max(0,x.jogos-(S.ui.statsSemGk?0:x.gk));   // partidas em que não esteve no gol
+  const ligaJogosL=todos.reduce((a,x)=>a+jogosL(x),0);
+  const naLinha=minL(me)>=PISO_FUNCAO,noGol=me.minGk>=PISO_FUNCAO;
   const cartoes=[
     naLinha?`<div class="rate"><b class="num">${por10(me.gols,minL(me))}</b><span>gols / 10 min</span>
-        <small class="${cmp(r10(me.gols,minL(me)),r10(ligaGols,ligaMin),true)}">liga: ${por10(ligaGols,ligaMin)} · só tempo de linha</small></div>`:null,
+        <small class="${cmp(r10(me.gols,minL(me)),r10(ligaGols,ligaMin),true)}">liga na linha: ${por10(ligaGols,ligaMin)}</small></div>`:null,
     noGol?`<div class="rate"><b class="num">${por10(me.sofridos,me.minGk)}</b><span>sofridos / 10 min</span>
-        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">liga: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)} no gol</small></div>`:null,
-    `<div class="rate"><b class="num">${dec2(me.gols/Math.max(1,me.jogos))}</b><span>gols por partida</span>
-        <small class="${cmp(me.gols/Math.max(1,me.jogos),ligaGols/Math.max(1,ligaJogos),true)}">liga: ${dec2(ligaGols/Math.max(1,ligaJogos))}</small></div>`
+        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">liga no gol: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small></div>`:null,
+    naLinha&&jogosL(me)?`<div class="rate"><b class="num">${dec2(me.gols/jogosL(me))}</b><span>gols por partida</span>
+        <small class="${cmp(me.gols/jogosL(me),ligaGols/Math.max(1,ligaJogosL),true)}">liga na linha: ${dec2(ligaGols/Math.max(1,ligaJogosL))} · ${pl(jogosL(me),'partida')}</small></div>`:null
   ].filter(Boolean).slice(0,2);
-  const ratesHtml=me.jogos?`<div class="rates">${cartoes.join('')}</div>`:'';
+  const ratesHtml=cartoes.length?`<div class="rates${cartoes.length===1?'" style="grid-template-columns:1fr':''}">${cartoes.join('')}</div>`:'';
   /* --- a posição da pessoa em cada ranking do período (D-108): responde
      "onde eu estou" sem rolar até a aba Racha; pódio em dourado          */
   const posDe=(lista,num)=>{const i=lista.findIndex(x=>x.pid===who);return i<0?null:posEmpate(lista,num)[i]};
@@ -5385,8 +5389,11 @@ const A={
   statsWho(){
     const l=L();
     const ps=[...l.players].sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
+    /* o mesmo mini-badge de patente do chip da presença (D-88): cor + riscos,
+       pela função principal da pessoa (goleiro fixo → G), senão a outra    */
+    const dot=p=>{if(!vePat(l))return '';let r=p.gk?'G':'L';if(!temPatente(l,p,r))r=r==='G'?'L':'G';return temPatente(l,p,r)?patDot(l,rt(p,r).rank):''};
     openSheet(`<h2>Ver os números de quem?</h2>
-      <div class="chips">${ps.map(p=>`<button class="tp big" data-a="setStatsWho" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>`);
+      <div class="chips">${ps.map(p=>`<button class="tp big" data-a="setStatsWho" data-id="${p.id}">${dot(p)}<span class="nm">${esc(p.name)}</span></button>`).join('')}</div>`);
   },
   setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;closeSheet();save();render()},
   /* Histórico de um confronto (ou de uma parceria) entre duas pessoas. */
