@@ -342,14 +342,14 @@ Duas consequências que importam:
 
 | Bloco | O que mostra |
 |---|---|
-| **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, partidas no gol, barra V/E/D e as duas patentes — e o card **Partida a partida** (D-76): uma linha por jogo com V/E/D, placar pelo lado da pessoa, a **prob. de vitória** no início do jogo e um ⚽ por gol e o mesmo ⚽ **tingido de vermelho** por gol contra (D-107); paginado de 10 em 10 (‹ recentes · antigas ›) |
+| **A pessoa** | rachas no período, partidas, aproveitamento, vitórias, gols, minutos, barra V/E/D e as duas patentes; **ritmo com a média da liga ao lado** (gols/10 min e sofridos/10 min, verde se melhor, vermelho se pior) e a faixa **Posição nos rankings** ("4º aproveit. de 19", pódio em dourado — D-108). Depois, o card **Racha a racha**: gráfico de colunas, uma por racha (últimos 12), V/E/D empilhados com altura = partidas e os gols em cima. E o card **Partida a partida** (D-76): uma linha por jogo com V/E/D, placar pelo lado da pessoa, a **prob. de vitória** no início do jogo e um ⚽ por gol e o mesmo ⚽ **tingido de vermelho** por gol contra (D-107); paginado de 10 em 10 (‹ recentes · antigas ›) |
 | **Duelos** | **Maior carrasco** e **Freguês** em destaque, e a lista de quem você mais enfrenta com V/E/D e barra. Tocar em um nome abre o histórico completo do confronto: data, placar, formato e resultado |
 | **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque |
-| **O racha no período** | rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — 3 linhas cada, abrindo até 10; **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
+| **O racha no período** | tiles da liga e o gráfico **Gols por racha** (coluna por racha, último em verde, média tracejada); rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — 3 linhas cada, abrindo até 10, cada linha com **barra proporcional ao líder** e a sua própria linha destacada (D-108); títulos com ícone SVG, sem emoji (só o ⚽ fica); **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
 
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga — dá para conferir o carrasco do outro também.
 
-**🧤 Sem goleiros** (chip ao lado do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
+**Sem goleiros** (chip com escudo ao lado do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
 
 **No período "Último" (um racha):**
 - **Presentes** conta quem esteve no racha **desde o começo** — quem foi embora antes do fim continua contando (a sessão guarda a união de quem passou por lá, e rachas antigos são completados por quem aparece nas partidas).

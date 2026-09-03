@@ -881,7 +881,7 @@ step('partida a partida na tela do jogador, com paginacao',()=>{
 step('numeros sem goleiros: liga, redesenha e desliga',()=>{
   A.statsSemGk();
   if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');
-  if(!/sem goleiros/.test(els['#app'].innerHTML))throw new Error('chip do toggle sumiu');
+  if(!/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('chip do toggle sumiu');
   A.statsPer({dataset:{v:'sempre'}});
   A.statsSemGk();
   if(S.ui.statsSemGk)throw new Error('toggle nao desligou');

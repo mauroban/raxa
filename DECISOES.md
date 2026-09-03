@@ -1913,6 +1913,31 @@ e o celular é o que importa, entra um segundo passo: `url(#gcred)`, filtro SVG 
 bola fica branca com gomos vermelhos; no Windows, o azul vira vermelho. Descartado o `drop-shadow`
 vermelho (halo borrado em 14px, e não pinta os gomos).
 
+### D-108 · Stats com cara de painel: gráficos, posição nos rankings, barras e ícones SVG
+**03/09/2026.** O pedido foi "mais cara de dashboard profissional e interessante de usar". A aba
+já tinha os números certos, mas era uma pilha de listas iguais, com emoji nos títulos. Mudanças,
+sem mexer no motor nem no que é contado:
+- **Racha a racha** (aba Jogador): gráfico de colunas, uma por racha (últimos 12 do período),
+  V/E/D empilhados com altura = partidas e o total de gols em cima. É a temporada de relance —
+  a lista "partida a partida" continua logo abaixo para o detalhe.
+- **Gols por racha** (aba Racha): coluna por racha, o último em verde, média do período tracejada.
+- **Posição nos rankings** (aba Jogador): fichas roláveis "4º aproveit. de 19 · 1º vitórias…",
+  pódio em dourado. Responde "onde eu estou" sem rolar até a aba Racha. Usa as mesmas listas e o
+  mesmo empate de posição dos rankings (D-89).
+- **Ritmo com a média da liga** ao lado (gols/10 min, sofridos/10 min ou gols por partida), verde
+  quando melhor que a liga, vermelho quando pior. O número sozinho não dizia se era muito ou pouco.
+- **Barra proporcional ao líder** em cada linha de ranking, e a linha da própria pessoa destacada
+  (`.rk3.me`, que existia como classe mas não tinha CSS). Sem barra quando o topo é ≤ 0 (+/−).
+- **Ícones SVG de traço** (`SICO`/`ic()`) no lugar dos emojis de seção (📅🏆😵📈⚡🧤🔥⭐📊😤😎🤝🔗),
+  cada seção com a sua cor. O ⚽ fica, porque é a marca do gol no app (D-107).
+- **Conserto:** "sofridos a cada 10 min" aparecia com 0 min no gol e dava 21052,63; agora só com
+  1 min ou mais no gol.
+**Descartado:** gráfico de nível (Elo) ao longo do tempo — o rating não é público (D-84/D-94);
+biblioteca de gráficos — colunas em CSS puro bastam, seguem o tema e não pesam.
+**Onde:** `viewStats` (`cardRR`, `posHtml`, `ratesHtml`, gráfico da liga), `rkBars`, CSS `.chart`,
+`.posrow`, `.rates`, `.pbar`, `.ic` em `index.html` · `scripts/.tmp/shot_stats.py` fotografa a
+aba com 10 rachas de demonstração · DOCUMENTACAO §5.2. `smoke.py` cobre o toggle "Sem goleiros".
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
