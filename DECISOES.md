@@ -1953,7 +1953,9 @@ número de linha, nem o contrário, e cada função se compara só com a liga na
 sofridos e minutos no gol, contra a liga no gol (soma de todo mundo enquanto estava no gol,
 ponderada pelo tempo). Piso de **20 min em cada função** (o mesmo do "Menos vazado" do racha):
 3 min no gol de um jogador de linha não geram cartão; goleiro fixo sem tempo de linha não vê
-cartão de linha. Um cartão só ocupa a largura toda.
+cartão de linha. Um cartão só ocupa a largura toda. O rótulo é
+"média da liga" nos três cartões (era "liga na linha" / "liga no gol"): a função já está no título
+do cartão.
 (2) Na aba Racha, a linha destacada em verde era a do jogador **selecionado** na aba Jogador
 ("Trocar"); virou a do **dono do perfil** neste aparelho. Ver os números de outra pessoa não faz
 dela "você" no ranking.
