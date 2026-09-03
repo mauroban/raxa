@@ -2021,6 +2021,38 @@ um rolo; a folha isola o que a pessoa quer olhar.
 **Onde:** `RK`, `rkRowHtml`, `rkSec`, `duelList`, `A.rkSheet`, `A.rkInv` em `index.html` ·
 `smoke.py` ("abrir a folha de um ranking e inverter a ordem") · DOCUMENTACAO §5.2.
 
+### D-113 · Sem "sinal de confiança" na patente: o estudo que decidiu (scripts/confianca.py)
+**03/09/2026.** O pedido: um símbolo de "alta confiança / calibrado" depois do "calibrando · 12/15",
+para dizer que a pessoa provavelmente está na patente certa. Antes de escolher os cortes, medimos
+com o motor real (`scripts/confianca.py`, mesma simulação do `converge.py` — D-82: 20 pessoas com
+habilidade verdadeira escondida, presença variável, times montados pelo app a cada racha, vencedor
+fica, 12 partidas curtas; 60 ligas × 60 rachas; avaliação no fim de cada racha, só quem já calibrou).
+**Sinais testados:** volume (15/30/45/90/150 partidas), circulação (das últimas 20/30/50/80
+partidas, quantas terminaram na patente atual), distância do Elo à borda da patente, e combinações.
+**Resultado (palpites bons, ±1 divisão da verdade para todos):** base 71% na patente certa, 80% a
+±1 divisão, **97% a ±2 divisões**. Nenhum sinal muda o ±1 nem o ±2 — todas as linhas dão o mesmo
+número. Volume não ajuda: 150 partidas acertam o mesmo que 15 (o K no piso de 20 põe tanto ruído
+quanto informação). A circulação (≥40 das últimas 50) sobe a patente exata de 71% para 76%,
+acendendo para 72% das pessoas; 72 das últimas 80 chega a 79% acendendo para metade. Com palpites
+mistos (5 em 20 errados por uma patente): base 66% / 69% / 92%, e a circulação mal sai da base.
+**Conclusão:** o motor garante a **patente com folga de ±2 divisões para todo mundo que calibrou**;
+não garante a divisão para ninguém, e nenhum sinal observável separa quem está certo de quem não
+está. Um check de "confiança" erraria 1 em 4 vezes que aparecesse — a lição da D-94 (aviso que
+erra ensina a ser ignorado). **Decisão: nenhum símbolo além do "calibrando".** A ±2 divisões,
+"calibrou" já é o sinal. O ruído é do dado, não do método: um resultado 5v5 é dividido entre dez
+pessoas (~0,07 de informação sobre cada uma); o reajuste em lote com todo o histórico (teto de
+qualquer método, `converge.py`) chega a 91% a ±1 contra 87% do motor.
+**Pares — "3 divisões separam de verdade?"** Quando a diferença MOSTRADA entre duas pessoas é de d
+divisões, o de cima é de fato mais forte em (bons / mistos): d=1: 72% / 66% · d=2: 87% / 81% ·
+**d=3: 96% / 91%** · d=4: 99% / 97% · d≥5: 100%. A diferença real é de uma patente inteira em só
+34% / 30% dos pares a d=3 (média real 2,4 / 2,2 divisões). Ou seja: **uma patente de diferença
+diz "mais forte" com segurança, mas não "uma patente melhor"**; uma divisão sozinha é quase cara
+ou coroa. É a régua para ler a escada e para qualquer texto que compare duas pessoas.
+**Descartado:** "há N partidas nesta patente" (a pessoa sai e volta; e nem circulação separa);
+percentual de certeza (Elo não tem incerteza formal); sinal "assentado" pelo K no piso (verdade
+sobre o processo, mas não distingue ninguém — 89% acendem e a taxa de acerto é a da base).
+**Onde:** `scripts/confianca.py [bom|misto|nada] [rachas] [ligas]` · DOCUMENTACAO §2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
