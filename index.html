@@ -2676,7 +2676,7 @@ function todayBlock(liga,lv){
   const ult=lv.matchIds[lv.matchIds.length-1];
   /* o Fim foi sem querer: enquanto a próxima não começa, a última tem volta */
   const volta=!lv.cur&&lv.lastEnd&&lv.lastEnd.mid===ult;
-  return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="k">Partidas de hoje (${lv.matchIds.length})</div>
+  return `<div class="card" style="margin-top:12px"><div class="row" style="margin-bottom:8px"><div class="k">Partidas de hoje (${lv.matchIds.length})</div>
       ${ult?`<button class="btn sm ghost sp" data-a="delMatch" data-id="${ult}">↶ Desfazer a última</button>`:''}</div>
     ${volta?`<button class="btn sm ghost" data-a="voltarPartida" style="width:100%;margin-bottom:8px">↩ Voltar a partida — o Fim foi sem querer</button>`:''}
     ${lv.matchIds.slice(-5).reverse().map(id=>{const m=liga.matches.find(x=>x.id===id);return m?mrow(liga,m,true,euId(liga)):''}).join('')}</div>`;
