@@ -592,7 +592,6 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .posc b{font-family:var(--disp);font-weight:800;font-size:18px;line-height:1}
 .posc b.pod{color:var(--gold)}
 .posc span{font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
-.posc small{font-size:10px;color:var(--mute2);font-weight:500;text-transform:none;letter-spacing:0}
 /* gráfico de colunas em CSS puro (racha a racha): sem biblioteca, obedece ao tema */
 .chart{display:flex;align-items:flex-end;gap:5px;height:112px;padding-top:18px;margin-top:10px;position:relative}
 .chart .col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;position:relative}
@@ -3088,9 +3087,9 @@ function viewStats(liga){
   const posicoes=[longa?['pm',rkPm,x=>x.pm,'+/−']:null,['pct',rkPct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],['vit',rkVit,x=>x.v,'vitórias'],
       ['gols',rkGols,x=>x.gols,'gols'],['pres',rkRachas,x=>x.nR,'presenças'],['ritmo',rkRitmo,x=>x.gols/minL(x),'ritmo'],
       ['min',rkMin,x=>x.min,'tempo'],['seq',rkSeq,x=>x.best,'sequência'],['gk',rkGk,x=>1/(1+x.sofridos/x.minGk),'no gol'],['golsgk',rkGolsGk,x=>x.golsGk,'gols do gol']]
-    .filter(Boolean).map(([k,l,num,lab])=>({k,lab,de:l.length,pos:posDe(l,num)})).filter(x=>x.pos);
+    .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${rot}</span></div>
-    <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab} <small>de ${x.de}</small></span></div>`).join('')}</div>`:'';
+    <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
   /* --- racha a racha (D-108): uma coluna por racha, V/E/D empilhados (altura
      = partidas) e os gols em cima. É o gráfico que a lista de partidas não
      conta: a temporada de relance. Últimos 12 rachas do período.           */

@@ -1921,8 +1921,9 @@ sem mexer no motor nem no que é contado:
   V/E/D empilhados com altura = partidas e o total de gols em cima. É a temporada de relance —
   a lista "partida a partida" continua logo abaixo para o detalhe.
 - **Gols por racha** (aba Racha): coluna por racha, o último em verde, média do período tracejada.
-- **Posição nos rankings** (aba Jogador): fichas roláveis "4º aproveit. de 19 · 1º vitórias…",
-  pódio em dourado. Responde "onde eu estou" sem rolar até a aba Racha. Usa as mesmas listas e o
+- **Posição nos rankings** (aba Jogador): fichas roláveis "4º aproveit. · 1º vitórias…", pódio em
+  dourado. Sem "de N" (tirado no mesmo dia): cada ranking lista só quem tem o número que ordena
+  — 18 em vitórias, 13 em gols, 5 em sequência — e o N mudando de ficha em ficha confundia. Responde "onde eu estou" sem rolar até a aba Racha. Usa as mesmas listas e o
   mesmo empate de posição dos rankings (D-89).
 - **Ritmo com a média da liga** ao lado (gols/10 min, sofridos/10 min ou gols por partida), verde
   quando melhor que a liga, vermelho quando pior. O número sozinho não dizia se era muito ou pouco.
