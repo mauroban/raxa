@@ -134,6 +134,15 @@ label.f .k{display:block;margin-bottom:6px}
 .seg{display:flex;gap:4px;background:var(--fill);border:0;border-radius:11px;padding:3px}
 .seg button{flex:1;border:0;background:transparent;color:var(--mute);border-radius:8px;padding:9px 4px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
 .seg button.on{background:var(--chalk);color:var(--onink)}
+/* filtros da Stats (D-114): seletores empilhados + interruptor, sem card */
+.sfilt{display:flex;flex-direction:column;gap:6px;margin:2px 0 12px}
+.sfilt .seg.per button{padding:8px 2px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gksw{align-self:flex-end;display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:4px 2px;min-height:32px;cursor:pointer}
+.gksw i{display:block;width:30px;height:18px;border-radius:9px;background:var(--panel2);border:1px solid var(--line2);position:relative;transition:background .15s}
+.gksw i::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--mute);transition:left .15s,background .15s}
+.gksw.on{color:var(--chalk)}
+.gksw.on i{background:var(--lime);border-color:var(--lime)}
+.gksw.on i::after{left:15px;background:var(--onink)}
 
 /* ---------- home ---------- */
 .ligacard{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:15px;cursor:pointer;color:var(--chalk)}
@@ -2933,20 +2942,23 @@ function viewStats(liga){
   /* filtro de período: os anos que existem no histórico + desde sempre */
   const anosLiga=[...new Set(liga.matches.filter(m=>!m.voided).map(m=>ANO(m.ts)))].sort((a,b)=>b-a);
   if(!anosLiga.includes(ANO_ATUAL()))anosLiga.unshift(ANO_ATUAL());
-  const seg=`<div class="seg" style="margin-bottom:10px">
+  /* Filtros (D-114): uma família só — dois seletores segmentados empilhados
+     (modo e período) e um interruptor pequeno para "Sem goleiros", sem card
+     em volta. Antes eram três controles de três estilos dentro de um card. */
+  const seg=`<div class="sfilt">
+    <div class="seg">
       <button class="${tab==='jogador'?'on':''}" data-a="statsTab" data-v="jogador">Jogador</button>
       <button class="${tab==='racha'?'on':''}" data-a="statsTab" data-v="racha">Racha</button>
     </div>
-    <div class="chips perfil" style="gap:6px">
-      <button class="tp ${soRacha?'sel':''}" data-a="statsPer" data-v="racha">Último</button>
-      <button class="tp ${per==='mes'?'sel':''}" data-a="statsPer" data-v="mes">30 dias</button>
-      ${anosLiga.map(y=>`<button class="tp ${anoSel===y?'sel':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
-      <button class="tp ${per==='sempre'?'sel':''}" data-a="statsPer" data-v="sempre">Sempre</button>
+    <div class="seg per">
+      <button class="${soRacha?'on':''}" data-a="statsPer" data-v="racha">Último</button>
+      <button class="${per==='mes'?'on':''}" data-a="statsPer" data-v="mes">30 dias</button>
+      ${anosLiga.map(y=>`<button class="${anoSel===y?'on':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
+      <button class="${per==='sempre'?'on':''}" data-a="statsPer" data-v="sempre">Sempre</button>
     </div>
-    <div class="chips perfil" style="gap:6px;margin-top:6px">
-      <button class="tp ${S.ui.statsSemGk?'sel':''}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua">${ic('shield')} Sem goleiros</button>
-    </div>`;
-  if(!liga.matches.length)return `<div class="card">${seg}</div><div class="empty"><div class="big">Nada para contar ainda</div>
+    <button class="gksw ${S.ui.statsSemGk?'on':''}" role="switch" aria-checked="${S.ui.statsSemGk?'true':'false'}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua"><span>Sem goleiros</span><i></i></button>
+  </div>`;
+  if(!liga.matches.length)return `${seg}<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
   const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0};
@@ -3325,9 +3337,8 @@ ${cardJuntos}  <div class="card">
     })()}
   </div>`;
   return `
-  <div class="card">${seg}
-    ${eu?'':`<div class="tiny muted" style="margin-top:9px">Ninguém assumiu um perfil neste aparelho ainda — abra a ficha de alguém em Jogadores e toque em “Este perfil sou eu” para o app saber quais partidas são suas.</div>`}
-  </div>
+  ${seg}
+    ${eu?'':`<div class="tiny muted" style="margin:-4px 2px 12px">Ninguém assumiu um perfil neste aparelho ainda — abra a ficha de alguém em Jogadores e toque em “Este perfil sou eu” para o app saber quais partidas são suas.</div>`}
 
 ${tab==='jogador'?cardsJogador:cardsRacha}`;
 }

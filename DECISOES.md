@@ -2053,6 +2053,19 @@ percentual de certeza (Elo não tem incerteza formal); sinal "assentado" pelo K 
 sobre o processo, mas não distingue ninguém — 89% acendem e a taxa de acerto é a da base).
 **Onde:** `scripts/confianca.py [bom|misto|nada] [rachas] [ligas]` · DOCUMENTACAO §2.
 
+### D-114 · Filtros da Stats: uma família só, sem card
+**03/09/2026.** "O design dos filtros ainda me incomoda." Eram três controles de três estilos
+dentro de um card: um seletor segmentado (Jogador/Racha), uma fileira de chips soltos (período)
+e um chip largo sozinho numa linha ("Sem goleiros"). Agora: **dois seletores segmentados
+empilhados** — modo e período, no mesmo desenho — e **"Sem goleiros" como interruptor** pequeno,
+alinhado à direita, texto apagado quando desligado e verde quando ligado. Sem card em volta:
+os seletores já têm fundo próprio, e o card só somava borda e respiro. O aviso "ninguém assumiu
+um perfil" fica logo abaixo, em texto pequeno. Ganho: ~40 px de altura e um só vocabulário.
+**Descartado:** período como abas de texto sublinhado (parecia navegação, não filtro); "Sem
+goleiros" dentro do seletor de período (não é período).
+**Onde:** `seg` em `viewStats`, CSS `.sfilt`/`.gksw` em `index.html` (`.sw` já existia, com outro
+uso — daí o nome) · DOCUMENTACAO §5.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
