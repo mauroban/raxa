@@ -68,8 +68,8 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav',
-    'statsPer','statsTab','statsSemGk','rachaTime','statsSec','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
-    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','statsInv','ppPage',
+    'statsPer','statsTab','statsSemGk','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
+    'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
@@ -640,13 +640,16 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
 });
 step('aba numeros',()=>{S.ui.tab='stats';render()});
 step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:String(new Date().getFullYear())}});A.statsPer({dataset:{v:'2019'}});A.statsPer({dataset:{v:'ano'}})});
-step('inverter um ranking pela setinha e voltar',()=>{
+step('abrir a folha de um ranking e inverter a ordem (D-112)',()=>{
   S.ui.statsTab='racha';A.statsPer({dataset:{v:'sempre'}});
-  A.statsInv({dataset:{k:'vit'}});
-  if(!S.ui.statsInv.vit)throw new Error('statsInv nao marcou');
-  if(document.querySelector('#app').innerHTML.indexOf('↑')<0)throw new Error('setinha invertida nao apareceu');
-  A.statsInv({dataset:{k:'vit'}});
-  if(S.ui.statsInv.vit)throw new Error('statsInv nao desmarcou');
+  if(document.querySelector('#app').innerHTML.indexOf('Ver ')<0)throw new Error('faltou o "Ver os 10" nos rankings');
+  A.rkSheet({dataset:{k:'vit'}});
+  if(!/Do 1º ao último/.test($('#sheet').innerHTML))throw new Error('folha do ranking nao abriu com a ordem');
+  A.rkInv({dataset:{k:'vit',v:'1'}});
+  if(!S.ui.statsInv.vit)throw new Error('rkInv nao marcou');
+  A.rkInv({dataset:{k:'vit',v:'0'}});
+  if(S.ui.statsInv.vit)throw new Error('rkInv nao desmarcou');
+  closeSheet();
 });
 step('numeros: ultimo racha e ultimo mes',()=>{
   A.statsTab({dataset:{v:'racha'}});
@@ -657,9 +660,9 @@ step('numeros: ultimo racha e ultimo mes',()=>{
      escalacao inteira (trecho curto descartado pode tirar — D-75), entao nao e exigido */
   if(/Times do racha/.test(h)&&!/% <small>real<\/small>/.test(h))throw new Error('faltou o realizado (empate vale meio) discreto na linha dos times');
   if(/Rankings/.test(h))throw new Error('ranking de temporada nao cabe no ultimo racha');
-  A.statsInv({dataset:{k:'rvenc'}});
-  if(els['#app'].innerHTML.indexOf('↑')<0)throw new Error('setinha invertida nao apareceu no card da noite');
-  A.statsInv({dataset:{k:'rvenc'}});
+  A.rkSheet({dataset:{k:'rvenc'}});
+  if(!/Quem mais ganhou/.test($('#sheet').innerHTML))throw new Error('folha do ranking da noite nao abriu');
+  closeSheet();
   A.statsPer({dataset:{v:'mes'}});
   if(!/no último mês/.test(els['#app'].innerHTML))throw new Error('periodo ultimo mes nao aplicou');
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
@@ -683,7 +686,7 @@ step('numeros: abas jogador/racha e listas compactas',()=>{
   const h=els['#app'].innerHTML;
   if(!/Rankings/.test(h)||!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
   if(/Duelos —/.test(h))throw new Error('duelos nao deveriam estar na aba racha');
-  A.statsSec({dataset:{k:'pres'}});A.statsSec({dataset:{k:'pres'}});
+  A.rkSheet({dataset:{k:'pres'}});closeSheet();
   A.statsTab({dataset:{v:'jogador'}});
   const h2=els['#app'].innerHTML;
   if(!/Duelos —/.test(h2)||!/minutos/.test(h2))throw new Error('aba jogador sem duelos/minutos');
@@ -855,7 +858,7 @@ step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-7
   const h=els['#app'].innerHTML;
   if(h.indexOf('Quem mais perdeu')>=0)throw new Error('quem mais perdeu saiu no D-72: a setinha do "quem mais ganhou" cobre a leitura');
   if(h.indexOf('Melhor +/−')<0)throw new Error('o +/- da noite tem que aparecer tambem no racha curto (depois das vitorias)');
-  if(h.indexOf('ver até')>=0){A.statsSec({dataset:{k:'rvenc'}});A.statsSec({dataset:{k:'rvenc'}})}
+  if(h.indexOf('Ver ')>=0){A.rkSheet({dataset:{k:'rvenc'}});closeSheet()}
   A.statsPer({dataset:{v:'sempre'}});
   if(els['#app'].innerHTML.indexOf('Mais derrotas')<0)throw new Error('faltou Mais derrotas nos rankings de temporada');
 });

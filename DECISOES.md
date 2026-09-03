@@ -1997,6 +1997,25 @@ a luva 🧤 voltou ao lado de quem é goleiro de fato (`p.gk`): jogador de linha
 ela os dois pareciam iguais — é informação, não enfeite.
 **Onde:** `A.rachaTime` em `index.html` · DOCUMENTACAO §5.2 · `scripts/.tmp/shot_stats.py time`.
 
+### D-112 · Rankings: top 3 limpo na página, lista inteira e ordem numa folha
+**03/09/2026.** "Os rankings todos estão muito feios: a barra é redundante, o botão de expandir e
+reduzir está confuso." Concordo com os três pontos. O que mudou:
+- **Sem barra proporcional** (D-108): o número já diz a proporção; a barra só engordava a linha.
+- **Sem setinha ↓/↑ no cabeçalho** e sem "▾ ver até 10 / ▴ menos" abrindo dentro da página.
+  Cada ranking mostra o **top 3** (posição, nome, número) e um botão **"Ver os 10 ›"** (ou "Ver
+  todos os N ›"). Ele abre uma **folha** com a lista inteira (até 10, cada linha com o detalhe que
+  antes só aparecia expandido) e um seletor **"Do 1º ao último / Do último ao 1º"** — a leitura
+  invertida continua existindo (quem mais perdeu = "quem mais ganhou" lido do fim, D-72), mas
+  como escolha explícita dentro da folha, não como um botão misterioso ao lado do título.
+- **Duelos e parcerias** seguem o mesmo padrão: 5 na página, "Ver todos os 18 ›" abre a folha
+  (ordem "Mais confrontos / Menos confrontos").
+- Um `rkSec` monta toda seção (temporada e último racha) — antes eram três geradores diferentes
+  (`rkBars`, `corta`+`mais`, `listaDuelo`) com pequenas divergências.
+**Descartado:** manter o expandir na página com texto melhor — dez rankings × 10 linhas ainda vira
+um rolo; a folha isola o que a pessoa quer olhar.
+**Onde:** `RK`, `rkRowHtml`, `rkSec`, `duelList`, `A.rkSheet`, `A.rkInv` em `index.html` ·
+`smoke.py` ("abrir a folha de um ranking e inverter a ordem") · DOCUMENTACAO §5.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

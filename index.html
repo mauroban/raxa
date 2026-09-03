@@ -552,9 +552,6 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:11px;font-family:var(--body)}
 .sec{margin-top:14px}
 .sec .k2{display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:8px}
-.k2 .ord{min-width:34px;min-height:32px;border:1px solid var(--line);background:none;color:var(--mute);border-radius:7px;
-  font:inherit;font-size:12px;line-height:1;padding:4px 9px;cursor:pointer;flex:0 0 auto}
-.k2 .ord.on{color:var(--chalk);border-color:var(--mute)}
 /* a regra do ranking (mínimo, unidade) é nota, não título: menor, sem caixa alta, e nunca empurra o título para a linha de baixo */
 .sec .k2 .tiny{font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:500;text-align:right;white-space:nowrap;margin-left:8px;flex:0 0 auto}
 .sec .k2>:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -574,20 +571,18 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk3.time .val .tiny{font-size:10.5px}
 .rk3 .val{font-family:var(--disp);font-weight:800;font-size:15px;white-space:nowrap}
 .rk3 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:10px;font-family:var(--body)}
-.more{display:block;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:10px 0 2px;cursor:pointer;text-align:left;min-height:36px}
+/* "Ver os 10 ›": abre a folha com a lista inteira e a ordem (D-112) */
+.more{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:8px 2px 2px;cursor:pointer;text-align:left;min-height:36px}
+.more .chev{font-size:17px;line-height:1;color:var(--mute2)}
+.sheet .rk3{padding:10px 0;font-size:15px}
+.sheet .rk3 .nm small{display:block;margin:2px 0 0}
 /* ---------- Stats com cara de painel (D-108) ---------- */
 /* ícone de seção: SVG de traço herdando a cor; cada seção tem a sua */
 .ic{width:14px;height:14px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;display:inline-block}
 .k2 .ic{margin-right:7px}
 .hl .t .ic{width:12px;height:12px;margin-right:4px;stroke-width:2.2}
-/* barra proporcional ao líder em cada linha: o ranking vira comparação de relance */
-.rk3 .pbar{display:block;height:3px;border-radius:2px;background:var(--panel2);margin-top:5px;overflow:hidden}
-.rk3:has(.pbar) .val,.rk3:has(.pbar) .pos{align-self:start;margin-top:1px}   /* número na altura do nome, não da barra */
-.rk3 .pbar i{display:block;height:100%;border-radius:2px;background:var(--mute2)}
-.rk3.top .pbar i{background:var(--gold)}
 .rk3.me{background:color-mix(in srgb,var(--lime) 10%,transparent);margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:8px}
 .rk3.me .nm{color:var(--lime)}
-.rk3.me .pbar i{background:var(--lime)}
 /* a posição da pessoa em cada ranking: fichas roláveis de lado, pódio em dourado */
 .posrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:8px;padding-bottom:2px}
 .posrow::-webkit-scrollbar{display:none}
@@ -2912,6 +2907,18 @@ function statsWhoId(liga,J){
   const top=Object.keys(src).sort((a,b)=>src[b].nR-src[a].nR)[0];
   return top||(liga.players[0]&&liga.players[0].id)||null;
 }
+/* Rankings da Stats (D-112): a página mostra só o top 3 de cada um, sem
+   barra nem setinha; "Ver os 10 ›" abre uma folha com a lista inteira e a
+   ordem (do 1º ao último / invertida). RK guarda o que a última renderização
+   precisou para montar a folha — funções vivas, só em memória.            */
+let RK={};
+const RK_MAX=10;
+function rkRowHtml(liga,eu,x,pos,top,fmt,sb,nome){
+  return `<div class="rk3 ${top?'top':''} ${x.pid&&x.pid===eu?'me':''}"${x.pid?` data-a="pSheet" data-id="${x.pid}"`:''}>
+      <span class="pos">${pos}</span>
+      <div class="nm">${nome?nome(x):esc(nameOf(liga,x.pid))}${sb?`<small>${sb}</small>`:''}</div>
+      <span class="val">${fmt(x)}</span></div>`;
+}
 function viewStats(liga){
   const eu=euId(liga),longa=liga.cfg.matchMode==='unica';   // +/- em destaque só na partida única (D-45)
   const per=statsPeriodo(liga);
@@ -2963,12 +2970,10 @@ function viewStats(liga){
 
   /* --- top 5 --- */
   const todos=Object.keys(J).map(id=>J[id]);
-  const TOPN=10;
   /* listas inteiras, ja ordenadas do melhor para o pior; o rkBars corta em
      3/10 e, com a setinha invertida, le a MESMA lista do fim (o outro top). */
   const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos);
   const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
-  const secPm=()=>`<div class="sec"><div class="k2"><span>${ic('bars','var(--cyan)')}Melhor +/− <span class="tiny muted">gols a favor − contra em quadra</span></span>${ordBtn('pm')}</div>${rkBars(rkPm,x=>x.pm,x=>pmTxt(x.pm),x=>vedTxt(x),null,'pm')}</div>`;
   const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos);
   const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos);
   const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos);
@@ -2990,39 +2995,29 @@ function viewStats(liga){
   const anos=who?statsAnos(liga,who):[];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
-  /* Ranking compacto: 3 linhas de uma vez, "ver mais" abre até 10 com o
-     detalhe. Menos parede de lista para quem só quer bater o olho. */
-  const aberto=S.ui.statsOpen||{};
-  /* Setinha de ordem por ranking: ↓ = do melhor para o pior (padrão); ↑ = a
-     mesma lista lida do fim — quem está pior naquele número. A posição volta
-     a contar do 1 porque é outro pódio, não o mesmo de cabeça para baixo.  */
-  const inv=k=>!!(S.ui.statsInv||{})[k];
-  const ordBtn=k=>`<button class="ord${inv(k)?' on':''}" data-a="statsInv" data-k="${k}" aria-label="inverter a ordem" title="${inv(k)?'do pior para o melhor — toque para voltar':'do melhor para o pior — toque para inverter'}">${inv(k)?'↑':'↓'}</button>`;
-  const rkBars=(itens,num,fmt,sub,vazio,key)=>{
-    if(!itens.length)return `<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div>`;
-    const base=inv(key)?[...itens].reverse():itens;
-    const pos=posEmpate(base,num);                       // empate divide a posição (D-89)
-    const full=!!aberto[key],lista=base.slice(0,full?TOPN:3);
-    /* barra proporcional ao líder da lista (D-108); com número negativo ou
-       zero no topo (+/−) não há proporção que faça sentido — sem barra    */
-    const topo=num(base[0]),piso=num(base[base.length-1]),comBarra=topo>0;
-    const larg=x=>{const v=num(x);if(!comBarra)return null;const w=piso<0?(v-piso)/(topo-piso):v/topo;return Math.max(3,Math.min(100,Math.round(w*100)))};
-    return lista.map((x,i)=>{const sb=sub?sub(x):null,w=larg(x);return `<div class="rk3 ${i===0?'top':''} ${x.pid===eu?'me':''}">
-      <span class="pos">${pos[i]}</span>
-      <div class="nm">${esc(nameOf(liga,x.pid))}${full&&sb?`<small>${sb}</small>`:''}${w!==null?`<span class="pbar"><i style="width:${w}%"></i></span>`:''}</div>
-      <span class="val">${fmt(x)}</span></div>`}).join('')
-      +(itens.length>3?`<button class="more" data-a="statsSec" data-k="${key}">${full?'▴ menos':'▾ ver até '+Math.min(TOPN,itens.length)}</button>`:'');
+  /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
+     setinha e sem barra — a lista inteira, com detalhe e ordem, é da folha. */
+  const rkSec=(key,icone,cor,titulo,hint,itens,num,fmt,sub,vazio,nome,ordem)=>{
+    RK[key]={titulo,hint,itens,num,fmt,sub,nome,ordem};
+    const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}${hint?` <span class="tiny muted">${hint}</span>`:''}</span></div>`;
+    if(!itens.length)return `<div class="sec">${head}<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div></div>`;
+    const pos=posEmpate(itens,num);                      // empate divide a posição (D-89)
+    return `<div class="sec">${head}${itens.slice(0,3).map((x,i)=>rkRowHtml(liga,eu,x,pos[i],i===0,fmt,null,nome)).join('')}
+      ${itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${itens.length>RK_MAX?'os '+RK_MAX:'todos os '+itens.length}<span class="chev">›</span></button>`:''}</div>`;
   };
+  const pmFmt=x=>`<span class="num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span>`;
   const C=2*Math.PI*43,aprMe=aprDe(me.v,me.e,me.jogos);   // pontos ganhos / disputados (V=3, E=1)
   const vedRow=(lab,n,cor)=>`<div class="r"><span>${lab}</span><div class="prog"><i style="width:${me.jogos?n/me.jogos*100:0}%;background:${cor}"></i></div><b class="num">${n}</b></div>`;
   /* sem a setinha ▲▼ por linha (ruído — a barrinha V/E/D já conta a história);
      a ordem inverte pelo mesmo botão dos rankings (D-89)                     */
-  const listaDuelo=(arr,m)=>{const kO=m?'parcOrd':'duelOrd',base=inv(kO)?[...arr].reverse():arr;
-    return base.slice(0,aberto[m?'parc':'duel']?base.length:5).map(x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
+  /* linha de duelo/parceria: avatar, nome, resumo e V/E/D; toque abre o histórico do confronto */
+  const duelRow=m=>x=>`<button class="rk2" data-a="duelo" data-id="${x.pid}" data-m="${m}">
       ${av(x.pid)}
       <div style="min-width:0"><div class="nm">${esc(nameOf(liga,x.pid))}</div>
         <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${aprDe(x.v,x.e,x.n)}% de aproveitamento</div></div>
-      <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`).join('')};
+      <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`;
+  const duelList=(arr,m,key,titulo)=>{RK[key]={titulo,itens:arr,num:x=>x.n,row:duelRow(m),ordem:m?['Mais partidas juntos','Menos partidas juntos']:['Mais confrontos','Menos confrontos']};
+    return arr.slice(0,5).map(duelRow(m)).join('')+(arr.length>5?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${m?'todas as':'todos os'} ${arr.length}<span class="chev">›</span></button>`:'')};
   const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
 
   /* --- partida a partida: a historia da pessoa no periodo, uma linha por
@@ -3141,7 +3136,7 @@ function viewStats(liga){
   </div>
 
 ${cardPP}  <div class="card">
-    <div class="k2" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="k">Duelos — quem ${esc(quem)} enfrenta</span>${ordBtn('duelOrd')}</div>
+    <div class="k" style="margin-bottom:8px">Duelos — quem ${esc(quem)} enfrenta</div>
     ${carrasco||fregues?`<div class="duo">
       ${carrasco?`<div class="hl bad"><div class="t">${ic('swords')}Maior carrasco</div>
         <div class="n">${esc(nameOf(liga,carrasco.pid))}</div>
@@ -3150,12 +3145,11 @@ ${cardPP}  <div class="card">
         <div class="n">${esc(nameOf(liga,fregues.pid))}</div>
         <div class="s">${fregues.v}V ${who===eu?'suas':'de '+esc(quem)} × ${fregues.d}V dele em ${fregues.n}</div></div>`:''}
     </div>`:''}
-    ${duelos.length?listaDuelo(duelos,0):'<div class="tiny muted">Ainda não enfrentou ninguém neste período.</div>'}
-    ${duelos.length>5?`<button class="more" data-a="statsSec" data-k="duel">${aberto.duel?'▴ menos':'▾ todos os '+duelos.length}</button>`:''}
+    ${duelos.length?duelList(duelos,0,'duel','Duelos — quem '+esc(quem)+' enfrenta'):'<div class="tiny muted">Ainda não enfrentou ninguém neste período.</div>'}
   </div>
 
   <div class="card">
-    <div class="k2" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="k">Parcerias — quem joga do lado de ${esc(quem)}</span>${ordBtn('parcOrd')}</div>
+    <div class="k" style="margin-bottom:8px">Parcerias — quem joga do lado de ${esc(quem)}</div>
     ${parceiro?`<div class="duo">
       <div class="hl"><div class="t">${ic('users')}Mais jogou junto</div>
         <div class="n">${esc(nameOf(liga,parceiro.pid))}</div>
@@ -3164,8 +3158,7 @@ ${cardPP}  <div class="card">
         <div class="n">${esc(nameOf(liga,dupla.pid))}</div>
         <div class="s">${aprDe(dupla.v,dupla.e,dupla.n)}% de aproveitamento em ${pl(dupla.n,'partida')} juntos</div></div>`:''}
     </div>`:''}
-    ${parcerias.length?listaDuelo(parcerias,1):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
-    ${parcerias.length>5?`<button class="more" data-a="statsSec" data-k="parc">${aberto.parc?'▴ menos':'▾ todas as '+parcerias.length}</button>`:''}
+    ${parcerias.length?duelList(parcerias,1,'parc','Parcerias — quem joga do lado de '+esc(quem)):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
   </div>
 
 `;
@@ -3217,12 +3210,10 @@ ${cardPP}  <div class="card">
     const rotuloTime=t=>(liga.cfg.format<=5&&(t.ids||[]).length)?esc(nomesCurtos(liga,t.ids).join(', ')):esc(t.n);
     const todos=Object.keys(J).map(id=>J[id]);
     /* cada ranking da noite mostra 3 e abre até 10 — mesmo padrão dos rankings de temporada */
-    const corta=(arr,k)=>(inv(k)?[...arr].reverse():arr).slice(0,aberto[k]?10:3);   // setinha: mesma regra dos rankings (D-70)
-    const mais=(arr,k)=>arr.length>3?`<button class="more" data-a="statsSec" data-k="${k}">${aberto[k]?'▴ menos':'▾ ver até '+Math.min(10,arr.length)}</button>`:'';
     /* quem mais ganhou é a estatística da noite: vitórias, desempate por menos derrotas e mais partidas */
     const venc=[...todos].filter(x=>x.v).sort((a,b)=>b.v-a.v||a.d-b.d||b.jogos-a.jogos);
     const pm=[...todos].filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
-    const secPmRacha=`<div class="sec"><div class="k2"><span>${ic('bars','var(--cyan)')}Melhor +/−</span>${ordBtn('rpm')}</div>${(()=>{const b=inv('rpm')?[...pm].reverse():pm,pos=posEmpate(b,x=>x.pm);return corta(pm,'rpm').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${pos[i]}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.v}V ${x.e}E ${x.d}D</small></div><span class="val num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span></div>`).join('')})()+mais(pm,'rpm')}</div>`;
+    const secPmRacha=rkSec('rpm','bars','var(--cyan)','Melhor +/−','',pm,x=>x.pm,pmFmt,x=>`${x.v}V ${x.e}E ${x.d}D`);
     const art=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
     const artGk=[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk);   // gol feito do gol (D-110)
     const tempo=[...todos].sort((a,b)=>b.min-a.min);
@@ -3250,13 +3241,13 @@ ${cardPP}  <div class="card">
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques da noite</div>
     ${pm.length&&longa?secPmRacha:''}
-    ${venc.length?`<div class="sec"><div class="k2"><span>${ic('trophy','var(--gold)')}Quem mais ganhou</span>${ordBtn('rvenc')}</div>${(()=>{const b=inv('rvenc')?[...venc].reverse():venc,pos=posEmpate(b,x=>x.v);return corta(venc,'rvenc').map((x,i)=>`<div class="rk3 ${i===0?'top':''}"><span class="pos">${pos[i]}</span><div class="nm">${esc(nameOf(liga,x.pid))}<small>${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</small></div><span class="val">${x.v}<small>V</small></span></div>`).join('')})()+mais(venc,'rvenc')}</div>`:''}
+    ${venc.length?rkSec('rvenc','trophy','var(--gold)','Quem mais ganhou','',venc,x=>x.v,x=>`${x.v}<small>V</small>`,x=>`${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento`):''}
     ${pm.length&&!longa?secPmRacha:''}
-    ${art.length?`<div class="sec"><div class="k2"><span>⚽ Artilheiro</span>${ordBtn('rart')}</div>${corta(art,'rart').map(x=>lin(x,x.gols+' gol'+(x.gols===1?'':'s'))).join('')+mais(art,'rart')}</div>`:''}
-    ${artGk.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--gold)')}Gol de goleiro <span class="tiny muted">feito de dentro do gol</span></span></div>${artGk.map(x=>lin(x,pl(x.golsGk,'gol'),fmtMin(x.minGk)+' no gol')).join('')}</div>`:''}
-    ${rendeu.length?`<div class="sec"><div class="k2"><span>${ic('up','var(--ok)')}Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></span>${ordBtn('rrendeu')}</div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
-    ${tempo.length?`<div class="sec"><div class="k2"><span>${ic('clock','var(--coral)')}Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
-    ${gks.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--cyan)')}Menos vazado <span class="tiny muted">mín. 20 min no gol</span></span>${ordBtn('rgk')}</div>${corta(gks,'rgk').map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')+mais(gks,'rgk')}</div>`:''}
+    ${art.length?rkSec('rart','⚽',null,'Artilheiro','',art,x=>x.gols,x=>pl(x.gols,'gol')):''}
+    ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
+    ${rendeu.length?rkSec('rrendeu','up','var(--ok)','Rendeu acima do esperado','mín. 3 partidas',rendeu,x=>x.over,x=>(x.over>0?'+':'')+x.over.toFixed(1),x=>(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j):''}
+    ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
+    ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk)+'<small>/10 min</small>',x=>fmtMin(x.minGk)+' no gol'):''}
     ${gc.length?`<div class="sec"><div class="k2"><i class="gball own" style="margin:0 6px 0 0">⚽</i>Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
@@ -3309,28 +3300,18 @@ ${cardJuntos}  <div class="card">
          primeiro). Na partida única o +/- abre a lista em qualquer filtro,
          porque lá V/E/D é um só por noite (D-45).                          */
       const SECS={
-        pm:secPm(),
-        pres:`<div class="sec"><div class="k2"><span>${ic('cal','var(--lime)')}Mais presenças</span>${ordBtn('pres')}</div>${rkBars(rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida'),null,'pres')}</div>`,
-        min:`<div class="sec"><div class="k2"><span>${ic('clock','var(--coral)')}Mais tempo em quadra</span>${ordBtn('min')}</div>${rkBars(rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha',null,'min')}</div>`,
-        vit:`<div class="sec"><div class="k2"><span>${ic('trophy','var(--gold)')}Mais vitórias</span>${ordBtn('vit')}</div>${rkBars(rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'vit')}</div>`,
-        der:`<div class="sec"><div class="k2"><span>${ic('down','var(--bad)')}Mais derrotas</span>${ordBtn('der')}</div>${rkBars(rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida'),null,'der')}</div>`,
-        pct:`<div class="sec"><div class="k2"><span>${ic('up','var(--ok)')}Maior aproveitamento <span class="tiny muted">pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('pct')}</div>
-      ${rkBars(rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.','pct')}</div>`,
-        gols:`<div class="sec"><div class="k2"><span>⚽ Artilharia</span>${ordBtn('gols')}</div>${rkBars(rkGols,x=>x.gols,x=>x.gols+' gol'+(x.gols===1?'':'s'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.','gols')}</div>`,
-        ritmo:`<div class="sec"><div class="k2"><span>${ic('zap','var(--white)')}Gols a cada 10 min <span class="tiny muted">de linha · mín. 1 h</span></span>${ordBtn('ritmo')}</div>
-      ${rkBars(rkRitmo,x=>x.gols/minL(x),x=>por10(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha','Ninguém com 1 h de linha e gol marcado ainda.','ritmo')}</div>`,
-        gk:`<div class="sec"><div class="k2"><span>${ic('shield','var(--cyan)')}Menos vazado <span class="tiny muted">sofridos/10 min · mín. 1 h</span></span>${ordBtn('gk')}</div>
-      ${rkBars(rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.','gk')}</div>`,
-        golsgk:rkGolsGk.length?`<div class="sec"><div class="k2"><span>${ic('shield','var(--gold)')}Gols de goleiro <span class="tiny muted">feitos de dentro do gol</span></span>${ordBtn('golsgk')}</div>
-      ${rkBars(rkGolsGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol',null,'golsgk')}</div>`:'',
-        seq:`<div class="sec"><div class="k2"><span>${ic('flame','var(--coral)')}Maior sequência <span class="tiny muted">3 ou mais</span></span>${ordBtn('seq')}</div>
-      ${rkBars(rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.','seq')}</div>`,
-        duplas:`<div class="sec"><div class="k2"><span>${ic('star','var(--gold)')}Melhor dupla <span class="tiny muted">aproveitamento juntos · mín. ${MIN_JOGOS} partidas</span></span>${ordBtn('duplas')}</div>
-      ${duplas.length?(()=>{const b=inv('duplas')?[...duplas].reverse():duplas,pos=posEmpate(b,x=>x.pct);return b.slice(0,aberto.duplas?10:3).map((x,i)=>`<div class="rk3 ${i===0?'top':''}">
-        <span class="pos">${pos[i]}</span>
-        <div class="nm">${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}${aberto.duplas?`<small>${x.v}V ${x.e}E em ${pl(x.n,'partida')}</small>`:''}</div>
-        <span class="val">${x.pct}%</span></div>`).join('')})()+(duplas.length>3?`<button class="more" data-a="statsSec" data-k="duplas">${aberto.duplas?'▴ menos':'▾ ver até '+Math.min(10,duplas.length)}</button>`:'')
-        :`<div class="tiny muted" style="padding:6px 2px">Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.</div>`}</div>`
+        pm:rkSec('pm','bars','var(--cyan)','Melhor +/−','gols a favor − contra em quadra',rkPm,x=>x.pm,pmFmt,x=>vedTxt(x)),
+        pres:rkSec('pres','cal','var(--lime)','Mais presenças','',rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida')),
+        min:rkSec('min','clock','var(--coral)','Mais tempo em quadra','',rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha'),
+        vit:rkSec('vit','trophy','var(--gold)','Mais vitórias','',rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida')),
+        der:rkSec('der','down','var(--bad)','Mais derrotas','',rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida')),
+        pct:rkSec('pct','up','var(--ok)','Maior aproveitamento',`pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas`,rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.'),
+        gols:rkSec('gols','⚽',null,'Artilharia','',rkGols,x=>x.gols,x=>pl(x.gols,'gol'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.'),
+        ritmo:rkSec('ritmo','zap','var(--white)','Gols a cada 10 min','de linha · mín. 1 h',rkRitmo,x=>x.gols/minL(x),x=>por10(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha','Ninguém com 1 h de linha e gol marcado ainda.'),
+        gk:rkSec('gk','shield','var(--cyan)','Menos vazado','sofridos/10 min · mín. 1 h',rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.'),
+        golsgk:rkGolsGk.length?rkSec('golsgk','shield','var(--gold)','Gols de goleiro','feitos de dentro do gol',rkGolsGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):'',
+        seq:rkSec('seq','flame','var(--coral)','Maior sequência','3 ou mais',rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.'),
+        duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>x.pct+'%',x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
       const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','golsgk','duplas']
         :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','golsgk','duplas']
@@ -5416,10 +5397,20 @@ const A={
           <div class="sp tiny muted num">${rec.v}V ${rec.e}E ${rec.d}D${vePat(l)?' · % = prob. de vitória':''}</div></div>
         ${linhas.join('')}`:'<div class="tiny muted" style="margin-top:12px">Nenhuma partida contou para este time.</div>'}`);
   },
-  statsSec(el){S.ui.statsOpen=S.ui.statsOpen||{};S.ui.statsOpen[el.dataset.k]=!S.ui.statsOpen[el.dataset.k];render()},
+  /* folha de um ranking (D-112): lista inteira (até 10) com detalhe, e a ordem
+     — do 1º ao último, ou lida do fim (a posição recomeça do 1: é outro pódio, D-89) */
+  rkSheet(el){
+    const k=el.dataset.k,d=RK[k],l=L();if(!d||!l)return;
+    const inv=!!(S.ui.statsInv||{})[k],base=inv?[...d.itens].reverse():d.itens,pos=posEmpate(base,d.num),eu=euId(l);
+    const rot=d.ordem||['Do 1º ao último','Do último ao 1º'];
+    const linha=(x,i)=>d.row?d.row(x):rkRowHtml(l,eu,x,pos[i],i===0&&!inv,d.fmt,d.sub?d.sub(x):null,d.nome);
+    openSheet(`<h2>${d.titulo}</h2>${d.hint?`<div class="tiny muted" style="margin:2px 0 8px">${d.hint}</div>`:''}
+      <div class="seg" style="margin-bottom:8px"><button class="${inv?'':'on'}" data-a="rkInv" data-k="${k}" data-v="0">${rot[0]}</button><button class="${inv?'on':''}" data-a="rkInv" data-k="${k}" data-v="1">${rot[1]}</button></div>
+      ${base.slice(0,d.row?base.length:RK_MAX).map(linha).join('')}
+      ${!d.row&&d.itens.length>RK_MAX?`<div class="tiny muted" style="margin-top:10px">Os ${RK_MAX} primeiros de ${d.itens.length}.</div>`:''}`);
+  },
+  rkInv(el){S.ui.statsInv=S.ui.statsInv||{};S.ui.statsInv[el.dataset.k]=el.dataset.v==='1';save();A.rkSheet(el)},
   ppPage(el){S.ui.ppPage=Math.max(0,(S.ui.ppPage||0)+(+el.dataset.d));render()},   // pagina do partida-a-partida
-  /* setinha dos rankings: ↓ melhor primeiro · ↑ lido do fim (preferência do aparelho) */
-  statsInv(el){S.ui.statsInv=S.ui.statsInv||{};S.ui.statsInv[el.dataset.k]=!S.ui.statsInv[el.dataset.k];save();render()},
   toggleDestaques(){S.ui.destAberto=!S.ui.destAberto;save();render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
   histRacha(el){S.ui.histRacha=el.dataset.id||null;save();render()},
