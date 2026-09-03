@@ -2011,6 +2011,11 @@ reduzir está confuso." Concordo com os três pontos. O que mudou:
   (ordem "Mais confrontos / Menos confrontos").
 - Um `rkSec` monta toda seção (temporada e último racha) — antes eram três geradores diferentes
   (`rkBars`, `corta`+`mais`, `listaDuelo`) com pequenas divergências.
+**Ajustes no mesmo dia:** o "Ver os 10 ›" foi para a **linha do título** do ranking — solto embaixo
+da lista, não se sabia de qual ranking ele era; a folha **sempre abre "Do 1º ao último"** e a
+inversão vale só naquela abertura (a preferência por aparelho, herdada da setinha, deixava a
+folha abrir invertida sem a pessoa lembrar por quê); e **Gol contra** no último racha virou
+ranking de verdade — antes repetia o nome a cada gol e saía sem número.
 **Descartado:** manter o expandir na página com texto melhor — dez rankings × 10 linhas ainda vira
 um rolo; a folha isola o que a pessoa quer olhar.
 **Onde:** `RK`, `rkRowHtml`, `rkSec`, `duelList`, `A.rkSheet`, `A.rkInv` em `index.html` ·

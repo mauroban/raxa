@@ -646,16 +646,16 @@ step('abrir a folha de um ranking e inverter a ordem (D-112)',()=>{
   A.rkSheet({dataset:{k:'vit'}});
   if(!/Do 1º ao último/.test($('#sheet').innerHTML))throw new Error('folha do ranking nao abriu com a ordem');
   A.rkInv({dataset:{k:'vit',v:'1'}});
-  if(!S.ui.statsInv.vit)throw new Error('rkInv nao marcou');
-  A.rkInv({dataset:{k:'vit',v:'0'}});
-  if(S.ui.statsInv.vit)throw new Error('rkInv nao desmarcou');
+  if(!/class="on" data-a="rkInv" data-k="vit" data-v="1"/.test($('#sheet').innerHTML))throw new Error('inverter nao marcou o seletor');
+  closeSheet();A.rkSheet({dataset:{k:'vit'}});
+  if(!/class="on" data-a="rkInv" data-k="vit" data-v="0"/.test($('#sheet').innerHTML))throw new Error('reabrir tem que voltar para "do 1º ao último"');
   closeSheet();
 });
 step('numeros: ultimo racha e ultimo mes',()=>{
   A.statsTab({dataset:{v:'racha'}});
   A.statsPer({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
-  if(!/Racha de /.test(h)||!/Destaques da noite/.test(h))throw new Error('aba racha no periodo "ultimo racha" sem os cards proprios');
+  if(!/Racha de /.test(h)||!/Destaques do racha/.test(h))throw new Error('aba racha no periodo "ultimo racha" sem os cards proprios');
   /* a % de vitorias realizada sempre sai; o "(esp.)" depende de m.pre cobrir a
      escalacao inteira (trecho curto descartado pode tirar — D-75), entao nao e exigido */
   if(/Times do racha/.test(h)&&!/% <small>real<\/small>/.test(h))throw new Error('faltou o realizado (empate vale meio) discreto na linha dos times');

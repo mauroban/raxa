@@ -550,7 +550,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk2.top .prog i{background:var(--gold)}
 .rk2 .val{font-family:var(--disp);font-weight:800;font-size:16px;white-space:nowrap;text-align:right}
 .rk2 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:11px;font-family:var(--body)}
-.sec{margin-top:14px}
+.sec{margin-top:20px}
 .sec .k2{display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:8px}
 /* a regra do ranking (mínimo, unidade) é nota, não título: menor, sem caixa alta, e nunca empurra o título para a linha de baixo */
 .sec .k2 .tiny{font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:500;text-align:right;white-space:nowrap;margin-left:8px;flex:0 0 auto}
@@ -573,7 +573,9 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk3 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:10px;font-family:var(--body)}
 /* "Ver os 10 ›": abre a folha com a lista inteira e a ordem (D-112) */
 .more{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:8px 2px 2px;cursor:pointer;text-align:left;min-height:36px}
-.more .chev{font-size:17px;line-height:1;color:var(--mute2)}
+.more .chev{font-size:17px;line-height:1;color:var(--mute2);margin-left:3px}
+.k2 .more{width:auto;flex:0 0 auto;padding:0 0 0 10px;min-height:32px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--chalk)}
+.k2 .more .chev{color:var(--mute)}
 .sheet .rk3{padding:10px 0;font-size:15px}
 .sheet .rk3 .nm small{display:block;margin:2px 0 0}
 /* ---------- Stats com cara de painel (D-108) ---------- */
@@ -2104,7 +2106,7 @@ function renderHome(){
       <div class="steps">
         <div class="st"><div class="n">1</div><div><div class="t">Marque quem chegou</div><div class="d">Toque no nome, e no 🧤 de quem veio para o gol hoje.</div></div></div>
         <div class="st"><div class="n">2</div><div><div class="t">Os times saem sozinhos</div><div class="d">Cheios e equilibrados pelo nível de cada um. Quem sobra vira fila.</div></div></div>
-        <div class="st"><div class="n">3</div><div><div class="t">Gol e fim em um toque</div><div class="d">Vencedor fica, a fila entra, e o nível se ajusta no fim da noite.</div></div></div>
+        <div class="st"><div class="n">3</div><div><div class="t">Gol e fim em um toque</div><div class="d">Vencedor fica, a fila entra, e o nível se ajusta no fim do racha.</div></div></div>
       </div></div>`}
   <div style="height:10px"></div>
   <button class="btn wide pri" data-a="newLiga">+ Nova liga</button>
@@ -2999,11 +3001,13 @@ function viewStats(liga){
      setinha e sem barra — a lista inteira, com detalhe e ordem, é da folha. */
   const rkSec=(key,icone,cor,titulo,hint,itens,num,fmt,sub,vazio,nome,ordem)=>{
     RK[key]={titulo,hint,itens,num,fmt,sub,nome,ordem};
-    const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}${hint?` <span class="tiny muted">${hint}</span>`:''}</span></div>`;
+    /* o "Ver os 10 ›" mora na linha do título: é dele que a lista é */
+    const ver=itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${itens.length>RK_MAX?'os '+RK_MAX:'todos'}<span class="chev">›</span></button>`:'';
+    /* a dica (mínimo, unidade) só cabe na linha do título quando não há "Ver"; com ele, fica na folha */
+    const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}${hint&&!ver?` <span class="tiny muted">${hint}</span>`:''}</span>${ver}</div>`;
     if(!itens.length)return `<div class="sec">${head}<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div></div>`;
     const pos=posEmpate(itens,num);                      // empate divide a posição (D-89)
-    return `<div class="sec">${head}${itens.slice(0,3).map((x,i)=>rkRowHtml(liga,eu,x,pos[i],i===0,fmt,null,nome)).join('')}
-      ${itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${itens.length>RK_MAX?'os '+RK_MAX:'todos os '+itens.length}<span class="chev">›</span></button>`:''}</div>`;
+    return `<div class="sec">${head}${itens.slice(0,3).map((x,i)=>rkRowHtml(liga,eu,x,pos[i],i===0,fmt,null,nome)).join('')}</div>`;
   };
   const pmFmt=x=>`<span class="num ${x.pm>0?'up':x.pm<0?'dn':''}">${pmTxt(x.pm)}</span>`;
   const C=2*Math.PI*43,aprMe=aprDe(me.v,me.e,me.jogos);   // pontos ganhos / disputados (V=3, E=1)
@@ -3223,7 +3227,8 @@ ${cardPP}  <div class="card">
     const moves=[];ms.forEach(m=>(m.moves||[]).forEach(x=>moves.push(x)));
     const net={};moves.forEach(x=>{const k=x.pid+'|'+(x.role||'L');net[k]=(net[k]||0)+x.dir});
     const subiu=Object.entries(net).filter(x=>x[1]>0),caiu=Object.entries(net).filter(x=>x[1]<0);
-    const gc=[];ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.own&&g.pid)gc.push(g.pid)}));
+    const gcN={};ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.own&&g.pid)gcN[g.pid]=(gcN[g.pid]||0)+1}));
+    const gc=Object.keys(gcN).map(pid=>({pid,gc:gcN[pid]})).sort((a,b)=>b.gc-a.gc);   // um por pessoa, com a contagem (D-112)
     const lin=(x,val,sub)=>`<div class="rk3" data-a="pSheet" data-id="${x.pid}"><span class="pos">·</span><div class="nm">${esc(nameOf(liga,x.pid))}${sub?`<small>${sub}</small>`:''}</div><span class="val">${val}</span></div>`;
     return `
   <div class="card">
@@ -3235,11 +3240,11 @@ ${cardPP}  <div class="card">
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(jogo)}</b><span>min de jogo</span></div>
     </div>
     ${times.length?`<div class="sec"><div class="k2">Times do racha <span class="tiny muted">toque para ver detalhes</span></div>
-      ${(()=>{const pos=posEmpate(times,t=>t.v*1e6+(t.gp-t.gc));return times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${pos[i]}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num" style="text-align:right">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small>${(t.v+t.e+t.d)?`<span class="tiny muted" style="display:block;font-weight:400;letter-spacing:0" title="resultado da noite (empate vale meio) · probabilidade média de vitória no apito — mesma base: a chance do Elo já é o placar esperado, com empate valendo meio">${Math.round((t.v+t.e/2)/(t.v+t.e+t.d)*100)}% <small>real</small>${t.jE?' <span style="opacity:.75">(esp. '+Math.round(t.esp/t.jE*100)+'%)</span>':''}</span>`:''}</span></div>`).join('')})()}
+      ${(()=>{const pos=posEmpate(times,t=>t.v*1e6+(t.gp-t.gc));return times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${pos[i]}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num" style="text-align:right">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small>${(t.v+t.e+t.d)?`<span class="tiny muted" style="display:block;font-weight:400;letter-spacing:0" title="resultado do racha (empate vale meio) · probabilidade média de vitória no apito — mesma base: a chance do Elo já é o placar esperado, com empate valendo meio">${Math.round((t.v+t.e/2)/(t.v+t.e+t.d)*100)}% <small>real</small>${t.jE?' <span style="opacity:.75">(esp. '+Math.round(t.esp/t.jE*100)+'%)</span>':''}</span>`:''}</span></div>`).join('')})()}
       ${semDono?`<div class="tiny muted" style="margin-top:7px">${pl(semDono,'formação','formações')} não ${semDono===1?'contou':'contaram'} para nenhum time: mais da metade do time original não estava em quadra.</div>`:''}</div>`:''}
   </div>
   <div class="card">
-    <div class="k" style="margin-bottom:2px">Destaques da noite</div>
+    <div class="k" style="margin-bottom:2px">Destaques do racha</div>
     ${pm.length&&longa?secPmRacha:''}
     ${venc.length?rkSec('rvenc','trophy','var(--gold)','Quem mais ganhou','',venc,x=>x.v,x=>`${x.v}<small>V</small>`,x=>`${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento`):''}
     ${pm.length&&!longa?secPmRacha:''}
@@ -3248,7 +3253,7 @@ ${cardPP}  <div class="card">
     ${rendeu.length?rkSec('rrendeu','up','var(--ok)','Rendeu acima do esperado','mín. 3 partidas',rendeu,x=>x.over,x=>(x.over>0?'+':'')+x.over.toFixed(1),x=>(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j):''}
     ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
     ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk)+'<small>/10 min</small>',x=>fmtMin(x.minGk)+' no gol'):''}
-    ${gc.length?`<div class="sec"><div class="k2"><i class="gball own" style="margin:0 6px 0 0">⚽</i>Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
+    ${gc.length?rkSec('rgc','<i class="gball own">⚽</i>',null,'Gol contra','',gc,x=>x.gc,x=>pl(x.gc,'gol')+' contra'):''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
          "de onde → para onde" escrito — quem andou mais vem primeiro     */
@@ -3796,7 +3801,7 @@ function resumoRacha(liga,sess,ms){
       <div><b>${pres}</b><span>pessoas</span></div>
       <div><b>${MINS(totMs)}</b><span>min</span></div>
     </div>
-    ${sec('🏆 Times da noite',T.length?T.map((t,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${pos[i]}</span>
+    ${sec('🏆 Times do racha',T.length?T.map((t,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${pos[i]}</span>
         <div class="nm">${rotulo(t)}<small>${esc(t.name)}${ver&&t.jE?` · ${Math.round((t.v+t.e/2)/Math.max(1,t.v+t.e+t.d)*100)}% real, ${Math.round(t.esp/t.jE*100)}% esperado`:''}</small></div>
         <div class="val"><span class="vedx"><b class="v">${t.v}</b>V <b>${t.e}</b>E <b class="d">${t.d}</b>D</span><small class="gols">${t.gp}·${t.gc} gols</small></div></div>`).join(''):'')}
     ${sec('⚽ Artilheiros',art.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
@@ -5401,7 +5406,7 @@ const A={
      — do 1º ao último, ou lida do fim (a posição recomeça do 1: é outro pódio, D-89) */
   rkSheet(el){
     const k=el.dataset.k,d=RK[k],l=L();if(!d||!l)return;
-    const inv=!!(S.ui.statsInv||{})[k],base=inv?[...d.itens].reverse():d.itens,pos=posEmpate(base,d.num),eu=euId(l);
+    const inv=el.dataset.v==='1',base=inv?[...d.itens].reverse():d.itens,pos=posEmpate(base,d.num),eu=euId(l);   // sempre abre do 1º ao último; inverter é só nesta abertura
     const rot=d.ordem||['Do 1º ao último','Do último ao 1º'];
     const linha=(x,i)=>d.row?d.row(x):rkRowHtml(l,eu,x,pos[i],i===0&&!inv,d.fmt,d.sub?d.sub(x):null,d.nome);
     openSheet(`<h2>${d.titulo}</h2>${d.hint?`<div class="tiny muted" style="margin:2px 0 8px">${d.hint}</div>`:''}
@@ -5409,7 +5414,7 @@ const A={
       ${base.slice(0,d.row?base.length:RK_MAX).map(linha).join('')}
       ${!d.row&&d.itens.length>RK_MAX?`<div class="tiny muted" style="margin-top:10px">Os ${RK_MAX} primeiros de ${d.itens.length}.</div>`:''}`);
   },
-  rkInv(el){S.ui.statsInv=S.ui.statsInv||{};S.ui.statsInv[el.dataset.k]=el.dataset.v==='1';save();A.rkSheet(el)},
+  rkInv(el){A.rkSheet(el)},
   ppPage(el){S.ui.ppPage=Math.max(0,(S.ui.ppPage||0)+(+el.dataset.d));render()},   // pagina do partida-a-partida
   toggleDestaques(){S.ui.destAberto=!S.ui.destAberto;save();render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
