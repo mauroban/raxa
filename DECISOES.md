@@ -1839,6 +1839,56 @@ toast a cada marca (a dica já muda no lugar).
 `scripts/smoke.py` (marca/desmarca, troca pelos dois lados, dois em quadra só movem a marca) ·
 `scripts/layout.py` ("partida com nome marcado para substituir") · DOCUMENTACAO §4.3.
 
+### D-104 · Consistência acima de tudo: o mesmo lance conta uma vez, e sem sinal há 20 s é só leitura
+**03/09/2026.** Com dois lançadores, um com sinal e outro sem, a mesclagem somava o mesmo gol duas
+vezes (com aviso) e a mesma substituição deixava o jogador duplicado em quadra (sem aviso nenhum). E
+quanto mais tempo um celular ficava lançando às cegas, mais lances tinham que ser mesclados depois
+sem ninguém ver. **Decidido:** (1) o mesmo lance visto de dois lugares é um só — gol do mesmo time em
+menos de 8 s, mesma troca ou mesmo goleiro em menos de 60 s; fica o do outro (já no servidor), com o
+autor do gol se só este tinha, e o aviso diz "contei um só — se foram gols diferentes, toque de
+novo"; `replayCur` e `splitStints` nunca empurram em quadra quem já está lá. (2) **Trava de sinal:**
+quem está sem sinal há mais de 20 s passa a só olhar (botões apagados, "sem sinal · só leitura",
+toque explica), até o primeiro contato bom. "Sem sinal" é fato constatado — pedido que falhou, prazo
+estourado, aparelho avisou — nunca silêncio; a batida do racha ao vivo passou de 15 s para 5 s para a
+queda ser descoberta a tempo, e com gravação pendente a própria gravação é a batida. O último
+contato bom vai para a cópia do aparelho: reabrir o app não zera. 20 s é a régua comum de app com
+interação ao vivo (batida a cada poucos segundos, "caiu" depois de 3–4 perdidas; Socket.IO, jogos
+multiplayer, editores colaborativos ficam entre 15 e 45 s). O usuário pediu explicitamente esse
+corte, mesmo que impeça de usar o app numa quadra sem sinal nenhum.
+**Descartado:** somar e avisar (D-102): dois gols do mesmo time em 8 s são raros demais para valer
+o placar dobrado; travar só durante a partida (presença e times também se mesclam às cegas);
+travar por silêncio (quem está parado com rede travaria); 60 s (a primeira versão — o usuário
+pediu 20).
+**Onde:** `mesclaLive` (`mesmoLance`), `replayCur`, `splitStints`, `PRAZO_SEM_SINAL`,
+`BATIDA_VIVO`, `travado`/`semSinal`/`contato`/`msgTrava`, `pulso`, `dispara`, `onDrop`,
+`beginPaint`, o `change` de ajustes e CSS `body.travado` em `index.html` · `scripts/sync.py`
+("a mesma troca nos dois celulares e uma so", "os dois celulares marcam o mesmo gol", "sem sinal
+ha mais de 20 s") · DOCUMENTACAO §4.3 · DEPLOY.md · RNF-03.
+
+### D-105 · Apagar liga: só o dono, só sem outros membros, digitando o nome
+**03/09/2026.** Apagar uma liga eram dois toques (botão + confirm), para qualquer membro (quem não
+era dono "apenas saía", mas o botão e o texto eram os mesmos). Apagar leva o histórico e os níveis
+de todo mundo. **Decidido:** o botão "Apagar liga" só aparece para o dono (`DONO[id]`, que vem no
+delta como `owner`); só funciona quando não há nenhum outro membro (o app confere pela lista de
+contas e o banco confere de novo na policy `leagues_delete`, via `has_other_members`, porque a RLS
+de `league_members` só deixa cada um ver o próprio vínculo); e pede o nome da liga digitado. Quem
+não é dono vê "Sair da liga", com confirmação própria.
+**Descartado:** tirar o poder de apagar de vez (liga de teste ou criada errada precisa sumir);
+soft delete com purga em 30 dias (é o desenho de BANCO-DE-DADOS.md, fica para quando o esquema
+relacional entrar).
+**Onde:** `A.delLiga`, `A.leaveLiga`, `DONO` e o card Dados de `viewCfg` em `index.html` ·
+`supabase/schema.sql` (`has_other_members`, `leagues_delete`) · `scripts/sync.py` ("o dono nao
+apaga enquanto ha outro membro", "quem nao e dono so sai", "so com o nome certo") · DOCUMENTACAO
+§7.4 · DEPLOY.md · BANCO-DE-DADOS.md.
+
+### D-106 · Sem emoji no botão de iniciar; bolinha vermelha para gol contra
+**03/09/2026.** "▶ Iniciar racha" virou "Iniciar racha" — emoji no botão principal passa sensação
+de amador. Na Stats, "Partida a partida" mostrava ⚽ por gol e 🙈 por gol contra; agora é uma
+bolinha por gol e **a mesma bolinha, vermelha**, por gol contra (`.gball`/`.gball.own`), inclusive
+no título "Gol contra" do resumo do racha. Os ⚽ de título (Artilheiro, Artilharia) ficaram por
+enquanto.
+**Onde:** `viewRacha` (botão), `ppRow` e o resumo em `index.html` · DOCUMENTACAO §5.2.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

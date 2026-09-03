@@ -69,6 +69,14 @@ returns boolean language sql security definer stable set search_path = public as
     where league_id = lid and user_id = auth.uid()
   );
 $fn$;
+-- Há algum membro além de quem pergunta? (para a regra de apagar liga)
+create or replace function public.has_other_members(lid uuid)
+returns boolean language sql security definer stable set search_path = public as $fn$
+  select exists (
+    select 1 from public.league_members
+    where league_id = lid and user_id <> auth.uid()
+  );
+$fn$;
 
 alter table public.profiles       enable row level security;
 alter table public.leagues        enable row level security;
@@ -94,7 +102,11 @@ create policy profiles_write on public.profiles for update to authenticated
 -- gravação tem que passar pelo compare-and-swap de save_parts. Um UPDATE
 -- direto pela API pularia a trava de versão e atropelaria o racha dos outros.
 create policy leagues_read   on public.leagues for select to authenticated using (public.is_member(id));
-create policy leagues_delete on public.leagues for delete to authenticated using (owner_id = auth.uid());
+-- Apagar é só o dono e só quando não há mais ninguém na liga (D-105): apagar
+-- leva o histórico de todo mundo. A conferência passa por uma função definer
+-- porque a RLS de league_members só deixa cada um ver o próprio vínculo.
+create policy leagues_delete on public.leagues for delete to authenticated
+  using (owner_id = auth.uid() and not public.has_other_members(id));
 
 -- Membro: cada um só vê o próprio vínculo, e só pode desfazer o próprio.
 create policy members_read  on public.league_members for select to authenticated using (user_id = auth.uid());

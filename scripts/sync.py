@@ -53,7 +53,7 @@ function delta(lid,since){
   const l=DB.leagues.find(x=>x.id===lid);
   const rows=t=>DB[t].filter(r=>r.league_id===lid&&r.v>since&&(since>0||!r.deleted)).map(r=>({id:r.id,data:jclone(r.data),deleted:r.deleted}));
   const lv=DB.live[lid];
-  return {id:lid,version:l.version,name:l.name,code:l.code,cfg:jclone(l.cfg),players:rows('players'),matches:rows('matches'),
+  return {id:lid,version:l.version,name:l.name,code:l.code,cfg:jclone(l.cfg),owner:l.owner_id===UID(),players:rows('players'),matches:rows('matches'),
     sessions:rows('sessions'),live:lv&&lv.v>since?{data:jclone(lv.data)}:null,log:DB.log.filter(r=>r.league_id===lid&&r.v>since).map(r=>jclone(r.data))};
 }
 function applyParts(lid,parts,nv){
@@ -67,6 +67,7 @@ function applyParts(lid,parts,nv){
   const l=DB.leagues.find(x=>x.id===lid);
   if(parts.name)l.name=parts.name;if(parts.cfg)l.cfg=jclone(parts.cfg);
 }
+let UID=()=>null;                           // quem esta logado (o fakeClient preenche)
 let RT=[];                                  // assinantes de realtime
 const REDE={caida:false,pendura:0};         // simula sinal caido / pedido pendurado
 const uuid=(n=>()=>'uuid-'+(++n))(0);
@@ -78,7 +79,7 @@ function emitM(ev,row){ RT.forEach(fn=>fn({eventType:ev,new:ev==='INSERT'?row:nu
 
 function fakeClient(){
   let session=null;
-  const uidNow=()=>session&&session.user.id;
+  const uidNow=()=>session&&session.user.id;UID=uidNow;
   const isMember=lid=>!!(uidNow()&&DB.members.some(m=>m.league_id===lid&&m.user_id===uidNow()));
 
   const rpcs={
@@ -165,7 +166,7 @@ function fakeClient(){
       rows=rows.filter(r=>Object.keys(this.f).every(k=>r[k]===this.f[k]));
       if(this.t==='leagues')rows=rows.filter(r=>isMember(r.id));            // RLS
       if(this.op==='delete'){
-        const alvo=rows.filter(r=>r.owner_id===uidNow());                   // so o dono apaga
+        const alvo=rows.filter(r=>r.owner_id===uidNow()&&!DB.members.some(m=>m.league_id===r.id&&m.user_id!==uidNow()));   // so o dono, e so sem outros membros
         alvo.forEach(r=>{DB.leagues=DB.leagues.filter(x=>x.id!==r.id);emit('DELETE',r)});
         return{data:null,error:null};
       }
@@ -560,38 +561,109 @@ await step('os dois celulares marcam o mesmo gol: soma e avisa',async()=>{
   row.version++;DB.live[ligaId]={data:lv,v:row.version};
   A.goal({dataset:{s:'0'}});
   await sleep(700);
-  ok('os dois gols ficaram (o app nao decide sozinho qual apagar)',L().live.cur.score[0]===2,L().live.cur.score.join('-'));
-  ok('mas avisou que pode ser gol dobrado',toasts.some(m=>/também marcou gol/.test(m)),toasts.join(' | '));
+  ok('contou um gol so (o mesmo lance visto de dois lugares)',L().live.cur.score[0]===1,L().live.cur.score.join('-'));
+  ok('e avisou que contou um so',toasts.some(m=>/contei um só/.test(m)),toasts.join(' | '));
+  await sleep(700);
+  ok('o servidor ficou com um gol',DB.live[ligaId].data.cur.score[0]===1,JSON.stringify(DB.live[ligaId].data.cur.score));
   toast=toast0;
+  A.endMatch();await sleep(700);
+});
+
+await step('a mesma troca nos dois celulares e uma so',async()=>{
+  A.startMatch();await sleep(700);
+  const c=L().live.cur,out=c.lineups[0].find(id=>id!==c.gks[0]),fora=benchList(L(),L().live);
+  ok('tem banco para testar',fora.length>0);if(!fora.length)return;
+  const inn=fora[0].id;
+  const row=srv(ligaId);const lv=jclone(DB.live[ligaId].data);
+  lv.cur.events.push({t:Date.now()-2000,type:'sub',side:0,out,in:inn,gks:[...lv.cur.gks]});
+  lv.cur.lineups[0][lv.cur.lineups[0].indexOf(out)]=inn;
+  row.version++;DB.live[ligaId]={data:lv,v:row.version};
+  A.doSub({dataset:{s:'0',out,id:inn}});
+  await sleep(700);
+  const cur=L().live.cur;
+  ok('um evento de troca so',cur.events.filter(e=>e.type==='sub').length===1,cur.events.filter(e=>e.type==='sub').length+'');
+  ok('quem entrou esta uma vez em quadra, quem saiu nao esta',cur.lineups[0].filter(x=>x===inn).length===1&&!cur.lineups[0].includes(out));
+  ok('ninguem duplicado',new Set([...cur.lineups[0],...cur.lineups[1]]).size===cur.lineups[0].length+cur.lineups[1].length);
+  A.endMatch();await sleep(700);
+});
+
+await step('sem sinal ha mais de 20 s: so leitura ate a conexao voltar',async()=>{
+  A.startMatch();await sleep(700);
+  const placar=L().live.cur.score.slice();
+  REDE.caida=true;
+  A.goal({dataset:{s:'0'}});await sleep(700);      // dentro do prazo: entra e fica guardado
+  ok('dentro do prazo o gol entra',L().live.cur.score[0]===placar[0]+1);
+  ok('mas ainda nao trava',!travado());
+  ULTIMO_OK=Date.now()-PRAZO_SEM_SINAL-1000;        // passaram 20 s sem nenhum contato bom
+  ok('a trava engatou',travado());
+  const toasts=[];const toast0=toast;toast=(m,o)=>{toasts.push(m);return toast0(m,o)};
+  goalTapAt=0;dispara({dataset:{a:'goal',s:'0'}});
+  ok('o toque no placar nao entra',L().live.cur.score[0]===placar[0]+1,L().live.cur.score.join('-'));
+  ok('e diz por que',toasts.some(m=>/só leitura/.test(m)),toasts.join(' | '));
+  const nPres=L().live.presentIds.length;
+  onDrop(L().live.presentIds[0],{dataset:{dropZone:'leave'}});
+  ok('o arraste tambem nao passa',L().live.presentIds.length===nPres,L().live.presentIds.length+'');
+  pulso();
+  ok('o aviso embaixo diz so leitura',/só leitura/.test(document.querySelector('#sync').textContent),document.querySelector('#sync').textContent);
+  cacheAgora();
+  ok('a copia guarda o ultimo contato bom',JSON.parse(localStorage.getItem('raxa_liga_'+ME.id)).ok===ULTIMO_OK);
+  toast=toast0;
+  REDE.caida=false;tentativas=0;clearTimeout(syncT);await flush();
+  ok('a rede voltou: destravou',!travado());
+  ok('e o gol guardado subiu',DB.live[ligaId].data.cur.score[0]===placar[0]+1);
+  goalTapAt=0;dispara({dataset:{a:'goal',s:'0'}});
+  ok('o toque volta a valer',L().live.cur.score[0]===placar[0]+2,L().live.cur.score.join('-'));
+  await sleep(700);
   A.endMatch();await sleep(700);
 });
 
 await step('a batida de rede confere a liga quando o realtime ficou mudo',async()=>{
   const row=srv(ligaId);
   row.cfg=JSON.parse(JSON.stringify(row.cfg));row.cfg.targetMin=77;row.version++;
-  CONTATO[ligaId]=0;                              // faz tempo que o servidor nao fala
+  CONTATO[ligaId]=0;BATIDA_EM[ligaId]=0;          // faz tempo que o servidor nao fala
   pulso();
   await sleep(300);
   ok('a mudanca chegou sem aviso do realtime',L().cfg.targetMin===77,'targetMin='+L().cfg.targetMin);
 });
 
 console.log('\n[sync] sair da liga e apagar');
+await step('o dono nao apaga enquanto ha outro membro',async()=>{
+  S.active=ligaId;
+  ok('o app sabe que mauro e o dono',DONO[ligaId]===true);
+  S.ui.tab='cfg';render();
+  ok('o dono ve "Apagar liga"',/data-a="delLiga"/.test(els['#app'].innerHTML));
+  prompt=()=>srv(ligaId).name;
+  await A.delLiga();
+  ok('a liga continua de pe',!!srv(ligaId));
+  ok('e continua na tela',S.ligas.length===1);
+  /* o banco tambem recusa, mesmo pulando o app */
+  await sb.from('leagues').delete().eq('id',ligaId);
+  ok('o DELETE direto no banco tambem nao apaga',!!srv(ligaId));
+});
+
 await step('quem nao e dono so sai',async()=>{
   await A.logout();
   val('#au','luis');val('#ap','segredo2');authMode='entrar';
   await A.doLogin();
   S.active=ligaId;
-  await A.delLiga();
+  ok('luis nao e dono',DONO[ligaId]===false);
+  S.ui.tab='cfg';render();
+  ok('luis ve "Sair da liga", nao "Apagar"',/data-a="leaveLiga"/.test(els['#app'].innerHTML)&&!/data-a="delLiga"/.test(els['#app'].innerHTML));
+  await A.leaveLiga();
   ok('a liga continua de pe',!!srv(ligaId));
   ok('mas o luis saiu',!DB.members.some(m=>m.user_id===ME.id&&m.league_id===ligaId));
   ok('e sumiu da tela dele',S.ligas.length===0);
 });
 
-await step('o dono apaga de verdade',async()=>{
+await step('o dono apaga de verdade — so com o nome certo',async()=>{
   await A.logout();
   val('#au','mauro');val('#ap','segredo1');authMode='entrar';
   await A.doLogin();
   S.active=ligaId;
+  prompt=()=>'outro nome';
+  await A.delLiga();
+  ok('nome errado nao apaga',!!srv(ligaId)&&S.ligas.length===1);
+  prompt=()=>srv(ligaId).name;
   await A.delLiga();
   ok('sumiu do banco',!srv(ligaId));
   ok('sumiu da tela',S.ligas.length===0);

@@ -43,11 +43,11 @@ Cada requisito traz uma **meta verificável**. Onde a meta ainda não é atingí
 
 | # | Requisito | Meta |
 |---|---|---|
-| RNF-03.1 | O app funciona **sem internet**, do início ao fim do racha | atingido para quem já abriu a liga logado: cópia no aparelho (D-102); entrar e a primeira carga ainda pedem rede |
+| RNF-03.1 | O app funciona **sem internet**, do início ao fim do racha | **revisto (D-104):** abre e mostra tudo sem rede (cópia no aparelho, D-102), mas lançar sem sinal vale por 20 s — depois é só leitura até voltar. Consistência entre celulares vale mais que lançar às cegas |
 | RNF-03.2 | Nenhum recurso externo é obrigatório para funcionar | fontes web degradam para fontes do sistema |
 | RNF-03.3 | Fechar o app ou perder a bateria não perde o racha | estado gravado a cada ação |
 | RNF-03.4 | Retomada do racha em andamento após reabrir | automática, sem perguntar nada |
-| RNF-03.5 | A sincronização tolera ficar offline por toda a sessão | atingido: cópia local com o que ficou pendente, envio ao reconectar (ou ao reabrir o app), prazo de 12 s por pedido, batida de rede de reserva do Realtime (D-102) |
+| RNF-03.5 | A sincronização tolera ficar offline por toda a sessão | o que ficou pendente (até 20 s de lances) sobe ao reconectar ou ao reabrir o app; prazo de 12 s por pedido; batida de 5 s ao vivo (D-102/D-104) |
 
 ---
 

@@ -109,10 +109,15 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
   gravar depois, com a versão certa, fica; quem estava com a versão velha recebe o
   delta do servidor, perde a alteração local **só nas partes que o outro também
   mexeu** e reenvia o resto (a tela avisa *"Atualizado por outra pessoa"*).
-- **Sinal caindo na quadra é esperado.** A liga fica copiada no aparelho (localStorage,
-  por conta); sem rede o app abre com a cópia, continua lançando e sobe tudo quando a
-  rede volta. Cada pedido ao servidor tem prazo de 12 s. O que ainda exige rede é
-  **entrar** (login) e a primeira carga de uma liga que o aparelho nunca viu.
+- **Sinal caindo na quadra é esperado — até 20 s.** A liga fica copiada no aparelho
+  (localStorage, por conta); sem rede o app abre com a cópia e sobe o que ficou pendente
+  quando a rede volta. Cada pedido ao servidor tem prazo de 12 s. Passados **20 s sem
+  nenhum contato bom** (constatado pela batida de 5 s do racha ao vivo), o app vira **só
+  leitura** até a conexão voltar — consistência entre os celulares vale mais (D-104).
+  O que ainda exige rede é **entrar** (login) e a primeira carga de uma liga que o
+  aparelho nunca viu.
+- **Apagar liga é só do dono, e só sem outros membros** (policy `leagues_delete` +
+  função `has_other_members`, D-105). Quem não é dono só sai.
 - **O projeto gratuito do Supabase hiberna** depois de ~7 dias sem nenhum acesso.
   O primeiro acesso depois disso demora alguns segundos a mais. Nada se perde.
 

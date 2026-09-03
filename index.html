@@ -207,6 +207,11 @@ label.f .k{display:block;margin-bottom:6px}
 .pdot{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:16px;width:18px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
 .pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
+/* uma bolinha por gol na "partida a partida"; gol contra é a mesma bolinha, vermelha */
+.gball{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--chalk);margin-left:3px;vertical-align:middle}
+.gball.own{background:var(--bad)}
+/* sem sinal há mais de 1 min: o que lança fica apagado — a tela pode estar velha */
+body.travado .scoreb .side,body.travado .esc2 .pl,body.travado .tp,body.travado .btn.pri{opacity:.55;filter:grayscale(.5)}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
 .gk{font-size:11px;color:var(--cyan)}
 
@@ -1116,7 +1121,8 @@ function splitStints(c,endedAt,cfg,mode){
     if(ev.type==='sub'){
       const k=lin[ev.side].indexOf(ev.out);
       if(!ev.in){if(k>=0)lin[ev.side].splice(k,1)}                 // foi embora: sai sem ninguém no lugar
-      else if(k>=0)lin[ev.side][k]=ev.in;else lin[ev.side].push(ev.in);
+      else if(k>=0)lin[ev.side][k]=ev.in;
+      else if(!lin[ev.side].includes(ev.in))lin[ev.side].push(ev.in);   // troca repetida (dois celulares) não duplica
     }
     if(Array.isArray(ev.gks))gks=ev.gks.slice();
     else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
@@ -2941,7 +2947,7 @@ function viewStats(liga){
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
       <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
       ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
-      <span style="min-width:44px;text-align:right;letter-spacing:1px">${x.gols<=8?'⚽'.repeat(x.gols):'⚽×'+x.gols}${x.gc?`<span title="gol contra">${'🙈'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
+      <span style="min-width:44px;text-align:right;white-space:nowrap">${x.gols<=8?'<i class="gball"></i>'.repeat(x.gols):'<i class="gball"></i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own"></i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
   const PP_PAG=10,ppMax=Math.max(0,Math.ceil(pps.length/PP_PAG)-1);
   const ppPag=clamp(S.ui.ppPage||0,0,ppMax),ppIni=ppPag*PP_PAG,ppFim=Math.min(pps.length,ppIni+PP_PAG);
@@ -3117,7 +3123,7 @@ ${cardPP}  <div class="card">
     ${rendeu.length?`<div class="sec"><div class="k2"><span>📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></span>${ordBtn('rrendeu')}</div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2"><span>⏱ Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
     ${gks.length?`<div class="sec"><div class="k2"><span>🧤 Menos vazado <span class="tiny muted">mín. 20 min no gol</span></span>${ordBtn('rgk')}</div>${corta(gks,'rgk').map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')+mais(gks,'rgk')}</div>`:''}
-    ${gc.length?`<div class="sec"><div class="k2">🙈 Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
+    ${gc.length?`<div class="sec"><div class="k2"><i class="gball own" style="margin:0 6px 0 0"></i>Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
          "de onde → para onde" escrito — quem andou mais vem primeiro     */
@@ -3615,9 +3621,9 @@ function viewCfgBody(liga){
     <div class="row" style="gap:6px">
       <button class="btn sm" data-a="export">Exportar</button>
       <button class="btn sm" data-a="import">Importar</button>
-      <button class="btn sm danger sp" data-a="delLiga">Apagar liga</button>
+      ${DONO[liga.id]?'<button class="btn sm danger sp" data-a="delLiga">Apagar liga</button>':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}
     </div>
-    <div class="tiny muted" style="margin-top:10px;line-height:1.5">O rating numérico por trás dos níveis fica só no arquivo de backup — nenhuma tela do app mostra pontos.</div>
+    <div class="tiny muted" style="margin-top:10px;line-height:1.5">O rating numérico por trás dos níveis fica só no arquivo de backup — nenhuma tela do app mostra pontos.${DONO[liga.id]?' Apagar a liga só é possível quando não há nenhum outro membro, e pede o nome dela digitado.':''}</div>
   </div>`;
 }
 
@@ -3679,7 +3685,7 @@ function resumoRacha(liga,sess,ms){
 function barFor(liga){
   const lv=liga.live;
   if(S.ui.tab!=='racha')return '';
-  if(!lv)return '<button class="btn wide pri" data-a="startRacha">▶ Iniciar racha</button>';
+  if(!lv)return '<button class="btn wide pri" data-a="startRacha">Iniciar racha</button>';
   if(lv.stage==='presenca')return `
     <button class="btn ghost" data-a="cancelRacha">Cancelar</button>
     <button class="btn pri" data-a="toTimes" ${lv.presentIds.length<4?'disabled':''}>Montar times (${lv.presentIds.length})</button>`;
@@ -5353,6 +5359,7 @@ function paintScroll(){
 function beginPaint(chip){
   const l=L();
   if(!l||!l.live||!podeLancar(l)){paint=null;return}
+  if(travado()){paint=null;toast(msgTrava(),{ms:3500});return}
   A.pres(chip);                                   // o primeiro nome vira e dita o resto
   paint.on=chip.classList.contains('on');paint.done.add(chip.dataset.id);paint.active=true;
   document.body.classList.add('painting');buzz(10);
@@ -5435,6 +5442,7 @@ function endDrag(drop){
 function onDrop(fromId,target){
   const l=L(),lv=l&&l.live;if(!lv||!fromId||!target)return;
   if(!podeLancar(l))return;            // o arraste não passa pelo dispatcher de [data-a]
+  if(travado())return toast(msgTrava(),{ms:3500});
   const alvo=target.dataset.dropPlayer,zona=target.dataset.dropZone;
   if(alvo===fromId)return;
   /* soltar em "Foi embora": passa pela mesma confirmação do toque */
@@ -5532,6 +5540,7 @@ function dispara(el){
   const lg=L();
   if(lg&&ACOES_LANCAR.has(el.dataset.a)&&!podeLancar(lg))return toast('Você é Jogador nesta liga — peça ao admin para virar Lançador');
   if(lg&&ACOES_ADMIN.has(el.dataset.a)&&!souAdmin(lg))return toast('Só o admin mexe nos ajustes da liga');
+  if(lg&&(ACOES_LANCAR.has(el.dataset.a)||ACOES_ADMIN.has(el.dataset.a))&&travado())return toast(msgTrava(),{ms:3500});
   fn(el);
 }
 document.addEventListener('click',e=>{
@@ -5544,6 +5553,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
   const el=e.target,l=L();if(!l)return;
   if((el.dataset.cfg||el.dataset.pat!==undefined)&&!souAdmin(l)){render();return toast('Só o admin mexe nos ajustes da liga')}
+  if((el.dataset.cfg||el.dataset.pat!==undefined)&&travado()){render();return toast(msgTrava(),{ms:3500})}
   if(el.dataset.cfg){
     /* campo numérico vazio ou negativo não pode virar NaN no motor: volta ao que estava */
     const LIM={targetGoals:[0,99],targetMin:[1,180],stintMin:[0,60],disputeThreshold:[1,50]};
@@ -5585,11 +5595,28 @@ async function loadSize(id){
   if(!r.error&&r.data){SIZE[id]={at:Date.now(),d:r.data};if(!ocupado())render()}
   else if(SIZE[id])SIZE[id].carregando=false;
 }                       // meus pedidos de entrada aguardando o admin [{league_id,name,requested_at}]
-const VER={}, SNAP={}, CODE={};    // por liga: versão do servidor, último doc gravado, código de convite
+const VER={}, SNAP={}, CODE={}, DONO={};   // por liga: versão do servidor, último doc gravado, código de convite, sou o dono
 let syncT=null, syncing=false, netErr=false, chan=null;
 const dirty=new Set();
 const CONTATO={};                  // por liga: quando o servidor respondeu por último (batida de rede)
-const contato=id=>{CONTATO[id]=Date.now()};
+/* ---------- trava de sinal ----------
+   Consistência acima de tudo (D-104): quem está sem sinal há mais de 20 s
+   passa a SÓ OLHAR. Dois celulares que não se enxergam produzem lances que
+   depois têm que ser mesclados às cegas; 20 s de divergência é o máximo que
+   se aceita — a régua comum de app com interação ao vivo (batida a cada 5 s,
+   "caiu" depois de 3–4 batidas perdidas). "Sem sinal" é fato observado
+   (pedido que falhou, prazo estourado, aparelho avisou que caiu), nunca só
+   silêncio — quem está com rede e parado não trava. O último contato bom vai
+   para a cópia do aparelho: reabrir o app não zera a contagem.              */
+const PRAZO_SEM_SINAL=20000;
+const BATIDA_VIVO=5000,BATIDA=60000;     // intervalo da batida com racha ao vivo / fora dele
+let ULTIMO_OK=0,sinalOk=true;
+const contato=id=>{if(id)CONTATO[id]=Date.now();ULTIMO_OK=Date.now();if(!sinalOk){sinalOk=true;marcaTrava()}};
+const semSinal=()=>{if(sinalOk){sinalOk=false;marcaTrava()}};
+const travado=()=>!!(sb&&ME&&!sinalOk&&Date.now()-ULTIMO_OK>PRAZO_SEM_SINAL);
+const msgTrava=()=>{const s=Math.round((Date.now()-ULTIMO_OK)/1000);
+  return 'Sem sinal há '+(s<120?s+' s':Math.round(s/60)+' min')+': só leitura até a conexão voltar, para o placar não divergir do outro celular'};
+function marcaTrava(){try{document.body.classList.toggle('travado',travado())}catch(e){}}
 let carregado=false;               // a lista de ligas veio do servidor nesta sessão
 let avisouErro=false;              // "não consegui gravar" já foi dito desde a última gravação boa
 
@@ -5648,8 +5675,8 @@ function cacheAgora(){
   const k=cacheKey();if(!k||cacheFalhou)return;
   try{
     const ligas=S.ligas.filter(l=>VER[l.id]!==undefined)
-      .map(l=>Object.assign({id:l.id,createdAt:l.createdAt,ver:VER[l.id],code:CODE[l.id]||null,snap:cacheSnapDiff(l)},factsDoc(l)));
-    localStorage.setItem(k,JSON.stringify({v:1,at:Date.now(),ligas,dirty:[...dirty]}));
+      .map(l=>Object.assign({id:l.id,createdAt:l.createdAt,ver:VER[l.id],code:CODE[l.id]||null,dono:!!DONO[l.id],snap:cacheSnapDiff(l)},factsDoc(l)));
+    localStorage.setItem(k,JSON.stringify({v:1,at:Date.now(),ok:ULTIMO_OK,ligas,dirty:[...dirty]}));
   }catch(e){cacheFalhou=true}          // sem espaço ou sem localStorage: segue só com a rede
 }
 function cacheSave(){if(cacheT)return;cacheT=setTimeout(cacheAgora,800)}
@@ -5657,11 +5684,12 @@ function cacheLoad(){
   const k=cacheKey();if(!k)return false;
   let o=null;try{o=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
   if(!o||o.v!==1||!Array.isArray(o.ligas)||!o.ligas.length)return false;
+  if(typeof o.ok==='number')ULTIMO_OK=Math.max(ULTIMO_OK,o.ok);
   o.ligas.forEach(c=>{
     if(!c.id||typeof c.ver!=='number')return;
     S.ligas.push({id:c.id,createdAt:c.createdAt||Date.now(),name:c.name||'Liga',cfg:c.cfg||defCfg(),
       players:c.players||[],matches:c.matches||[],sessions:c.sessions||[],live:c.live||null,log:c.log||[]});
-    VER[c.id]=c.ver;if(c.code)CODE[c.id]=c.code;
+    VER[c.id]=c.ver;if(c.code)CODE[c.id]=c.code;DONO[c.id]=!!c.dono;
   });
   S=normalize(S);
   o.ligas.forEach(c=>{
@@ -5750,7 +5778,8 @@ function syncDot(estado,txt){          // salvando | erro | limpo
     document.body.appendChild(el)}
   if(estado==='limpo'){el.style.opacity='0';return}
   el.style.opacity='1';
-  el.textContent=txt||(estado==='erro'?(dirty.size?'sem conexão · guardado no aparelho':'sem conexão'):'salvando');
+  marcaTrava();
+  el.textContent=txt||(estado==='erro'?(travado()?'sem sinal · só leitura':dirty.size?'sem conexão · guardado no aparelho':'sem conexão'):'salvando');
   el.style.background=estado==='erro'?'var(--bad,#FF5F5F)':'var(--panel,#111917)';
   el.style.color=estado==='erro'?'#1a0a0a':'var(--mute,#84998E)';
 }
@@ -5771,7 +5800,7 @@ async function flush(){
       const {data,error}=await rpcT('save_parts',{p_id:id,p_version:VER[id]||1,p_parts:parts});
       if(error){                                   // sem rede: espera o backoff; o servidor recusou: avisa uma vez
         netErr=true;tentativas++;dirty.add(id);
-        if(ehRede(error))syncDot('erro');
+        if(ehRede(error)){semSinal();syncDot('erro')}
         else{syncDot('erro','erro ao gravar');if(!avisouErro){avisouErro=true;toast('Não consegui gravar: '+traduz(error),{ms:4000})}}
         break;
       }
@@ -5826,6 +5855,7 @@ function applyDelta(id,d){
     logSync=antigas.length+novas.length;
   }
   if(d.code)CODE[id]=d.code;
+  if(typeof d.owner==='boolean')DONO[id]=d.owner;
   VER[id]=d.version;
   S=normalize(S);
   l=S.ligas.find(x=>x.id===id);if(!l)return;
@@ -5863,7 +5893,8 @@ function replayCur(c){
     if(ev.type==='sub'){
       const k=lin[ev.side].indexOf(ev.out);
       if(!ev.in){if(k>=0)lin[ev.side].splice(k,1)}
-      else if(k>=0)lin[ev.side][k]=ev.in;else lin[ev.side].push(ev.in);
+      else if(k>=0)lin[ev.side][k]=ev.in;
+      else if(!lin[ev.side].includes(ev.in))lin[ev.side].push(ev.in);   // a mesma troca vinda de dois celulares não duplica ninguém
     }
     if(Array.isArray(ev.gks))gks=ev.gks.slice();
     else if(ev.type==='gk'){const o=ev.side===0?1:0;if(ev.id&&gks[o]===ev.id)gks[o]=null;gks[ev.side]=ev.id||null}
@@ -5907,17 +5938,34 @@ function mesclaLive(local,remoto,snapJson){
   }
   const out=JSON.parse(JSON.stringify(remoto));
   const vistos=new Set(out.cur.events.map(chaveEv));
-  const novosRemotos=out.cur.events.filter(e=>e.type==='goal'&&!conhecidos.has(chaveEv(e)));
-  let novos=0;
-  (local.cur.events||[]).forEach(e=>{const k=chaveEv(e);if(!vistos.has(k)){vistos.add(k);out.cur.events.push(JSON.parse(JSON.stringify(e)));novos++}});
+  /* O que o outro celular lançou e este ainda não viu. O MESMO lance visto
+     dos dois lados (gol do mesmo time em menos de 8 s; a mesma troca ou o
+     mesmo goleiro em menos de 60 s) é um lance só: fica o do outro (já está
+     no servidor) e o daqui não entra — com o autor do gol, se só este tinha.
+     Antes o gol ficava em dobro com um aviso; dois gols do mesmo time em 8 s
+     são raros o bastante para o aviso mandar conferir, não somar (D-104).   */
+  const novosRemotos=out.cur.events.filter(e=>!conhecidos.has(chaveEv(e)));
+  const usados=new Set();
+  const mesmoLance=(a,b)=>{
+    if(a.type!==b.type||a.side!==b.side||usados.has(b))return false;
+    if(a.type==='goal')return Math.abs(b.t-a.t)<8000;
+    if(a.type==='sub')return a.out===b.out&&(a.in||null)===(b.in||null)&&Math.abs(b.t-a.t)<60000;
+    if(a.type==='gk')return (a.id||null)===(b.id||null)&&Math.abs(b.t-a.t)<60000;
+    return false;
+  };
+  let novos=0,golsUm=0;
+  (local.cur.events||[]).forEach(e=>{
+    const k=chaveEv(e);if(vistos.has(k))return;
+    const igual=novosRemotos.find(r=>mesmoLance(e,r));
+    if(igual){usados.add(igual);if(e.type==='goal'){golsUm++;if(e.pid&&!igual.pid){igual.pid=e.pid;igual.own=!!e.own}}return}
+    vistos.add(k);out.cur.events.push(JSON.parse(JSON.stringify(e)));novos++;
+  });
   /* autor de gol marcado aqui e ainda não lá: o gol é o mesmo, leva o autor */
   (local.cur.events||[]).forEach(e=>{if(e.type!=='goal'||!e.pid)return;
     const r=out.cur.events.find(x=>x.type==='goal'&&x.t===e.t&&x.side===e.side);if(r&&!r.pid){r.pid=e.pid;r.own=!!e.own}});
+  if(golsUm)MESCLA.aviso=(golsUm===1?'Um gol foi marcado nos dois celulares: contei um só':golsUm+' gols foram marcados nos dois celulares: contei uma vez cada')
+    +' — se foram gols diferentes, toque de novo';
   if(!novos)return out;
-  /* os dois celulares marcaram gol do mesmo lado com menos de 8 s de diferença:
-     quase sempre é o MESMO gol, visto de dois lugares */
-  const dobrado=pendentes.some(a=>a.type==='goal'&&novosRemotos.some(b=>b.side===a.side&&Math.abs(b.t-a.t)<8000));
-  if(dobrado)MESCLA.aviso='O outro celular também marcou gol do mesmo time quase na mesma hora — confira o placar';
   replayCur(out.cur);
   return out;
 }
@@ -5944,6 +5992,7 @@ async function loadAll(){
     const r=deltas[i];
     if(r.error||!r.data){falhas++;if(!temLocal(row.id))toast('Não consegui carregar '+row.name);return}
     CODE[row.id]=row.code;contato(row.id);
+    if(typeof r.data.owner==='boolean')DONO[row.id]=r.data.owner;
     if(temLocal(row.id)&&VER[row.id]>=r.data.version)return;   // a cópia já está em dia
     applyDelta(row.id,r.data);
   });
@@ -5961,26 +6010,31 @@ async function recarrega(){
   if(recarregando||!ME||!sb||Date.now()<recarregaEm)return;
   recarregando=true;recarregaEm=Date.now()+10000;
   try{await loadAll();netErr=false;if(!dirty.size)syncDot('limpo');if(!ocupado())render();if(dirty.size){tentativas=0;clearTimeout(syncT);flush()}}
-  catch(e){}
+  catch(e){semSinal();syncDot('erro')}
   finally{recarregando=false}
 }
 /* ---------- batida de rede ----------
    O aviso do Realtime se perde quando o celular dorme, o app vai para segundo
    plano ou o sinal cai — e a reconexão não reenvia o que passou. Então a liga
-   aberta é conferida por conta própria: a cada 15 s com o racha ao vivo, a
+   aberta é conferida por conta própria: a cada 5 s com o racha ao vivo, a
    cada 60 s fora dele, e só se nada chegou do servidor nesse intervalo. A
-   resposta sem novidade é uma linha (versão e listas vazias).                */
+   resposta sem novidade é uma linha (versão e listas vazias). É a batida que
+   sustenta a trava de 20 s: sem ela, "sem sinal" só seria descoberto na hora
+   de gravar. Com gravação pendente, a própria gravação é a batida.          */
 let pulsoT=null;
+const BATIDA_EM={};                        // por liga: quando a última batida saiu (não empilha pedidos)
 function pulso(){
   if(!sb||!ME||typeof document==='undefined'||document.visibilityState!=='visible')return;
+  if(!sinalOk)syncDot('erro');                         // "sem conexão" vira "só leitura" quando passa do prazo
   if(!carregado){recarrega();return}
   const l=L();if(!l||VER[l.id]===undefined)return;
-  const gap=aoVivo(l)?15000:60000;
-  if(Date.now()-(CONTATO[l.id]||0)<gap)return;
-  contato(l.id);                             // não empilha pedidos enquanto este não responde
+  const gap=aoVivo(l)?BATIDA_VIVO:BATIDA;
+  if(Date.now()-Math.max(CONTATO[l.id]||0,BATIDA_EM[l.id]||0)<gap)return;
+  BATIDA_EM[l.id]=Date.now();
+  if(dirty.size){if(!syncing){tentativas=0;clearTimeout(syncT);flush()}return}   // o que está pendente é a batida
   refetch(l.id);
 }
-function ligaPulso(){clearInterval(pulsoT);pulsoT=setInterval(pulso,5000);if(pulsoT&&pulsoT.unref)pulsoT.unref()}
+function ligaPulso(){clearInterval(pulsoT);pulsoT=setInterval(pulso,1000);if(pulsoT&&pulsoT.unref)pulsoT.unref()}
 async function loadPend(){
   try{const r=await sb.rpc('my_requests');PEND=(r.data||[])}catch(e){PEND=[]}
 }
@@ -6055,7 +6109,7 @@ async function refetch(id,tent){
   }
   if(ocupado()){pendente.add(id);return}                                // não redesenha por cima de digitação
   const {data,error}=await rpcT('league_delta',{p_id:id,p_since:VER[id]||0});
-  if(error||!data){if(error&&ehRede(error)){netErr=true;syncDot('erro')}return}
+  if(error||!data){if(error&&ehRede(error)){netErr=true;semSinal();syncDot('erro')}return}
   contato(id);
   if(netErr&&!dirty.size&&!syncing){netErr=false;syncDot('limpo')}   // a rede voltou, e quem só olha fica sabendo
   if((VER[id]||0)>=data.version)return;             // eco da nossa própria gravação
@@ -6140,7 +6194,8 @@ async function afterLogin(session){
   try{localStorage.setItem('raxa_last_user',ME.username)}catch(e){}
   S=defState();
   S.me={id:ME.id,name:ME.username};
-  [VER,SNAP,CODE].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));dirty.clear();carregado=false;
+  [VER,SNAP,CODE,DONO].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));dirty.clear();carregado=false;
+  ULTIMO_OK=0;sinalOk=true;marcaTrava();
   loadUI();
   /* a cópia do aparelho aparece na hora; a rede só traz o que mudou desde ela */
   const temCopia=cacheLoad();
@@ -6148,7 +6203,7 @@ async function afterLogin(session){
   try{await loadAll()}
   catch(e){
     if(!temCopia){renderAuth('Não consegui carregar as ligas: '+traduz(e));return}
-    netErr=true;syncDot('erro');toast('Sem conexão — mostrando a cópia do aparelho',{ms:3500});
+    netErr=true;semSinal();syncDot('erro');toast('Sem conexão — mostrando a cópia do aparelho',{ms:3500});
   }
   watch();
   render();
@@ -6184,7 +6239,7 @@ function reid(de,para){
   l.id=para;
   if(S.active===de)S.active=para;
   if(dirty.has(de)){dirty.delete(de);dirty.add(para)}   // mexeu antes da rede responder
-  [VER,SNAP,CODE].forEach(m=>{delete m[de]});
+  [VER,SNAP,CODE,DONO].forEach(m=>{delete m[de]});
 }
 
 async function createLeague(name,base){
@@ -6200,7 +6255,7 @@ async function createLeague(name,base){
     return null;
   }
   reid(tmp,data.id);
-  VER[data.id]=data.version;CODE[data.id]=data.code;
+  VER[data.id]=data.version;CODE[data.id]=data.code;DONO[data.id]=true;
   /* o snapshot é o documento que foi: qualquer edição feita enquanto a rede
      respondia aparece como diferença e sobe na próxima gravação */
   const s=SNAP[data.id]=snapNovo();
@@ -6250,7 +6305,7 @@ Object.assign(A,{
     cacheDrop();                                   // a cópia é desta conta; outra conta no mesmo aparelho não a vê
     try{await sb.auth.signOut()}catch(e){}
     ME=null;S=defState();carregado=false;
-    dirty.clear();pendente.clear();[VER,SNAP,CODE].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));
+    dirty.clear();pendente.clear();[VER,SNAP,CODE,DONO].forEach(m=>Object.keys(m).forEach(k=>delete m[k]));
     try{localStorage.removeItem(UIKEY)}catch(e){}
     authMode='entrar';renderAuth();
   },
@@ -6305,18 +6360,34 @@ Object.assign(A,{
     PEND=PEND.filter(x=>x.league_id!==id);render();toast('Pedido cancelado');
   },
 
+  /* Apagar uma liga é irreversível e leva o histórico de todo mundo — então
+     só o dono, só sem nenhum outro membro (regra também no banco, D-105), e
+     digitando o nome da liga. Quem não é dono tem "Sair da liga".          */
   async delLiga(){
     const id=S.active,l=L();if(!l)return;
-    if(!confirm('Apagar esta liga para todo mundo? Se você não for o dono, você apenas sai dela.'))return;
-    if(!sb||!ME){S.ligas=S.ligas.filter(x=>x.id!==id);S.active=null;S=normalize(S);render();return}
-    /* A RLS só deixa o dono apagar. Para os outros o DELETE não afeta linha
-       nenhuma — então confere se sobrou e, se sobrou, apenas sai. */
-    await sb.from('leagues').delete().eq('id',id);
+    if(!sb||!ME){if(!confirm('Apagar esta liga?'))return;S.ligas=S.ligas.filter(x=>x.id!==id);S.active=null;S=normalize(S);render();return}
+    if(!DONO[id])return A.leaveLiga();
+    await loadAccounts(id);
+    const outros=((ACC[id]&&ACC[id].lista)||[]).filter(a=>!a.pending&&a.user_id!==ME.id);
+    if(outros.length)return toast('A liga tem '+pl(outros.length,'outro membro','outros membros')+' — remova todos em Jogadores antes de apagar, ou peça a outro admin',{ms:4500});
+    const nome=prompt('Apagar "'+l.name+'" para sempre, com todas as partidas e níveis? Digite o nome da liga para confirmar:');
+    if(nome===null)return;
+    if(nome.trim().toLowerCase()!==String(l.name||'').trim().toLowerCase())return toast('O nome não bate — nada foi apagado',{ms:3000});
+    const {error}=await sb.from('leagues').delete().eq('id',id);
     const {data:ainda}=await sb.from('leagues').select('id').eq('id',id).maybeSingle();
-    if(ainda){await sb.rpc('leave_league',{p_id:id});toast('Você saiu da liga')}
-    else toast('Liga apagada');
-    S.ligas=S.ligas.filter(x=>x.id!==id);S.active=null;delete VER[id];delete SNAP[id];
-    S=normalize(S);saveUI();render();
+    if(error||ainda)return toast('Não deu para apagar: '+(error?traduz(error):'a liga ainda tem outros membros'),{ms:4000});
+    toast('Liga apagada');
+    S.ligas=S.ligas.filter(x=>x.id!==id);S.active=null;[VER,SNAP,CODE,DONO].forEach(m=>{delete m[id]});
+    S=normalize(S);saveUI();cacheSave();render();
+  },
+  async leaveLiga(){
+    const id=S.active,l=L();if(!l||!sb||!ME)return;
+    if(!confirm('Sair de "'+l.name+'"? Você deixa de ver o racha; para voltar, peça o código de novo ao admin.'))return;
+    const {error}=await sb.rpc('leave_league',{p_id:id});
+    if(error)return toast('Não deu para sair: '+traduz(error),{ms:4000});
+    toast('Você saiu da liga');
+    S.ligas=S.ligas.filter(x=>x.id!==id);S.active=null;[VER,SNAP,CODE,DONO].forEach(m=>{delete m[id]});
+    S=normalize(S);saveUI();cacheSave();render();
   },
 
   copyCode(){
@@ -6545,7 +6616,7 @@ onWin('online',()=>{
   if(S.active)refetch(S.active);
 });
 /* O aparelho avisou que caiu: quem está só olhando fica sabendo que a tela pode estar velha. */
-onWin('offline',()=>{if(ME)syncDot('erro')});
+onWin('offline',()=>{if(ME){semSinal();syncDot('erro')}});
 /* Soltou o campo de texto: se chegou atualização enquanto digitava, busca agora. */
 document.addEventListener('focusout',()=>setTimeout(refetchPendentes,80));
 

@@ -207,7 +207,7 @@ Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:
 | Remover membro | `status='removido'` — o jogador e o histórico dele ficam |
 | Cadastrar jogador sem conta | `players` sem membro — o caso normal do racha |
 | Passar o admin adiante / sair | pelo menos um admin ativo por liga, garantido por trigger |
-| Apagar a liga | `apagada_em` (soft), purga definitiva depois de 30 dias |
+| Apagar a liga | `apagada_em` (soft), purga definitiva depois de 30 dias — e só o dono, só sem nenhum outro membro (hoje: policy `leagues_delete` com `has_other_members`, D-105) |
 
 ---
 
