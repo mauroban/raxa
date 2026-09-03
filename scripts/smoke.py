@@ -371,6 +371,12 @@ step('proxima partida entra com o time escolhido',()=>{
   if(querido!=null&&lv.cur.a!==querido)throw new Error('entrou outro time');
 });
 step('chegou atrasado (sheet)',()=>A.lateSheet());
+step('o racha de hoje aparece como ao vivo na aba Jogos',()=>{
+  const l=L();if(!l.live||!l.live.matchIds.length)return;
+  S.ui.tab='hist';S.ui.histRacha=null;render();
+  if(!/live-badge/.test(els['#app'].innerHTML))throw new Error('o racha em andamento nao esta marcado como ao vivo na lista de rachas');
+  S.ui.tab='racha';render();
+});
 step('desfazer',()=>A.undo());
 step('encerrar segunda partida',()=>{A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}})});
 step('formato 11v11',()=>setFormat(11));

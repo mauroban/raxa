@@ -633,6 +633,11 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .card.pulse{animation:oppulse 2.2s ease-out infinite;border-color:color-mix(in srgb,var(--lime) 50%,var(--line))}
 #nav button{position:relative}
 .navdot{position:absolute;top:7px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--lime);animation:oppulse 2.2s ease-out infinite}
+/* ao vivo: vermelho, pulso curto — o de opiniões é verde e lento */
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.navdot.live{background:var(--coral);animation:livepulse 1.3s ease-in-out infinite}
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--disp);font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);vertical-align:middle}
+.live-badge i{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:livepulse 1.3s ease-in-out infinite}
 .segn{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:#1a1200;font-size:11px;font-weight:800;margin-left:4px;vertical-align:1px}
 .opnav{display:flex;gap:8px;margin-top:12px;align-items:center}
 .oplist{display:grid;gap:4px}
@@ -1978,7 +1983,7 @@ function drawApp(){
     </div>${body}`;
   $('#bar').innerHTML=barFor(liga);
   const pend=opPendentes(liga)>=OP_MUITOS;        // a aba que leva a avaliar pisca para quem deve muita opinião
-  setNav(NAV_TABS.map(([v,l])=>`<button class="${tab===v?'on':''}" data-a="tab" data-v="${v}" aria-current="${tab===v?'page':'false'}">${NAV_ICON[v]}${l}${v==='ranking'&&pend?'<i class="navdot" title="opiniões pendentes"></i>':''}</button>`).join(''));
+  setNav(NAV_TABS.map(([v,l])=>`<button class="${tab===v?'on':''}" data-a="tab" data-v="${v}" aria-current="${tab===v?'page':'false'}">${NAV_ICON[v]}${l}${v==='ranking'&&pend?'<i class="navdot" title="opiniões pendentes"></i>':''}${v==='racha'&&tab!=='racha'&&aoVivo(liga)?'<i class="navdot live" title="racha ao vivo"></i>':''}</button>`).join(''));
   tickClock();
   if(typeof cuidaWake==='function')cuidaWake();
 }
@@ -1990,7 +1995,7 @@ function renderHome(){
       <div class="dot">${esc(l.name.slice(0,1).toUpperCase())}</div>
       <div style="min-width:0;flex:1">
         <h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.name)}</h3>
-        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}${l.live?' · <span class="win">racha rolando</span>':''}</div>
+        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}${l.live?' · '+seloVivo(l.live.stage==='jogo'?'ao vivo':'montando'):''}</div>
       </div><div style="color:var(--mute);font-size:20px">›</div>
     </button>`).join(''):`
     <div class="empty" style="padding-bottom:18px"><div class="big">Nenhuma liga ainda</div>
@@ -2686,6 +2691,11 @@ function viewRanking(liga){
   if(!liga.players.length)return `<div class="empty"><div class="big">Sem jogadores</div>Comece um racha para cadastrar.</div>`;
   return pendenciasCard(liga)+opCard(liga)+viewEscada(liga);
 }
+/* Racha em andamento: o mesmo selo vermelho pulsando em todo lugar que fala
+   do racha de hoje — aba Racha (quando se está em outra), lista de ligas,
+   e o racha na aba Jogos (D-100).                                          */
+const aoVivo=liga=>!!(liga&&liga.live);
+const seloVivo=(txt)=>`<span class="live-badge"><i></i>${txt||'ao vivo'}</span>`;
 /* Quem lança vê quantas opiniões já deu — e entra na lista de um toque. */
 function opCard(liga){
   if(!vePat(liga)||!podeOpinar(liga))return '';
@@ -3488,7 +3498,7 @@ function viewHist(liga){
     return topo+`
     <button class="btn sm ghost" data-a="histRacha" data-id="" style="margin-bottom:10px">‹ Todos os rachas</button>
     <div class="card" style="margin-bottom:10px">
-      <div class="row"><div class="k">${aberto.avulso?'Partidas avulsas':'Racha'}</div>
+      <div class="row"><div class="k">${aberto.avulso?'Partidas avulsas':'Racha'}${liga.live&&aberto.id===liga.live.id?' '+seloVivo():''}</div>
         <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
       <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
@@ -3502,7 +3512,7 @@ function viewHist(liga){
       const meus=eu?r.ms.filter(m=>ladoNaPartida(liga,m,eu)!==null).length:0;
       return `<button class="rachaRow ${meus?'eu':''}" data-a="histRacha" data-id="${esc(r.id)}">
         <div style="min-width:0;flex:1">
-          <div class="nm">${r.avulso?'Partidas avulsas':DIA(r.ts)}</div>
+          <div class="nm">${r.avulso?'Partidas avulsas':DIA(r.ts)}${liga.live&&r.id===liga.live.id?' '+seloVivo():''}</div>
           <div class="meta"><span class="num">${v} partida${v===1?'':'s'}</span>
             <span class="num">${r.gols} gol${r.gols===1?'':'s'}</span>
             ${meus?`<span class="mine" style="color:var(--lime)">VOCÊ ${meus}</span>`:''}

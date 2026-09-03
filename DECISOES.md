@@ -1768,6 +1768,16 @@ vazado, gols contra…): o resumo é para mandar no grupo, cabe numa tela; o res
 **Onde:** `resumoRacha` (chamado por `endRacha`) e CSS `.sumrow` em `index.html` ·
 `scripts/visual.py` (tela 14) · DOCUMENTACAO §4.4.
 
+### D-100 · O racha em andamento se anuncia: selo "● ao vivo" e ponto vermelho na aba
+**02/09/2026.** Quem abre o app com um racha rolando (o outro celular lançando, ou a própria
+pessoa em outra aba) não tinha sinal nenhum. Agora `aoVivo(liga)` acende um ponto vermelho
+pulsando na aba **Racha** quando se está em outra aba, o selo **● ao vivo** na linha do racha de
+hoje na aba **Jogos** (e no cabeçalho dele), e na lista de ligas ("montando" enquanto ainda é
+presença ou times; "ao vivo" com o racha começado). Vermelho e pulso curto, para não se
+confundir com o ponto verde e lento das opiniões pendentes (D-95).
+**Onde:** `aoVivo`/`seloVivo`, `drawApp` (nav), `renderHome`, `viewHist` em `index.html` ·
+`scripts/smoke.py` ("o racha de hoje aparece como ao vivo") · DOCUMENTACAO §4.3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
