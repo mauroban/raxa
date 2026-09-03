@@ -81,6 +81,8 @@ button{font-family:inherit;color:inherit}
 .iconbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--chalk);
   width:40px;height:40px;border-radius:11px;font-size:17px;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
 .iconbtn:active{transform:scale(.94)}
+.iconbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.livetop .iconbtn svg{width:18px;height:18px}
 
 /* ---------- navegação de polegar ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:50;height:var(--navh);
@@ -1954,6 +1956,12 @@ function render(){
     $('#bar').innerHTML='';setNav('');
   }
 }
+/* ícones de botão em SVG (traço, cor do texto) — emoji/caractere varia por aparelho e parece amador */
+const ICO={
+  pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/></svg>',
+  play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></svg>',
+  close:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l-5 5 5 5M5 12h14"/></svg>'};
 const NAV_ICON={
   racha:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l4.5 3.3-1.7 5.4H9.2L7.5 10.3z"/><path d="M12 3v4M16.5 10.3l3.8-1.2M14.8 15.7l2.4 3.4M9.2 15.7l-2.4 3.4M7.5 10.3L3.7 9.1"/></svg>',
   stats:'<svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg>',
@@ -1981,7 +1989,7 @@ function drawApp(){
         <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h1>
         <div class="sub">${liga.players.length} jogadores · ${nRachas(liga)} racha${nRachas(liga)===1?'':'s'} · ${liga.matches.length} partida${liga.matches.length===1?'':'s'}</div>
       </div>
-      <button class="iconbtn" data-a="home" aria-label="Voltar para a lista de ligas" title="Ligas">↩</button>
+      <button class="iconbtn" data-a="home" aria-label="Voltar para a lista de ligas" title="Ligas">${ICO.back}</button>
     </div>${body}`;
   $('#bar').innerHTML=barFor(liga);
   const pend=opPendentes(liga)>=OP_MUITOS;        // a aba que leva a avaliar pisca para quem deve muita opinião
@@ -2604,8 +2612,8 @@ function viewJogo(liga,lv){
       <div class="k">${c.paused?'⏸ pausada':'alvo '+alvo}</div>
       ${nextq?`<div class="tiny muted">próximo: ${esc(nextq.name)}</div>`:''}
     </div>
-    <button class="iconbtn" data-a="pauseMatch" title="${c.paused?'retomar':'pausar'}" aria-label="${c.paused?'Retomar partida':'Pausar partida'}">${c.paused?'▶':'⏸'}</button>
-    <button class="iconbtn" data-a="cancelMatch" title="cancelar partida" aria-label="Cancelar partida">✕</button>
+    <button class="iconbtn" data-a="pauseMatch" title="${c.paused?'retomar':'pausar'}" aria-label="${c.paused?'Retomar partida':'Pausar partida'}">${c.paused?ICO.play:ICO.pause}</button>
+    <button class="iconbtn" data-a="cancelMatch" title="cancelar partida" aria-label="Cancelar partida">${ICO.close}</button>
   </div>
   ${trechos.length>1?`<div class="stintline tiny muted">Trecho ${trechos.length} ·
     <span class="num">${atual.score[0]}-${atual.score[1]}</span> em ${mmss(atual.dur)} — cada formação conta como uma partida</div>`:''}
