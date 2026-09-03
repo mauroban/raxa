@@ -1781,9 +1781,9 @@ confundir com o ponto verde e lento das opiniões pendentes (D-95).
 ### D-101 · Sem faixa "Trocando X"; autor do gol no polegar, com aviso enquanto faltar
 **02/09/2026.** (1) A faixa "Trocando Fulano — toque em quem entra" saiu da montagem e da
 pré-partida: o nome selecionado já fica marcado, e tocar nele de novo desmarca — a faixa era um
-segundo aviso da mesma coisa. (2) A tirinha "quem fez?" ficava logo abaixo do placar, longe do
-polegar, e sumia em 6 s; agora flutua acima da barra de ação (`position:fixed`), fica 10 s (15 s
-no gol contra) e, enquanto houver gol sem autor, um aviso discreto abaixo do placar ("⚠️ 1 gol
+segundo aviso da mesma coisa. (2) A tirinha "quem fez?" sumia em 6 s; agora fica 10 s (15 s no gol contra), logo abaixo
+do placar, onde o olho já está (uma versão flutuando acima da barra de ação foi testada e
+descartada: ficava baixa demais na tela), e, enquanto houver gol sem autor, um aviso discreto abaixo do placar ("⚠️ 1 gol
 sem autor — toque para marcar") abre a escolha do autor do último deles. Gol sem autor continua
 valendo como sempre (D-14 decide se a artilharia é confiável); o aviso é para o esquecimento, não
 um bloqueio.
