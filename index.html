@@ -207,9 +207,14 @@ label.f .k{display:block;margin-bottom:6px}
 .pdot{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:16px;width:18px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
 .pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
-/* uma bolinha por gol na "partida a partida"; gol contra é a mesma bolinha, vermelha */
-.gball{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--chalk);margin-left:3px;vertical-align:middle}
-.gball.own{background:var(--bad)}
+/* uma bola ⚽ por gol na "partida a partida" — a mesma da linha "gols a cada 10 min";
+   gol contra é a MESMA bola, vermelha (D-107). Emoji não aceita color, então a cor
+   vem de filtro: grayscale tira o azulado do ⚽ do Windows, brightness(.75) baixa o
+   branco para um cinza que aceita tinta (branco puro satura em rosa), sepia tinge,
+   saturate+hue-rotate(-45) levam ao vermelho; os gomos escuros ficam escuros.
+   Conferido em print no Chrome (scripts/visual.py não cobre a Stats da pessoa). */
+.gball{display:inline-block;font-size:11px;line-height:1;margin-left:2px;vertical-align:-1px;font-style:normal}
+.gball.own{filter:grayscale(1) brightness(.75) sepia(1) saturate(6) hue-rotate(-45deg)}
 /* sem sinal há mais de 1 min: o que lança fica apagado — a tela pode estar velha */
 body.travado .scoreb .side,body.travado .esc2 .pl,body.travado .tp,body.travado .btn.pri{opacity:.55;filter:grayscale(.5)}
 .prov{font-size:10.5px;color:var(--gold);font-family:var(--body);letter-spacing:.04em;font-weight:700}
@@ -2947,7 +2952,7 @@ function viewStats(liga){
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
       <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
       ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
-      <span style="min-width:44px;text-align:right;white-space:nowrap">${x.gols<=8?'<i class="gball"></i>'.repeat(x.gols):'<i class="gball"></i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own"></i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
+      <span style="min-width:44px;text-align:right;white-space:nowrap">${x.gols<=8?'<i class="gball">⚽</i>'.repeat(x.gols):'<i class="gball">⚽</i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own">⚽</i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
   const PP_PAG=10,ppMax=Math.max(0,Math.ceil(pps.length/PP_PAG)-1);
   const ppPag=clamp(S.ui.ppPage||0,0,ppMax),ppIni=ppPag*PP_PAG,ppFim=Math.min(pps.length,ppIni+PP_PAG);
@@ -3123,7 +3128,7 @@ ${cardPP}  <div class="card">
     ${rendeu.length?`<div class="sec"><div class="k2"><span>📈 Rendeu acima do esperado <span class="tiny muted">mín. 3 partidas</span></span>${ordBtn('rrendeu')}</div>${corta(rendeu,'rrendeu').map(x=>lin(x,(x.over>0?'+':'')+x.over.toFixed(1),(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j)).join('')+mais(rendeu,'rrendeu')}</div>`:''}
     ${tempo.length?`<div class="sec"><div class="k2"><span>⏱ Mais tempo em quadra</span>${ordBtn('rtempo')}</div>${corta(tempo,'rtempo').map(x=>lin(x,fmtMin(x.min),pl(x.jogos,'partida'))).join('')+mais(tempo,'rtempo')}</div>`:''}
     ${gks.length?`<div class="sec"><div class="k2"><span>🧤 Menos vazado <span class="tiny muted">mín. 20 min no gol</span></span>${ordBtn('rgk')}</div>${corta(gks,'rgk').map(x=>lin(x,por10(x.sofridos,x.minGk)+'<small>/10 min</small>',fmtMin(x.minGk)+' no gol')).join('')+mais(gks,'rgk')}</div>`:''}
-    ${gc.length?`<div class="sec"><div class="k2"><i class="gball own" style="margin:0 6px 0 0"></i>Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
+    ${gc.length?`<div class="sec"><div class="k2"><i class="gball own" style="margin:0 6px 0 0">⚽</i>Gol contra</div>${gc.map(pid=>lin({pid},'')).join('')}</div>`:''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
          "de onde → para onde" escrito — quem andou mais vem primeiro     */

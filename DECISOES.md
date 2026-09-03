@@ -1889,6 +1889,19 @@ no título "Gol contra" do resumo do racha. Os ⚽ de título (Artilheiro, Artil
 enquanto.
 **Onde:** `viewRacha` (botão), `ppRow` e o resumo em `index.html` · DOCUMENTACAO §5.2.
 
+### D-107 · Gol volta a ser ⚽ na "partida a partida"; gol contra é o mesmo ⚽, vermelho
+**03/09/2026.** A bolinha em CSS da D-106 ficou pior que o emoji: o ⚽ já aparece na mesma tela
+("⚽ 0,44 gols a cada 10 min") e a linha de cada partida ficava destoando. Voltou o ⚽ por gol
+e o gol contra é **o mesmo ⚽ tingido de vermelho** por `filter` (grayscale → brightness .75 →
+sepia → saturate → hue-rotate −45°), porque emoji não aceita `color`. O `brightness` antes do
+`sepia` é o que faz o branco virar vermelho e não rosa; conferido em print no Chrome/Windows,
+onde o ⚽ é azulado. Mantida a regra geral de não usar emoji em botão e indicador novo — a
+exceção é o ⚽, que é a marca do gol no app inteiro.
+**Descartado:** silhueta via `text-shadow` (vira um disco liso, igual à bolinha de CSS);
+`mix-blend-mode: multiply` sobre círculo vermelho (borda do glifo varia por aparelho).
+**Onde:** `.gball`/`.gball.own` em `index.html`, `ppRow` e o título "Gol contra" do resumo do
+racha · DOCUMENTACAO §5.2. Sem teste automático de cor; `layout.py` cobre a estrutura.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
