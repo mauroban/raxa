@@ -1901,6 +1901,10 @@ exceção é o ⚽, que é a marca do gol no app inteiro.
 `mix-blend-mode: multiply` sobre círculo vermelho (borda do glifo varia por aparelho).
 **Onde:** `.gball`/`.gball.own` em `index.html`, `ppRow` e o título "Gol contra" do resumo do
 racha · DOCUMENTACAO §5.2. Sem teste automático de cor; `layout.py` cobre a estrutura.
+**Ajuste no mesmo dia:** a primeira versão saiu com 11px e `vertical-align:-1px` — pequena e
+caindo abaixo da linha no celular, porque o glifo do emoji desce da linha de base de um jeito
+diferente em cada aparelho. Agora é 14px (tamanho do placar ao lado) e a célula (`.gcell`) é
+`inline-flex` centralizado, sem `vertical-align`.
 
 ## Como registrar uma decisão nova
 

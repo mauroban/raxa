@@ -213,7 +213,10 @@ label.f .k{display:block;margin-bottom:6px}
    branco para um cinza que aceita tinta (branco puro satura em rosa), sepia tinge,
    saturate+hue-rotate(-45) levam ao vermelho; os gomos escuros ficam escuros.
    Conferido em print no Chrome (scripts/visual.py não cobre a Stats da pessoa). */
-.gball{display:inline-block;font-size:11px;line-height:1;margin-left:2px;vertical-align:-1px;font-style:normal}
+/* 14px (do tamanho do placar ao lado) e SEM vertical-align: o emoji desce da linha de
+   base de um jeito diferente em cada aparelho, então quem centraliza é o flex da célula. */
+.gball{display:inline-block;font-size:14px;line-height:1;margin-left:2px;font-style:normal}
+.gcell{display:inline-flex;align-items:center;justify-content:flex-end;min-width:44px;white-space:nowrap}
 .gball.own{filter:grayscale(1) brightness(.75) sepia(1) saturate(6) hue-rotate(-45deg)}
 /* sem sinal há mais de 1 min: o que lança fica apagado — a tela pode estar velha */
 body.travado .scoreb .side,body.travado .esc2 .pl,body.travado .tp,body.travado .btn.pri{opacity:.55;filter:grayscale(.5)}
@@ -2952,7 +2955,7 @@ function viewStats(liga){
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
       <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
       ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
-      <span style="min-width:44px;text-align:right;white-space:nowrap">${x.gols<=8?'<i class="gball">⚽</i>'.repeat(x.gols):'<i class="gball">⚽</i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own">⚽</i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
+      <span class="gcell">${x.gols<=8?'<i class="gball">⚽</i>'.repeat(x.gols):'<i class="gball">⚽</i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own">⚽</i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
   const PP_PAG=10,ppMax=Math.max(0,Math.ceil(pps.length/PP_PAG)-1);
   const ppPag=clamp(S.ui.ppPage||0,0,ppMax),ppIni=ppPag*PP_PAG,ppFim=Math.min(pps.length,ppIni+PP_PAG);
