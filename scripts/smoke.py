@@ -377,6 +377,16 @@ step('o racha de hoje aparece como ao vivo na aba Jogos',()=>{
   if(!/live-badge/.test(els['#app'].innerHTML))throw new Error('o racha em andamento nao esta marcado como ao vivo na lista de rachas');
   S.ui.tab='racha';render();
 });
+step('gol sem autor avisa na tela ate alguem marcar',()=>{
+  const l=L(),lv=l.live;if(!lv||!lv.cur)return;
+  A.goal({dataset:{s:'1'}});render();
+  if(!/noauthor/.test(els['#app'].innerHTML))throw new Error('gol sem autor devia avisar');
+  const g=lv.cur.events.filter(e=>e.type==='goal'&&!e.pid).pop();
+  A.setGoalScorer({dataset:{t:String(g.t),id:lv.cur.lineups[1][0]}});render();
+  const resto=lv.cur.events.filter(e=>e.type==='goal'&&!e.pid).length;
+  if(!resto&&/noauthor/.test(els['#app'].innerHTML))throw new Error('aviso devia sumir com todos os gols com autor');
+  A.undo();
+});
 step('desfazer',()=>A.undo());
 step('encerrar segunda partida',()=>{A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}})});
 step('formato 11v11',()=>setFormat(11));

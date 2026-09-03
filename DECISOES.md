@@ -1778,6 +1778,19 @@ confundir com o ponto verde e lento das opiniões pendentes (D-95).
 **Onde:** `aoVivo`/`seloVivo`, `drawApp` (nav), `renderHome`, `viewHist` em `index.html` ·
 `scripts/smoke.py` ("o racha de hoje aparece como ao vivo") · DOCUMENTACAO §4.3.
 
+### D-101 · Sem faixa "Trocando X"; autor do gol no polegar, com aviso enquanto faltar
+**02/09/2026.** (1) A faixa "Trocando Fulano — toque em quem entra" saiu da montagem e da
+pré-partida: o nome selecionado já fica marcado, e tocar nele de novo desmarca — a faixa era um
+segundo aviso da mesma coisa. (2) A tirinha "quem fez?" ficava logo abaixo do placar, longe do
+polegar, e sumia em 6 s; agora flutua acima da barra de ação (`position:fixed`), fica 10 s (15 s
+no gol contra) e, enquanto houver gol sem autor, um aviso discreto abaixo do placar ("⚠️ 1 gol
+sem autor — toque para marcar") abre a escolha do autor do último deles. Gol sem autor continua
+valendo como sempre (D-14 decide se a artilharia é confiável); o aviso é para o esquecimento, não
+um bloqueio.
+**Onde:** `viewTimes`/`viewProxima` (sem `selBar`), `viewJogo` (`.noauthor`), `showScorer`
+(tempo) e CSS `.scorerbar` em `index.html` · `scripts/smoke.py` ("gol sem autor avisa") ·
+DOCUMENTACAO §4.2/§4.3.
+
 ## Como registrar uma decisão nova
 
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi

@@ -276,14 +276,14 @@ Cada cartão de time mostra, ao lado do nome, a **patente média do time** (D-87
 - todos os nomes ficam em botões grandes, e **quem está de fora tem card próprio com contador** — nunca escondido; na montagem os times ficam **lado a lado, em duas colunas, um nome por linha** (D-98), para todos caberem na tela do celular sem nome quebrando;
 - **arraste um nome sobre o outro para trocar de lugar**, ou arraste para dentro de um time, para o card "fora" ou para o card de goleiros — no celular, segure um instante antes de arrastar;
 - quem preferir tocar: toca em um jogador e em outro para trocar; toca no espaço de um time (ou no card "fora") para mover;
-- enquanto alguém está selecionado, uma barra fixa no topo mostra quem é e permite cancelar;
+- quem está selecionado fica marcado no próprio nome (tocar nele de novo desmarca) — sem faixa de aviso (D-101);
 - "Equilibrar" refaz tudo, 🎲 sorteia ignorando o nível, e os botões 2/3/4 times remontam na hora.
 
 ### 4.3 Durante — 1 toque por partida
 
 Cronômetro grande, dois blocos coloridos e os slots de goleiro:
 
-- **Tocar no bloco do time = +1 gol.** Aparece uma tirinha com os nomes daquele time para marcar o autor — toca ou ignora, ela some sozinha em 6s. **Nunca bloqueia.**
+- **Tocar no bloco do time = +1 gol.** Aparece uma tirinha flutuante, no alcance do polegar, com os nomes daquele time para marcar o autor — toca ou ignora, ela some sozinha em 10 s. **Nunca bloqueia.** Enquanto houver **gol sem autor**, um aviso discreto fica abaixo do placar ("⚠️ 1 gol sem autor — toque para marcar") e abre a escolha do autor (D-101).
 - **Os gols ficam listados abaixo do placar**, com minuto e autor: `3'12 — Rodrigo ✕`. Toque no nome para corrigir o autor (ou colocar um que você tinha pulado), e no **✕** para apagar aquele gol específico. É mais direto que um "desfazer" cego, porque você vê exatamente o que está removendo.
 - O cronômetro mostra o alvo configurado na Liga ("2 gols ou 7 min") e pisca quando bate. Quando o **tempo** bate, o celular também **vibra e apita**, uma vez por partida: a tela está no chão da quadra e ninguém está olhando para ela. O alvo de gols não apita — é um toque da própria pessoa. O **alvo** é a única coisa que continua sendo da Liga; o **modo** (curtas ou única) é de cada racha.
 - **Encerrar é um toque só, e o botão já diz o resultado**: `✓ Fim · Time A 2-1`. Ele grava exatamente o que está no placar e **não pergunta nada** — nem no 0-0, que é gravado como empate. Ninguém precisa tocar no time que venceu: os gols já disseram.

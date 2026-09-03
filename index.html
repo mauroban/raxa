@@ -366,7 +366,10 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 }
 .lineup{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .lineup span{font-size:12px;color:var(--mute);background:var(--panel2);padding:3px 7px;border-radius:7px}
-.scorerbar{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px}
+/* a tirinha "quem fez?" flutua no alcance do polegar, acima da barra de ação,
+   em vez de ficar embaixo do placar (D-101) */
+.scorerbar{position:fixed;left:10px;right:10px;bottom:calc(var(--navh) + 84px);z-index:150;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);animation:opin .18s ease-out}
+.noauthor{display:block;width:100%;margin-top:8px;border:1px dashed color-mix(in srgb,var(--gold) 60%,var(--line));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--chalk);border-radius:11px;padding:9px 12px;font:inherit;font-size:13px;text-align:left;cursor:pointer}
 .scorerbar .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .goalrow{display:flex;align-items:center;gap:12px;padding:4px 0;border-bottom:1px solid var(--line)}
 .goalrow:last-child{border-bottom:0}
@@ -2308,7 +2311,6 @@ function viewTimes(liga,lv){
   const rod=pool.length>0;
   const faltando=lv.teams.map(t=>per-t.ids.length).filter(x=>x>0);
   return `
-  ${selBar(liga,lv)}
   <div class="card">
     <div class="row"><div class="k">Times · ${liga.cfg.format}v${liga.cfg.format}${rod?' (goleiro reveza)':''}</div>
       <div class="sp tiny ${diff<18?'win':diff<55?'muted':'dn'}">${esc(verdict)}</div></div>
@@ -2353,11 +2355,6 @@ function viewTimes(liga,lv){
     </div>
   </div>
   <div class="tiny muted" style="text-align:center;padding:12px 20px">Arraste, ou toque em um nome e depois no outro, para trocar.</div>`;
-}
-function selBar(liga,lv){
-  if(!lv.sel)return '';
-  return `<div class="selbar" style="margin-top:8px">Trocando <b>&nbsp;${esc(nameOf(liga,lv.sel))}</b> — toque em quem entra no lugar
-    <button class="btn sm ghost sp" data-a="clearSel">Cancelar</button></div>`;
 }
 /* ---------- completar o time menor ----------
    Os dois lados entram sempre com o mesmo número. Quando o time da vez tem
@@ -2544,7 +2541,6 @@ function viewProxima(liga,lv){
           {attrs:`data-a="toTeam" data-i="${ti}" data-drop-zone="team:${ti}"`,head:cab,
            foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false)).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
     </div>
-    ${selBar(liga,lv)}
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
       const partes=[];
       if(rs.length)partes.push('Hoje: '+rs.map(x=>esc(x.n)+' '+x.r.w+'V'+(x.r.d?' '+x.r.d+'E':'')+' '+x.r.l+'D').join(' · '));
@@ -2624,6 +2620,8 @@ function viewJogo(liga,lv){
       </div>`}).join('<div class="vs">VS</div>')}
   </div>
   <div id="scorer"></div>
+  ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
+    return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">⚠️ ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
   <div class="esc2">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
       {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="outPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"`})).join('')}
@@ -5300,7 +5298,7 @@ function showScorer(side,contra){
       <button class="tp big" data-a="scorer" data-id="" style="opacity:.6">pular</button></div></div>`;
   clearTimeout(showScorer._t);
   showScorer._t=setTimeout(()=>{const s=$('#scorer');if(s)s.innerHTML='';
-    if(typeof refetchPendentes==='function')refetchPendentes()},contra?12000:6000);
+    if(typeof refetchPendentes==='function')refetchPendentes()},contra?15000:10000);
 }
 /* ==========================================================================
    PINTAR PRESENÇA — segurar num nome e arrastar marca (ou desmarca) todo
