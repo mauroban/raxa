@@ -1992,7 +1992,9 @@ cabeçalho. A partida é do time pela composição em quadra (`timeDoLado`, D-59
 card — então o V/E/D da folha bate com o da lista. Racha em andamento usa os times do próprio racha.
 **Ajuste no mesmo dia:** o rótulo é "prob. de vitória", nunca "chance no apito" (o app inteiro fala
 em probabilidade de vitória); a dica do card virou "toque para ver detalhes"; e as linhas dos
-times ficaram compactas (12,5px, menos respiro) — ocupavam a tela como se fossem cards.
+times ficaram compactas (12,5px, menos respiro) — ocupavam a tela como se fossem cards. No rodízio
+a luva 🧤 voltou ao lado de quem é goleiro de fato (`p.gk`): jogador de linha também roda, e sem
+ela os dois pareciam iguais — é informação, não enfeite.
 **Onde:** `A.rachaTime` em `index.html` · DOCUMENTACAO §5.2 · `scripts/.tmp/shot_stats.py time`.
 
 ## Como registrar uma decisão nova

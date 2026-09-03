@@ -5400,7 +5400,8 @@ const A={
     const gks=sess&&Array.isArray(sess.gkPool)?sess.gkPool:[];
     /* patente de cada um, no mini-badge da presença (D-88); goleiro do rodízio pela trilha de goleiro */
     const dot=(p,r)=>{if(!vePat(l))return '';if(!temPatente(l,p,r))r=r==='G'?'L':'G';return temPatente(l,p,r)?patDot(l,rt(p,r).rank):''};
-    const chip=(id,r,big)=>{const p=P(l,id);return p?`<button class="tp ${big?'big':''}" data-a="pSheet" data-id="${id}">${dot(p,r)}<span class="nm">${esc(p.name)}</span></button>`:''};
+    /* no rodízio a luva marca quem é goleiro de fato: jogador de linha também roda, e sem a luva os dois pareciam iguais */
+    const chip=(id,r,big)=>{const p=P(l,id);return p?`<button class="tp ${big?'big':''}" data-a="pSheet" data-id="${id}">${dot(p,r)}<span class="nm">${esc(p.name)}${r==='G'&&p.gk?' 🧤':''}</span></button>`:''};
     /* as partidas do time (D-111): o time é reconhecido pela composição
        (timeDoLado, D-59), não pelo nome no placar; até o 5v5 o adversário é
        a lista de quem estava em quadra do outro lado, como no histórico   */
