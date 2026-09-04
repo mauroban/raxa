@@ -852,6 +852,13 @@ function opAtiva(liga,o){
   return !!(a&&PODE_OPINAR.includes(a.role||'jogador'));
 }
 const opsAtivas=(liga,tr)=>(Array.isArray(tr.op)?tr.op:[]).filter(o=>opAtiva(liga,o));
+/* Tudo que UM membro opinou sobre os outros: {pid, nome, r, e, ts} (D-124). */
+function opinioesDadas(liga,by){
+  const out=[];
+  (liga.players||[]).forEach(p=>{if(p.id===by)return;['L','G'].forEach(r=>{const tr=p[r];if(!tr||!Array.isArray(tr.op))return;
+    tr.op.forEach(o=>{if(o.by===by)out.push({pid:p.id,nome:p.name,r,e:o.e===undefined?null:o.e,ts:o.ts||0})})})});
+  return out;
+}
 /* Improviso no gol (D-110): jogador de linha SEM opinião como goleiro entra
    no gol uma patente abaixo da entrada padrão (Bronze 2 na escada padrão:
    1300), ainda calibrando e com o K de quem não tem palpite. É mais difícil
@@ -2195,7 +2202,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
   'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -5383,12 +5390,31 @@ const A={
         <button class="btn ghost" data-a="pdCancel">Cancelar</button>
         <button class="btn pri" id="pdsalvar" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
       </div>
+      ${adm&&ver?(()=>{const n=opinioesDadas(l,p.id).length;return `<button class="btn wide ghost" data-a="opDe" data-id="${p.id}" style="margin-top:10px">👁 Opiniões que ${esc(p.name.split(' ')[0])} deu${n?` <small>(${n})</small>`:''}</button>`})():''}
       ${adm?`<button class="btn wide ghost" data-a="mergeSheet" data-id="${p.id}" style="margin-top:10px">⇆ É a mesma pessoa que outro cadastro…</button>`:''}
       ${adm&&juncoesDe(l,p.id).length?`<div style="margin-top:10px"><div class="k" style="margin-bottom:6px">Cadastros juntados aqui</div>
         ${juncoesDe(l,p.id).map(e=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="min-width:0"><b>${esc(e.de.name)}</b> <span class="muted">· ${pl((e.matches||[]).length,'partida')} · ${new Date(e.ts).toLocaleDateString('pt-BR')}</span></div>
           <button class="btn sm ghost sp" data-a="unmerge" data-ref="${esc(e.id)}">Separar de novo</button></div>`).join('')}
         </div>`:''}
       ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
+  },
+  /* ----- as opiniões que um membro deu (só o admin) -----
+     A ficha mostra o que os outros acham DELE; aqui é o contrário: tudo que
+     ele opinou sobre os outros, por posição, com data e se vale hoje (D-124).
+     Só olhar — a opinião é da pessoa, e não se anula uma a uma (D-121).   */
+  opDe(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souAdmin(l))return toast('Só o admin vê as opiniões de um membro');
+    const todas=opinioesDadas(l,p.id),vale=PODE_OPINAR.includes(p.role||'jogador');
+    const data=ts=>ts?new Date(ts).toLocaleDateString('pt-BR'):'';
+    const sec=r=>{const ops=todas.filter(o=>o.r===r).sort((a,b)=>(b.e===null?-1:b.e)-(a.e===null?-1:a.e)||a.nome.localeCompare(b.nome));
+      if(!ops.length)return '';
+      return `<div class="k" style="margin:12px 0 6px">${r==='G'?'🧤 Gol':'Linha'} · ${pl(ops.length,'opinião','opiniões')}</div>
+        ${ops.map(o=>`<div class="oprow2"><div class="who tiny"><button class="lnk" data-a="pSheet" data-id="${o.pid}" data-r="${r}" style="text-decoration:none;color:inherit;font-weight:600">${esc(o.nome)}</button> <span class="muted">· ${data(o.ts)}</span></div>${o.e===null?'<span class="pat none">não sabe</span>':patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}`};
+    openSheet(`<h2>Opiniões que ${esc(p.name.split(' ')[0])} deu</h2>
+      <div class="tiny muted" style="margin-bottom:4px">${PAPEL[p.role]||'Jogador'}${vale?' · valem na entrada de cada um':' · <b>não valem</b>: hoje é Jogador (D-121) — voltam a valer se for promovido'}${todas.length?'':' · ainda não opinou sobre ninguém'}</div>
+      ${sec('L')}${sec('G')}
+      <div style="height:14px"></div><button class="btn wide ghost" data-a="pSheet" data-id="${p.id}">Voltar à ficha</button>`);
   },
   /* ----- juntar cadastros ----- */
   mergeSheet(el){

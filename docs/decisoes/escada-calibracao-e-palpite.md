@@ -444,3 +444,22 @@ rebaixado (perde informação que volta a servir se ele for promovido); impedir 
 lista "não vale"), `pdSave` em `index.html` · `scripts/smoke.py` (sem `opDel`; rebaixar invalida e
 promover revalida; jogador opina sem valer) · [Patentes §3.4](../produto/patentes.md) ·
 [Contas e permissões §5](../produto/contas-e-permissoes.md).
+
+<a id="d-124"></a>
+### D-124 · Só o admin vê, na ficha, tudo que um membro opinou sobre os outros
+**04/09/2026.** A ficha de uma pessoa mostra o que os outros acham **dela**; não havia como ver o
+inverso — tudo que **ela** opinou. O admin precisa disso para entender uma entrada estranha
+("quem deu Diamante para o Fulano?" → "o Beltrano deu Diamante para todo mundo") e para
+conversar com quem está fora da curva. Agora a ficha tem, **só para o admin** e só com as
+patentes visíveis, o botão *"Opiniões que Fulano deu (N)"*, que abre uma folha por posição
+(Linha / 🧤 Gol): cada nome com a patente dada ou "não sabe", a data, e um aviso quando as
+opiniões dele **não valem** hoje (é Jogador, D-121). Os nomes levam à ficha de cada um.
+**Por quê:** só o admin — é o mesmo poder de ver o Elo cru: informação que vira briga se for
+pública ("você me deu Bronze?"). **Só leitura**, de propósito: a D-121 tirou o "anular a opinião
+de uma pessoa" e isto não o traz de volta pela porta dos fundos; o caminho continua sendo
+conversar, ou rebaixar a Jogador.
+**Descartado:** mostrar para quem lança (a opinião é entre quem deu e quem avalia a liga, não
+entre pares); um card na aba Jogadores (a pergunta é sempre sobre uma pessoa — mora na ficha).
+**Onde:** `opinioesDadas`, `A.opDe` (em `ACOES_ADMIN`), botão em `pSheet` em `index.html` ·
+`scripts/smoke.py` bloco D-124 · [Patentes §8](../produto/patentes.md) ·
+[Contas e permissões](../produto/contas-e-permissoes.md).

@@ -1255,6 +1255,32 @@ step('da para jogar sem completar: os dois lados entram menores e iguais',()=>{
   A.finish({dataset:{r:'draw'}});
 });
 
+console.log('\n[smoke] as opinioes que um membro deu: so o admin ve (D-124)');
+step('ficha: admin ve o botao com a contagem; a folha lista por posicao; nao-admin nem ve o botao nem abre',()=>{
+  S=defState();A.demo();const l=L();
+  S.me.name='tester';l.players[0].owner='tester';
+  const eu=euId(l);if(!eu)throw new Error('faltou vincular o usuario logado a um jogador');
+  const me=P(l,eu);me.role='admin';
+  const alvo=l.players.find(p=>p.id!==eu),alvo2=l.players.find(p=>p.id!==eu&&p.id!==alvo.id);
+  alvo.L.op=(alvo.L.op||[]).filter(o=>o.by!==eu).concat([{e:1700,by:eu,ts:Date.now()}]);
+  alvo2.G.op=(alvo2.G.op||[]).filter(o=>o.by!==eu).concat([{e:null,by:eu,ts:Date.now()}]);
+  const dadas=opinioesDadas(l,eu);
+  if(dadas.length<2||!dadas.some(x=>x.pid===alvo.id&&x.r==='L'&&x.e===1700)||!dadas.some(x=>x.pid===alvo2.id&&x.r==='G'&&x.e===null))throw new Error('opinioesDadas nao achou as duas');
+  A.pSheet({dataset:{id:eu}});
+  let h=$('#sheet').innerHTML;
+  if(!h.includes('data-a="opDe"')||!h.includes('('+dadas.length+')'))throw new Error('admin devia ver o botao com a contagem');
+  A.opDe({dataset:{id:eu}});h=$('#sheet').innerHTML;
+  if(!h.includes(alvo.name)||!h.includes(alvo2.name)||!h.includes('não sabe')||!h.includes('🧤 Gol')||!h.includes('Linha'))throw new Error('a folha devia listar as duas opinioes por posicao');
+  if(!h.includes('valem na entrada'))throw new Error('admin: as opinioes valem');
+  me.role='jogador';A.opDe({dataset:{id:eu}});h=$('#sheet').innerHTML;
+  if(h.includes('não valem'))throw new Error('quem nao e admin nao abre a folha');
+  me.role='admin';const outro=alvo;outro.role='jogador';A.opDe({dataset:{id:outro.id}});h=$('#sheet').innerHTML;
+  if(!h.includes('não valem'))throw new Error('membro que hoje e Jogador: a folha diz que as opinioes dele nao valem');
+  me.role='lancador';A.pSheet({dataset:{id:alvo2.id}});
+  if($('#sheet').innerHTML.includes('data-a="opDe"'))throw new Error('lancador nao ve o botao');
+  me.role='admin';
+});
+
 console.log('\n[smoke] elenco no meio do racha: sair e voltar, goleiro que chega, refazer times (D-122)');
 /* racha novo do zero: `line` de linha + `gk` goleiros presentes, times montados, pré-partida */
 const rachaNovo=(line,gk)=>{S=defState();A.demo();const l=L();l.cfg.format=5;l.cfg.matchMode='curtas';
