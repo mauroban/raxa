@@ -132,6 +132,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-106](interface.md#d-106) · Sem emoji no botão de iniciar; bolinha vermelha para gol contra
 - [D-107](interface.md#d-107) · Gol volta a ser ⚽ na "partida a partida"; gol contra é o mesmo ⚽, vermelho
 - [D-119](interface.md#d-119) · Sem o botão "Carregar o racha de sábado"
+- [D-120](interface.md#d-120) · O cartão de opinião cabe na tela do celular
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 

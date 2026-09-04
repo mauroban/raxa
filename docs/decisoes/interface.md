@@ -223,3 +223,22 @@ saiu. A ação `A.demo` continua no código **sem botão**: é a massa de dados 
 **Descartado:** mover a montagem do exemplo para os scripts (quatro cópias do mesmo seed, ou um
 prelúdio compartilhado só para isso); apagar o exemplo e reescrever os quatro scripts.
 **Onde:** tela inicial (`renderHome`) e `A.demo` em `index.html` · [Deploy §3](../tecnico/deploy.md).
+
+<a id="d-120"></a>
+### D-120 · O cartão de opinião cabe na tela do celular
+**04/09/2026.** O cartão de "Minhas opiniões" (nome, cinco patentes, "Não sei", anterior/próximo)
+passava da tela num celular: as descrições de cada patente tinham duas frases e quebravam em três
+ou quatro linhas no 360 px, a linha com as opiniões dos outros e a contagem "3 de 16 · faltam 13"
+empurravam tudo para baixo, e a pessoa rolava para achar o Ferro e o "Não sei". Medido em Chrome
+headless a 360 px: o cartão terminava a **633 px** do topo da folha, e a folha tem 88% da altura
+da tela (563 px num celular de 640 px). Agora termina a **550 px**: descrição de **uma frase** por
+patente (12 px; uma linha no computador, duas no celular), "Não sei — nunca vi jogar", opções de
+44 px em vez de 56, avatar e nome menores, a contagem saiu da folha (o seletor Linha/Gol já mostra
+quantas faltam; fica só "faltam N" ao lado do título e a barra de progresso) e a linha com **o que
+os outros opinaram saiu do cartão** — fica na ficha; aqui a pergunta é a sua. A contagem de
+opiniões recebidas na lista de baixo **fica** (é o que diz quem ainda precisa de opinião).
+**Descartado:** cortar o "Não sei" ou a navegação; esconder a régua e deixar só o badge (a frase é o
+que corrige o olhar do drible, D-90); folha em duas páginas.
+**Onde:** `A.opSheet` (`SIGNIF`, cabeçalho, cartão) e CSS `.opcard`/`.opopt`/`.opbar`/`.opnav` em
+`index.html` · medida: Chrome headless a 360 px (`scripts/visual.py` cobre a estrutura) ·
+[Patentes §8](../produto/patentes.md).
