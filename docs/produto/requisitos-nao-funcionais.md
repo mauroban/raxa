@@ -1,6 +1,6 @@
 # Requisitos não funcionais — Raxa
 
-Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · modelo de dados da v2 em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
+Produto em [docs/produto](./) (índice em [docs/README.md](../README.md)) · modelo de dados da v2 em [Banco de dados](../tecnico/banco-de-dados.md).
 
 Cada requisito traz uma **meta verificável**. Onde a meta ainda não é atingível na versão atual (com backend), está marcado o que fica para a v2.
 

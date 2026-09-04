@@ -1,9 +1,9 @@
 # Regras do racha — como a noite roda
 
 > As regras de quadra que o app segue: quem entra, quem sai, quem fica, quem completa.
-> Nada aqui é sobre patente ou rating — isso está na [DOCUMENTACAO.md](DOCUMENTACAO.md).
-> Requisitos correspondentes em [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md) (RF-05 e RF-06)
-> · o porquê de cada regra em [DECISOES.md](DECISOES.md).
+> Nada aqui é sobre patente ou rating — isso está em [Patentes](patentes.md).
+> Requisitos correspondentes em [Requisitos funcionais](requisitos-funcionais.md) (RF-05 e RF-06)
+> · o porquê de cada regra em [decisões](../decisoes/README.md).
 
 ---
 

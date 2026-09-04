@@ -8,7 +8,7 @@
 -- O motor (splitStints, computeElo, rebuildAll) continua rodando no cliente,
 -- exatamente como no protótipo — nenhuma regra de produto mudou.
 --
--- O esquema relacional definitivo está em BANCO-DE-DADOS.md. Este aqui é o
+-- O esquema relacional definitivo está em docs/tecnico/banco-de-dados.md. Este aqui é o
 -- degrau intermediário: contas de verdade, dados compartilhados, sem reescrita.
 --
 -- Como aplicar: Supabase -> SQL Editor -> cole tudo -> Run.

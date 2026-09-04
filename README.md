@@ -10,7 +10,7 @@ Sem build, sem app store — é uma página só.
 
 Os dados ficam no Postgres (Supabase): a mesma liga abre em qualquer aparelho e o
 racha em andamento aparece para todo mundo do grupo em tempo real. Para subir o seu,
-veja **[DEPLOY.md](DEPLOY.md)** — dá para rodar inteiro no plano gratuito.
+veja **[Deploy](docs/tecnico/deploy.md)** — dá para rodar inteiro no plano gratuito.
 
 Na primeira tela (enquanto não existe nenhuma liga), **"Carregar o racha de sábado"** cria a liga já com a lista real (3 goleiros e 16 de linha), todo mundo no nível de entrada — ajuste quem quiser na aba Jogadores ou deixe as partidas de calibração resolverem.
 
@@ -32,14 +32,13 @@ Na primeira tela (enquanto não existe nenhuma liga), **"Carregar o racha de sá
 
 ## Documentação
 
-| Arquivo | Conteúdo |
+Tudo em [`docs/`](docs/README.md), separado por assunto:
+
+| Pasta | O que tem |
 |---|---|
-| [DOCUMENTACAO.md](DOCUMENTACAO.md) | Como o produto funciona, o sistema de patentes, os números/duelos e as decisões de design |
-| [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md) | RF-01 a RF-11, com prioridade, status e critérios de aceite |
-| [REQUISITOS-NAO-FUNCIONAIS.md](REQUISITOS-NAO-FUNCIONAIS.md) | RNF-01 a RNF-11, com metas verificáveis |
-| [DECISOES.md](DECISOES.md) | O registro das decisões: o que foi decidido, por quê, o que foi descartado e onde vive |
-| [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md) | As regras de quadra: times cheios, fila do "de próximo", vencedor fica, quem completa, goleiros |
-| [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md) | Esquema da v2: contas, membros, convites, partidas, RLS e migração |
+| [docs/produto](docs/README.md#produto) | Como o produto funciona, um documento por assunto: [conceitos](docs/produto/conceitos.md), [patentes](docs/produto/patentes.md), [fluxo do racha](docs/produto/fluxo-do-racha.md), [stats](docs/produto/stats.md), [contestação](docs/produto/contestacao-e-correcao.md), [contas](docs/produto/contas-e-permissoes.md), [princípios](docs/produto/principios.md); mais as [regras de quadra](docs/produto/regras-do-racha.md) e os requisitos [funcionais](docs/produto/requisitos-funcionais.md) e [não funcionais](docs/produto/requisitos-nao-funcionais.md) |
+| [docs/tecnico](docs/README.md#técnico) | [Estado do protótipo](docs/tecnico/prototipo.md), [banco de dados](docs/tecnico/banco-de-dados.md), [deploy](docs/tecnico/deploy.md) e os [estudos de simulação](docs/tecnico/estudos.md) |
+| [docs/decisoes](docs/decisoes/README.md) | O registro das decisões (D-01 em diante), um arquivo por tema: o que foi decidido, por quê, o que foi descartado e onde vive |
 
 ## Testes
 
@@ -77,5 +76,5 @@ reescrita.
 Ainda falta para virar produto: papel de escrita valendo no servidor para a
 gravação da liga (as ações de conta do admin já valem — D-62 —, mas qualquer
 membro consegue gravar a liga via `save_parts`), e o esquema relacional completo
-de `BANCO-DE-DADOS.md`, que é o que dá consulta, histórico e RLS por linha de
-verdade. Caminho em `DOCUMENTACAO.md` (seção 8.1).
+de [Banco de dados](docs/tecnico/banco-de-dados.md), que é o que dá consulta, histórico e RLS por linha de
+verdade. Caminho em [Protótipo](docs/tecnico/prototipo.md), "Como o backend está montado".

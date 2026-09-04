@@ -14,7 +14,7 @@ Tempo total: ~10 minutos.
    banco e espere ~2 min subir.
 
 2. **SQL Editor** → **New query** → cole o conteúdo de
-   [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
+   [`supabase/schema.sql`](../../supabase/schema.sql) → **Run**.
    Cria as tabelas, a RLS, as funções e liga o Realtime. Pode rodar de novo sem quebrar.
    Se você já tinha aplicado uma versão anterior, rode de novo: a versão atual
    usa **tabelas por entidade** (`league_players`, `league_matches`,
@@ -38,7 +38,7 @@ Tempo total: ~10 minutos.
    - **Project URL**
    - chave **anon public**
 
-5. Cole as duas em [`config.js`](config.js):
+5. Cole as duas em [`config.js`](../../config.js):
 
    ```js
    window.RAXA_CFG = {
@@ -104,7 +104,7 @@ substituições em tempo real. O indicador no canto inferior esquerdo mostra
   só exige ser **membro**: qualquer membro consegue, pela API, gravar a liga
   inteira. É deliberado por ora — jogador também grava (contestar, assumir o
   próprio perfil), e separar o que cada papel pode mudar exige validar o
-  conteúdo do diff, que é o esquema relacional de `BANCO-DE-DADOS.md`.
+  conteúdo do diff, que é o esquema relacional de [Banco de dados](banco-de-dados.md).
 - **Última gravação vence, por entidade.** Duas pessoas mexendo ao mesmo tempo: quem
   gravar depois, com a versão certa, fica; quem estava com a versão velha recebe o
   delta do servidor, perde a alteração local **só nas partes que o outro também

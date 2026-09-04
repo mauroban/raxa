@@ -2,8 +2,8 @@
 
 > Modelo de dados do backend. O app (`index.html`) já roda contra o Supabase (esquema intermediário
 > em `supabase/schema.sql`); este documento descreve o alvo relacional completo, sem mudar regra de produto.
-> Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · requisitos em [REQUISITOS-FUNCIONAIS.md](REQUISITOS-FUNCIONAIS.md)
-> · decisões em [DECISOES.md](DECISOES.md).
+> Produto em [docs/produto](../produto/) (índice em [docs/README.md](../README.md)) · requisitos em [Requisitos funcionais](../produto/requisitos-funcionais.md)
+> · decisões em [decisões](../decisoes/README.md).
 
 > **Estado (28/08/2026):** o degrau intermediário está implementado em `supabase/schema.sql` —
 > tabelas por entidade (`league_players`, `league_matches`, `league_sessions`, `league_live`,
@@ -11,7 +11,7 @@
 > `save_parts`), trava otimista em `leagues.version`, `league_requests` (entrada por aprovação) e
 > `leagues.cfg`/`migrated`. Papel de admin vale no servidor para contas (D-62); a escrita da liga
 > (`save_parts`) ainda é por membro. Este documento continua sendo o alvo relacional completo
-> (trechos, gols e vínculos como linhas próprias); ver D-29 em DECISOES.md.
+> (trechos, gols e vínculos como linhas próprias); ver D-29 em [decisões](../decisoes/README.md).
 
 **Alvo:** Postgres (Supabase) — Auth, Row Level Security e Realtime saem prontos.
 Todo o motor (`splitStints`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`) é função pura e sobe
@@ -361,7 +361,7 @@ Duas coisas que **não** são política de RLS e sim de API: o rating numérico 
 ## 9. Offline (alvo — hoje o app precisa de rede)
 
 No alvo, o app volta a funcionar sem internet, que é o requisito da quadra (o protótipo local funcionava;
-a versão atual com backend não — ver DEPLOY.md). A fila local guarda as operações
+a versão atual com backend não — ver [Deploy](deploy.md)). A fila local guarda as operações
 (`match.create`, `goal.add`, `sub`, `match.end`) com id gerado no cliente (uuid v7, ordenável por tempo) e
 envia ao reconectar. Como o id vem do cliente, reenviar é idempotente: `insert … on conflict (id) do nothing`.
 

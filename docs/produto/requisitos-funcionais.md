@@ -1,6 +1,6 @@
 # Requisitos funcionais — Raxa
 
-Produto em [DOCUMENTACAO.md](DOCUMENTACAO.md) · regras de quadra em [REGRAS-DO-RACHA.md](REGRAS-DO-RACHA.md) · modelo de dados da v2 em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md).
+Produto em [docs/produto](./) (índice em [docs/README.md](../README.md)) · regras de quadra em [Regras do racha](regras-do-racha.md) · modelo de dados da v2 em [Banco de dados](../tecnico/banco-de-dados.md).
 
 Legenda de status: **✅ v1** implementado no protótipo (`index.html`) · **🔶 v1 parcial** existe, mas simulado localmente · **⬜ v2** planejado.
 Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2** desejável.
@@ -253,7 +253,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-09.10 | Uma Liga nunca fica sem admin: passar o papel adiante é obrigatório antes de sair ou rebaixar o último admin | P1 | ⬜ v2 |
 | RF-09.11 | Toda ação sobre membros fica registrada: quem fez, em quem, quando | P2 | ⬜ v2 |
 
-**Modelo de dados:** o esquema que sustenta membros, convites e papéis está em [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md) — o vínculo 1:1 de RF-09.2b é uma `unique (liga_id, player_id)` em `liga_members`.
+**Modelo de dados:** o esquema que sustenta membros, convites e papéis está em [Banco de dados](../tecnico/banco-de-dados.md) — o vínculo 1:1 de RF-09.2b é uma `unique (liga_id, player_id)` em `liga_members`.
 
 **Nota:** em v1 conta, papéis e reivindicação existem no modelo de dados e na interface, mas valem apenas no aparelho — não há autenticação. O único papel de fato aplicado hoje é o de admin, na visibilidade das patentes (RF-03.14); os demais só viram regra com o backend (RF-09.7). Pelo mesmo motivo, "uma contestação por pessoa" (RF-07.2) hoje é "uma por nome de aparelho".
 
@@ -264,7 +264,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | # | Requisito | Pri | Status |
 |---|---|---|---|
 | RF-10.1 | Os dados persistem no servidor (Postgres, por conta); no aparelho fica só a preferência de tela | P0 | ✅ v1 |
-| RF-10.2 | O app funciona integralmente sem internet | P0 | ⬜ v2 — a versão com backend precisa de rede (DEPLOY.md) |
+| RF-10.2 | O app funciona integralmente sem internet | P0 | ⬜ v2 — a versão com backend precisa de rede ([Deploy](../tecnico/deploy.md)) |
 | RF-10.3 | Sincronização entre aparelhos, com vários lançadores no mesmo racha (delta por versão + tempo real) | P0 | ✅ v1 |
 | RF-10.4 | Fila de sincronização offline com resolução determinística de conflitos | P1 | ⬜ v2 |
 | RF-10.5 | Migração automática de dados salvos por versões anteriores do app | P1 | ✅ v1 |
