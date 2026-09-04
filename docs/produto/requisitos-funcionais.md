@@ -35,7 +35,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-02.4 | Buscar jogador por nome em lista de até ~50 nomes | P1 | ✅ v1 |
 | RF-02.5 | A entrada de um jogador é a **junção das opiniões** de quem lança: 1 = ela; 2 = média; 3+ = mediana; divergência (desvio mediano ≥ 1 patente) entra no meio com o K de quem está sem palpite; opiniões visíveis a todos; quem vira Jogador ou sai perde as opiniões; ninguém opina sobre si | P0 | ✅ v1 |
 | RF-02.5b | Tela **Minhas opiniões** para quem lança: uma pessoa por vez num cartão, as 5 patentes como opções que dizem o que significam, "Não sei" como sexta opção, progresso, linha e gol; com 5+ pendentes o card e a aba pulsam | P1 | ✅ v1 |
-| RF-02.6 | Arquivar jogador (reversível) preservando cadastro, opiniões e histórico; apagar de vez só cadastro sem histórico (D-128) | P2 | ✅ v1 |
+| RF-02.6 | Arquivar jogador (reversível) preservando cadastro, opiniões e histórico; apagar de vez só quem nunca jogou (D-128) | P2 | ✅ v1 |
 | RF-02.6b | **Juntar dois cadastros** da mesma pessoa (admin): partidas, sessões e racha em andamento passam para o que fica; recusa quem esteve na mesma partida ou está em duas contas; **reversível** pela ficha ("Separar de novo") | P1 | ✅ v1 |
 | RF-02.7 | Ver a ficha do jogador: **as duas patentes** (linha e goleiro), partidas, aproveitamento, gols, melhor patente, V/E/D separados por papel, forma recente | P1 | ✅ v1 |
 | RF-02.8 | Editar o nome e o "costuma ir ao gol" de quem já está cadastrado | P2 | ⬜ v2 |

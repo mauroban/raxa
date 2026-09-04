@@ -5373,8 +5373,8 @@ const A={
     const stTudo=statsLiga(l,'sempre'),j=stTudo.J[p.id]||{min:0,minGk:0,sofridos:0,pm:0};
     const jt=inseparaveis(l,stTudo).filter(x=>x.a===p.id||x.b===p.id);
     const arq=!!p.arq;
-    /* sem partida, sem presença em racha nenhum: o cadastro pode ser apagado de vez (foi engano) */
-    const semHist=!partidasCom(l,p.id).length&&!(l.sessions||[]).some(s=>(s.presentIds||[]).includes(p.id))&&!(l.live&&(l.live.presentIds||[]).includes(p.id));
+    /* sem partida nenhuma: o cadastro pode ser apagado de vez (a presença que houver sai junto) */
+    const semHist=!partidasCom(l,p.id).length;
     const contaRow=`<div class="trow">
         <div class="lbl">Conta<small>${PD.owner?'vinculada a <b>@'+esc(PD.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
         ${PD.owner?(podeConta?`<button class="btn sm ghost" data-a="pdOwner">desvincular</button>`:'')
@@ -5443,7 +5443,7 @@ const A={
         ${!arq?`<button class="btn wide danger ghost" data-a="arquivar" data-id="${p.id}" style="margin-top:18px">Arquivar jogador</button>
           <div class="tiny muted" style="margin-top:6px">Sai da presença, dos times e das listas, sem apagar nada. Dá para reativar.</div>`:''}
         ${semHist?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Apagar cadastro</button>
-          <div class="tiny muted" style="margin-top:6px">Só porque nunca jogou nem esteve em racha nenhum — cadastro por engano.</div>`:''}
+          <div class="tiny muted" style="margin-top:6px">Só porque nunca jogou uma partida. Quem já jogou se arquiva.</div>`:''}
       </div>`:''}`);
   },
   /* ----- arquivar / reativar (D-128) -----
@@ -5759,15 +5759,15 @@ const A={
   },
   /* nível, gol, conta e permissão mudam pela ficha (PD → pdSave), num
      rascunho com as mesmas checagens de papel — não há ações diretas.      */
-  /* Apagar de vez só para cadastro SEM histórico (nunca jogou, nunca esteve
-     em racha): foi engano. Quem tem histórico se arquiva (D-128).           */
+  /* Apagar de vez só para cadastro SEM PARTIDA: quem já jogou se arquiva
+     (D-128). A presença em sessões sai junto, para não sobrar id órfão.    */
   delPlayer(el){
     const l=L();
     if(!souAdmin(l))return toast('Só o admin apaga cadastro');
     const id=el.dataset.id,px=P(l,id);
-    const temHist=partidasCom(l,id).length||(l.sessions||[]).some(s=>(s.presentIds||[]).includes(id))||(l.live&&(l.live.presentIds||[]).includes(id));
-    if(temHist)return toast('Tem histórico: arquive em vez de apagar');
-    if(!confirm('Apagar este cadastro? Nunca jogou nem esteve em racha nenhum.'))return;
+    if(partidasCom(l,id).length)return toast('Já jogou: arquive em vez de apagar');
+    if(!confirm('Apagar este cadastro? Nunca jogou uma partida; a presença que houver sai junto.'))return;
+    (l.sessions||[]).forEach(s=>{if(Array.isArray(s.presentIds))s.presentIds=s.presentIds.filter(x=>x!==id)});
     logAdd(l,'delPlayer',{pid:id,name:px?px.name:null,owner:px?px.owner:null});
     l.players=l.players.filter(p=>p.id!==id);
     const nOp=anulaOpinioes(l,id);if(nOp)logAdd(l,'opClear',{by:id,n:nOp});   // as opiniões dele saem junto

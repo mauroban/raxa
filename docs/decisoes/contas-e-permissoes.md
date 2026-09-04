@@ -181,3 +181,5 @@ permissão ficam depois dos números, com o Cancelar/Salvar logo abaixo, e arqui
 bloco Admin, no fim. Log: `bio` ("mudou a descrição").
 **Ajuste no mesmo dia (2):** a folha "+ Novo jogador" tem o campo de descrição, opcional, logo
 abaixo do nome — é na hora do cadastro que se sabe "amigo de quem".
+**Ajuste no mesmo dia (3):** apagar de vez vale para quem **nunca jogou uma partida**, mesmo que tenha
+sido marcado presente em algum racha — a presença sai das sessões junto com o cadastro.
