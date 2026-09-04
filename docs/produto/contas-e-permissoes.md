@@ -45,7 +45,7 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 
 | Papel | Pode |
 |---|---|
-| **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, juntar cadastros, dar papéis (rebaixar a Jogador é o que tira o peso das opiniões de alguém — D-121), ver na ficha tudo que um membro opinou sobre os outros (D-124) |
+| **Admin** | Tudo: configurar a liga (os ajustes são só dele — os outros papéis veem o formato e a aparência, sem controles, D-128), revisar/corrigir/anular partidas, cadastrar e **arquivar** jogadores (remover de vez só cadastro sem histórico — D-128), juntar cadastros, dar papéis (rebaixar a Jogador é o que tira o peso das opiniões de alguém — D-121), ver na ficha tudo que um membro opinou sobre os outros (D-124) |
 | **Moderador** | Cadastrar e editar jogadores, montar times e corrigir o resultado de partidas (anular, revisar contestação e apagar são só do admin) |
 | **Lançador** | Conduzir o racha: presença, times, partidas, gols, cadastrar jogador — e **opinar sobre o nível** de entrada de qualquer um (como moderador e admin) |
 | **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar; pode dar opinião sobre nível, mas ela **só passa a valer** quando for Lançador ou acima (D-121). Não lança nada |
@@ -55,3 +55,13 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 **Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).
 
 **Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Pendências** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
+
+## 7. Arquivar jogador (D-128)
+
+**Não existe mais "remover jogador" para quem tem histórico.** Remover apagava o cadastro, as opiniões dele e sobre ele, e recalculava o nível de todo mundo (a expectativa é do time: sem ele nas partidas em que jogou, a conta de todos muda). No lugar, **Arquivar** (admin ou moderador, na ficha): a pessoa ganha a marca de arquivada e some da presença, do "Chegou", dos times, das escadas, de *Minhas opiniões* e das listas de escolha — mas o cadastro, as duas patentes, as opiniões recebidas e as dadas, as partidas e as presenças ficam como estão. As opiniões que ela deu deixam de valer enquanto arquivada (quem saiu não conta, D-121) e voltam a valer ao reativar. O histórico continua mostrando o nome dela. Quem está em quadra não se arquiva (tire da partida primeiro).
+
+**Reativar** fica na própria ficha (faixa "arquivado em …") e os arquivados aparecem num card dos ajustes, para admin e moderador. **Apagar cadastro** só existe para quem **nunca jogou nem esteve em racha nenhum** — cadastro por engano; para os outros, o botão nem aparece, e a ação recusa.
+
+**A ficha é por blocos**, nesta ordem: cabeçalho só de leitura (nome, conta, papel, rachas) → nível (cartões Linha/Gol, entrada, "Dar a minha opinião") → números → **Cadastro** (o único bloco que é formulário: nome, costuma ir ao gol, conta e, só para o admin, permissão; fechado por Cancelar/Salvar) → Admin (opiniões que deu, juntar cadastros) → Arquivar, isolado no fim. Quem não é admin não vê o bloco de permissão (o papel já está no cabeçalho). **"Sou eu"** só aparece para quem ainda não tem perfil nesta liga.
+
+**Ajustes por papel.** Os controles da liga (quem vê os níveis, nomes dos níveis, alvo, trecho mínimo, contestação, exportar/importar) são só do admin. Os outros papéis veem o formato e o alvo da liga, como o nível anda, a aparência do aparelho e "Sair da liga". *Minhas opiniões* não diz mais se a opinião da pessoa vale ou não: isso é conta da liga, não dela.

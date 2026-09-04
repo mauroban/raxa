@@ -1317,6 +1317,72 @@ step('minhas opinioes: a lista de baixo ordena sem opiniao > Diamante … Ferro 
   gente.forEach(p=>p.L.op=p.L.op.filter(o=>o.by!==eu));rebuildAll(l);me.role='admin';closeSheet();
 });
 
+console.log('\n[smoke] arquivar em vez de remover; ficha por blocos; ajustes por papel (D-128)');
+step('arquivar guarda tudo: some do elenco, historico e opinioes ficam, reativar devolve; apagar so sem historico',()=>{
+  S=defState();A.demo();const l=L();S.me.name='tester';l.players[0].owner='tester';l.players[0].role='admin';
+  const eu=euId(l),me=P(l,eu);
+  /* um racha rapido para haver partida e sessao no historico */
+  A.startRacha();l.players.slice(0,12).forEach(q=>A.pres({dataset:{id:q.id}}));A.toTimes();A.startJogo();
+  A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});A.endRacha();closeSheet();
+  const p=l.players.find(x=>x.id!==eu&&x.L.games>0);if(!p)throw new Error('cenario pede alguem com partidas');
+  const alvo=l.players.find(x=>x.id!==eu&&x.id!==p.id);
+  p.role='lancador';alvo.L.op=[{by:p.id,e:1700,ts:1}];rebuildAll(l);
+  if(!alvo.L.def)throw new Error('a opiniao do futuro arquivado devia valer antes');
+  const nM=l.matches.length,nome=p.name,elo=p.L.elo,nJog=l.players.length;
+  A.pSheet({dataset:{id:p.id}});let h=$('#sheet').innerHTML;
+  if(!h.includes('data-a="arquivar"')||h.includes('data-a="delPlayer"'))throw new Error('com historico: arquivar sim, apagar nao');
+  A.arquivar({dataset:{id:p.id}});
+  if(!P(l,p.id)||!P(l,p.id).arq)throw new Error('devia continuar no cadastro, marcado como arquivado');
+  if(l.players.length!==nJog||l.matches.length!==nM||nameOf(l,p.id)!==nome)throw new Error('arquivar nao pode apagar nada');
+  if(alvo.L.def)throw new Error('quem saiu nao conta: a opiniao dele deixa de valer');
+  A.startRacha();if(viewPresenca(l,l.live).includes('data-id="'+p.id+'"'))throw new Error('arquivado nao aparece na presenca');
+  A.lateSheet();if($('#sheet').innerHTML.includes('data-id="'+p.id+'"'))throw new Error('arquivado nao aparece no "Chegou"');
+  A.cancelRacha();
+  S.ui.tab='ranking';if(viewEscada(l).includes('data-id="'+p.id+'"'))throw new Error('arquivado nao aparece na escada');
+  S.ui.opRole='L';OPV.ordem=[];A.opSheet();if($('#sheet').innerHTML.includes(p.name))throw new Error('arquivado nao aparece em Minhas opinioes');
+  if(!viewCfgBody(l).includes('data-a="pSheet" data-id="'+p.id+'"'))throw new Error('ajustes devia listar o arquivado');
+  A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(!h.includes('data-a="reativar"')||!h.includes('arquivado'))throw new Error('ficha do arquivado devia ter Reativar');
+  A.reativar({dataset:{id:p.id}});
+  if(P(l,p.id).arq)throw new Error('reativar nao tirou a marca');
+  if(P(l,p.id).L.elo!==elo)throw new Error('o nivel dele voltou diferente: '+P(l,p.id).L.elo+' vs '+elo);
+  if(!alvo.L.def)throw new Error('reativado: a opiniao dele volta a valer');
+  if(!l.log.some(e=>e.a==='arquivar')||!l.log.some(e=>e.a==='reativar'))throw new Error('log');
+  A.delPlayer({dataset:{id:p.id}});if(!P(l,p.id))throw new Error('apagar com historico tem que ser recusado');
+  const novo=mkPlayer(l,'Engano',null,false,eu);l.players.push(novo);
+  A.pSheet({dataset:{id:novo.id}});if(!$('#sheet').innerHTML.includes('data-a="delPlayer"'))throw new Error('sem historico: apagar aparece');
+  A.delPlayer({dataset:{id:novo.id}});if(P(l,novo.id))throw new Error('sem historico devia apagar');
+  alvo.L.op=[];rebuildAll(l);closeSheet();
+});
+step('ficha: olhar, depois Cadastro com Salvar, depois Admin, arquivar por ultimo; Permissao e "Sou eu" so quando cabem',()=>{
+  const l=L(),eu=euId(l),me=P(l,eu);me.role='admin';
+  const p=l.players.find(x=>x.id!==eu);
+  A.pSheet({dataset:{id:p.id}});let h=$('#sheet').innerHTML;
+  const at=s=>{const i=h.indexOf(s);if(i<0)throw new Error('faltou na ficha: '+s);return i};
+  if(!(at('class="lv2"')<at('class="stat four"')&&at('class="stat four"')<at('>Cadastro<')&&at('>Cadastro<')<at('id="pdsalvar"')&&at('id="pdsalvar"')<at('>Admin</div>')&&at('>Admin</div>')<at('data-a="arquivar"')))throw new Error('ordem da ficha errada');
+  if(!h.includes('Permissão'))throw new Error('admin ve a permissao');
+  if(h.includes('>Sou eu<'))throw new Error('quem ja tem perfil vinculado nao ve "Sou eu"');
+  me.role='lancador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(h.includes('Permissão')||h.includes('só o admin muda'))throw new Error('quem nao e admin nao ve o bloco de permissao');
+  if(h.includes('>Cadastro<')||h.includes('data-a="arquivar"'))throw new Error('lancador nao edita cadastro nem arquiva');
+  me.role='moderador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(!h.includes('>Cadastro<')||!h.includes('data-a="arquivar"')||h.includes('Permissão')||h.includes('>Admin</div>'))throw new Error('moderador edita e arquiva, sem permissao e sem bloco admin');
+  me.role='jogador';me.owner=null;A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(!h.includes('>Sou eu<'))throw new Error('sem perfil vinculado, "Sou eu" aparece');
+  me.owner='tester';me.role='admin';closeSheet();
+});
+step('minhas opinioes nao diz se a opiniao vale; ajustes de quem nao e admin so mostram, sem controles',()=>{
+  const l=L(),eu=euId(l),me=P(l,eu);
+  me.role='jogador';S.ui.opRole='L';OPV.ordem=[];A.opSheet();
+  if($('#sheet').innerHTML.includes('passa a valer'))throw new Error('nao avisa que a opiniao nao vale');
+  closeSheet();
+  let h=viewCfgBody(l);
+  if(/data-a="setVis"|data-a="toggleCfg"|data-cfg=|data-pat=|data-a="export"|data-a="import"/.test(h))throw new Error('jogador nao pode ver os controles dos ajustes');
+  if(!h.includes('Formato da liga')||!h.includes('data-a="setTheme"'))throw new Error('jogador ve formato e aparencia');
+  me.role='admin';h=viewCfgBody(l);
+  if(!/data-a="setVis"/.test(h)||!/data-cfg=/.test(h))throw new Error('admin continua com os controles');
+});
+
 console.log('\n[smoke] elenco no meio do racha: sair e voltar, goleiro que chega, refazer times (D-122)');
 /* racha novo do zero: `line` de linha + `gk` goleiros presentes, times montados, pré-partida */
 const rachaNovo=(line,gk)=>{S=defState();A.demo();const l=L();l.cfg.format=5;l.cfg.matchMode='curtas';

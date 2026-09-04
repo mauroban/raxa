@@ -849,8 +849,12 @@ function juntaOpinioes(vals){
 function opAtiva(liga,o){
   if(o.by===null||o.by===undefined)return true;
   const a=(liga.players||[]).find(p=>p.id===o.by);
-  return !!(a&&PODE_OPINAR.includes(a.role||'jogador'));
+  return !!(a&&!a.arq&&PODE_OPINAR.includes(a.role||'jogador'));   // arquivado = saiu: não conta (D-121/D-128)
 }
+/* O ELENCO: quem não está arquivado. Presença, times, escadas, opiniões e
+   listas de escolha olham só para estes; o histórico (partidas, sessões,
+   estatísticas) continua vendo todo mundo por `P(liga,id)` (D-128).      */
+const ativos=liga=>(liga.players||[]).filter(p=>!p.arq);
 const opsAtivas=(liga,tr)=>(Array.isArray(tr.op)?tr.op:[]).filter(o=>opAtiva(liga,o));
 /* Tudo que UM membro opinou sobre os outros: {pid, nome, r, e, ts} (D-124). */
 function opinioesDadas(liga,by){
@@ -884,7 +888,7 @@ function opPendentesPor(liga){
   const out={L:0,G:0};
   if(!vePat(liga)||!podeOpinar(liga))return out;
   const eu=euId(liga);if(!eu)return out;
-  liga.players.forEach(p=>{if(p.id===eu)return;['L','G'].forEach(r=>{if(jogaEm(p,r)&&!(rt(p,r).op||[]).some(o=>o.by===eu))out[r]++})});
+  ativos(liga).forEach(p=>{if(p.id===eu)return;['L','G'].forEach(r=>{if(jogaEm(p,r)&&!(rt(p,r).op||[]).some(o=>o.by===eu))out[r]++})});
   return out;
 }
 const opPendentes=liga=>{const o=opPendentesPor(liga);return o.L+o.G};
@@ -1302,7 +1306,7 @@ function genteDaPartida(m){
 function foraDeQuadra(liga,m,t){
   const ocup=new Set([...escalaEm(liga,m,t,0),...escalaEm(liga,m,t,1)]);
   const gente=genteDaPartida(m);
-  const resto=(liga.players||[]).filter(p=>!gente.has(p.id)).map(p=>p.id)
+  const resto=ativos(liga).filter(p=>!gente.has(p.id)).map(p=>p.id)
     .sort((a,b)=>nameOf(liga,a).localeCompare(nameOf(liga,b)));
   return [...gente].filter(id=>!ocup.has(id)).concat(resto);
 }
@@ -2184,7 +2188,7 @@ function logAdd(liga,a,extra){
 }
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
-  delPlayer:'removeu jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol',
+  delPlayer:'apagou cadastro',arquivar:'arquivou jogador',reativar:'reativou jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',goal:'corrigiu autor de gol',
   esc:'corrigiu escalação/trocas',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
 /* moderador: corrige resultado de partida, edita jogador — não anula, não revisa, não dá papel */
 const souModerador=liga=>['admin','moderador'].includes(meuPapel(liga));
@@ -2201,7 +2205,7 @@ const opinaoVale=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel','prePick',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer','arquivar','reativar']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2408,7 +2412,7 @@ function presBadgeUpd(liga,lv,chip,id){const pb=chip&&chip.querySelector?chip.qu
 function viewPresenca(liga,lv){
   /* Ordem: quem já está marcado primeiro, depois quem mais aparece nos rachas —
      é assim que se acha rápido a galera de sempre numa lista de 50 nomes.     */
-  const sorted=[...liga.players].sort((a,b)=>
+  const sorted=ativos(liga).sort((a,b)=>
     (lv.presentIds.indexOf(b.id)>=0)-(lv.presentIds.indexOf(a.id)>=0)
     ||(b.sessions||0)-(a.sessions||0)||(b.L.games+b.G.games)-(a.L.games+a.G.games)
     ||a.name.localeCompare(b.name));
@@ -3090,7 +3094,7 @@ function opCard(liga){
 /* a escada de níveis: linha ou goleiro */
 function viewEscada(liga){
   if(!vePat(liga)){
-    const ps=[...liga.players].sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
+    const ps=ativos(liga).sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
     return `<div class="card" style="margin-bottom:10px">
       <div class="k" style="margin-bottom:6px">Níveis fechados</div>
       <div class="tiny muted" style="line-height:1.5">O admin desta liga escolheu manter os níveis só para ele. As estatísticas continuam abertas.</div></div>
@@ -3104,7 +3108,7 @@ function viewEscada(liga){
   /* cada escada mostra quem é daquela posição (goleiro no gol, o resto na linha)
      e quem já ATUOU nela — goleiro que nunca jogou na linha fica fora da escada de linha */
   const daPos=p=>(role==='G'?!!p.gk:!p.gk)||rt(p,role).games>0;
-  const lista=liga.players.filter(p=>daPos(p)&&temPatente(liga,p,role));   // sem nível na valência, fora da escada
+  const lista=ativos(liga).filter(p=>daPos(p)&&temPatente(liga,p,role));   // sem nível na valência, fora da escada
   /* Ordem dentro do degrau: para o admin — que já vê o Elo cru na linha — manda
      o Elo, que é o desempate honesto (a divisão só muda com histerese, então dois
      do mesmo degrau podem estar longe um do outro). Para os outros continua
@@ -3123,7 +3127,7 @@ function viewEscada(liga){
      precisa da ordem verdadeira antes de o rótulo existir), quantidade de
      partidas para os outros — que é o que a linha mostra ali. Quem ainda não
      jogou está todo no Elo de entrada, e aí o desempate é o nome.            */
-  const semNivel=liga.players.filter(p=>daPos(p)&&!temPatente(liga,p,role))
+  const semNivel=ativos(liga).filter(p=>daPos(p)&&!temPatente(liga,p,role))
     .sort((a,b)=>(porElo?rt(b,role).elo-rt(a,role).elo:rt(b,role).games-rt(a,role).games)||a.name.localeCompare(b.name));
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
@@ -3969,8 +3973,42 @@ const papelMarca=p=>!p.owner?'':(p.role&&p.role!=='jogador'
   ?` <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':'var(--cyan)'};font-size:9.5px;padding:1px 5px;margin-left:4px;vertical-align:middle">${PAPEL[p.role]}</span>`
   :' <span style="color:var(--cyan)" title="tem conta">•</span>');
 /* ---------- ajustes ---------- */
+/* Ajustes por papel (D-128): quem não é admin vê o que a liga É (formato,
+   como o nível anda, aparência do aparelho, sair da liga) — sem os controles
+   de configurar, que só o admin usa. Moderador (e admin) vê os arquivados. */
+function cardArquivados(liga){
+  if(!souModerador(liga))return '';
+  const arq=(liga.players||[]).filter(p=>p.arq).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!arq.length)return '';
+  return `<div class="card"><div class="k" style="margin-bottom:6px">Arquivados</div>
+    <div class="tiny muted" style="margin-bottom:8px">Fora do elenco, com o histórico guardado. Toque para ver a ficha e reativar.</div>
+    <div class="chips">${arq.map(p=>`<button class="tp" data-a="pSheet" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div></div>`;
+}
 function viewCfgBody(liga){
   const c=liga.cfg;
+  if(!souAdmin(liga))return `
+  <div class="card">
+    <div class="k" style="margin-bottom:6px">Formato da liga</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}</div>
+    <div class="tiny muted" style="margin-top:4px">Alvo: ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}.</div>
+  </div>
+  <div class="card">
+    <div class="k" style="margin-bottom:6px">Como o nível anda</div>
+    <div class="tiny muted" style="line-height:1.55">Elo de time, igual em toda liga. A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>, separada para linha e para goleiro. Quem sobe só cai depois de passar bem abaixo do corte.</div>
+  </div>
+  ${cardArquivados(liga)}
+  <div class="card">
+    <div class="k" style="margin-bottom:8px">Aparência</div>
+    <div class="row" style="gap:6px;margin-bottom:8px">
+      ${[['claro','☀ Claro'],['escuro','☽ Escuro'],['auto','Automático']].map(x=>
+        `<button class="btn sm ${(S.ui.theme||'claro')===x[0]?'pri':'ghost'}" data-a="setTheme" data-v="${x[0]}" style="flex:1">${x[1]}</button>`).join('')}
+    </div>
+    <div class="tiny muted">Vale só neste aparelho.</div>
+  </div>
+  <div class="card">
+    <div class="row"><div class="tiny muted" style="min-width:0">Os ajustes da liga são do admin.</div>
+      ${DONO[liga.id]?'':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}</div>
+  </div>`;
   return `
   <div class="card">
     <div class="k" style="margin-bottom:6px">Formato da liga</div>
@@ -4028,6 +4066,7 @@ function viewCfgBody(liga){
       <button class="btn sm sp ${c.disputeMode==='suspend'?'pri':'ghost'}" data-a="toggleDispute">${c.disputeMode==='suspend'?'Suspende':'Sinaliza'}</button>
     </div>
   </div>
+  ${cardArquivados(liga)}
   <div class="card">
     <div class="k" style="margin-bottom:10px">Dados</div>
     <div class="row" style="gap:6px">
@@ -4582,7 +4621,7 @@ const A={
   /* ----- chegou atrasado ----- */
   lateSheet(){
     const l=L(),lv=l.live;
-    const fora=l.players.filter(p=>!lv.presentIds.includes(p.id));
+    const fora=ativos(l).filter(p=>!lv.presentIds.includes(p.id));
     openSheet(`<h2>Chegou agora</h2>
       <div class="tiny muted" style="margin-bottom:10px">Marque quem chegou e mande direto para um time.</div>
       <div class="chips" style="margin-bottom:14px">
@@ -5018,7 +5057,7 @@ const A={
   escPick(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
     const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),noJogo=genteDaPartida(m);
-    const fora=(l.players||[]).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    const fora=ativos(l).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>${esc(nameOf(l,pid))}</h2>
       <div class="tiny muted" style="margin-bottom:12px">Começou a partida no ${esc(m.names[s])}.</div>
       <div style="display:grid;gap:7px;margin-bottom:16px">
@@ -5080,7 +5119,7 @@ const A={
   escAdd(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
     const m=r.m,s=+el.dataset.s,noJogo=genteDaPartida(m);
-    const fora=(l.players||[]).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    const fora=ativos(l).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>Quem mais começou no ${esc(m.names[s])}?</h2>
       <div class="tiny muted" style="margin-bottom:12px">Quem entrou no meio da partida não entra aqui: isso é uma troca.</div>
       <div class="chips">${fora.length?fora.map(p=>`<button class="tp big" data-a="escAddDo" data-id="${m.id}" data-s="${s}" data-pid="${p.id}">${esc(p.name)}</button>`).join('')
@@ -5305,6 +5344,10 @@ const A={
      Nada muda no jogador enquanto a folha está aberta: nome, nível, gol,
      conta e permissão vão para PD (rascunho) e só entram no Salvar — com as
      mesmas checagens de papel e o mesmo registro no log das ações diretas. */
+  /* Ficha do jogador (D-128): primeiro se OLHA (nível, números), depois se
+     EDITA (o bloco "Cadastro", o único que é formulário, fechado pelo
+     Cancelar/Salvar), depois as ferramentas do admin, e por último, isolado,
+     arquivar. Ninguém abre a ficha para editar: abre por um toque num nome. */
   pSheet(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
     if(!PD||PD.id!==p.id)PD={id:p.id,view:(S.ui.rankRole==='G'?'G':'L'),name:p.name,gk:!!p.gk,role:p.role||'jogador',owner:p.owner||null};
@@ -5320,31 +5363,36 @@ const A={
         ${tem?`<div class="best">${calibrando(l,p,t)?`calibrando · ${calTxt(l,t)}`
           :`melhor: ${esc(rankLabel(l,Math.max(t.peak||0,t.rank)))}`} · ${t.w}V ${t.d}E ${t.l}D</div>`:''}
       </button>`};
-    const podeConta=PD.owner?(PD.owner===S.me.name||adm):true;
+    const eu=euId(l);
+    /* "Sou eu" só para quem ainda não tem perfil nesta liga; desvincular: o dono ou o admin */
+    const podeConta=PD.owner?(PD.owner===S.me.name||adm):!eu;
     /* uma varredura só do histórico para a folha inteira */
     const stTudo=statsLiga(l,'sempre'),j=stTudo.J[p.id]||{min:0,minGk:0,sofridos:0,pm:0};
     const jt=inseparaveis(l,stTudo).filter(x=>x.a===p.id||x.b===p.id);
+    const arq=!!p.arq;
+    /* sem partida, sem presença em racha nenhum: o cadastro pode ser apagado de vez (foi engano) */
+    const semHist=!partidasCom(l,p.id).length&&!(l.sessions||[]).some(s=>(s.presentIds||[]).includes(p.id))&&!(l.live&&(l.live.presentIds||[]).includes(p.id));
+    const contaRow=`<div class="trow">
+        <div class="lbl">Conta<small>${PD.owner?'vinculada a <b>@'+esc(PD.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
+        ${PD.owner?(podeConta?`<button class="btn sm ghost" data-a="pdOwner">desvincular</button>`:'')
+          :podeConta?`<button class="btn sm ghost" data-a="pdOwner">Sou eu</button>`:''}
+      </div>`;
+    const rodape=`<div class="ps-foot">
+        <button class="btn ghost" data-a="pdCancel">Cancelar</button>
+        <button class="btn pri" id="pdsalvar" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
+      </div>`;
     openSheet(`
       <div class="ps-hd">
-        <div class="avatar ${divAv}" style="${corAv}">${esc(iniciais(PD.name||p.name))}</div>
+        <div class="avatar ${divAv}" style="${corAv}">${esc(iniciais(p.name))}</div>
         <div style="min-width:0;flex:1">
-          ${edt?`<input value="${esc(PD.name)}" oninput="PD.name=this.value;pdNome()" placeholder="Nome" aria-label="nome do jogador"
-              style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`
-            :`<h2><span>${esc(p.name)}</span></h2>`}
-          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}</div>
+          <h2><span>${esc(p.name)}</span></h2>
+          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}${arq?' · <b style="color:var(--gold)">arquivado</b>':''}</div>
         </div>
       </div>
+      ${arq?`<div class="card" style="margin:10px 0;border-color:rgba(245,197,66,.45)"><div class="row"><div class="tiny" style="min-width:0">Arquivado em ${new Date(p.arq).toLocaleDateString('pt-BR')}: fora da presença, dos times, das escadas e das opiniões. O histórico dele continua valendo.</div>
+        ${edt?`<button class="btn sm sp" data-a="reativar" data-id="${p.id}">Reativar</button>`:''}</div></div>`:''}
       ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
-      ${(()=>{return `<div class="stat four">
-        ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
-        <div><b class="num">${tot}</b><span>partidas</span></div>
-        <div><b class="num">${aprDe(vit,emp,tot)}%</b><span>aproveitamento</span></div>
-        <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
-        <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
-      </div>
-      ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
-      <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
-      ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),eu=euId(l),minha=(t.op||[]).find(o=>o.by===eu);
+      ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),minha=(t.op||[]).find(o=>o.by===eu);
         const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
         return `<div class="ps-panel">
         <div class="k">Nível ${role==='G'?'no gol':'na linha'}</div>
@@ -5352,41 +5400,73 @@ const A={
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
           <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões'):'sem opinião'}</span></div>
-        </div>${/* o "hoje" já está no cartão do topo da ficha (badge, partidas, V/E/D): aqui só a entrada */''}
+        </div>${/* o "hoje" já está no cartão do topo (badge, partidas, V/E/D); opinião individual não aparece (D-125) */''}
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
-        ${/* opinião individual não aparece para ninguém (D-125): fica a entrada, a contagem e o aviso de divergência;
-             o admin vê o que cada membro opinou pelo botão "Opiniões que Fulano deu" (D-124) */''}
-        ${/* a opinião se dá só pelo cartão de "Minhas opiniões" (D-127): a ficha mostra entrada e hoje,
-             e leva ao cartão — sem a escada aqui, ninguém dá a nota olhando a entrada mudar */''}
-        ${podeOpinar(l)&&eu&&eu!==p.id?`<button class="btn sm ghost" data-a="opIr" data-pid="${p.id}" data-r="${role}" style="margin-top:10px">${minha?(minha.e===null?'Você marcou "não sei"':'Sua opinião: '+esc(rankLabel(l,stepOf(minha.e)).split(' ')[0]))+' · mudar ›':'Dar a minha opinião ›'}</button>`:''}
+        ${podeOpinar(l)&&eu&&eu!==p.id&&!arq?`<button class="btn sm ghost" data-a="opIr" data-pid="${p.id}" data-r="${role}" style="margin-top:10px">${minha?(minha.e===null?'Você marcou "não sei"':'Sua opinião: '+esc(rankLabel(l,stepOf(minha.e)).split(' ')[0]))+' · mudar ›':'Dar a minha opinião ›'}</button>`:''}
       </div>`})():''}
-      <div style="height:6px"></div>
-      <div class="trow">
-        <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
-        <button class="sw ${PD.gk?'on':''}" data-a="pdGk" role="switch" aria-checked="${PD.gk?'true':'false'}" aria-label="costuma ir ao gol" ${edt?'':'disabled'}></button>
+      <div class="stat four">
+        ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
+        <div><b class="num">${tot}</b><span>partidas</span></div>
+        <div><b class="num">${aprDe(vit,emp,tot)}%</b><span>aproveitamento</span></div>
+        <div><b class="num">${p.goals}</b><span>gols${p.gc?' <span class="muted">· '+p.gc+' contra</span>':''}</span></div>
+        <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
       </div>
-      <div class="trow">
-        <div class="lbl">Conta<small>${PD.owner?'vinculada a <b>@'+esc(PD.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
-        ${PD.owner?(podeConta?`<button class="btn sm ghost" data-a="pdOwner">desvincular</button>`:'')
-          :`<button class="btn sm ghost" data-a="pdOwner">Sou eu</button>`}
-      </div>
-      <div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
-        <div class="lbl">Permissão${adm?'':'<small>só o admin muda</small>'}</div>
-        ${adm?`<div class="seg">${[['admin','Admin'],['moderador','Moderador'],['lancador','Lançador'],['jogador','Jogador']]
-            .map(x=>`<button class="${PD.role===x[0]?'on':''}" data-a="pdRole" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>`
-          :`<div class="tiny">${PAPEL[p.role]||'Jogador'}</div>`}
-      </div>
-      <div class="ps-foot">
-        <button class="btn ghost" data-a="pdCancel">Cancelar</button>
-        <button class="btn pri" id="pdsalvar" data-a="pdSave" ${mudou?'':'disabled'}>Salvar</button>
-      </div>
-      ${adm&&ver?(()=>{const n=opinioesDadas(l,p.id).length;return `<button class="btn wide ghost" data-a="opDe" data-id="${p.id}" style="margin-top:10px">👁 Opiniões que ${esc(p.name.split(' ')[0])} deu${n?` <small>(${n})</small>`:''}</button>`})():''}
-      ${adm?`<button class="btn wide ghost" data-a="mergeSheet" data-id="${p.id}" style="margin-top:10px">⇆ É a mesma pessoa que outro cadastro…</button>`:''}
-      ${adm&&juncoesDe(l,p.id).length?`<div style="margin-top:10px"><div class="k" style="margin-bottom:6px">Cadastros juntados aqui</div>
-        ${juncoesDe(l,p.id).map(e=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="min-width:0"><b>${esc(e.de.name)}</b> <span class="muted">· ${pl((e.matches||[]).length,'partida')} · ${new Date(e.ts).toLocaleDateString('pt-BR')}</span></div>
-          <button class="btn sm ghost sp" data-a="unmerge" data-ref="${esc(e.id)}">Separar de novo</button></div>`).join('')}
+      ${jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''}
+      <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>
+      ${edt?`<div class="sec" style="margin-top:14px">
+        <div class="k" style="margin-bottom:8px">Cadastro</div>
+        <input value="${esc(PD.name)}" oninput="PD.name=this.value;pdNome()" placeholder="Nome" aria-label="nome do jogador"
+          style="font-family:var(--disp);font-size:18px;padding:8px 10px;width:100%;margin-bottom:4px">
+        <div class="trow">
+          <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
+          <button class="sw ${PD.gk?'on':''}" data-a="pdGk" role="switch" aria-checked="${PD.gk?'true':'false'}" aria-label="costuma ir ao gol"></button>
+        </div>
+        ${contaRow}
+        ${adm?`<div class="trow" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div class="lbl">Permissão</div>
+          <div class="seg">${[['admin','Admin'],['moderador','Moderador'],['lancador','Lançador'],['jogador','Jogador']]
+            .map(x=>`<button class="${PD.role===x[0]?'on':''}" data-a="pdRole" data-r="${x[0]}">${x[1]}</button>`).join('')}</div>
         </div>`:''}
-      ${edt?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Remover jogador</button>`:''}`);
+        ${rodape}
+      </div>`
+      :`<div style="margin-top:10px">${contaRow}${rodape}</div>`}
+      ${adm?`<div class="sec" style="margin-top:14px"><div class="k" style="margin-bottom:8px">Admin</div>
+        ${ver?(()=>{const n=opinioesDadas(l,p.id).length;return `<button class="btn wide ghost" data-a="opDe" data-id="${p.id}">👁 Opiniões que ${esc(p.name.split(' ')[0])} deu${n?` <small>(${n})</small>`:''}</button>`})():''}
+        <button class="btn wide ghost" data-a="mergeSheet" data-id="${p.id}" style="margin-top:8px">⇆ É a mesma pessoa que outro cadastro…</button>
+        ${juncoesDe(l,p.id).length?`<div style="margin-top:10px"><div class="k" style="margin-bottom:6px">Cadastros juntados aqui</div>
+          ${juncoesDe(l,p.id).map(e=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><div class="tiny" style="min-width:0"><b>${esc(e.de.name)}</b> <span class="muted">· ${pl((e.matches||[]).length,'partida')} · ${new Date(e.ts).toLocaleDateString('pt-BR')}</span></div>
+            <button class="btn sm ghost sp" data-a="unmerge" data-ref="${esc(e.id)}">Separar de novo</button></div>`).join('')}
+          </div>`:''}
+      </div>`:''}
+      ${edt&&!arq?`<button class="btn wide danger ghost" data-a="arquivar" data-id="${p.id}" style="margin-top:18px">Arquivar jogador</button>
+        <div class="tiny muted" style="margin-top:6px">Sai da presença, dos times e das listas, sem apagar nada. Dá para reativar.</div>`:''}
+      ${edt&&semHist?`<button class="btn wide danger ghost" data-a="delPlayer" data-id="${p.id}" style="margin-top:10px">Apagar cadastro</button>
+        <div class="tiny muted" style="margin-top:6px">Só porque nunca jogou nem esteve em racha nenhum — cadastro por engano.</div>`:''}`);
+  },
+  /* ----- arquivar / reativar (D-128) -----
+     Remover apagava o cadastro, as opiniões dele e sobre ele, e recalculava
+     o nível de todo mundo. Arquivar guarda tudo: a pessoa some do elenco
+     (presença, times, escadas, opiniões) e o histórico continua inteiro.  */
+  arquivar(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souModerador(l))return toast('Só admin ou moderador arquiva jogador');
+    const lv=l.live;
+    if(lv&&lv.cur&&(lv.cur.lineups[0].includes(p.id)||lv.cur.lineups[1].includes(p.id)))return toast('Está em quadra agora: tire da partida primeiro');
+    if(!confirm(p.name+': arquivar? Sai do elenco, o histórico fica, e dá para reativar depois.'))return;
+    p.arq=Date.now();
+    logAdd(l,'arquivar',{pid:p.id,name:p.name});
+    if(lv){lv.presentIds=(lv.presentIds||[]).filter(x=>x!==p.id);lv.gkToday=(lv.gkToday||[]).filter(x=>x!==p.id);
+      lv.gkPool=(lv.gkPool||[]).filter(x=>x!==p.id);lv.teams.forEach(t=>{t.ids=t.ids.filter(x=>x!==p.id)});
+      if(Array.isArray(lv.fila))lv.fila=lv.fila.filter(x=>x!==p.id);if(Array.isArray(lv.fill))lv.fill=lv.fill.map(x=>(x||[]).filter(y=>y!==p.id))}
+    rebuildAll(l);                     // as opiniões que ele deu deixam de valer (quem saiu não conta, D-121)
+    PD=null;closeSheet();save();render();toast(p.name+' arquivado');
+  },
+  reativar(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p)return;
+    if(!souModerador(l))return toast('Só admin ou moderador reativa jogador');
+    delete p.arq;
+    logAdd(l,'reativar',{pid:p.id,name:p.name});
+    rebuildAll(l);PD=null;save();A.pSheet({dataset:{id:p.id}});render();toast(p.name+' de volta ao elenco');
   },
   /* ----- as opiniões que um membro deu (só o admin) -----
      A ficha mostra o que os outros acham DELE; aqui é o contrário: tudo que
@@ -5411,7 +5491,7 @@ const A={
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
     if(!souAdmin(l))return toast('Só o admin junta cadastros');
     const jogos=x=>x.L.games+x.G.games;
-    const outros=l.players.filter(x=>x.id!==p.id).sort((a,b)=>a.name.localeCompare(b.name));
+    const outros=ativos(l).filter(x=>x.id!==p.id).sort((a,b)=>a.name.localeCompare(b.name));
     openSheet(`<h2>${esc(p.name)} é a mesma pessoa que…</h2>
       <div class="tiny muted" style="margin-bottom:10px">Escolha o outro cadastro. Nada muda até confirmar.</div>
       <div class="qwrap"><input id="mq" placeholder="Buscar…" oninput="mergeFiltra(this.value)" autocomplete="off"></div>
@@ -5544,7 +5624,7 @@ const A={
        linha; na aba Gol, só quem vai ao gol (costuma, ou já pegou)         */
     const joga=p=>r==='G'?(p.gk||p.G.games>0):(!p.gk||p.L.games>0);
     if(OPV.r!==r||OPV.liga!==l.id||!OPV.ordem.length){
-      const todos=l.players.filter(p=>p.id!==eu&&joga(p)).sort((a,b)=>((!!minha(a))-(!!minha(b)))||a.name.localeCompare(b.name));
+      const todos=ativos(l).filter(p=>p.id!==eu&&joga(p)).sort((a,b)=>((!!minha(a))-(!!minha(b)))||a.name.localeCompare(b.name));
       /* abre na primeira pendente; com tudo dado, abre no "✓ todas dadas" (i = -1) —
          um cartão de pessoa por padrão dava a sensação de que faltava opinar (D-120) */
       OPV={r,liga:l.id,ordem:todos.map(p=>p.id),i:todos.findIndex(p=>!minha(p))};
@@ -5558,7 +5638,7 @@ const A={
     const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem;
     /* quem não joga nesta posição não ganha cartão, mas aparece no fim da lista,
        apagado — tocar abre a ficha (a opinião dele se dá na outra aba)      */
-    const outros=l.players.filter(p=>p.id!==eu&&!joga(p)).sort((a,b)=>a.name.localeCompare(b.name));
+    const outros=ativos(l).filter(p=>p.id!==eu&&!joga(p)).sort((a,b)=>a.name.localeCompare(b.name));
     const n=fila.filter(minha).length,faltam=fila.length-n;
     /* a régua é "o que o time ganha com ele" (D-90), dita em comparação com um
        jogador médio do racha — nunca em pontos                            */
@@ -5612,7 +5692,7 @@ const A={
       <div class="opbar"><i style="width:${fila.length?Math.round(100*n/fila.length):0}%"></i></div>
       <div class="seg" style="margin-bottom:6px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha${pend.L?` <span class="segn">${pend.L}</span>`:''}</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol${pend.G?` <span class="segn">${pend.G}</span>`:''}</button></div>
       ${cartao}
-      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.${opinaoVale(l)?'':' <span style="color:var(--gold)">Sua opinião fica registrada e passa a valer quando você for Lançador.</span>'}</div>
+      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.</div>${/* sem dizer se a opinião vale: isso é conta da liga, não da pessoa (D-128) */''}
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
       <div class="oplist">${fila.slice().sort(ordemLista).map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — ninguém precisa opinar sobre eles aqui; toque se quiser</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
@@ -5674,11 +5754,15 @@ const A={
   },
   /* nível, gol, conta e permissão mudam pela ficha (PD → pdSave), num
      rascunho com as mesmas checagens de papel — não há ações diretas.      */
+  /* Apagar de vez só para cadastro SEM histórico (nunca jogou, nunca esteve
+     em racha): foi engano. Quem tem histórico se arquiva (D-128).           */
   delPlayer(el){
     const l=L();
-    if(!souModerador(l))return toast('Só admin ou moderador remove jogador');
-    if(!confirm('Remover jogador? O histórico das partidas continua.'))return;
+    if(!souModerador(l))return toast('Só admin ou moderador apaga cadastro');
     const id=el.dataset.id,px=P(l,id);
+    const temHist=partidasCom(l,id).length||(l.sessions||[]).some(s=>(s.presentIds||[]).includes(id))||(l.live&&(l.live.presentIds||[]).includes(id));
+    if(temHist)return toast('Tem histórico: arquive em vez de apagar');
+    if(!confirm('Apagar este cadastro? Nunca jogou nem esteve em racha nenhum.'))return;
     logAdd(l,'delPlayer',{pid:id,name:px?px.name:null,owner:px?px.owner:null});
     l.players=l.players.filter(p=>p.id!==id);
     const nOp=anulaOpinioes(l,id);if(nOp)logAdd(l,'opClear',{by:id,n:nOp});   // as opiniões dele saem junto
@@ -5760,7 +5844,7 @@ const A={
   histRacha(el){S.ui.histRacha=el.dataset.id||null;save();render()},
   statsWho(){
     const l=L();
-    const ps=[...l.players].sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
+    const ps=ativos(l).sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
     /* o mesmo mini-badge de patente do chip da presença (D-88): cor + riscos,
        pela função principal da pessoa (goleiro fixo → G), senão a outra    */
     const dot=p=>{if(!vePat(l))return '';let r=p.gk?'G':'L';if(!temPatente(l,p,r))r=r==='G'?'L':'G';return temPatente(l,p,r)?patDot(l,rt(p,r).rank):''};
@@ -6236,7 +6320,7 @@ function loadUI(){
    No servidor a liga vive em partes (jogadores, partidas, rachas, live, log)
    e só os FATOS vão para lá. Nível, Elo, forma, gols e contagens são
    recalculados aqui (rebuildAll) a partir das partidas.                     */
-const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,
+const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,arq:p.arq||null,
   L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def),op:(p.L&&Array.isArray(p.L.op))?p.L.op:[]},
   G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def),op:(p.G&&Array.isArray(p.G.op))?p.G.op:[]}});
 const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;delete o.papel;return o};
@@ -6983,7 +7067,7 @@ Object.assign(A,{
       <button class="btn wide ghost" data-a="accReject" data-u="${esc(a.user_id)}">Recusar</button>
       <div class="tiny muted" style="margin-top:8px">Depois de aprovar, vincule a conta a um jogador aqui mesmo em Membros.</div>`);
     const p=l.players.find(x=>x.owner===a.username);
-    const livres=l.players.filter(x=>!x.owner).sort((x,y)=>x.name.localeCompare(y.name));
+    const livres=ativos(l).filter(x=>!x.owner).sort((x,y)=>x.name.localeCompare(y.name));
     openSheet(`<h2>@${esc(a.username)}</h2>
       <div class="tiny muted" style="margin-bottom:12px">${a.is_owner?'Dono da liga · ':''}entrou em ${new Date(a.joined_at).toLocaleDateString('pt-BR')}</div>
       <div class="k" style="margin-bottom:8px">Jogador</div>
@@ -7072,7 +7156,7 @@ function logCard(liga){
     else if(e.a==='result')o+=`: ${e.from==='draw'?'empate':'time '+(e.from+1)} → ${e.to==='draw'?'empate':'time '+(e.to+1)}`;
     else if(e.a==='role')o+=` de ${esc(nome(e.pid))}: ${PAPEL[e.from]||'Jogador'} → ${PAPEL[e.to]||'Jogador'}`;
     else if(e.a==='link'||e.a==='unlink')o+=`: @${esc(e.user||'?')} ↔ ${esc(nome(e.pid))}`;
-    else if(e.a==='delPlayer'||e.a==='newPlayer')o+=`: ${esc(e.name||nome(e.pid))}`;
+    else if(e.a==='delPlayer'||e.a==='newPlayer'||e.a==='arquivar'||e.a==='reativar')o+=`: ${esc(e.name||nome(e.pid))}`;
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='esc')o+=`: ${esc(e.txt||'')}`;
     else if(e.a==='op'){const rl=x=>x===null||x===undefined?'sem opinião':x==='ns'?'não sabe':esc(patName(liga,clamp(x,0,TOP)));o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${rl(e.from)} → ${rl(e.to)}${e.adm?' (anulada pelo admin)':''}${e.by&&e.by!==e.pid?' — opinião de '+esc(nome(e.by)):''}`}

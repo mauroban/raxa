@@ -95,3 +95,5 @@ O vínculo conta↔jogador mora em `liga_members`, e não em `players`: é uma `
 garante, no banco, que **um membro é um jogador só**. Jogador sem linha em `liga_members` é perfil sem dono.
 
 O motor (`splitStints`, `stintPart`, `computeElo`, `updateRank`, `applyMatch`, `rebuildAll`, `buildTeams`, `pairCounts`, `statsLiga`, `encontros`, `statsAnos`) é todo função pura, sem DOM — hoje roda no cliente (`rebuildAll` a cada delta) e pode subir para o servidor sem reescrita quando fizer sentido. Offline: a liga fica copiada no aparelho (`cacheAgora`/`cacheLoad`, só fatos + a diferença para o que o servidor conhece) e o que não subiu sobe quando a rede volta; a carga inicial pede só o delta desde a cópia (D-102).
+
+**Arquivar, não remover (D-128).** Jogador com histórico só se arquiva (`p.arq`), pela ficha; some do elenco e fica no histórico; reativa pela ficha ou pelo card "Arquivados" dos ajustes. Apagar de vez só sem histórico. A ficha é por blocos (olhar → Cadastro → Admin → Arquivar), permissão só para o admin, "Sou eu" só sem perfil; os ajustes de quem não é admin são só leitura.

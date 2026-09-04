@@ -371,3 +371,5 @@ O export JSON da v1 é o formato de entrada: uma liga vira `ligas` + `players` (
 `sessions` + `matches` + `stints` + `goals`. Quem importa vira admin e reivindica o próprio perfil; os
 demais reivindicam quando entrarem pelo link. Nada de rating é recalculado na importação — o histórico
 vem junto e `rebuildAll` confirma que os números batem.
+
+**Arquivado (D-128).** O jogador leva `arq` (timestamp) no `data` de `league_players` quando é arquivado; `null`/ausente = no elenco. Nada mais muda: partidas, sessões e opiniões continuam apontando para o id. Não há coluna nova nem SQL a rodar — é campo do JSON.

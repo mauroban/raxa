@@ -146,3 +146,28 @@ relacional entrar).
 **Onde:** `A.delLiga`, `A.leaveLiga`, `DONO` e o card Dados de `viewCfg` em `index.html` ·
 `supabase/schema.sql` (`has_other_members`, `leagues_delete`) · `scripts/sync.py` ("o dono nao
 apaga enquanto ha outro membro", "quem nao e dono so sai", "so com o nome certo") · [Contas e permissões §4](../produto/contas-e-permissoes.md) · [Deploy](../tecnico/deploy.md) · [Banco de dados](../tecnico/banco-de-dados.md).
+
+<a id="d-128"></a>
+### D-128 · Arquivar em vez de remover; ficha por blocos; ajustes e permissão só para o admin
+**04/09/2026.** (1) **Remover jogador** apagava o cadastro (nome, conta, papel, hábito de gol), as
+opiniões recebidas e as dadas (só a quantidade ia para o log), e o `rebuildAll` recalculava o nível
+de todo mundo — nas partidas dele o time passava a ter um a menos na média. O histórico "continuava",
+mas com um "—" no lugar do nome, e podia ser feito por moderador, num toque, sem volta. Virou
+**Arquivar** (`p.arq` = data, reversível): fora do elenco (`ativos(liga)` em presença, Chegou,
+escadas, Minhas opiniões, revisão, junção, vínculo de conta), tudo guardado, histórico e nome intactos;
+as opiniões dadas deixam de valer enquanto arquivado (`opAtiva`, D-121) e voltam ao reativar. Card
+"Arquivados" nos ajustes (admin/moderador). **Apagar** só para cadastro sem partida e sem presença.
+(2) **Ficha por blocos**: olhar (cabeçalho, nível, números) → Cadastro (formulário, Salvar fecha o
+bloco) → Admin → Arquivar. Antes o nome era campo de texto no topo, leitura no meio, campos de novo
+embaixo e quatro botões depois do Salvar. (3) Quem não é admin **não vê o bloco de permissão** (o
+papel está no cabeçalho); **"Sou eu"** só para quem não tem perfil nesta liga (`podeConta`).
+(4) **Ajustes por papel**: só o admin vê os controles; os outros veem formato/alvo, como o nível
+anda, aparência e sair da liga. (5) *Minhas opiniões* não avisa "sua opinião passa a valer quando
+você for Lançador": se a opinião vale é conta da liga.
+**Por quê:** medo real de perder dado valioso por um descuido — e um dado que muda o nível dos
+outros. Tela que mostra controle que a pessoa não pode usar ensina a ignorar a tela.
+**Descartado:** confirmar o remover com o nome digitado (continua destrutivo); esconder os
+arquivados da estatística (jogaram; é fato).
+**Onde:** `ativos`, `opAtiva`, `playerFacts` (`arq`), `A.arquivar`/`A.reativar`/`A.delPlayer`,
+`pSheet`, `cardArquivados`, `viewCfgBody`, `opSheet` em `index.html` · `scripts/smoke.py` bloco
+D-128 · [Contas e permissões §7](../produto/contas-e-permissoes.md) · [Banco](../tecnico/banco-de-dados.md).

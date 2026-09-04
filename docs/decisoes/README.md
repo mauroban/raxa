@@ -152,6 +152,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-85](contas-e-permissoes.md#d-85) · Membros sai da aba Jogadores: papel na linha da escada, e um card só de pendências
 - [D-93](contas-e-permissoes.md#d-93) · Juntar dois cadastros da mesma pessoa — reversível pela ficha
 - [D-105](contas-e-permissoes.md#d-105) · Apagar liga: só o dono, só sem outros membros, digitando o nome
+- [D-128](contas-e-permissoes.md#d-128) · Arquivar em vez de remover jogador; ficha por blocos (olhar → cadastro → admin → arquivar); ajustes e permissão só para o admin; "Sou eu" só sem perfil
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 
