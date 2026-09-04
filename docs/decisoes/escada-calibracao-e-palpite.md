@@ -504,9 +504,9 @@ sem a opinião dos outros (D-120) — a pergunta é a sua, com a régua do que o
 **Por quê:** a média aparada já protege contra o exagero de um só (com 3+ opiniões a maior e a
 menor caem), então o risco de jogo estratégico é baixo; o que importa é não dar a nota vendo o
 consenso mudar. Um lugar só para opinar também é um lugar só para explicar a régua.
-**Fica de fora, anotado:** o cartão mostra o "hoje" da pessoa, que para quem nunca jogou é a média
-das opiniões dos outros — âncora residual; se aparecer, a saída é "opine antes de ver" só para quem
-ainda não jogou.
+**Ajuste no mesmo dia:** o cartão **não mostra mais o "hoje"** da pessoa (nem o aviso de opiniões
+divergentes): para quem nunca jogou o hoje é a média das opiniões dos outros, e vê-lo antes de opinar
+ancorava a nota. O cartão tem avatar, nome, descrição e as opções — só isso.
 **Descartado:** congelar a entrada e recalcular só ao montar os times (quebra o cadastro no dia);
 travar a opinião depois de dada (a pessoa muda de ideia vendo jogar, e é isso que se quer).
 **Onde:** `pSheet` (sem escada, botão `opIr`), `A.opIr`, toast de `opSet` em `index.html` ·

@@ -5670,8 +5670,7 @@ const A={
             ${p.bio?`<div style="font-size:13px;color:var(--mute);margin-top:2px;line-height:1.3">${esc(p.bio)}</div>`:''}${/* a descrição ajuda a saber de QUEM se fala (D-128) */''}
           </div>
         </div>
-        ${/* o "hoje" numa linha própria, alinhado à esquerda embaixo da foto — a foto fica ao lado do nome e do apelido */''}
-        <div class="tiny muted" style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${tem?'hoje '+patBadge(l,tr.rank):tr.games?'calibrando · '+calTxt(l,tr):'ainda sem nível'}${tr.dv?'<span style="color:var(--gold)">· ⚠️ opiniões divergem</span>':''}</div>
+        ${/* sem o nível de hoje no cartão (D-127/D-128): para quem nunca jogou ele É a média das opiniões dos outros — âncora; a pergunta aqui é a SUA */''}
         <div class="k" style="margin:8px 0 2px">Como ${p.gk&&r==='G'?'ele pega':'ele joga'} ${r==='G'?'no gol':'na linha'}?</div>
         ${l.cfg.patNames.map((nm,k)=>{const st=k*3+1,on=!!(m&&m.e!==null&&patOf(stepOf(m.e))===k);
           return `<button class="opopt ${on?'on':''}" style="${patVars(st)}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="${st}" data-back="lista" aria-pressed="${on?'true':'false'}">
