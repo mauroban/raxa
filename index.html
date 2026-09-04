@@ -5306,7 +5306,9 @@ const A={
     const joga=p=>r==='G'?(p.gk||p.G.games>0):(!p.gk||p.L.games>0);
     if(OPV.r!==r||OPV.liga!==l.id||!OPV.ordem.length){
       const todos=l.players.filter(p=>p.id!==eu&&joga(p)).sort((a,b)=>((!!minha(a))-(!!minha(b)))||a.name.localeCompare(b.name));
-      OPV={r,liga:l.id,ordem:todos.map(p=>p.id),i:0};
+      /* abre na primeira pendente; com tudo dado, abre no "✓ todas dadas" (i = -1) —
+         um cartão de pessoa por padrão dava a sensação de que faltava opinar (D-120) */
+      OPV={r,liga:l.id,ordem:todos.map(p=>p.id),i:todos.findIndex(p=>!minha(p))};
     }
     OPV.ordem=OPV.ordem.filter(id=>P(l,id)&&joga(P(l,id)));
     if(el&&el.dataset&&el.dataset.i!==undefined)OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);
@@ -5324,7 +5326,7 @@ const A={
       'Abaixo da média: o time cobre algo por ele.',
       'A média do racha. Na dúvida, é aqui.',
       'Acima da média: faz falta quando não vem.',
-      'O melhor da quadra: sozinho vira o jogo. Raro.'];
+      'Muda o patamar do time sozinho. Raro.'];
     const p=OPV.i>=0?ordem[OPV.i]:null;
     let cartao;
     if(!ordem.length)cartao=`<div class="opcard"><div class="tiny muted">Ninguém para opinar ${r==='G'?'no gol — quem vai ao gol aparece aqui':'na linha'}.</div></div>`;
@@ -5361,7 +5363,7 @@ const A={
       <div class="opbar"><i style="width:${fila.length?Math.round(100*n/fila.length):0}%"></i></div>
       <div class="seg" style="margin-bottom:6px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha${pend.L?` <span class="segn">${pend.L}</span>`:''}</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol${pend.G?` <span class="segn">${pend.G}</span>`:''}</button></div>
       ${cartao}
-      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra — não só no drible. Tocar de novo tira.</div>
+      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
       <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui; toque para abrir a ficha</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */

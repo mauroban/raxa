@@ -242,3 +242,9 @@ que corrige o olhar do drible, D-90); folha em duas páginas.
 **Onde:** `A.opSheet` (`SIGNIF`, cabeçalho, cartão) e CSS `.opcard`/`.opopt`/`.opbar`/`.opnav` em
 `index.html` · medida: Chrome headless a 360 px (`scripts/visual.py` cobre a estrutura) ·
 [Patentes §8](../produto/patentes.md).
+**Ajuste no mesmo dia:** o Diamante deixou de ser "o melhor da quadra" (relativo: em todo racha
+alguém é o melhor) e virou "muda o patamar do time sozinho" — é o que a patente garante. A dica
+abaixo do cartão parou em "Pense no que o time ganha com a pessoa em quadra"; o "não só no drible.
+Tocar de novo tira" saiu. E com **todas as opiniões dadas** a folha abre no "✓ todas dadas", não
+no cartão da primeira pessoa da lista (`OPV.i = -1`): o cartão por padrão dava a sensação de que
+ainda faltava opinar. Tocar num nome da lista continua abrindo o cartão dele.

@@ -695,6 +695,20 @@ step('minhas opinioes: a lista de quem lanca, um toque por pessoa',()=>{
   A.opSet({dataset:{pid:alvo.id,r:'L',s:'7',back:'lista'}});   // tira de novo
   closeSheet();S.ui.tab='racha';render();
 });
+step('minhas opinioes: com tudo dado, a folha abre no "todas dadas", sem cartao de pessoa',()=>{
+  const l=L(),eu=euId(l);if(!eu)return;
+  const dadas=[];
+  l.players.forEach(p=>{if(p.id===eu)return;['L','G'].forEach(k=>{const tr=p[k];tr.op=tr.op||[];if(!tr.op.some(o=>o.by===eu)){tr.op.push({by:eu,e:null,ts:1});dadas.push([tr,eu])}})});
+  rebuildAll(l);OPV.ordem=[];
+  try{
+    A.opSheet({dataset:{go:'1'}});
+    const h=els['#sheet'].innerHTML;
+    if(!/Todas as suas opiniões/.test(h))throw new Error('devia abrir no "todas dadas"');
+    if(/data-a="opSet"/.test(h))throw new Error('nao devia mostrar o cartao de uma pessoa por padrao');
+    A.opSheet({dataset:{i:'0'}});
+    if(!/data-a="opSet"/.test(els['#sheet'].innerHTML))throw new Error('tocar na lista ainda tem que abrir o cartao da pessoa');
+  }finally{dadas.forEach(([tr,by])=>{tr.op=tr.op.filter(o=>!(o.by===by&&o.e===null&&o.ts===1))});rebuildAll(l);OPV.ordem=[];closeSheet()}
+});
 step('admin ve o elo cru, discreto, na escada',()=>{
   if(viewEscada(L()).indexOf('Elo — só o admin vê')<0)throw new Error('elo sutil nao apareceu para o admin');
 });
