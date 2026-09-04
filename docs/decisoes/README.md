@@ -53,6 +53,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-94](escada-calibracao-e-palpite.md#d-94) · Sai o aviso "revisar palpite?" — ele apontava quem estava certo tanto quanto quem estava errado
 - [D-95](escada-calibracao-e-palpite.md#d-95) · A entrada é a junção das opiniões de quem lança; "Editor" vira "Moderador"
 - [D-96](escada-calibracao-e-palpite.md#d-96) · Com 3+ opiniões, média aparada (sem a mais alta e a mais baixa), não a mediana pura
+- [D-121](escada-calibracao-e-palpite.md#d-121) · Sem anular opinião de uma pessoa; rebaixar a Jogador invalida (não apaga); Jogador também opina
 
 ### [Times, fila e goleiro](times-fila-e-goleiro.md)
 

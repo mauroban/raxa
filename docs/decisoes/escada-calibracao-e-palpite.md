@@ -419,3 +419,28 @@ própria pessoa ("suas notas ficam meia patente acima das dos outros; o app comp
 ficha dos avaliados.
 **Onde:** `juntaOpinioes` em `index.html` · `scripts/test.py` [5b] ("cinco opinioes") ·
 [Patentes §4](../produto/patentes.md).
+
+<a id="d-121"></a>
+### D-121 · Sem anular opinião de uma pessoa; rebaixar a Jogador invalida (não apaga), e Jogador também opina
+**04/09/2026.** O admin podia anular a opinião de uma pessoa específica sobre um jogador (o ✕ ao
+lado de cada opinião na ficha). Isso saiu: é um poder cirúrgico demais — "não gostei dessa nota" —
+e a D-95 já diz que a entrada é a junção de várias opiniões, não a escolha do admin. O único jeito
+de tirar o peso das opiniões de alguém é **rebaixar a pessoa a Jogador**, e aí todas as dela deixam
+de valer, de uma vez. E rebaixar **não apaga**: as opiniões ficam registradas (a ficha as mostra
+apagadas, "não vale (Jogador)"), só saem da conta; promover de volta as revalida. `opAtiva` já
+olhava o papel de hoje de quem opinou — o que mudou é que `pdSave` parou de chamar `anulaOpinioes`
+(que segue existindo só para quem é removido da liga) e o log `opClear` deixou de ser gerado
+(o rótulo fica, para o histórico antigo). Por fim, **Jogador também pode dar opinião**: ela fica
+registrada e passa a valer quando ele subir — o card e a folha avisam ("valem quando você for
+Lançador") e o card não pulsa para quem a opinião ainda não vale. `podeOpinar` passou a ser "tem
+perfil vinculado"; `opinaoVale` é "lançador ou acima". E na folha "Minhas opiniões", quem não
+joga naquela posição (goleiro na aba Linha, e vice-versa) continua fora da fila obrigatória, mas
+**tocar no nome abre o cartão dele** (`OPV.solto`), não a ficha: ninguém é forçado a opinar, e
+ninguém é impedido.
+**Descartado:** manter o ✕ só para o admin com confirmação (já era assim); apagar as opiniões do
+rebaixado (perde informação que volta a servir se ele for promovido); impedir Jogador de opinar
+(a opinião de quem joga junto tem valor futuro, e o custo de guardar é zero).
+**Onde:** `podeOpinar`, `opinaoVale`, `opAtiva`, `opCard`, `opSheet`, `opSet`, ficha (`pSheet`,
+lista "não vale"), `pdSave` em `index.html` · `scripts/smoke.py` (sem `opDel`; rebaixar invalida e
+promover revalida; jogador opina sem valer) · [Patentes §3.4](../produto/patentes.md) ·
+[Contas e permissões §5](../produto/contas-e-permissoes.md).

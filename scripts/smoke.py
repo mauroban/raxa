@@ -630,17 +630,16 @@ step('opinar sobre o nivel: um toque salva, a entrada e media/mediana e o histor
   if(!p.L.dv)throw new Error('duas patentes de distancia: devia marcar divergencia');
   A.pSheet({dataset:{id:p.id}});
   if(!/Opiniões muito diferentes/.test(els['#sheet'].innerHTML))throw new Error('ficha nao avisou a divergencia');
-  const c0=global.confirm;global.confirm=()=>false;
-  try{A.opDel({dataset:{pid:p.id,r:'L',by:outro.id}});if(!p.L.op.some(o=>o.by===outro.id))throw new Error('anular sem confirmar apagou a opiniao do outro')}
-  finally{global.confirm=c0}
-  A.opDel({dataset:{pid:p.id,r:'L',by:outro.id}});
-  if(p.L.op.some(o=>o.by===outro.id))throw new Error('opDel nao tirou');
+  /* D-121: não existe anular a opinião de outra pessoa — nem botão na ficha, nem ação */
+  if(A.opDel)throw new Error('a acao de anular opiniao de outro nao deveria existir');
+  if(/data-a="opDel"/.test(els['#sheet'].innerHTML))throw new Error('a ficha nao deveria ter o ✕ de anular');
+  p.L.op=p.L.op.filter(o=>o.by!==outro.id);rebuildAll(l);
   A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});          // tocar de novo tira
   if(p.L.op.length||p.L.def)throw new Error('tocar de novo devia tirar a opiniao');
   const e1=p.L.elo;rebuildAll(l);if(p.L.elo!==e1)throw new Error('recalculo nao e estavel');
   outro.role=papel0;A.pdCancel();
 });
-step('rebaixar quem opinou a jogador anula as opinioes dele',()=>{
+step('rebaixar quem opinou a jogador invalida as opinioes dele sem apagar; promover de volta revalida (D-121)',()=>{
   const l=L(),eu=euId(l);
   const autor=l.players.find(x=>x.id!==eu&&x.role!=='admin');const papel0=autor.role;autor.role='lancador';
   const alvo=l.players.find(x=>x.id!==eu&&x.id!==autor.id);
@@ -648,9 +647,42 @@ step('rebaixar quem opinou a jogador anula as opinioes dele',()=>{
   if(!alvo.L.def)throw new Error('opiniao do lancador nao valeu');
   A.pSheet({dataset:{id:autor.id}});A.pdRole({dataset:{r:'jogador'}});A.pdSave();
   if(autor.role!=='jogador')throw new Error('papel nao mudou');
-  if(alvo.L.op.length||alvo.L.def)throw new Error('as opinioes do rebaixado deviam ser anuladas');
-  const lg=l.log[l.log.length-1]||{};if(lg.a!=='opClear')throw new Error('log nao registrou a anulacao: '+JSON.stringify(lg));
-  autor.role=papel0;rebuildAll(l);
+  if(alvo.L.op.length!==1)throw new Error('a opiniao do rebaixado nao pode sumir');
+  if(alvo.L.def)throw new Error('a opiniao do rebaixado nao pode valer');
+  if(l.log.some(e=>e.a==='opClear'&&e.by===autor.id))throw new Error('nao devia registrar anulacao');
+  A.pSheet({dataset:{id:alvo.id,r:'L'}});
+  if(!/não vale \(Jogador\)/.test(els['#sheet'].innerHTML))throw new Error('a ficha devia mostrar a opiniao como sem valor');
+  A.pSheet({dataset:{id:autor.id}});A.pdRole({dataset:{r:'lancador'}});A.pdSave();
+  if(!alvo.L.def)throw new Error('promovido de volta: a opiniao devia voltar a valer');
+  autor.role=papel0;alvo.L.op=[];rebuildAll(l);closeSheet();
+});
+step('minhas opinioes: quem nao joga nesta posicao nao e obrigatorio, mas o toque na lista apagada abre o cartao dele',()=>{
+  const l=L(),eu=euId(l);if(!eu)return;
+  S.ui.opRole='L';OPV.ordem=[];A.opSheet();
+  const gk=l.players.find(p=>p.id!==eu&&p.gk&&!(p.L.games>0));if(!gk)return console.log('  (sem goleiro fora da fila da linha para testar)');
+  if(OPV.ordem.includes(gk.id))throw new Error('goleiro sem partida na linha nao devia estar na fila da linha');
+  if(!new RegExp('data-a="opSheet" data-solto="'+gk.id+'"').test(els['#sheet'].innerHTML))throw new Error('a lista apagada devia abrir o cartao, nao a ficha');
+  A.opSheet({dataset:{solto:gk.id}});
+  const h=els['#sheet'].innerHTML;
+  if(!new RegExp('data-a="opSet" data-pid="'+gk.id+'"').test(h))throw new Error('o cartao do solto nao abriu');
+  if(!/fora da fila da linha/.test(h)||!/Voltar à fila/.test(h))throw new Error('o cartao do solto devia dizer que ele esta fora da fila');
+  const op0=(gk.L.op||[]).slice();
+  A.opSet({dataset:{pid:gk.id,r:'L',s:'7',back:'lista'}});
+  if(!(gk.L.op||[]).some(o=>o.by===eu))throw new Error('a opiniao sobre o solto nao foi gravada');
+  if(OPV.solto)throw new Error('depois de opinar devia voltar para a fila');
+  gk.L.op=op0;rebuildAll(l);closeSheet();
+});
+step('jogador pode dar opiniao, mas ela nao vale (D-121)',()=>{
+  const l=L(),eu=euId(l),me=P(l,eu);const papel0=me.role;me.role='jogador';
+  const p=l.players.find(x=>x.id!==eu);const op0=(p.L.op||[]).slice();p.L.op=[];rebuildAll(l);
+  try{
+    A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});
+    if(!(p.L.op||[]).some(o=>o.by===eu))throw new Error('jogador devia conseguir registrar a opiniao');
+    if(p.L.def)throw new Error('a opiniao do jogador nao pode valer');
+    S.ui.tab='ranking';render();
+    if(!/valem quando você for Lançador/.test(els['#app'].innerHTML))throw new Error('o card devia avisar que a opiniao ainda nao vale');
+    if(/card pulse/.test(els['#app'].innerHTML))throw new Error('o card nao devia pulsar para quem a opiniao nao vale');
+  }finally{p.L.op=op0;me.role=papel0;rebuildAll(l);closeSheet()}
 });
 step('minhas opinioes: a lista de quem lanca, um toque por pessoa',()=>{
   const l=L(),eu=euId(l);

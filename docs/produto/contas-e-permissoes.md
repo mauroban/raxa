@@ -45,10 +45,10 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 
 | Papel | Pode |
 |---|---|
-| **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, juntar cadastros, anular opiniões dos outros, dar papéis |
+| **Admin** | Tudo: configurar a liga, revisar/corrigir/anular partidas, cadastrar e remover jogadores, juntar cadastros, dar papéis (rebaixar a Jogador é o que tira o peso das opiniões de alguém — D-121) |
 | **Moderador** | Cadastrar e editar jogadores, montar times e corrigir o resultado de partidas (anular, revisar contestação e apagar são só do admin) |
 | **Lançador** | Conduzir o racha: presença, times, partidas, gols, cadastrar jogador — e **opinar sobre o nível** de entrada de qualquer um (como moderador e admin) |
-| **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar. Não lança nada |
+| **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar; pode dar opinião sobre nível, mas ela **só passa a valer** quando for Lançador ou acima (D-121). Não lança nada |
 
 O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a quem conduz o racha (quem está com o celular na mão). Conta ainda sem perfil vinculado também é tratada como Jogador.
 

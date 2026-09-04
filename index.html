@@ -2181,7 +2181,11 @@ const souModerador=liga=>['admin','moderador'].includes(meuPapel(liga));
 const podeLancar=liga=>['admin','moderador','lancador'].includes(meuPapel(liga));
 /* Opinar sobre o nível de entrada é de quem lança (admin, moderador, lançador):
    quanto mais opiniões, melhor a entrada (D-95). Jogador só olha.          */
-const podeOpinar=liga=>PODE_OPINAR.includes(meuPapel(liga));
+/* Qualquer membro com perfil vinculado DÁ opinião; ela só VALE (entra na
+   entrada) enquanto quem deu for lançador ou acima — `opAtiva`. Rebaixar a
+   Jogador não apaga nada: invalida; promover de volta revalida (D-121).   */
+const podeOpinar=liga=>!!euId(liga);
+const opinaoVale=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
@@ -2895,11 +2899,12 @@ function opCard(liga){
   const eu=euId(liga);if(!eu)return '';
   const r=S.ui.rankRole==='G'?'G':'L';
   if(liga.players.length<2)return '';
-  const pend=opPendentesPor(liga),tot=pend.L+pend.G,muitos=tot>=OP_MUITOS;   // muita gente esperando a sua opinião: o card pulsa
+  const vale=opinaoVale(liga);
+  const pend=opPendentesPor(liga),tot=pend.L+pend.G,muitos=vale&&tot>=OP_MUITOS;   // muita gente esperando a sua opinião: o card pulsa
   const partes=[pend.L?`<b style="color:var(--gold)">${pend.L}</b> na linha`:'',pend.G?`<b style="color:var(--gold)">${pend.G}</b> no gol`:''].filter(Boolean);
   return `<div class="card ${muitos?'pulse':''}" style="margin-bottom:10px"><div class="row" data-a="opSheet" data-go="1" style="cursor:pointer">
     <div style="min-width:0"><div class="k">Minhas opiniões sobre nível</div>
-      <div class="tiny muted" style="margin-top:3px">${tot?`Faltam ${partes.join(' · ')}`:'Todas dadas ✓'}</div></div>
+      <div class="tiny muted" style="margin-top:3px">${tot?`Faltam ${partes.join(' · ')}`:'Todas dadas ✓'}${vale?'':' · <span style="color:var(--gold)">valem quando você for Lançador</span>'}</div></div>
     <div class="sp" style="color:${tot?'var(--gold)':'var(--mute)'};font-size:18px">›</div></div></div>`;
 }
 /* a escada de níveis: linha ou goleiro */
@@ -5116,7 +5121,8 @@ const A={
       </div>
       ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
-      ${ver?(()=>{const t=rt(p,role),todasOp=opsAtivas(l,t),ops=todasOp.filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),nsabe=todasOp.filter(o=>o.e===null),eu=euId(l),minha=todasOp.find(o=>o.by===eu),j=juntaOpinioes(ops.map(o=>o.e));
+      ${ver?(()=>{const t=rt(p,role),todasOp=opsAtivas(l,t),ops=todasOp.filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),nsabe=todasOp.filter(o=>o.e===null),eu=euId(l),minha=(t.op||[]).find(o=>o.by===eu),j=juntaOpinioes(ops.map(o=>o.e));
+        const semValor=(t.op||[]).filter(o=>!opAtiva(l,o)&&o.e!==null);   // de quem hoje é Jogador: fica registrada, não entra na conta (D-121)
         const nomeOp=o=>o.by?esc(nameOf(l,o.by))+(o.by===eu?' <span class="muted">(você)</span>':''):'<span class="muted">cadastro</span>';
         const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
         return `<div class="ps-panel">
@@ -5129,7 +5135,8 @@ const A={
           <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')}</span></div>`:''}
         </div>
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
-        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}${adm&&o.by!==eu?`<button class="x" data-a="opDel" data-pid="${p.id}" data-r="${role}" data-by="${o.by||''}" title="anular esta opinião" aria-label="anular esta opinião">✕</button>`:'<span class="xs"></span>'}</div>`).join('')}${nsabe.length?`<div class="oprow2"><div class="who tiny muted">${nsabe.map(o=>nomeOp(o)).join(', ')}</div><span class="pat none">não sabe${nsabe.length>1?'m':''}</span><span class="xs"></span></div>`:''}</div>`:''}
+        ${ops.length||nsabe.length?`<div style="margin-top:8px">${ops.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}${nsabe.length?`<div class="oprow2"><div class="who tiny muted">${nsabe.map(o=>nomeOp(o)).join(', ')}</div><span class="pat none">não sabe${nsabe.length>1?'m':''}</span><span class="xs"></span></div>`:''}</div>`:''}
+        ${semValor.length?`<div style="margin-top:6px;opacity:.55">${semValor.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)} <span class="muted">· não vale (Jogador)</span></div>${patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}</div>`:''}
         ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
           <div class="ladder4">
             ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&minha.e!==null&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -5251,7 +5258,6 @@ const A={
   /* ----- opiniões sobre o nível (D-95): um toque salva ----- */
   opSet(el){
     const l=L(),p=P(l,el.dataset.pid);if(!p)return;
-    if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
     const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
     if(eu===p.id)return toast('Sobre você, quem opina são os outros');
     const r=el.dataset.r==='G'?'G':'L',tr=rt(p,r);if(!Array.isArray(tr.op))tr.op=[];
@@ -5266,25 +5272,15 @@ const A={
     logAdd(l,'op',{pid:p.id,role:r,by:eu,from:rot(tinha),to:rot(dep)});
     rebuildAll(l);save();
     if(el.dataset.back==='lista'){
-      if(dep){const n=OPV.ordem.length;let j=-1;   // próxima pessoa ainda sem a sua opinião; sem ninguém: cartão de "todas dadas"
+      const solto=!!OPV.solto;OPV.solto=null;
+      if(dep&&!solto){const n=OPV.ordem.length;let j=-1;   // próxima pessoa ainda sem a sua opinião; sem ninguém: cartão de "todas dadas"
         for(let k=1;k<=n;k++){const q=P(l,OPV.ordem[(OPV.i+k)%n]);if(q&&!(rt(q,r).op||[]).some(o=>o.by===eu)){j=(OPV.i+k)%n;break}}
         OPV.i=j}
+      else if(solto){const j=OPV.ordem.findIndex(id=>{const q=P(l,id);return q&&!(rt(q,r).op||[]).some(o=>o.by===eu)});OPV.i=j}   // de volta à fila, na primeira pendente
       A.opSheet();const sh=$('#sheet');if(sh)sh.scrollTop=0;
     }else A.pSheet({dataset:{id:p.id,r}});
     render();
     toast(!dep?'Opinião retirada':dep.e===null?'Anotado: não sabe':`Opinião salva · entrada ${rankLabel(l,stepOf(rt(p,r).base))}`);
-  },
-  opDel(el){                          // admin anula a opinião de outra pessoa
-    const l=L(),p=P(l,el.dataset.pid);if(!p)return;
-    if(!souAdmin(l))return toast('Só o admin anula a opinião dos outros');
-    const r=el.dataset.r==='G'?'G':'L',tr=rt(p,r),by=el.dataset.by||null;
-    const i=(tr.op||[]).findIndex(o=>(o.by||null)===by);if(i<0)return;
-    const e=tr.op[i].e,quem=by?nameOf(l,by):'o cadastro';
-    /* o ✕ fica ao lado de cada opinião: um toque errado não pode apagar a opinião de outra pessoa */
-    if(!confirm(`Anular a opinião de ${quem} sobre ${p.name} (${e===null?'não sabe':patName(l,stepOf(e))})? Só ${by?'ele':'o admin'} pode dar de novo.`))return;
-    tr.op.splice(i,1);
-    logAdd(l,'op',{pid:p.id,role:r,by,from:stepOf(e),to:null,adm:true});
-    rebuildAll(l);save();A.pSheet({dataset:{id:p.id,r}});render();toast('Opinião anulada');
   },
   /* A tela de quem lança (D-95): UMA pessoa por vez, num cartão. As cinco
      patentes são opções grandes que já dizem o que significam — não há
@@ -5293,7 +5289,7 @@ const A={
      conferir e voltar. A ordem é fixada ao abrir (quem falta primeiro), para
      ninguém pular de lugar debaixo do dedo.                                */
   opSheet(el){
-    const l=L();if(!podeOpinar(l))return toast('Só quem lança opina sobre nível');
+    const l=L();
     const eu=euId(l);if(!eu)return toast('Vincule o seu perfil ("Sou eu" na sua ficha) para opinar');
     const pend=opPendentesPor(l);
     let r=(S.ui.opRole||S.ui.rankRole)==='G'?'G':'L';
@@ -5311,7 +5307,11 @@ const A={
       OPV={r,liga:l.id,ordem:todos.map(p=>p.id),i:todos.findIndex(p=>!minha(p))};
     }
     OPV.ordem=OPV.ordem.filter(id=>P(l,id)&&joga(P(l,id)));
-    if(el&&el.dataset&&el.dataset.i!==undefined)OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);
+    if(el&&el.dataset&&el.dataset.i!==undefined){OPV.i=clamp(+el.dataset.i,-1,OPV.ordem.length-1);OPV.solto=null}
+    /* "solto": alguém de fora da fila desta posição (não costuma jogar aqui) —
+       ninguém é obrigado a opinar sobre ele, mas tocar no nome abre o cartão */
+    if(el&&el.dataset&&el.dataset.solto)OPV.solto=el.dataset.solto;
+    if(OPV.solto&&(!P(l,OPV.solto)||OPV.ordem.includes(OPV.solto)))OPV.solto=null;
     const ordem=OPV.ordem.map(id=>P(l,id)),fila=ordem;
     /* quem não joga nesta posição não ganha cartão, mas aparece no fim da lista,
        apagado — tocar abre a ficha (a opinião dele se dá na outra aba)      */
@@ -5327,7 +5327,8 @@ const A={
       'A média do racha. Na dúvida, é aqui.',
       'Acima da média: faz falta quando não vem.',
       'Muda o patamar do time sozinho. Raro.'];
-    const p=OPV.i>=0?ordem[OPV.i]:null;
+    const solto=OPV.solto?P(l,OPV.solto):null;
+    const p=solto||(OPV.i>=0?ordem[OPV.i]:null);
     let cartao;
     if(!ordem.length)cartao=`<div class="opcard"><div class="tiny muted">Ninguém para opinar ${r==='G'?'no gol — quem vai ao gol aparece aqui':'na linha'}.</div></div>`;
     else if(!p){const o=r==='G'?'L':'G';cartao=`<div class="opcard done"><div class="big">✓</div><div class="nm">Todas as suas opiniões ${r==='G'?'no gol':'na linha'} estão dadas</div>
@@ -5350,28 +5351,30 @@ const A={
         <button class="opopt ns ${m&&m.e===null?'on':''}" data-a="opSet" data-pid="${p.id}" data-r="${r}" data-s="ns" data-back="lista" aria-pressed="${m&&m.e===null?'true':'false'}">
           <span class="pat none">?</span><span class="desc"><b>Não sei</b> — nunca vi jogar.</span>${m&&m.e===null?'<span class="chk">✓</span>':''}</button>
         <div class="opnav">
-          <button class="btn sm ghost" data-a="opNav" data-d="-1" ${OPV.i<=0?'disabled':''}>‹ Anterior</button>
-          <div class="tiny muted" style="align-self:center">${OPV.i+1} de ${ordem.length}</div>
-          <button class="btn sm ghost sp" data-a="opNav" data-d="1">${m?'Próximo ›':'Pular ›'}</button>
+          <button class="btn sm ghost" data-a="opNav" data-d="-1" ${OPV.i<=0||solto?'disabled':''}>‹ Anterior</button>
+          <div class="tiny muted" style="align-self:center">${solto?'fora da fila '+(r==='G'?'do gol':'da linha'):(OPV.i+1)+' de '+ordem.length}</div>
+          <button class="btn sm ghost sp" data-a="opNav" data-d="${solto?'0':'1'}">${solto?'Voltar à fila ›':m?'Próximo ›':'Pular ›'}</button>
         </div>
       </div>`;
     }
     /* ao lado do nome, quantas opiniões (de verdade, sem os "não sei") a pessoa já recebeu */
-    const linha=(q,outro)=>{const m=minha(q),nOp=opsAtivas(l,rt(q,r)).filter(o=>o.e!==null).length;return `<button class="oprowb ${outro?'outro':''} ${q===p?'cur':''}" ${outro?`data-a="pSheet" data-id="${q.id}"`:`data-a="opSheet" data-i="${OPV.ordem.indexOf(q.id)}"`}>
+    const linha=(q,outro)=>{const m=minha(q),nOp=opsAtivas(l,rt(q,r)).filter(o=>o.e!==null).length;return `<button class="oprowb ${outro?'outro':''} ${q===p?'cur':''}" ${outro?`data-a="opSheet" data-solto="${q.id}"`:`data-a="opSheet" data-i="${OPV.ordem.indexOf(q.id)}"`}>
       <span class="nm">${esc(q.name)}${q.gk?' 🧤':''}</span><span class="cnt ${nOp?'':'zero'}" title="opiniões que ${esc(q.name.split(' ')[0])} já recebeu">${nOp?pl(nOp,'opinião','opiniões'):'nenhuma'}</span>${m?(m.e===null?'<span class="none">não sei</span>':patBadgePat(l,stepOf(m.e))):'<span class="none">—</span>'}</button>`};
     openSheet(`<div class="row" style="align-items:baseline;gap:8px"><h2 style="margin-bottom:0">Minhas opiniões</h2><div class="sp tiny" style="white-space:nowrap;${faltam?'color:var(--gold)':'color:var(--mute)'}" title="${n} de ${fila.length} ${r==='G'?'no gol':'na linha'}">${faltam?'faltam '+faltam:'todas dadas ✓'}</div></div>
       <div class="opbar"><i style="width:${fila.length?Math.round(100*n/fila.length):0}%"></i></div>
       <div class="seg" style="margin-bottom:6px"><button class="${r==='L'?'on':''}" data-a="opRole" data-v="L">Linha${pend.L?` <span class="segn">${pend.L}</span>`:''}</button><button class="${r==='G'?'on':''}" data-a="opRole" data-v="G">🧤 Gol${pend.G?` <span class="segn">${pend.G}</span>`:''}</button></div>
       ${cartao}
-      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.</div>
+      <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.${opinaoVale(l)?'':' <span style="color:var(--gold)">Sua opinião fica registrada e passa a valer quando você for Lançador.</span>'}</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
-      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — sem prioridade aqui; toque para abrir a ficha</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
+      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — ninguém precisa opinar sobre eles aqui; toque se quiser</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
     if(el&&el.dataset&&el.dataset.i!==undefined){const sh=$('#sheet');if(sh){try{sh.scrollTo({top:0,behavior:'smooth'})}catch(e){sh.scrollTop=0}}}
   },
   opNav(el){
-    const d=+el.dataset.d||1,n=OPV.ordem.length;if(!n)return;
-    OPV.i=OPV.i<0?(d>0?0:n-1):clamp(OPV.i+d,0,n-1);
+    const d=+el.dataset.d||0,n=OPV.ordem.length;
+    const solto=!!OPV.solto;OPV.solto=null;
+    if(!n)return A.opSheet();
+    if(!solto)OPV.i=OPV.i<0?(d>0?0:n-1):clamp(OPV.i+d,0,n-1);   // "Voltar à fila" (d=0) só larga o solto
     A.opSheet();
   },
   opRole(el){S.ui.opRole=el.dataset.v==='G'?'G':'L';saveUI();OPV.ordem=[];A.opSheet()},
@@ -5415,14 +5418,10 @@ const A={
       }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
       p.owner=d.owner;
     }
-    /* Quem deixa de lançar leva as opiniões junto (D-95): elas deixam de
-       valer para todo mundo, e o histórico reaplica sem elas.             */
-    let reaplicar=false;
-    if(d.role!==papelAntes&&!PODE_OPINAR.includes(d.role)){
-      const n=anulaOpinioes(l,p.id);
-      if(n){logAdd(l,'opClear',{by:p.id,n});reaplicar=true}
-    }
-    if(reaplicar)rebuildAll(l);                          // o histórico reaplica sobre o base novo
+    /* Mudar de papel não apaga opinião nenhuma (D-121): as que ele deu
+       deixam de valer como Jogador e voltam a valer se subir de novo —
+       `opAtiva` olha o papel de hoje. Só o histórico reaplica.            */
+    if(d.role!==papelAntes)rebuildAll(l);
     PD=null;closeSheet();save();render();toast(msg);
   },
   /* nível, gol, conta e permissão mudam pela ficha (PD → pdSave), num
