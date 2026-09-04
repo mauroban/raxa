@@ -5368,7 +5368,7 @@ const A={
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
       <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — ninguém precisa opinar sobre eles aqui; toque se quiser</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
-    if(el&&el.dataset&&el.dataset.i!==undefined){const sh=$('#sheet');if(sh){try{sh.scrollTo({top:0,behavior:'smooth'})}catch(e){sh.scrollTop=0}}}
+    if(el&&el.dataset&&(el.dataset.i!==undefined||el.dataset.solto)){const sh=$('#sheet');if(sh){try{sh.scrollTo({top:0,behavior:'smooth'})}catch(e){sh.scrollTop=0}}}
   },
   opNav(el){
     const d=+el.dataset.d||0,n=OPV.ordem.length;
