@@ -5352,9 +5352,7 @@ const A={
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
           <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões'):'sem opinião'}</span></div>
-          ${t.games?`<div class="lbl">HOJE</div>
-          <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')}</span></div>`:''}
-        </div>
+        </div>${/* o "hoje" já está no cartão do topo da ficha (badge, partidas, V/E/D): aqui só a entrada */''}
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
         ${/* opinião individual não aparece para ninguém (D-125): fica a entrada, a contagem e o aviso de divergência;
              o admin vê o que cada membro opinou pelo botão "Opiniões que Fulano deu" (D-124) */''}
