@@ -1422,6 +1422,39 @@ step('troca de lugar continua: linha ⇄ linha entre os lados, e linha ⇄ fila 
   A.prePick({dataset:{slot:'gk',s:'0'}});A.toTeam({dataset:{i:'-1'}});   // marca num slot nao "se move"
 });
 
+step('improvisado no gol vindo de um time que espera: trocar ele com alguem de outro time de fora troca de TIME, e ele segue no gol',()=>{
+  const lv=rachaNovo(16,3),l=L();const pair=parPre_(lv,l);
+  const esperam=lv.teams.map((_,i)=>i).filter(i=>!pair.includes(i));
+  if(esperam.length<2)throw new Error('cenario pede dois times esperando');
+  const x=lv.teams[esperam[0]].ids[0],y=lv.teams[esperam[1]].ids[0];
+  onDrop('fora:'+x,{dataset:{dropSlot:'gk:0'}});             // x improvisa no gol do lado 0 (so nesta partida)
+  A.prePick({dataset:{id:x}});                                  // ainda esta no 🧤? (chave sem prefixo = o slot do gol)
+  if(pecaPre(l,lv,pair,x).kind!=='gk')throw new Error('x devia estar no gol do lado 0');
+  lv.sel=null;
+  onDrop('fora:'+x,{dataset:{dropPlayer:'fora:'+y}});          // no card Fora: x ⇄ y
+  if(!lv.teams[esperam[1]].ids.includes(x)||!lv.teams[esperam[0]].ids.includes(y))throw new Error('devia trocar de time');
+  if(escalPre(l,lv,pair).gks[0]!==x)throw new Error('a troca de time nao pode trocar o goleiro junto: '+escalPre(l,lv,pair).gks);
+  if(!viewProxima(l,lv).includes('data-drop-player="fora:'+x+'"'))throw new Error('x continua no card Fora como pessoa');
+});
+step('time que espera com um a menos mostra a vaga; quem esta na fila entra nele por toque ou arraste',()=>{
+  const lv=rachaNovo(16,3),l=L();const pair=parPre_(lv,l);
+  const esp=lv.teams.map((_,i)=>i).find(i=>!pair.includes(i));
+  const saiu=lv.teams[esp].ids[0];A.leaveDo({dataset:{id:saiu,modo:'foi'}});
+  const novo=l.players.find(p=>!lv.presentIds.includes(p.id));A.lateIn({dataset:{id:novo.id}});A.lateFila({dataset:{id:novo.id}});
+  const h=viewProxima(l,lv);
+  if(!h.includes('data-drop-slot="vagaT:'+esp+'"'))throw new Error('o time que espera devia mostrar a vaga');
+  A.prePick({dataset:{slot:'vagaT',s:String(esp)}});A.prePick({dataset:{id:'fora:'+novo.id}});
+  if(!lv.teams[esp].ids.includes(novo.id)||filaDe(lv).includes(novo.id))throw new Error('devia entrar no time que espera');
+  if(viewProxima(l,lv).includes('data-drop-slot="vagaT:'+esp+'"'))throw new Error('time completo nao mostra vaga');
+  /* arrastar alguem de um lado que joga para a vaga de um time que espera: sai do lado, entra no time */
+  const outro=lv.teams[esp].ids[0];A.leaveDo({dataset:{id:outro,modo:'foi'}});
+  const lin=escalPre(l,lv,pair).escal[0].find(id=>id!==escalPre(l,lv,pair).gks[0]);
+  onDrop(lin,{dataset:{dropSlot:'vagaT:'+esp}});
+  if(!lv.teams[esp].ids.includes(lin)||lv.teams[pair[0]].ids.includes(lin))throw new Error('devia mudar de time');
+  A.prePick({dataset:{id:'fora:'+lin}});A.toTeam({dataset:{i:'-1'}});     // chave com prefixo tambem move para fora
+  if(lv.teams[esp].ids.includes(lin))throw new Error('toque no card Fora com chave fora: devia tirar do time');
+});
+
 console.log('\n[smoke] dados antigos no localStorage');
 const antigo={v:1,me:{id:'x',name:''},active:'old',ui:{tab:'racha'},ligas:[{id:'old',name:'Antiga',
   cfg:{startElo:1500,kNew:40,kBase:24,placement:5,tiers:[1700,1600,1450,1350],tierNames:['a','b','c','d','e'],

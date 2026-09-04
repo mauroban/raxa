@@ -284,3 +284,10 @@ de goleiro fixo como "só esta partida" (o time ficaria com 6 e o goleiro antigo
 **Onde:** `escalPre`, `pecaPre`, `parPre`, `lancePre`, `trocaLugar`, `mudaFill`, `defineGkPre`,
 `A.prePick`, `viewProxima`, `onDrop` em `index.html` · [Fluxo §2–3](../produto/fluxo-do-racha.md)
 · `scripts/smoke.py` bloco "pré-partida com a gramática da partida ao vivo (D-123)".
+**Ajuste no mesmo dia:** (a) os **times que esperam** também mostram a vaga no card "Fora"
+(`vagaT:i`): quem é tocado ou arrastado nela entra naquele time de vez, venha da fila, de outro
+time ou de um dos lados que jogam; (b) o chip do card "Fora" carrega a chave **`fora:ID`** — é a
+pessoa aí fora, não o slot que ela ocupa. Antes, quem improvisava no gol emprestado (vindo de um
+time que espera) continuava listado no time dele e, ao trocá-lo ali com alguém de outro time, a
+troca caía no par "de fora → 🧤" e **trocava o goleiro** em vez de trocar de time. Agora troca de
+time e ele segue no gol. Teste: os dois últimos passos do bloco D-123 do smoke.

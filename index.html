@@ -2597,6 +2597,10 @@ function pecaPre(liga,lv,pair,key){
   if(!key)return null;
   if(/^gk:[01]$/.test(key))return {kind:'gkVazio',side:+key.slice(3),id:null};
   if(/^vaga:[01]$/.test(key))return {kind:'vaga',side:+key.slice(5),id:null};
+  if(/^vagaT:\d+$/.test(key)){const ti=+key.slice(6);return lv.teams[ti]?{kind:'vagaT',side:-1,id:null,ti}:null}
+  /* chip do card "Fora": é a pessoa aí fora, mesmo que esteja no gol emprestada */
+  if(/^fora:/.test(key)){const id=key.slice(5);
+    return P(liga,id)&&lv.presentIds.includes(id)?{kind:'fora',side:-1,id,team:lv.teams.findIndex(t=>t.ids.includes(id))}:null}
   const e=escalPre(liga,lv,pair);
   const side=[0,1].find(sd=>e.gks[sd]===key||e.escal[sd].includes(key));
   const team=lv.teams.findIndex(t=>t.ids.includes(key));
@@ -2610,6 +2614,7 @@ function pecaPre(liga,lv,pair,key){
 function parPre(a,b){
   if(!a||!b)return false;
   const k=[a.kind,b.kind].sort().join('+'),mesmo=a.side===b.side;
+  if(a.kind==='vagaT'||b.kind==='vagaT')return !!(a.id||b.id);   // vaga num time que espera: qualquer pessoa entra
   if(k==='fora+fora'||k==='fora+linha'||k==='linha+linha')return a.id!==b.id;
   if(a.kind==='fora'||b.kind==='fora')return true;
   if(k==='gk+gk')return !mesmo;
@@ -2648,6 +2653,15 @@ function lancePre(liga,lv,pair,ka,kb){
   const de=k=>a.kind===k?a:b.kind===k?b:null;
   const fora=de('fora'),nm=id=>nameOf(liga,id).split(' ')[0];
   const rod=comRodizio(lv);
+  /* vaga num time que espera: a pessoa entra nele de vez (sai de onde estava) */
+  const vt=de('vagaT');
+  if(vt){
+    const p=a===vt?b:a,t=lv.teams[vt.ti];
+    lv.teams.forEach(x=>{x.ids=x.ids.filter(y=>y!==p.id)});t.ids.push(p.id);
+    if(Array.isArray(lv.fill))lv.fill=lv.fill.map(x=>(x||[]).filter(y=>y!==p.id));
+    if(p.kind==='gk'&&!rod)lv.nextGks=null;
+    return `${nm(p.id)} entra no ${t.name}`;
+  }
   /* nome ⇄ nome */
   if(a.id&&b.id&&a.kind!=='gk'&&b.kind!=='gk'){
     const f=[a,b].find(x=>x.fill);
@@ -2793,10 +2807,13 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
 }
 
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
-function tpChip(liga,lv,id,big,attrs){
-  const p=P(liga,id);if(!p)return '';
+/* `key` (opcional) é a chave que o toque/arraste carrega — na pré-partida o
+   chip do card "Fora" usa 'fora:ID', para o toque nele ser "essa pessoa, aí
+   fora", mesmo que ela esteja no gol emprestada (D-123).                    */
+function tpChip(liga,lv,id,big,attrs,key){
+  const p=P(liga,id);if(!p)return '';key=key||id;
   const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(liga,p,role)&&vePat(liga);
-  return `<button class="tp ${big?'big':''} ${lv.sel===id?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${id}" data-drag="1" data-drop-player="${id}"${attrs||''}>
+  return `<button class="tp ${big?'big':''} ${lv.sel===key?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${key}" data-drag="1" data-drop-player="${key}"${attrs||''}>
     ${tem?patDot(liga,rt(p,role).rank):''}<span class="nm">${esc(p.name)}${gk?' 🧤':''}</span></button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
@@ -2851,10 +2868,16 @@ function viewProxima(liga,lv){
     :sel.kind==='gk'?`${nomeSel} sai do gol — toque em quem vai para o gol`
     :sel.kind==='gkVazio'?'Gol vazio — toque em quem vai para o gol'
     :sel.kind==='vaga'?'Vaga — toque em quem completa'
+    :sel.kind==='vagaT'?`Vaga no ${esc(lv.teams[sel.ti].name)} — toque em quem entra`
     :`${nomeSel} — toque em quem sai, no 🧤 ou numa vaga`;
   const maisOpc=sel&&(sel.kind==='gk'||sel.kind==='gkVazio')?` · <button class="lnk" data-a="preGk" data-sd="${sel.side}">outras opções</button>`
     :sel&&sel.kind==='vaga'?` · <button class="lnk" data-a="fillPick" data-sd="${sel.side}">escolher da lista</button>`:'';
-  const chipFora=id=>tpChip(liga,lv,id,true,alvoDe(id));
+  /* no card "Fora" o chip é a pessoa aí fora ('fora:ID'), não o slot que ela
+     ocupa emprestada: trocar dois nomes ali troca de time, não de goleiro   */
+  const chipFora=id=>tpChip(liga,lv,id,true,alvoDe('fora:'+id),'fora:'+id);
+  /* time que espera com gente a menos também tem a vaga à vista: quem entra nela entra no time */
+  const vagasT=i=>{const t=lv.teams[i],falta=per-t.ids.length;if(falta<=0)return '';
+    return Array.from({length:falta},()=>`<button class="tp big vaga ${lv.sel==='vagaT:'+i?'sel':''}" data-a="prePick" data-slot="vagaT" data-s="${i}" data-drop-slot="vagaT:${i}"${alvoDe('vagaT:'+i)}>＋ vaga</button>`).join('')};
   return `
   <div class="card">
     <div class="row"><div class="k">Próxima partida</div>
@@ -2872,7 +2895,7 @@ function viewProxima(liga,lv){
            empty:`data-a="prePick" data-slot="vaga" data-s="${sd}" data-drop-slot="vaga:${sd}"${alvoDe('vaga:'+sd)}`},
           {attrs:`data-a="toTeam" data-i="${ti}" data-drop-zone="team:${ti}"`,head:cab,
            selGk:lv.sel==='gk:'+sd,selVaga:lv.sel==='vaga:'+sd,vaga:'＋ completar',
-           foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false,alvoDe(id))).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
+           foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false,alvoDe('fora:'+id),'fora:'+id)).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
     </div>
     <div class="tiny ${sel?'':'muted'}" style="margin:6px 2px 0">${dica}${maisOpc}</div>
     ${(()=>{const rs=[0,1].map(sd=>({n:lv.teams[pair[sd]].name,r:teamRecord(liga,lv,pair[sd])})).filter(x=>x.r.n);
@@ -2887,7 +2910,7 @@ function viewProxima(liga,lv){
       <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+descansam.length+outros.reduce((a,i)=>a+lv.teams[i].ids.length,0)}</div></div>
     ${outros.length||descansam.length?`<div class="foragrid" style="margin-top:8px">${outros.map(i=>`<div class="grp">
       <div class="teamtag ${TEAMBG[i]}">${esc(lv.teams[i].name)}</div>
-      ${lv.teams[i].ids.map(chipFora).join('')||'<span class="tiny muted">vazio</span>'}
+      ${lv.teams[i].ids.map(chipFora).join('')+vagasT(i)||'<span class="tiny muted">vazio</span>'}
     </div>`).join('')}${descansam.length?`<div class="grp"><div class="teamtag cN">🧤 Rodízio</div>${descansam.map(chipFora).join('')}</div>`:''}</div>`:''}
     ${soltos.length?`<div style="margin-top:8px">
       <div class="row" style="margin-bottom:6px"><div class="k">Fila — os próximos a entrar</div>
@@ -4503,10 +4526,12 @@ const A={
     lv.sel=key;render();
   },
   toTeam(el){
-    const lv=L().live;if(!lv.sel||!P(L(),lv.sel))return;      // marca num slot (🧤, vaga) não se move
+    const lv=L().live;if(!lv.sel)return;
+    const id=String(lv.sel).replace(/^fora:/,'');
+    if(!P(L(),id))return;                                     // marca num slot (🧤, vaga) não se move
     const i=+el.dataset.i;
-    lv.teams.forEach(t=>{const k=t.ids.indexOf(lv.sel);if(k>=0)t.ids.splice(k,1)});
-    if(i>=0)lv.teams[i].ids.push(lv.sel);
+    lv.teams.forEach(t=>{const k=t.ids.indexOf(id);if(k>=0)t.ids.splice(k,1)});
+    if(i>=0)lv.teams[i].ids.push(id);
     lv.sel=null;save();render();
   },
 
@@ -5897,7 +5922,7 @@ function onDrop(fromId,target){
   const alvo=target.dataset.dropPlayer,zona=target.dataset.dropZone;
   if(alvo===fromId)return;
   /* soltar em "Foi embora": passa pela mesma confirmação do toque */
-  if(zona==='leave')return A.leaveRacha({dataset:{id:fromId}});
+  if(zona==='leave')return A.leaveRacha({dataset:{id:fromId.replace(/^fora:/,'')}});
   if(lv.stage==='jogo'&&lv.cur){
     /* mesma gramática do toque (D-117): de fora sobre quem sai, sobre o 🧤 ou
        numa vaga; de linha sobre o 🧤 do seu lado; goleiro sobre o outro goleiro */
