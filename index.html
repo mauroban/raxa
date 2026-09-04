@@ -638,7 +638,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .lv2 button.on{border-color:var(--chalk);box-shadow:0 0 0 1px var(--chalk) inset}
 .lv2 button .best{font-size:11px;color:var(--mute);margin-top:6px}
 .lv2 .none{font-size:13px;color:var(--mute)}
-.ps-panel{background:var(--fill);border:0;border-radius:12px;padding:12px;margin-top:12px}
+.ps-panel{background:var(--fill);border:0;border-radius:12px;padding:12px;margin:12px 0 10px}   /* respiro dos dois lados: acima vêm os cartões de nível, abaixo os números */
 .ps-panel .k{margin-bottom:8px}
 .ladder4{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px}
 .ladder4.six{grid-template-columns:repeat(3,1fr)}   /* "Sem nível" + 5 níveis: 3×2, e não 6 espremidos numa linha */
@@ -5416,7 +5416,7 @@ const A={
       </div>
       ${jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''}
       <div class="tiny muted" style="margin:6px 0 10px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>
-      ${adm?`<div class="trow">
+      ${nomeia?`<div class="trow">
         <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
         <button class="sw ${PD.gk?'on':''}" data-a="pdGk" role="switch" aria-checked="${PD.gk?'true':'false'}" aria-label="costuma ir ao gol"></button>
       </div>`:''}
@@ -5732,7 +5732,7 @@ const A={
       if(p.owner&&!(p.owner===S.me.name||adm))return toast('Só o dono do perfil ou o admin desvincula');
       if(d.owner&&l.players.some(x=>x.id!==p.id&&x.owner===d.owner))return toast('Você já tem um perfil nesta liga — desvincule o outro antes');
     }
-    if(d.gk!==!!p.gk&&!adm)return toast('Só o admin muda o hábito de gol');
+    if(d.gk!==!!p.gk&&!nomeia)return toast('Só quem lança muda o hábito de gol');
 
     if(nome!==p.name){logAdd(l,'rename',{pid:p.id,from:p.name,to:nome});p.name=nome}
     if(bio!==(p.bio||'')){logAdd(l,'bio',{pid:p.id,from:p.bio||'',to:bio});if(bio)p.bio=bio;else delete p.bio}

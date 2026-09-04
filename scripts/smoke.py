@@ -1365,17 +1365,17 @@ step('ficha: nome e descricao no cabecalho (quem lanca); gol, permissao e arquiv
   if(h.includes('>Sou eu<'))throw new Error('quem ja tem perfil vinculado nao ve "Sou eu"');
   /* lancador: edita nome e descricao, e so isso */
   me.role='lancador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
-  if(!h.includes('aria-label="nome do jogador"')||!h.includes('aria-label="descrição"'))throw new Error('lancador edita nome e descricao');
-  if(h.includes('Permissão')||h.includes('data-a="pdGk"')||h.includes('data-a="arquivar"')||h.includes('>Admin</div>'))throw new Error('lancador nao ve gol, permissao, arquivar nem bloco admin');
-  PD.bio='amigo do Matheus';A.pdSave();
+  if(!h.includes('aria-label="nome do jogador"')||!h.includes('aria-label="descrição"')||!h.includes('data-a="pdGk"'))throw new Error('lancador edita nome, descricao e habito de gol');
+  if(h.includes('Permissão')||h.includes('data-a="arquivar"')||h.includes('>Admin</div>'))throw new Error('lancador nao ve permissao, arquivar nem bloco admin');
+  PD.bio='amigo do Matheus';const gk0=!!P(l,p.id).gk;PD.gk=!gk0;A.pdSave();
   if(P(l,p.id).bio!=='amigo do Matheus')throw new Error('descricao nao salvou');
+  if(!!P(l,p.id).gk===gk0)throw new Error('lancador muda o habito de gol');
   if(!l.log.some(e=>e.a==='bio'&&e.pid===p.id))throw new Error('descricao sem log');
-  /* moderador: como o lancador aqui (gol e arquivar sao do admin) */
+  P(l,p.id).gk=gk0;
+  /* moderador: como o lancador aqui (arquivar e permissao sao do admin) */
   me.role='moderador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
-  if(h.includes('data-a="pdGk"')||h.includes('data-a="arquivar"')||h.includes('Permissão'))throw new Error('moderador nao muda gol, nao arquiva, nao da permissao');
-  const gk0=!!P(l,p.id).gk;PD.gk=!gk0;A.pdSave();
-  if(!!P(l,p.id).gk!==gk0)throw new Error('moderador nao pode mudar o habito de gol');
-  PD=null;
+  if(!h.includes('data-a="pdGk"')||h.includes('data-a="arquivar"')||h.includes('Permissão'))throw new Error('moderador muda gol, nao arquiva, nao da permissao');
+  PD=null;closeSheet();
   /* jogador: le a descricao, sem campo; "Sou eu" so sem perfil */
   me.role='jogador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
   if(h.includes('aria-label="descrição"')||!h.includes('amigo do Matheus'))throw new Error('jogador le a descricao, sem editar');

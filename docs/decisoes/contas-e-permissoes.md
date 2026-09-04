@@ -173,8 +173,9 @@ arquivados da estatística (jogaram; é fato).
 D-128 · [Contas e permissões §7](../produto/contas-e-permissoes.md) · [Banco](../tecnico/banco-de-dados.md).
 **Ajuste no mesmo dia:** o bloco "Cadastro" saiu — o nome volta a se editar **no próprio nome**, no
 cabeçalho, e ganhou embaixo uma **descrição** discreta (`p.bio`, até 120 caracteres: apelido, "amigo
-do Matheus", como chegou), editável por quem lança e lida pelos outros. Papéis afinados: **nome e
-descrição, quem lança**; **qualquer outra alteração** (hábito de gol, permissão, arquivar, reativar,
-apagar, card "Arquivados") **só o admin** — moderador deixou de arquivar. As linhas de gol/conta/
+do Matheus", como chegou), editável por quem lança e lida pelos outros. Papéis afinados: **nome,
+descrição e hábito de gol, quem lança**; **qualquer outra alteração** (permissão, arquivar, reativar,
+apagar, card "Arquivados") **só o admin** — moderador deixou de arquivar. O painel de nível ganhou
+respiro embaixo: colado nos cartões de números, parecia sobreposto. As linhas de gol/conta/
 permissão ficam depois dos números, com o Cancelar/Salvar logo abaixo, e arquivar/apagar dentro do
 bloco Admin, no fim. Log: `bio` ("mudou a descrição").
