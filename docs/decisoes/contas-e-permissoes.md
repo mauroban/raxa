@@ -183,3 +183,5 @@ bloco Admin, no fim. Log: `bio` ("mudou a descrição").
 abaixo do nome — é na hora do cadastro que se sabe "amigo de quem".
 **Ajuste no mesmo dia (3):** apagar de vez vale para quem **nunca jogou uma partida**, mesmo que tenha
 sido marcado presente em algum racha — a presença sai das sessões junto com o cadastro.
+**Ajuste no mesmo dia (4):** a descrição aparece também no cartão de *Minhas opiniões*, abaixo do
+nome e mais discreta — é lá que mais importa saber de quem se está falando.

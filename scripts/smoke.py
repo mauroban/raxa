@@ -1314,6 +1314,11 @@ step('minhas opinioes: a lista de baixo ordena sem opiniao > Diamante … Ferro 
   const ultimoSem=Math.max(...semOp.map(pos));
   if(!(ultimoSem<pos(gente[1])&&pos(gente[1])<pos(gente[2])&&pos(gente[2])<pos(gente[0])))
     throw new Error('ordem errada: sem opiniao '+ultimoSem+' < Diamante '+pos(gente[1])+' < Ferro '+pos(gente[2])+' < nao sei '+pos(gente[0]));
+  /* a descricao aparece no cartao, abaixo do nome (D-128) */
+  gente[3].bio='amigo do Matheus';A.opIr({dataset:{pid:gente[3].id,r:'L'}});   // abre no cartao DELE
+  const h2=$('#sheet').innerHTML,card=h2.slice(h2.indexOf('class="opcard"'),h2.indexOf('class="opnav"'));
+  if(!card.includes(gente[3].name)||!card.includes('amigo do Matheus'))throw new Error('o cartao da pessoa devia mostrar a descricao dela');
+  delete gente[3].bio;
   gente.forEach(p=>p.L.op=p.L.op.filter(o=>o.by!==eu));rebuildAll(l);me.role='admin';closeSheet();
 });
 
