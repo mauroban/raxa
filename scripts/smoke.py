@@ -651,7 +651,8 @@ step('rebaixar quem opinou a jogador invalida as opinioes dele sem apagar; promo
   if(alvo.L.def)throw new Error('a opiniao do rebaixado nao pode valer');
   if(l.log.some(e=>e.a==='opClear'&&e.by===autor.id))throw new Error('nao devia registrar anulacao');
   A.pSheet({dataset:{id:alvo.id,r:'L'}});
-  if(!/não vale \(Jogador\)/.test(els['#sheet'].innerHTML))throw new Error('a ficha devia mostrar a opiniao como sem valor');
+  /* a ficha não lista opinião individual (D-125): a do rebaixado some da contagem */
+  if(!/sem opinião/.test(els['#sheet'].innerHTML)||/1 opinião/.test(els['#sheet'].innerHTML))throw new Error('a ficha devia contar a opiniao do rebaixado como sem valor');
   A.pSheet({dataset:{id:autor.id}});A.pdRole({dataset:{r:'lancador'}});A.pdSave();
   if(!alvo.L.def)throw new Error('promovido de volta: a opiniao devia voltar a valer');
   autor.role=papel0;alvo.L.op=[];rebuildAll(l);closeSheet();
@@ -1285,14 +1286,31 @@ step('ficha: quem deu qual opiniao so o admin ve; os outros veem a contagem e o 
   const autor=l.players.find(p=>p.id!==eu&&p.role!=='jogador')||l.players.find(p=>p.id!==eu);autor.role='lancador';
   const alvo=l.players.find(p=>p.id!==eu&&p.id!==autor.id);
   alvo.L.op=[{by:autor.id,e:1700,ts:1},{by:eu,e:1500,ts:2}];rebuildAll(l);
-  me.role='admin';A.pSheet({dataset:{id:alvo.id,r:'L'}});let h=$('#sheet').innerHTML;
-  if(!h.includes(autor.name)||!h.includes('2 opiniões'))throw new Error('admin devia ver o nome de quem opinou e a contagem');
-  me.role='lancador';A.pSheet({dataset:{id:alvo.id,r:'L'}});h=$('#sheet').innerHTML;
-  const painel=h.slice(h.indexOf('opiniões</div>'));
-  if(painel.includes(autor.name))throw new Error('lancador nao pode ver quem deu cada opiniao');
-  if(!h.includes('2 opiniões')||!h.includes('só o admin vê'))throw new Error('para os outros fica a contagem e o aviso');
-  if(!h.includes('data-a="opSet"'))throw new Error('a propria opiniao continua editavel');
+  /* ninguém vê opinião individual na ficha, nem o admin: fica a contagem; o admin tem o botão da D-124 */
+  ['admin','lancador'].forEach(papel=>{me.role=papel;A.pSheet({dataset:{id:alvo.id,r:'L'}});const h=$('#sheet').innerHTML;
+    const painel=h.slice(h.indexOf('opiniões</div>'));
+    if(painel.includes(autor.name))throw new Error(papel+' nao pode ver quem deu cada opiniao na ficha');
+    if(!h.includes('2 opiniões'))throw new Error(papel+': a contagem tem que ficar');
+    if(!h.includes('data-a="opSet"'))throw new Error(papel+': a propria opiniao continua editavel');
+    if((papel==='admin')!==h.includes('data-a="opDe"'))throw new Error('o botao das opinioes dadas e so do admin')});
   me.role='admin';alvo.L.op=[];rebuildAll(l);
+});
+step('minhas opinioes: a lista de baixo ordena sem opiniao > Diamante … Ferro > nao sei (D-126)',()=>{
+  const l=L(),eu=euId(l),me=P(l,eu);me.role='lancador';
+  const gente=l.players.filter(p=>p.id!==eu&&!p.gk).slice(0,4);if(gente.length<4)throw new Error('cenario pede 4 de linha');
+  gente.forEach(p=>p.L.op=(p.L.op||[]).filter(o=>o.by!==eu));
+  gente[0].L.op.push({by:eu,e:null,ts:1});                 // não sei
+  gente[1].L.op.push({by:eu,e:stepMid(13),ts:1});          // Diamante
+  gente[2].L.op.push({by:eu,e:stepMid(1),ts:1});           // Ferro
+  /* gente[3]: sem opinião */
+  S.ui.opRole='L';OPV.ordem=[];A.opSheet();
+  const h=$('#sheet').innerHTML,lista=h.slice(h.indexOf('class="oplist"'));
+  const pos=p=>lista.indexOf('>'+p.name+'<')>=0?lista.indexOf('>'+p.name+'<'):lista.indexOf(p.name);
+  const semOp=l.players.filter(p=>p.id!==eu&&!p.gk&&!(p.L.op||[]).some(o=>o.by===eu));
+  const ultimoSem=Math.max(...semOp.map(pos));
+  if(!(ultimoSem<pos(gente[1])&&pos(gente[1])<pos(gente[2])&&pos(gente[2])<pos(gente[0])))
+    throw new Error('ordem errada: sem opiniao '+ultimoSem+' < Diamante '+pos(gente[1])+' < Ferro '+pos(gente[2])+' < nao sei '+pos(gente[0]));
+  gente.forEach(p=>p.L.op=p.L.op.filter(o=>o.by!==eu));rebuildAll(l);me.role='admin';closeSheet();
 });
 
 console.log('\n[smoke] elenco no meio do racha: sair e voltar, goleiro que chega, refazer times (D-122)');

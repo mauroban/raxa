@@ -55,7 +55,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-96](escada-calibracao-e-palpite.md#d-96) · Com 3+ opiniões, média aparada (sem a mais alta e a mais baixa), não a mediana pura
 - [D-121](escada-calibracao-e-palpite.md#d-121) · Sem anular opinião de uma pessoa; rebaixar a Jogador invalida (não apaga); Jogador também opina
 - [D-124](escada-calibracao-e-palpite.md#d-124) · Só o admin vê, na ficha, tudo que um membro opinou sobre os outros (só leitura)
-- [D-125](escada-calibracao-e-palpite.md#d-125) · Quem deu qual opinião só o admin vê; para os outros a ficha mostra a entrada, a contagem e a divergência
+- [D-125](escada-calibracao-e-palpite.md#d-125) · Opinião individual não aparece na ficha de ninguém (nem admin): entrada, contagem e divergência; nota por nome só pelo botão da D-124
+- [D-126](escada-calibracao-e-palpite.md#d-126) · Minhas opiniões: a lista ordena sem opinião › Diamante … Ferro › não sei
 
 ### [Times, fila e goleiro](times-fila-e-goleiro.md)
 

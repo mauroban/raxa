@@ -5344,9 +5344,7 @@ const A={
       </div>
       ${(()=>{return jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''})()}
       <div class="tiny muted" style="margin-top:6px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>`})()}
-      ${ver?(()=>{const t=rt(p,role),todasOp=opsAtivas(l,t),ops=todasOp.filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),nsabe=todasOp.filter(o=>o.e===null),eu=euId(l),minha=(t.op||[]).find(o=>o.by===eu),j=juntaOpinioes(ops.map(o=>o.e));
-        const semValor=(t.op||[]).filter(o=>!opAtiva(l,o)&&o.e!==null);   // de quem hoje é Jogador: fica registrada, não entra na conta (D-121)
-        const nomeOp=o=>o.by?esc(nameOf(l,o.by))+(o.by===eu?' <span class="muted">(você)</span>':''):'<span class="muted">cadastro</span>';
+      ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),eu=euId(l),minha=(t.op||[]).find(o=>o.by===eu);
         const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
         return `<div class="ps-panel">
         <div class="k">Nível ${role==='G'?'no gol':'na linha'} — opiniões</div>
@@ -5358,10 +5356,8 @@ const A={
           <div class="ctl">${temPatente(l,p,role)?patBadge(l,t.rank):'<span class="muted">calibrando</span>'}<span class="sub">${pl(t.games,'partida','partidas')}</span></div>`:''}
         </div>
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
-        ${/* quem deu qual nota é só do admin (D-125): para os outros fica a entrada, a contagem e o aviso de divergência */''}
-        ${adm&&(ops.length||nsabe.length)?`<div style="margin-top:8px">${ops.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)}${ops.length>2&&Math.abs(o.e-j.e)>=OP_DESTOA?' <span class="muted">· destoa</span>':''}</div>${patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}${nsabe.length?`<div class="oprow2"><div class="who tiny muted">${nsabe.map(o=>nomeOp(o)).join(', ')}</div><span class="pat none">não sabe${nsabe.length>1?'m':''}</span><span class="xs"></span></div>`:''}</div>`:''}
-        ${adm&&semValor.length?`<div style="margin-top:6px;opacity:.55">${semValor.map(o=>`<div class="oprow2"><div class="who tiny">${nomeOp(o)} <span class="muted">· não vale (Jogador)</span></div>${patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}</div>`:''}
-        ${!adm&&(ops.length||nsabe.length)?'<div class="tiny muted" style="margin-top:6px">Quem deu cada opinião, só o admin vê.</div>':''}
+        ${/* opinião individual não aparece para ninguém (D-125): fica a entrada, a contagem e o aviso de divergência;
+             o admin vê o que cada membro opinou pelo botão "Opiniões que Fulano deu" (D-124) */''}
         ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
           <div class="ladder4">
             ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&minha.e!==null&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
@@ -5601,6 +5597,11 @@ const A={
         </div>
       </div>`;
     }
+    /* a lista de baixo se ordena pela SUA opinião (D-126): quem ainda não tem
+       primeiro, depois de Diamante a Ferro, e "não sei" no fim — a fila de
+       navegação do cartão (OPV.ordem) continua fixa, para não pular         */
+    const chaveLista=q=>{const m=minha(q);return !m?0:m.e===null?2:1};
+    const ordemLista=(a,b)=>chaveLista(a)-chaveLista(b)||((minha(b)||{}).e||0)-((minha(a)||{}).e||0)||a.name.localeCompare(b.name);
     /* ao lado do nome, quantas opiniões (de verdade, sem os "não sei") a pessoa já recebeu */
     const linha=(q,outro)=>{const m=minha(q),nOp=opsAtivas(l,rt(q,r)).filter(o=>o.e!==null).length;return `<button class="oprowb ${outro?'outro':''} ${q===p?'cur':''}" ${outro?`data-a="opSheet" data-solto="${q.id}"`:`data-a="opSheet" data-i="${OPV.ordem.indexOf(q.id)}"`}>
       <span class="nm">${esc(q.name)}${q.gk?' 🧤':''}</span><span class="cnt ${nOp?'':'zero'}" title="opiniões que ${esc(q.name.split(' ')[0])} já recebeu">${nOp?pl(nOp,'opinião','opiniões'):'nenhuma'}</span>${m?(m.e===null?'<span class="none">não sei</span>':patBadgePat(l,stepOf(m.e))):'<span class="none">—</span>'}</button>`};
@@ -5610,7 +5611,7 @@ const A={
       ${cartao}
       <div class="tiny muted" style="margin:12px 2px 0">Pense no que o <b>time ganha</b> com a pessoa em quadra.${opinaoVale(l)?'':' <span style="color:var(--gold)">Sua opinião fica registrada e passa a valer quando você for Lançador.</span>'}</div>
       ${ordem.length?`<div class="k" style="margin:16px 0 6px">Todos <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">— toque para ir</span></div>
-      <div class="oplist">${fila.map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — ninguém precisa opinar sobre eles aqui; toque se quiser</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
+      <div class="oplist">${fila.slice().sort(ordemLista).map(q=>linha(q,false)).join('')}${outros.length?`<div class="tiny muted" style="margin:8px 0 4px">${r==='G'?'Não costumam ir ao gol':'Costumam ir ao gol'} — ninguém precisa opinar sobre eles aqui; toque se quiser</div>${outros.map(q=>linha(q,true)).join('')}`:''}</div>`:''}`);
     /* veio da lista lá embaixo: o cartão da pessoa está no topo — a folha sobe até ele */
     if(el&&el.dataset&&(el.dataset.i!==undefined||el.dataset.solto)){const sh=$('#sheet');if(sh){try{sh.scrollTo({top:0,behavior:'smooth'})}catch(e){sh.scrollTop=0}}}
   },

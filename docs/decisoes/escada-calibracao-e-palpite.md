@@ -478,3 +478,16 @@ entender uma entrada estranha (par da D-124).
 um só); mostrar as notas sem os nomes (com 2–3 opiniões dá para deduzir quem deu qual).
 **Onde:** painel de opiniões em `pSheet` (`adm&&…`) em `index.html` · `scripts/smoke.py` bloco
 D-124/D-125 · [Patentes §8](../produto/patentes.md).
+**Ajuste no mesmo dia:** nem o admin vê a lista na ficha — opinião individual não aparece para
+ninguém ali; fica só a contagem. O admin olha nota por nome pelo lado de quem opinou (botão da
+D-124). Menos uma lista na ficha, e a regra fica de uma frase só.
+
+<a id="d-126"></a>
+### D-126 · Minhas opiniões: a lista ordena sem opinião › Diamante … Ferro › não sei
+**04/09/2026.** A lista "Todos" no fim da folha *Minhas opiniões* vinha na ordem da fila de
+navegação (pendentes primeiro, depois por nome). Agora ordena pela **sua opinião**: quem ainda não
+tem primeiro, depois de Diamante a Ferro, e "não sei" no fim — a lista vira a sua escada, e o que
+destoa salta aos olhos ("esse aqui eu dei Ouro?"). A fila do cartão (‹ Anterior / Próximo ›)
+continua fixa desde a abertura, para o cartão não pular de pessoa a cada nota dada.
+**Onde:** `ordemLista` em `A.opSheet` (`index.html`) · `scripts/smoke.py` passo D-126 ·
+[Patentes §8](../produto/patentes.md).
