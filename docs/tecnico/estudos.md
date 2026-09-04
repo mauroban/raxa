@@ -34,6 +34,14 @@ Pergunta: depois de 3 meses de racha, mais 3 meses; se ao longo do 2º trimestre
 
 O que ficou (bom / misto / nada): A é mais forte — X=1: **88% / 80% / 78%** · X=2: **96% / 90% / 88%** · X=3: **99% / 95% / 94%** · X=4: 100% / 98% / 97%. Uma patente inteira melhor — X=1: 14% / 18% / 34% · X=2: 32% / 31% / 49% · X=3: **55% / 48% / 64%** · X=4: 77% / 67% / 78% · X≥5: 97% / 91% / 92%. Leitura: **um trimestre de consistência vale cerca de uma divisão a mais no retrato** (1 mantida ≈ 2 no retrato, 2 mantidas ≈ 3, 3 mantidas ≈ 4). A ordem pode ser afirmada a partir de 2 divisões mantidas; "uma patente inteira melhor" continua sem garantia (3 mantidas dão cara ou coroa; precisa de 5). Dobrar o período rende 3–5 pontos, não mais — o ruído é do dado (um resultado 5v5 dividido entre dez), não da amostra. [D-115](../decisoes/motor-de-patente.md#d-115).
 
+## forca.py — time montado à mão: que diferença de média diz "mais forte"? (pergunta de 04/09/2026)
+
+`python scripts/forca.py [bom|misto|nada] [rachas] [ligas]`
+
+Pergunta: enquanto os times são montados à mão, olhando a escada, que diferença entre as **médias mostradas** dos dois lados garante que um é mais forte de verdade? Liga do `converge.py` no racha 20, 30 ligas, milhares de 5v5 sorteados; 1 divisão = 67 pts.
+
+O que ficou (bom / misto / sem palpite — % em que o lado mostrado é o mais forte de verdade): **até meia divisão: 59–62%** (cara ou coroa) · meia a 1: 75–83% · 1 a 1,5: 88–95% · 1,5 a 2: 95–99% · **2 a 3: 99–100%** · 3 ou mais: 100%. "Uma divisão inteira melhor de verdade" só a partir de 3 divisões mostradas (93–100%); com 2–3 mostradas, 83–93%. E a chance real de vitória do lado mais forte: 2–3 div ≈ **66–71%**, ≥3 div ≈ 75–79% — favorito, nunca barbada. Leitura: **2 divisões de diferença na média é "mais forte com certeza"** em qualquer cenário; abaixo de 1 divisão é ruído e vale como equilibrado. Régua para montar à mão: somar o degrau de cada um (Ferro 1 = 1 … Diamante 3 = 15) e comparar a média — diferença de 1 no degrau médio é aceitável, de 2 é desequilíbrio certo.
+
 ## Como acrescentar um estudo
 
 Um script em `scripts/`, com docstring dizendo a pergunta e o uso; uma seção aqui com pergunta, comando, o número que ficou e o link da decisão; a decisão (D-NN) no arquivo de tema em `docs/decisoes/` com os números completos. Guardar saídas em `scripts/.tmp/` (fora do git).
