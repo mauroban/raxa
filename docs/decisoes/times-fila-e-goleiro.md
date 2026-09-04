@@ -256,3 +256,31 @@ vivo não há gesto linha ⇄ linha entre lados (é em dois lances, por alguém 
 **Onde:** `leaveDo`, `voltaDoEmbora`, `undo`, `startMatch`, `lateGk`, `applyPlan`, `viewJogo` em
 `index.html` · [Fluxo §3](../produto/fluxo-do-racha.md) · `scripts/smoke.py` bloco
 "elenco no meio do racha (D-122)".
+
+<a id="d-123"></a>
+### D-123 · Pré-partida com a gramática da partida ao vivo: 🧤, gol vazio e vaga são slots; a vaga fica sempre à vista
+**Quando:** 2026-09-04.
+**O quê:** a substituição de goleiro na tela da próxima partida deixou de passar por folha
+("No rodízio / Alguém do time / Sem goleiro"): o 🧤, o gol vazio e a vaga de linha entram na
+**mesma gramática de toque e arraste da partida ao vivo** (D-103/D-117) — primeiro toque marca,
+o par elegível ganha o tracejado verde, segundo toque resolve, mesmo slot desmarca. Como ali não há
+partida rodando, cada par mexe no **estado da rodada** (`lancePre`): nome ⇄ nome troca de lugar de
+vez (a da montagem, `trocaLugar` — inclusive goleiro fixo ⇄ linha do outro lado); de fora → 🧤 com
+rodízio é goleiro só desta partida (`nextGks`) e o do rodízio descansa (agora aparece como chip no
+grupo "🧤 Rodízio" do card Fora, de onde volta por toque); de fora → 🧤 com goleiro fixo entra **no
+time** no lugar do goleiro e ganha o 🧤 do dia (o goleiro é do time; o antigo vai para a fila com o
+🧤); de linha ⇄ 🧤 do mesmo lado trocam de papel nesta partida (com rodízio abre a vaga, D-117);
+de fora → vaga completa (empréstimo); 🧤 ⇄ 🧤 trocam de gol (fixo: de time); 🧤 → vaga põe o
+goleiro na linha (o do rodízio entra completando). Quem completa (⇄) sai com um toque sem marca.
+A folha antiga e a lista de quem completa (com "X hoje") ficam a um toque na dica ("outras opções"
+/ "escolher da lista"), porque "sem goleiro definido" e "voltar à sugestão" não têm gesto.
+**E a vaga fica sempre à vista:** "Jogar 4v4 assim" tirava o slot da tela; agora um time com um a
+menos sempre mostra a vaga tracejada — um toque nela e outro em quem está fora (ou arrastar) volta
+a completar.
+**Por quê:** o lançador aprendeu um gesto na partida ao vivo e encontrava outro, pior, um passo
+antes; e "com um a menos" tem que ter onde encaixar alguém sem procurar botão.
+**Descartado:** manter a folha como gesto principal (era o problema); tratar de fora → 🧤 no racha
+de goleiro fixo como "só esta partida" (o time ficaria com 6 e o goleiro antigo na linha).
+**Onde:** `escalPre`, `pecaPre`, `parPre`, `lancePre`, `trocaLugar`, `mudaFill`, `defineGkPre`,
+`A.prePick`, `viewProxima`, `onDrop` em `index.html` · [Fluxo §2–3](../produto/fluxo-do-racha.md)
+· `scripts/smoke.py` bloco "pré-partida com a gramática da partida ao vivo (D-123)".

@@ -82,7 +82,7 @@ com menos gente que o adversário, **ninguém joga em inferioridade e ninguém s
 - o app **completa o time curto com quem está na fila**, sugerindo quem menos jogou na noite;
 - **quem escolhe é você** — toque no nome para tirar e escolher outro;
 - quem completa **joga aquela partida por aquele time e volta para o dele depois** (é empréstimo, não transferência);
-- se preferir, **Jogar 4v4 assim** faz os dois lados entrarem menores, iguais.
+- se preferir, **Jogar 4v4 assim** faz os dois lados entrarem menores, iguais — e a vaga continua à vista, para quem quiser preencher com um toque (D-123).
 
 ### 2.4 Quem entra é sugestão, não regra
 

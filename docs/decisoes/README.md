@@ -76,6 +76,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-87](times-fila-e-goleiro.md#d-87) · Patente média do time no cabeçalho do cartão
 - [D-111](times-fila-e-goleiro.md#d-111) · Folha do time do racha: patentes e as partidas do time
 - [D-122](times-fila-e-goleiro.md#d-122) · Mexer no elenco no meio do racha: ↶ do "foi embora" devolve a pessoa inteira; goleiro que chega no racha fixo vai para a fila; improvisado no gol não corta quem completa; refazer times zera a rodada
+- [D-123](times-fila-e-goleiro.md#d-123) · Pré-partida com a gramática da partida ao vivo: 🧤, gol vazio e vaga são slots (sem folha de goleiro); a vaga fica à vista mesmo "jogando 4v4 assim"
 
 ### [Partida ao vivo e histórico](partida-e-historico.md)
 
