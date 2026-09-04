@@ -291,3 +291,6 @@ pessoa aí fora, não o slot que ela ocupa. Antes, quem improvisava no gol empre
 time que espera) continuava listado no time dele e, ao trocá-lo ali com alguém de outro time, a
 troca caía no par "de fora → 🧤" e **trocava o goleiro** em vez de trocar de time. Agora troca de
 time e ele segue no gol. Teste: os dois últimos passos do bloco D-123 do smoke.
+**Ajuste no mesmo dia (2):** o slot do 🧤 na escalação (pré-partida e ao vivo) leva o ponto do
+nível pela **patente de goleiro**, como os chips do rodízio no card "Fora" já levavam — o goleiro
+era o único nome da escalação sem nível.

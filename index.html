@@ -2795,7 +2795,7 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
     :`<button class="pl ${cls} empty ${extra.selVaga?'sel':''}" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':extra.vaga||(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
   const gkAttrs=act?(typeof act.gk==='function'?act.gk(gk):act.gk):'';
-  let h=gk?`<button class="pl gk ${lv.sel===gk?'sel':''}" ${gkAttrs}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
+  let h=gk?`<button class="pl gk ${lv.sel===gk?'sel':''}" ${gkAttrs}>🧤${dot(gk)}<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
     :`<button class="pl gk empty ${extra.selGk?'sel':''}" ${gkAttrs}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
   /* `per` é o tamanho do time. Com rodízio (per < formato) o goleiro entra
      ALÉM das vagas de linha — venha ele do rodízio ou improvisado do time:
