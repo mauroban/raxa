@@ -220,3 +220,39 @@ times ficaram compactas (12,5px, menos respiro) — ocupavam a tela como se foss
 a luva 🧤 voltou ao lado de quem é goleiro de fato (`p.gk`): jogador de linha também roda, e sem
 ela os dois pareciam iguais — é informação, não enfeite.
 **Onde:** `A.rachaTime` em `index.html` · [Stats §2](../produto/stats.md) · `scripts/.tmp/shot_stats.py time`.
+
+<a id="d-122"></a>
+### D-122 · Mexer no elenco no meio do racha: sair e voltar, goleiro que chega, improvisado no gol, refazer times
+**Quando:** 2026-09-04.
+**O quê:** uma varredura de todos os cenários de substituição, chegada e saída (pré-partida e ao
+vivo) rodada no motor real achou seis quebras, todas corrigidas no mesmo commit:
+1. **"Foi embora" em quadra + `↶`** devolvia a pessoa só à escalação: fora da presença, do time e
+   da fila, ela sumia do racha na partida seguinte (e nem aparecia na folha do "Foi embora"). O
+   evento de saída agora guarda onde ela estava (`left`: posição na escalação, time e posição
+   nele, 🧤 do dia, lugar no rodízio, "completando") e o `↶` devolve tudo (`voltaDoEmbora`).
+2. **Goleiro escolhido na mão para a próxima** (folha do 🧤) que ia embora **entrava em quadra**
+   mesmo assim: `leaveDo` não limpava `nextGks`. Agora a escolha manual cai e volta a sugestão.
+3. **Rodízio, alguém do time improvisa no gol na pré-partida:** a tela mostrava a vaga e sugeria
+   quem completa (D-117), mas a largada media o time pelo total da escalação e cortava quem
+   completava — 4v5. `startMatch` agora conta a linha **sem o goleiro** quando há rodízio.
+4. **Racha com goleiro fixo, "chegou para ser goleiro":** ia para um `gkPool` num racha sem
+   rodízio e a largada o escalava além dos 5 de um lado só — 6v5, sem aviso. Agora entra na
+   **fila com o 🧤 do dia**: completa ou troca de lugar como qualquer um, e é o goleiro do lado em
+   que entrar. Descartado: virar rodízio sozinho (mudaria o tamanho dos times no meio do racha) e
+   perguntar em qual time entra (o time cheio não tem vaga de goleiro).
+5. **Aviso "jogando 4v5"** só olhava o lado esquerdo; agora o menor dos dois.
+6. **Refazer times** deixava `lastStay`/`lastGks`/`nextGks` da rodada antiga: o time novo de
+   mesmo número herdava "🧤 fica" e o goleiro do vencedor. `applyPlan` zera os três.
+**Por quê:** racha é racha — gente chega, sai, volta, improvisa; cada um desses cenários tinha um
+caminho que deixava o estado do racha e o da partida em desacordo. Consistência acima de tudo
+(D-104): o `↶` tem que desfazer o lance **inteiro**, e ninguém que foi embora pode ser escalado.
+**Verificado e deixado como está:** de fora → linha/🧤/vaga e `↶`; linha ⇄ 🧤; 🧤 → vaga; goleiro
+em quadra indo embora; time que espera perdendo gente e entrando completado; 4 times com dois
+faltando; sair e voltar no mesmo racha (presença única na sessão); "marquei errado" com time
+escalado; partida única titular ⇄ reserva e reserva do outro time; cancelar; empate com 2 times
+(D-39). **Atritos anotados, sem mudança:** chegou → time cheio vira "reserva" que só entra à mão
+quando não há fila; não há "Foi embora" na tela de times (voltar à presença remonta tudo); ao
+vivo não há gesto linha ⇄ linha entre lados (é em dois lances, por alguém de fora).
+**Onde:** `leaveDo`, `voltaDoEmbora`, `undo`, `startMatch`, `lateGk`, `applyPlan`, `viewJogo` em
+`index.html` · [Fluxo §3](../produto/fluxo-do-racha.md) · `scripts/smoke.py` bloco
+"elenco no meio do racha (D-122)".

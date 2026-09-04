@@ -1255,6 +1255,85 @@ step('da para jogar sem completar: os dois lados entram menores e iguais',()=>{
   A.finish({dataset:{r:'draw'}});
 });
 
+console.log('\n[smoke] elenco no meio do racha: sair e voltar, goleiro que chega, refazer times (D-122)');
+/* racha novo do zero: `line` de linha + `gk` goleiros presentes, times montados, pré-partida */
+const rachaNovo=(line,gk)=>{S=defState();A.demo();const l=L();l.cfg.format=5;l.cfg.matchMode='curtas';
+  l.players.forEach((p,i)=>p.gk=i<gk);A.startRacha();
+  l.players.slice(0,gk+line).forEach(p=>A.pres({dataset:{id:p.id}}));A.toTimes();A.startJogo();return l.live};
+step('foi embora em quadra + ↶: volta a presenca, ao time e a escalacao, e segue no racha',()=>{
+  const lv=rachaNovo(11,2);A.startMatch();const c=lv.cur;
+  const x=c.lineups[0][1],ti=lv.teams.findIndex(t=>t.ids.includes(x)),ix=lv.teams[ti].ids.indexOf(x);
+  onDrop(x,{dataset:{dropZone:'leave'}});
+  if(c.lineups[0].includes(x)||lv.presentIds.includes(x)||lv.teams[ti].ids.includes(x))throw new Error('nao saiu');
+  A.undo();
+  if(c.lineups[0][1]!==x)throw new Error('nao voltou a escalacao na mesma posicao');
+  if(!lv.presentIds.includes(x)||(lv.leftIds||[]).includes(x))throw new Error('nao voltou a presenca');
+  if(lv.teams[ti].ids[ix]!==x)throw new Error('nao voltou ao time na mesma posicao');
+  A.finish({dataset:{r:'0'}});
+  if(!viewProxima(L(),lv).includes(nameOf(L(),x)))throw new Error('sumiu da tela da proxima partida');
+});
+step('goleiro do rodizio que foi embora em quadra + ↶: volta ao rodizio e ao gol',()=>{
+  const lv=rachaNovo(12,2);A.startMatch();const c=lv.cur;const g=c.gks[0],pool=lv.gkPool.slice();
+  onDrop(g,{dataset:{dropZone:'leave'}});
+  if(lv.gkPool.includes(g)||c.gks[0])throw new Error('nao saiu do rodizio');
+  A.undo();
+  if(c.gks[0]!==g||JSON.stringify(lv.gkPool)!==JSON.stringify(pool)||!lv.gkToday.includes(g))throw new Error('nao voltou ao rodizio: '+lv.gkPool);
+});
+step('goleiro escolhido na mao para a proxima foi embora: nao entra em quadra',()=>{
+  const lv=rachaNovo(12,2);const g=lv.gkPool[1];
+  A.setPreGk({dataset:{sd:'0',id:g}});
+  A.leaveDo({dataset:{id:g,modo:'foi'}});
+  if(lv.nextGks)throw new Error('a escolha manual devia cair');
+  A.startMatch();const c=lv.cur;
+  if(c.lineups[0].includes(g)||c.lineups[1].includes(g)||c.gks.includes(g))throw new Error('quem foi embora entrou em quadra');
+  /* sobrou um goleiro no rodizio: ele entra de um lado; o outro fica sem, como a sugestao do app faria */
+  if(c.gks.filter(Boolean).length!==1||!c.gks.includes(lv.gkPool[0]))throw new Error('o goleiro que ficou devia estar em quadra: '+c.gks);
+});
+step('rodizio: alguem do time improvisa no gol na pre-partida e quem completa a vaga ENTRA (nao 4v5)',()=>{
+  const lv=rachaNovo(12,2),l=L();const pair=(lv.nextPair||suggestPair(l,lv)).slice();
+  const imp=lv.teams[pair[0]].ids[0];
+  A.setPreGk({dataset:{sd:'0',id:imp}});
+  const f=fillDe(l,lv,pair);if(f[0].length!==1)throw new Error('devia sugerir 1 para completar a vaga: '+JSON.stringify(f));
+  A.startMatch();const c=lv.cur;
+  if(c.gks[0]!==imp)throw new Error('o improvisado nao esta no gol');
+  if(!c.lineups[0].includes(f[0][0]))throw new Error('quem completava foi cortado na largada');
+  if(c.lineups[0].length!==c.lineups[1].length)throw new Error('largou '+c.lineups[0].length+'v'+c.lineups[1].length);
+  A.finish({dataset:{r:'draw'}});
+});
+step('racha com goleiro fixo: "chegou para ser goleiro" vai para a fila com o 🧤, nao para um rodizio que nao existe (sem 6v5)',()=>{
+  const lv=rachaNovo(11,2),l=L();
+  if(comRodizio(lv))throw new Error('o cenario pede goleiros fixos');
+  const novo=l.players.find(p=>!lv.presentIds.includes(p.id));
+  A.lateIn({dataset:{id:novo.id}});A.lateGk({dataset:{id:novo.id}});
+  if((lv.gkPool||[]).length)throw new Error('entrou num rodizio inexistente');
+  if(!ehGkHoje(lv,novo.id)||filaDe(lv)[filaDe(lv).length-1]!==novo.id)throw new Error('devia estar no fim da fila, marcado como goleiro');
+  A.startMatch();const c=lv.cur;
+  if(c.lineups[0].length!==c.lineups[1].length)throw new Error('largou '+c.lineups[0].length+'v'+c.lineups[1].length);
+  A.finish({dataset:{r:'0'}});
+  /* o time que perdeu rodou com a fila (o recem-chegado entrou nele); o goleiro fixo desse time
+     foi embora: quem tem o 🧤 do dia no time assume o gol na largada seguinte */
+  const pair=lv.nextPair||suggestPair(l,lv);const tB=lv.teams[pair[1]];
+  if(!tB.ids.includes(novo.id))throw new Error('o recem-chegado devia ter entrado no time que perdeu, pela fila');
+  const gB=tB.ids.find(id=>ehGkHoje(lv,id)&&id!==novo.id);if(!gB)throw new Error('o time devia ter o goleiro fixo original');
+  A.leaveDo({dataset:{id:gB,modo:'foi'}});
+  A.startMatch();
+  if(lv.cur.gks[1]!==novo.id)throw new Error('quem chegou com o 🧤 devia ser o goleiro do lado: '+lv.cur.gks);
+  if(lv.cur.lineups[0].length!==lv.cur.lineups[1].length)throw new Error('largou '+lv.cur.lineups[0].length+'v'+lv.cur.lineups[1].length);
+  A.finish({dataset:{r:'draw'}});
+});
+step('aviso de time incompleto vale para os dois lados',()=>{
+  const lv=rachaNovo(12,2),l=L();A.startMatch();const c=lv.cur;
+  onDrop(c.gks[1],{dataset:{dropZone:'leave'}});          // o lado DIREITO ficou com um a menos
+  if(!viewJogo(l,lv).includes('incompleto'))throw new Error('lado direito curto e a tela nao avisou');
+});
+step('refazer times no meio do racha: o "🧤 fica" e o goleiro do time antigo nao passam para o time novo de mesmo numero',()=>{
+  const lv=rachaNovo(12,2),l=L();A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});
+  A.teamsBack();A.balance();A.startJogo();
+  if(lv.lastStay||lv.lastGks||lv.nextGks)throw new Error('estado da rodada antiga sobreviveu ao refazer');
+  const gp=planGks(l,lv,suggestPair(l,lv));
+  if(gp.fica.some(Boolean))throw new Error('time recem-montado com "🧤 fica"');
+});
+
 console.log('\n[smoke] dados antigos no localStorage');
 const antigo={v:1,me:{id:'x',name:''},active:'old',ui:{tab:'racha'},ligas:[{id:'old',name:'Antiga',
   cfg:{startElo:1500,kNew:40,kBase:24,placement:5,tiers:[1700,1600,1450,1350],tierNames:['a','b','c','d','e'],
