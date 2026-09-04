@@ -463,3 +463,18 @@ entre pares); um card na aba Jogadores (a pergunta é sempre sobre uma pessoa �
 **Onde:** `opinioesDadas`, `A.opDe` (em `ACOES_ADMIN`), botão em `pSheet` em `index.html` ·
 `scripts/smoke.py` bloco D-124 · [Patentes §8](../produto/patentes.md) ·
 [Contas e permissões](../produto/contas-e-permissoes.md).
+
+<a id="d-125"></a>
+### D-125 · Quem deu qual opinião, só o admin vê
+**04/09/2026.** A ficha mostrava, para qualquer papel, a lista de opiniões com o nome de quem deu
+cada uma. Saiu de vista: **só o admin** vê a lista (com "não sabe", "destoa" e as que não valem por
+serem de Jogador, D-121). Para os outros a ficha continua mostrando a **entrada**, **quantas
+opiniões** a formaram, o **hoje** e o aviso de divergência (que fala das extremas, sem nome), e a
+frase "Quem deu cada opinião, só o admin vê". A própria opinião de quem lança continua editável ali.
+**Por quê:** opinião pública entre pares vira cobrança ("você me deu Bronze?") e nota combinada —
+a régua pede honestidade, e honestidade pede um pouco de sigilo. O admin precisa ver para
+entender uma entrada estranha (par da D-124).
+**Descartado:** esconder também a contagem (ela é o que diz se a entrada é sólida ou palpite de
+um só); mostrar as notas sem os nomes (com 2–3 opiniões dá para deduzir quem deu qual).
+**Onde:** painel de opiniões em `pSheet` (`adm&&…`) em `index.html` · `scripts/smoke.py` bloco
+D-124/D-125 · [Patentes §8](../produto/patentes.md).

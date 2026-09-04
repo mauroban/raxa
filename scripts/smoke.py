@@ -1280,6 +1280,20 @@ step('ficha: admin ve o botao com a contagem; a folha lista por posicao; nao-adm
   if($('#sheet').innerHTML.includes('data-a="opDe"'))throw new Error('lancador nao ve o botao');
   me.role='admin';
 });
+step('ficha: quem deu qual opiniao so o admin ve; os outros veem a contagem e o aviso (D-125)',()=>{
+  const l=L(),eu=euId(l),me=P(l,eu);
+  const autor=l.players.find(p=>p.id!==eu&&p.role!=='jogador')||l.players.find(p=>p.id!==eu);autor.role='lancador';
+  const alvo=l.players.find(p=>p.id!==eu&&p.id!==autor.id);
+  alvo.L.op=[{by:autor.id,e:1700,ts:1},{by:eu,e:1500,ts:2}];rebuildAll(l);
+  me.role='admin';A.pSheet({dataset:{id:alvo.id,r:'L'}});let h=$('#sheet').innerHTML;
+  if(!h.includes(autor.name)||!h.includes('2 opiniões'))throw new Error('admin devia ver o nome de quem opinou e a contagem');
+  me.role='lancador';A.pSheet({dataset:{id:alvo.id,r:'L'}});h=$('#sheet').innerHTML;
+  const painel=h.slice(h.indexOf('opiniões</div>'));
+  if(painel.includes(autor.name))throw new Error('lancador nao pode ver quem deu cada opiniao');
+  if(!h.includes('2 opiniões')||!h.includes('só o admin vê'))throw new Error('para os outros fica a contagem e o aviso');
+  if(!h.includes('data-a="opSet"'))throw new Error('a propria opiniao continua editavel');
+  me.role='admin';alvo.L.op=[];rebuildAll(l);
+});
 
 console.log('\n[smoke] elenco no meio do racha: sair e voltar, goleiro que chega, refazer times (D-122)');
 /* racha novo do zero: `line` de linha + `gk` goleiros presentes, times montados, pré-partida */
