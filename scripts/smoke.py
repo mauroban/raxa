@@ -1354,22 +1354,35 @@ step('arquivar guarda tudo: some do elenco, historico e opinioes ficam, reativar
   A.delPlayer({dataset:{id:novo.id}});if(P(l,novo.id))throw new Error('sem historico devia apagar');
   alvo.L.op=[];rebuildAll(l);closeSheet();
 });
-step('ficha: olhar, depois Cadastro com Salvar, depois Admin, arquivar por ultimo; Permissao e "Sou eu" so quando cabem',()=>{
+step('ficha: nome e descricao no cabecalho (quem lanca); gol, permissao e arquivar so admin; Salvar antes do bloco Admin; "Sou eu" so sem perfil',()=>{
   const l=L(),eu=euId(l),me=P(l,eu);me.role='admin';
   const p=l.players.find(x=>x.id!==eu);
   A.pSheet({dataset:{id:p.id}});let h=$('#sheet').innerHTML;
   const at=s=>{const i=h.indexOf(s);if(i<0)throw new Error('faltou na ficha: '+s);return i};
-  if(!(at('class="lv2"')<at('class="stat four"')&&at('class="stat four"')<at('>Cadastro<')&&at('>Cadastro<')<at('id="pdsalvar"')&&at('id="pdsalvar"')<at('>Admin</div>')&&at('>Admin</div>')<at('data-a="arquivar"')))throw new Error('ordem da ficha errada');
+  if(!(at('aria-label="nome do jogador"')<at('class="lv2"')&&at('class="lv2"')<at('class="stat four"')&&at('class="stat four"')<at('data-a="pdGk"')&&at('data-a="pdGk"')<at('id="pdsalvar"')&&at('id="pdsalvar"')<at('>Admin</div>')&&at('>Admin</div>')<at('data-a="arquivar"')))throw new Error('ordem da ficha errada');
+  if(h.includes('>Cadastro<'))throw new Error('sem bloco "Cadastro": o nome se edita no proprio nome');
   if(!h.includes('Permissão'))throw new Error('admin ve a permissao');
   if(h.includes('>Sou eu<'))throw new Error('quem ja tem perfil vinculado nao ve "Sou eu"');
+  /* lancador: edita nome e descricao, e so isso */
   me.role='lancador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
-  if(h.includes('Permissão')||h.includes('só o admin muda'))throw new Error('quem nao e admin nao ve o bloco de permissao');
-  if(h.includes('>Cadastro<')||h.includes('data-a="arquivar"'))throw new Error('lancador nao edita cadastro nem arquiva');
+  if(!h.includes('aria-label="nome do jogador"')||!h.includes('aria-label="descrição"'))throw new Error('lancador edita nome e descricao');
+  if(h.includes('Permissão')||h.includes('data-a="pdGk"')||h.includes('data-a="arquivar"')||h.includes('>Admin</div>'))throw new Error('lancador nao ve gol, permissao, arquivar nem bloco admin');
+  PD.bio='amigo do Matheus';A.pdSave();
+  if(P(l,p.id).bio!=='amigo do Matheus')throw new Error('descricao nao salvou');
+  if(!l.log.some(e=>e.a==='bio'&&e.pid===p.id))throw new Error('descricao sem log');
+  /* moderador: como o lancador aqui (gol e arquivar sao do admin) */
   me.role='moderador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
-  if(!h.includes('>Cadastro<')||!h.includes('data-a="arquivar"')||h.includes('Permissão')||h.includes('>Admin</div>'))throw new Error('moderador edita e arquiva, sem permissao e sem bloco admin');
-  me.role='jogador';me.owner=null;A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(h.includes('data-a="pdGk"')||h.includes('data-a="arquivar"')||h.includes('Permissão'))throw new Error('moderador nao muda gol, nao arquiva, nao da permissao');
+  const gk0=!!P(l,p.id).gk;PD.gk=!gk0;A.pdSave();
+  if(!!P(l,p.id).gk!==gk0)throw new Error('moderador nao pode mudar o habito de gol');
+  PD=null;
+  /* jogador: le a descricao, sem campo; "Sou eu" so sem perfil */
+  me.role='jogador';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
+  if(h.includes('aria-label="descrição"')||!h.includes('amigo do Matheus'))throw new Error('jogador le a descricao, sem editar');
+  if(h.includes('>Sou eu<'))throw new Error('com perfil vinculado nao ve "Sou eu"');
+  me.owner=null;A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
   if(!h.includes('>Sou eu<'))throw new Error('sem perfil vinculado, "Sou eu" aparece');
-  me.owner='tester';me.role='admin';closeSheet();
+  me.owner='tester';me.role='admin';delete P(l,p.id).bio;closeSheet();
 });
 step('minhas opinioes nao diz se a opiniao vale; ajustes de quem nao e admin so mostram, sem controles',()=>{
   const l=L(),eu=euId(l),me=P(l,eu);

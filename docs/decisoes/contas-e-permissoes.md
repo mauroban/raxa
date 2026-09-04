@@ -171,3 +171,10 @@ arquivados da estatística (jogaram; é fato).
 **Onde:** `ativos`, `opAtiva`, `playerFacts` (`arq`), `A.arquivar`/`A.reativar`/`A.delPlayer`,
 `pSheet`, `cardArquivados`, `viewCfgBody`, `opSheet` em `index.html` · `scripts/smoke.py` bloco
 D-128 · [Contas e permissões §7](../produto/contas-e-permissoes.md) · [Banco](../tecnico/banco-de-dados.md).
+**Ajuste no mesmo dia:** o bloco "Cadastro" saiu — o nome volta a se editar **no próprio nome**, no
+cabeçalho, e ganhou embaixo uma **descrição** discreta (`p.bio`, até 120 caracteres: apelido, "amigo
+do Matheus", como chegou), editável por quem lança e lida pelos outros. Papéis afinados: **nome e
+descrição, quem lança**; **qualquer outra alteração** (hábito de gol, permissão, arquivar, reativar,
+apagar, card "Arquivados") **só o admin** — moderador deixou de arquivar. As linhas de gol/conta/
+permissão ficam depois dos números, com o Cancelar/Salvar logo abaixo, e arquivar/apagar dentro do
+bloco Admin, no fim. Log: `bio` ("mudou a descrição").

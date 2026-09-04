@@ -373,3 +373,4 @@ demais reivindicam quando entrarem pelo link. Nada de rating é recalculado na i
 vem junto e `rebuildAll` confirma que os números batem.
 
 **Arquivado (D-128).** O jogador leva `arq` (timestamp) no `data` de `league_players` quando é arquivado; `null`/ausente = no elenco. Nada mais muda: partidas, sessões e opiniões continuam apontando para o id. Não há coluna nova nem SQL a rodar — é campo do JSON.
+**Descrição (D-128).** `bio` (texto curto, até 120 caracteres) no `data` de `league_players`; ausente = sem descrição. Campo do JSON, sem SQL.
