@@ -491,3 +491,23 @@ destoa salta aos olhos ("esse aqui eu dei Ouro?"). A fila do cartão (‹ Anteri
 continua fixa desde a abertura, para o cartão não pular de pessoa a cada nota dada.
 **Onde:** `ordemLista` em `A.opSheet` (`index.html`) · `scripts/smoke.py` passo D-126 ·
 [Patentes §8](../produto/patentes.md).
+
+<a id="d-127"></a>
+### D-127 · A opinião só se dá pelo cartão de "Minhas opiniões"; a ficha mostra entrada e hoje
+**04/09/2026.** Toda opinião recalcula a liga na hora e a ficha mostrava, logo acima da escada da
+sua opinião, o badge de ENTRADA mudando a cada toque — e o aviso dizia "entrada Prata 2". Isso
+convida a dar a nota olhando o efeito (e a "puxar" quando não move) e ancora quem ainda não opinou
+no consenso. A escada saiu da ficha: ali ficam a **entrada** (badge e contagem), o **hoje**, o aviso
+de divergência, qual é **a sua** nota, e um botão que leva ao cartão da pessoa em *Minhas
+opiniões* (`opIr`). O toast de "opinião salva" não diz mais a entrada resultante. O cartão continua
+sem a opinião dos outros (D-120) — a pergunta é a sua, com a régua do que o time ganha (D-90).
+**Por quê:** a média aparada já protege contra o exagero de um só (com 3+ opiniões a maior e a
+menor caem), então o risco de jogo estratégico é baixo; o que importa é não dar a nota vendo o
+consenso mudar. Um lugar só para opinar também é um lugar só para explicar a régua.
+**Fica de fora, anotado:** o cartão mostra o "hoje" da pessoa, que para quem nunca jogou é a média
+das opiniões dos outros — âncora residual; se aparecer, a saída é "opine antes de ver" só para quem
+ainda não jogou.
+**Descartado:** congelar a entrada e recalcular só ao montar os times (quebra o cadastro no dia);
+travar a opinião depois de dada (a pessoa muda de ideia vendo jogar, e é isso que se quer).
+**Onde:** `pSheet` (sem escada, botão `opIr`), `A.opIr`, toast de `opSet` em `index.html` ·
+`scripts/smoke.py` (ficha leva ao cartão; a nota se dá lá) · [Patentes §8](../produto/patentes.md).

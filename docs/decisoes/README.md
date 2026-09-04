@@ -57,6 +57,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-124](escada-calibracao-e-palpite.md#d-124) · Só o admin vê, na ficha, tudo que um membro opinou sobre os outros (só leitura)
 - [D-125](escada-calibracao-e-palpite.md#d-125) · Opinião individual não aparece na ficha de ninguém (nem admin): entrada, contagem e divergência; nota por nome só pelo botão da D-124
 - [D-126](escada-calibracao-e-palpite.md#d-126) · Minhas opiniões: a lista ordena sem opinião › Diamante … Ferro › não sei
+- [D-127](escada-calibracao-e-palpite.md#d-127) · A opinião só se dá pelo cartão de "Minhas opiniões"; a ficha mostra entrada e hoje e leva ao cartão
 
 ### [Times, fila e goleiro](times-fila-e-goleiro.md)
 

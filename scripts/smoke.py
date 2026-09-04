@@ -67,7 +67,7 @@ step('toda acao tem classificacao de papel',()=>{
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
-    'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav',
+    'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
     'statsPer','statsTab','statsSemGk','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
@@ -616,7 +616,11 @@ step('opinar sobre o nivel: um toque salva, a entrada e media/mediana e o histor
   const l=L(),eu=euId(l);if(!eu)throw new Error('sem perfil vinculado');
   const p=l.players.find(x=>x.L.games>0&&x.id!==eu);
   A.pSheet({dataset:{id:p.id}});
-  if(!/data-a="opSet"/.test(els['#sheet'].innerHTML))throw new Error('ficha sem a escada de opiniao');
+  /* D-127: a ficha nao tem a escada; tem o botao que leva ao cartao da pessoa em "Minhas opinioes" */
+  if(/data-a="opSet"/.test(els['#sheet'].innerHTML))throw new Error('a ficha nao pode ter a escada de opiniao');
+  if(!/data-a="opIr"/.test(els['#sheet'].innerHTML))throw new Error('ficha sem o botao de ir opinar');
+  A.opIr({dataset:{pid:p.id,r:'L'}});
+  if(!new RegExp('data-a="opSet" data-pid="'+p.id+'"').test(els['#sheet'].innerHTML))throw new Error('o botao da ficha devia abrir o cartao dessa pessoa');
   const prev=hojeCom(l,p,'L',10);
   p.L.op=[];rebuildAll(l);
   A.opSet({dataset:{pid:p.id,r:'L',s:'10',back:'ficha'}});
@@ -1291,7 +1295,7 @@ step('ficha: quem deu qual opiniao so o admin ve; os outros veem a contagem e o 
     const painel=h.slice(h.indexOf('opiniões</div>'));
     if(painel.includes(autor.name))throw new Error(papel+' nao pode ver quem deu cada opiniao na ficha');
     if(!h.includes('2 opiniões'))throw new Error(papel+': a contagem tem que ficar');
-    if(!h.includes('data-a="opSet"'))throw new Error(papel+': a propria opiniao continua editavel');
+    if(h.includes('data-a="opSet"')||!h.includes('data-a="opIr"'))throw new Error(papel+': sem escada na ficha, so o botao que leva ao cartao (D-127)');
     if((papel==='admin')!==h.includes('data-a="opDe"'))throw new Error('o botao das opinioes dadas e so do admin')});
   me.role='admin';alvo.L.op=[];rebuildAll(l);
 });

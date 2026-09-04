@@ -5347,7 +5347,7 @@ const A={
       ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),eu=euId(l),minha=(t.op||[]).find(o=>o.by===eu);
         const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
         return `<div class="ps-panel">
-        <div class="k">Nível ${role==='G'?'no gol':'na linha'} — opiniões</div>
+        <div class="k">Nível ${role==='G'?'no gol':'na linha'}</div>
         ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px">No gol, na dúvida, não opine: o app acha o lugar em ${calMeta(l).n} ${calMeta(l).u}.</div>`:''}
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
@@ -5358,15 +5358,9 @@ const A={
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
         ${/* opinião individual não aparece para ninguém (D-125): fica a entrada, a contagem e o aviso de divergência;
              o admin vê o que cada membro opinou pelo botão "Opiniões que Fulano deu" (D-124) */''}
-        ${podeOpinar(l)&&eu&&eu!==p.id?`<div class="k" style="margin-top:12px">Sua opinião</div>
-          <div class="ladder4">
-            ${l.cfg.patNames.map((n,k)=>`<button class="${minha&&minha.e!==null&&patOf(stepOf(minha.e))===k?'on':''}" style="--pc:${PATC[k]}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="${k*3+1}" data-back="ficha"><i></i><span>${esc(n)}</span></button>`).join('')}
-          </div>
-          <div class="row" style="gap:6px;margin-top:8px">
-            <button class="btn sm ${minha&&minha.e===null?'':'ghost'}" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="ns" data-back="ficha">Não sei</button>
-            ${minha?`<button class="btn sm ghost sp" data-a="opSet" data-pid="${p.id}" data-r="${role}" data-s="" data-back="ficha">Tirar a minha opinião</button>`:''}
-          </div>`
-          :eu===p.id?'<div class="tiny muted" style="margin-top:8px">Sobre você, quem opina são os outros.</div>':''}
+        ${/* a opinião se dá só pelo cartão de "Minhas opiniões" (D-127): a ficha mostra entrada e hoje,
+             e leva ao cartão — sem a escada aqui, ninguém dá a nota olhando a entrada mudar */''}
+        ${podeOpinar(l)&&eu&&eu!==p.id?`<button class="btn sm ghost" data-a="opIr" data-pid="${p.id}" data-r="${role}" style="margin-top:10px">${minha?(minha.e===null?'Você marcou "não sei"':'Sua opinião: '+esc(rankLabel(l,stepOf(minha.e)).split(' ')[0]))+' · mudar ›':'Dar a minha opinião ›'}</button>`:''}
       </div>`})():''}
       <div style="height:6px"></div>
       <div class="trow">
@@ -5520,7 +5514,18 @@ const A={
       A.opSheet();const sh=$('#sheet');if(sh)sh.scrollTop=0;
     }else A.pSheet({dataset:{id:p.id,r}});
     render();
-    toast(!dep?'Opinião retirada':dep.e===null?'Anotado: não sabe':`Opinião salva · entrada ${rankLabel(l,stepOf(rt(p,r).base))}`);
+    /* sem dizer a entrada que resultou (D-127): a nota não é para ser dada olhando o efeito */
+    toast(!dep?'Opinião retirada':dep.e===null?'Anotado: não sabe':'Opinião salva');
+  },
+  /* Da ficha ao cartão daquela pessoa em "Minhas opiniões" (D-127): é o único
+     caminho para dar ou mudar a opinião.                                    */
+  opIr(el){
+    const l=L(),p=P(l,el.dataset.pid);if(!p)return;
+    const r=el.dataset.r==='G'?'G':'L';
+    S.ui.opRole=r;saveUI();OPV.ordem=[];
+    A.opSheet();                                   // monta a fila desta posição
+    const i=OPV.ordem.indexOf(p.id);
+    if(i>=0)A.opSheet({dataset:{i:String(i)}});else A.opSheet({dataset:{solto:p.id}});
   },
   /* A tela de quem lança (D-95): UMA pessoa por vez, num cartão. As cinco
      patentes são opções grandes que já dizem o que significam — não há
