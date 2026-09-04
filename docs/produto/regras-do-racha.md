@@ -101,6 +101,9 @@ time ou da fila. **Racha real não obedece fila; obedece o que a galera combinou
 - **Menos goleiros que times** → eles ficam **fora dos times**, no rodízio: a cada partida o app escala um
   para cada lado, **alternando os lados** para ninguém ficar preso ao desempenho de um time só.
 - Racha em que todo mundo reveza no gol: não marque ninguém, e escolha o goleiro na tela da partida.
+- **Com rodízio, o goleiro é sempre além dos N−1 de linha** — venha do rodízio ou improvisado do time.
+  Quem do time vai para o gol deixa uma **vaga de linha**, e a vaga aparece para ser fechada com alguém de
+  fora; o time nunca fica com um a menos por causa do gol (D-117).
 
 ---
 

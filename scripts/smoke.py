@@ -156,11 +156,26 @@ step('gol do time A',()=>A.goal({dataset:{s:'0'}}));
 step('marcar autor do gol',()=>A.scorer({dataset:{id:L().live.cur.lineups[0][0]}}));
 step('gol do time B',()=>A.goal({dataset:{s:'1'}}));
 step('remover gol do time B',()=>A.ungoal({dataset:{s:'1'}}));
-step('abrir troca de goleiro',()=>A.gkSheet({dataset:{s:'0'}}));
-step('definir goleiro improvisado',()=>A.setGk({dataset:{s:'0',id:L().live.cur.lineups[0][1]}}));
-step('trocar o goleiro de um time pelo do outro: os dois trocam de lugar',()=>{
+step('alguem do time vai para o gol pelo toque: quem estava no gol volta para a linha, ninguem sai',()=>{
+  const lv=L().live,c=lv.cur,g=c.gks[0],y=c.lineups[0].find(id=>id!==g),antes=c.lineups[0].length;
+  A.subPick({dataset:{s:'0',id:y}});
+  if(!/toque em quem entra, ou no 🧤/.test(els['#app'].innerHTML))throw new Error('a dica nao oferece o gol');
+  if(!new RegExp('data-id="'+g+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o slot do goleiro nao ficou marcado como par');
+  A.subPick({dataset:{s:'0',id:g}});
+  if(c.gks[0]!==y)throw new Error('nao foi para o gol: '+c.gks);
+  if(c.lineups[0].length!==antes||!c.lineups[0].includes(g)||!c.lineups[0].includes(y))throw new Error('o time mudou de tamanho: '+c.lineups[0].length+' (era '+antes+')');
+  if(lv.sel)throw new Error('a marca deveria sumir');
+  if(/＋ vaga/.test(els['#app'].innerHTML))throw new Error('nao pode sobrar vaga: o goleiro antigo esta na linha');
+  const ev=c.events[c.events.length-1];
+  if(ev.type!=='gk'||ev.id!==y||(ev.mv||[]).length)throw new Error('evento gk errado: '+JSON.stringify(ev));
+  A.undo();
+  if(c.gks[0]!==g||c.lineups[0].length!==antes)throw new Error('undo nao devolveu o goleiro');
+});
+step('trocar o goleiro pelo do outro lado (toque no 🧤 e no outro 🧤): os dois trocam de lugar',()=>{
   const c=L().live.cur,a=c.gks[0],b=c.gks[1];
-  A.setGk({dataset:{s:'0',id:b}});
+  A.subPick({dataset:{s:'0',id:a}});
+  if(!/sai do gol — toque em quem vai para o gol/.test(els['#app'].innerHTML))throw new Error('a dica do goleiro marcado nao apareceu');
+  A.subPick({dataset:{s:'1',id:b}});
   if(c.gks[0]!==b||c.gks[1]!==a)throw new Error('goleiros nao trocaram: '+c.gks);
   if(!c.lineups[0].includes(b)||c.lineups[1].includes(b))throw new Error('goleiro novo nao mudou de escalacao');
   if(!c.lineups[1].includes(a)||c.lineups[0].includes(a))throw new Error('goleiro antigo nao foi para o outro lado');
@@ -173,6 +188,64 @@ step('trocar o goleiro de um time pelo do outro: os dois trocam de lugar',()=>{
   if(c.gks[0]!==a||c.gks[1]!==b)throw new Error('undo nao devolveu os goleiros: '+c.gks);
   if(!c.lineups[0].includes(a)||!c.lineups[1].includes(b)||c.lineups[0].includes(b)||c.lineups[1].includes(a))
     throw new Error('undo nao devolveu as escalacoes');
+});
+step('goleiro foi embora: gol vazio, alguem do time improvisa e a vaga da linha fica marcada; quem esta fora entra nela',()=>{
+  const lv=L().live,c=lv.cur,g=c.gks[1],cheio=c.lineups[1].length;
+  onDrop(g,{dataset:{dropZone:'leave'}});          // o goleiro do lado B foi embora
+  if(c.gks[1]!==null||c.lineups[1].includes(g))throw new Error('o goleiro deveria ter saido');
+  render();
+  if(!/data-slot="gk"[^>]*data-drop-slot="gk:1"/.test(els['#app'].innerHTML))throw new Error('o slot 🧤 vazio nao e um alvo');
+  A.subPick({dataset:{s:'1',slot:'gk'}});
+  if(lv.sel!=='gk:1')throw new Error('o gol vazio nao ficou marcado: '+lv.sel);
+  if(!/Gol vazio — toque em quem vai para o gol/.test(els['#app'].innerHTML))throw new Error('a dica do gol vazio nao apareceu');
+  const y=c.lineups[1][0];
+  if(!new RegExp('data-id="'+y+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o jogador de linha do mesmo lado nao e par do gol vazio');
+  A.subPick({dataset:{s:'1',id:y}});
+  if(c.gks[1]!==y)throw new Error('nao improvisou no gol');
+  if(lv.sel!=='vaga:1')throw new Error('a vaga da linha deveria ficar marcada, veio '+lv.sel);
+  if(!/＋ vaga/.test(els['#app'].innerHTML)||!/Vaga na linha — toque em quem entra/.test(els['#app'].innerHTML))throw new Error('a vaga nao apareceu na escalacao');
+  /* o goleiro que saiu volta como goleiro do rodizio descansando: aparece no grupo Rodizio, tocavel */
+  lv.presentIds.push(g);lv.gkPool.push(g);lv.leftIds=(lv.leftIds||[]).filter(x=>x!==g);render();
+  if(!/🧤 Rodízio/.test(els['#app'].innerHTML))throw new Error('o grupo do rodizio nao apareceu entre quem esta fora');
+  if(!new RegExp('data-a="subPick" data-id="'+g+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o goleiro do rodizio nao e par da vaga');
+  A.subPick({dataset:{id:g}});                     // entra na vaga, de linha
+  if(c.lineups[1].length!==cheio||!c.lineups[1].includes(g)||c.gks[1]!==y)throw new Error('nao entrou na vaga: '+c.lineups[1].length+' de '+cheio);
+  const ev=c.events[c.events.length-1];
+  if(ev.type!=='sub'||ev.out!==null||ev.in!==g)throw new Error('evento de entrada na vaga errado: '+JSON.stringify(ev));
+  const st=splitStints(c,Date.now()+60000,L().cfg);
+  if(!st[st.length-1].lineups[1].includes(g)||st[st.length-1].gks[1]!==y)throw new Error('o trecho seguinte nao conta com quem entrou na vaga');
+  A.undo();
+  if(c.lineups[1].includes(g)||c.lineups[1].length!==cheio-1)throw new Error('undo da entrada na vaga nao tirou o nome');
+  /* de fora direto para o gol: quem esta no gol sai de quadra, quem entra e o goleiro */
+  A.subPick({dataset:{id:g}});A.subPick({dataset:{s:'1',id:y}});
+  if(c.gks[1]!==g||!c.lineups[1].includes(g)||c.lineups[1].includes(y))throw new Error('de fora para o gol nao trocou: '+c.gks+' / '+c.lineups[1]);
+  if(!/Entrou .* no gol/.test(els['#toast'].innerHTML||''))console.log('  (toast do gol nao conferido)');
+  /* quem saiu do gol volta pela vaga da linha: o time fecha de novo */
+  A.subPick({dataset:{id:y}});A.subPick({dataset:{s:'1',slot:'vaga'}});
+  if(c.lineups[1].length!==cheio||!c.lineups[1].includes(y)||c.gks[1]!==g)throw new Error('a vaga nao fechou o time: '+c.lineups[1].length+' de '+cheio);
+  const todos=[...c.lineups[0],...c.lineups[1]];
+  if(new Set(todos).size!==todos.length)throw new Error('alguem duplicado em quadra');
+});
+step('goleiro para a vaga da linha deixa o gol vazio',()=>{
+  const lv=L().live,c=lv.cur,g=c.gks[1],y=c.lineups[1].find(id=>id!==g);
+  const n=c.lineups[1].length;                     // saida simulada de y (como "foi embora"): abre uma vaga na linha
+  c.lineups[1]=c.lineups[1].filter(id=>id!==y);c.events.push({t:Date.now(),type:'sub',side:1,out:y,in:null,gks:[...c.gks]});render();
+  A.subPick({dataset:{s:'1',id:g}});
+  if(!new RegExp('data-slot="vaga" data-drop-slot="vaga:1"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('a vaga nao e par do goleiro');
+  A.subPick({dataset:{s:'1',slot:'vaga'}});
+  if(c.gks[1]!==null||!c.lineups[1].includes(g))throw new Error('o goleiro nao foi para a linha: '+c.gks);
+  A.undo();
+  if(c.gks[1]!==g)throw new Error('undo nao devolveu o goleiro ao gol');
+  A.undo();                                        // desfaz a saida simulada
+  if(c.lineups[1].length!==n||!c.lineups[1].includes(y))throw new Error('undo nao devolveu quem saiu');
+});
+step('arrastar de linha sobre o 🧤 do mesmo lado troca de papel; sobre o outro lado nao faz nada',()=>{
+  const lv=L().live,c=lv.cur,g=c.gks[0],y=c.lineups[0].find(id=>id!==g),antes=JSON.stringify(c.lineups);
+  onDrop(y,{dataset:{dropPlayer:c.gks[1]}});
+  if(c.gks[0]!==g||JSON.stringify(c.lineups)!==antes)throw new Error('arrastar sobre o goleiro do outro lado nao podia mudar nada');
+  onDrop(y,{dataset:{dropPlayer:g}});
+  if(c.gks[0]!==y||JSON.stringify(c.lineups)!==antes)throw new Error('arrastar sobre o 🧤 do mesmo lado deveria trocar de papel');
+  A.undo();
 });
 step('troca gravada pela versao antiga (sem mover escalacao) e curada ao recarregar',()=>{
   const c=L().live.cur,a=c.gks[0],b=c.gks[1];
@@ -417,7 +490,7 @@ step('partida unica com goleiro fixo: escalacao sem vaga fantasma',()=>{
 step('modo varias curtas',()=>setMatchMode('curtas'));
 step('comecar partida para as substituicoes',()=>A.startMatch());
 step('substituir tocando em quem esta em quadra e depois em quem entra',()=>{
-  const out=L().live.cur.lineups[0][0],fora=benchList(L(),L().live);
+  const c0=L().live.cur,out=c0.lineups[0].find(id=>id!==c0.gks[0]),fora=benchList(L(),L().live);
   if(!fora.length)return;
   A.subPick({dataset:{s:'0',id:out}});
   A.subPick({dataset:{id:fora[0].id}});
@@ -457,8 +530,8 @@ step('substituir tocando em quem esta fora e depois em quem sai',()=>{
   const c=L().live.cur;
   if(c.lineups[1].includes(out)||!c.lineups[1].includes(fora[0].id))throw new Error('a troca nao aconteceu');
 });
-step('dois toques em quadra so movem a marca (nao trocam ninguem de time)',()=>{
-  const c=L().live.cur,a=c.lineups[0][0],b=c.lineups[1][0],antes=JSON.stringify(c.lineups);
+step('dois toques em quadra so movem a marca (nao trocam ninguem de time; goleiro com goleiro e a excecao, D-47)',()=>{
+  const c=L().live.cur,a=c.lineups[0].find(id=>id!==c.gks[0]),b=c.lineups[1].find(id=>id!==c.gks[1]),antes=JSON.stringify(c.lineups);
   A.subPick({dataset:{s:'0',id:a}});A.subPick({dataset:{s:'1',id:b}});
   if(L().live.sel!==b)throw new Error('a marca deveria ir para o segundo nome');
   if(JSON.stringify(c.lineups)!==antes)throw new Error('a escalacao nao podia mudar');
@@ -812,7 +885,9 @@ step('times do racha: toque abre a escalacao original',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],t=sess.teams[0];
   A.rachaTime({dataset:{sid:sess.id,n:t.name}});
   const sh=els['#sheet'].innerHTML;
-  if(sh.indexOf(esc(nameOf(l,t.ids[0])))<0)throw new Error('escalacao original nao apareceu na folha');
+  /* um de linha: goleiro fixo que trocou de time na montagem vira 'rodizio' na leitura do racha e some da composicao */
+  const quem=t.ids.find(x=>!(P(l,x)||{}).gk)||t.ids[0];
+  if(sh.indexOf(esc(nameOf(l,quem)))<0)throw new Error('escalacao original nao apareceu na folha');
   A.closeSheet();
 });
 step('vitoria e do time que jogou, nao do nome no placar',()=>{

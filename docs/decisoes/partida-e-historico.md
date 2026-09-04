@@ -360,3 +360,39 @@ toast a cada marca (a dica já muda no lugar).
 `data-alvo`), `dispara` + `pointerup` do arraste e CSS `[data-alvo]` em `index.html` ·
 `scripts/smoke.py` (marca/desmarca, troca pelos dois lados, dois em quadra só movem a marca) ·
 `scripts/layout.py` ("partida com nome marcado para substituir") · [Fluxo do racha §3](../produto/fluxo-do-racha.md).
+
+<a id="d-117"></a>
+### D-117 · O 🧤 é um slot como os outros: goleiro entra pela gramática da substituição, e improvisar não encurta o time
+**04/09/2026.** Colocar alguém no gol no meio da partida não funcionava como o resto da tela: o slot 🧤
+abria uma folha própria que só oferecia o rodízio e "improvisar alguém do time" — e o caso mais comum,
+**alguém que não é do time ir para o gol** (o goleiro do rodízio que estava descansando, alguém da fila),
+não estava lá. Pior: "improvisar alguém do time" só mudava `gks`, o improvisado continuava contado na
+linha e o time **ficava com um a menos** sem que nada mostrasse a vaga (a escalação calculava as vagas
+de linha como `per−1` quando o goleiro não era do rodízio, então a vaga nem aparecia). A folha de
+goleiro foi apagada. O 🧤 (ocupado ou vazio) e a **vaga** de linha entram na mesma gramática de toque
+e arraste da D-103: `pecaAoVivo` classifica o que foi tocado (fora, linha, goleiro, gol vazio, vaga),
+`parAoVivo` diz quem é par de quem (é o tracejado verde), `lanceAoVivo` resolve o par — de fora para
+qualquer slot (`doSub`, com `out` nulo quando entra numa vaga e `gol` quando entra no gol); de linha ⇄
+🧤 do mesmo lado troca de papel (`vaiProGol`, evento `gk` sem `mv`); de linha → 🧤 vazio vai para o gol
+**e deixa a vaga de linha já marcada** para o próximo toque; 🧤 → vaga deixa o gol vazio; 🧤 ⇄ 🧤 do
+outro lado é a troca de lugar da D-47. **Quem entra no lugar do goleiro é o goleiro**, venha do rodízio ou
+não (antes o lado ficava sem goleiro fixo quando o substituto não era do rodízio). Os goleiros do
+rodízio que estão descansando deixaram de ser texto ("Descansando: …") e viraram chips no grupo
+"🧤 Rodízio" entre os de fora, tocáveis e arrastáveis como todo mundo. A escalação passou a calcular as
+vagas de linha pelo **racha**, não pelo goleiro da vez: `lv.rot` (montado com rodízio → o goleiro é
+sempre além dos `per` de linha; `comRodizio`). O mesmo bug existia na pré-partida ("Alguém do time" na
+folha do 🧤 entrava com um a menos): `fillInfo` desconta o goleiro tirado do time e a vaga aparece como
+"＋ completar", como qualquer time curto. Evento `sub` com `out` nulo (entrou numa vaga) é lido pela
+reconstrução dos trechos, pelo `↶`, pela mesclagem de dois celulares e pela revisão (que ganhou
+"ninguém" em "quem saiu" e mostra "(no gol)" quando o substituto entrou no gol).
+**Descartado:** manter a folha como segundo caminho (D-103: dois jeitos confundem); mandar quem estava no
+gol para fora de quadra quando alguém de linha vai para o gol (na quadra ele volta para a linha — o
+time não fica com um a menos); esconder a vaga e completar sozinho (quem entra é escolha de quem está
+com o celular).
+**Onde:** `foraList`, `pecaAoVivo`, `parAoVivo`, `lanceAoVivo`, `comRodizio`, `applyPlan` (`lv.rot`),
+`normalize`, `escCol`, `viewJogo`, `A.subPick`, `A.doSub`, `A.vaiProGol` (no lugar de `gkSheet`/`setGk`),
+`A.undo`, `onDrop` (`data-drop-slot`), `fillInfo`, revisão (`evSet`, linha do tempo) em `index.html` ·
+`scripts/smoke.py` (alguém do time vai para o gol; 🧤 ⇄ 🧤; goleiro foi embora → gol vazio → vaga →
+rodízio entra; de fora direto para o gol; goleiro para a vaga; arraste sobre o 🧤) ·
+`scripts/layout.py` ("partida com goleiro marcado para trocar") · [Fluxo do racha §3](../produto/fluxo-do-racha.md)
+· [Regras do racha §3](../produto/regras-do-racha.md).

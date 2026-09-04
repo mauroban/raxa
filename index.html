@@ -294,6 +294,7 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .cA{background:var(--bibA)} .cB{background:var(--bibB)} .cC{background:var(--bibC)} .cD{background:var(--bibD);color:#0F1F16!important}
 .teamtag{display:inline-block;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.06em;
   font-size:12px;padding:4px 9px;border-radius:7px;color:#fff;margin-bottom:7px}
+.teamtag.cN{background:var(--mute)}   /* grupo sem cor de time: "Sem time", "Rodízio" */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 /* filtros de período: uma linha só, rolando de lado se não couber */
 .chips.perfil{flex-wrap:nowrap}
@@ -1078,6 +1079,8 @@ function normalize(st){
       /* quem veio de goleiro é escolha do dia, não do cadastro */
       if(!Array.isArray(lv.gkToday))lv.gkToday=lv.presentIds.filter(id=>(l.players.find(x=>x.id===id)||{}).gk);
       lv.per=lv.per||Math.max(2,l.cfg.format-(lv.gkPool.length?1:0));
+      /* racha gravado antes do `rot`: com rodízio o time é format-1 de linha */
+      if(typeof lv.rot!=='boolean')lv.rot=lv.per<l.cfg.format;
       if(!Array.isArray(lv.nextPair))lv.nextPair=null;
       if(!Array.isArray(lv.fila))lv.fila=[];
       if(!Array.isArray(lv.fill)||lv.fill.length!==2)lv.fill=[[],[]];
@@ -1669,6 +1672,9 @@ function shuffleTeams(liga,ids,n,caps,strict){
 /* Quantas pessoas um time precisa ter em quadra. Quando os goleiros revezam,
    eles não pertencem a time nenhum, então o time é de N−1 jogadores de linha. */
 function perTeamSize(liga,rotating){return Math.max(2,liga.cfg.format-(rotating?1:0))}
+/* O racha foi montado com rodízio de goleiros? Aí o goleiro entra ALÉM dos
+   `per` de linha (D-117) — mesmo que o rodízio esvazie ou alguém improvise. */
+const comRodizio=lv=>typeof lv.rot==='boolean'?lv.rot:(lv.gkPool||[]).length>0;
 /* Tamanho de cada time.
    - Racha curto: **time é sempre cheio**, do tamanho do formato. Ninguém joga
      4 contra 5, e não existe time de 3 esperando: quem não completa um time
@@ -1715,7 +1721,7 @@ function applyPlan(liga,lv,force,modo){
   const pl=planTeams(liga,lv.presentIds,force,lv.mode,lv.gkToday);
   /* remontar os times invalida a partida que estava em campo */
   if(lv.cur&&(!lv.teams[lv.cur.a]||!lv.teams[lv.cur.b]||pl.n!==lv.teams.length))lv.cur=null;
-  lv.gkPool=pl.gkPool;lv.per=pl.per;lv.sel=null;lv.lastWinner=null;lv.lastSide=null;lv.nextPair=null;
+  lv.gkPool=pl.gkPool;lv.per=pl.per;lv.rot=!!pl.rotating;lv.sel=null;lv.lastWinner=null;lv.lastSide=null;lv.nextPair=null;
   const curto=(lv.mode||liga.cfg.matchMode)!=='unica';   // reserva automatica so no modo longo
   lv.teams=modo==='shuffle'?shuffleTeams(liga,pl.ids,pl.n,pl.caps,curto)
     :buildTeams(liga,pl.ids,pl.n,pl.caps,pl.gkIds,curto);
@@ -2169,7 +2175,7 @@ const podeOpinar=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','gkSheet','setGk','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2510,7 +2516,11 @@ function jogosHoje(liga,lv){
 }
 function fillInfo(liga,lv,pair){
   const per=lv.per||perTeamSize(liga,(lv.gkPool||[]).length>0);
-  const tam=[0,1].map(sd=>Math.min(per,(lv.teams[pair[sd]]||{ids:[]}).ids.length));
+  /* com rodízio, quem do time improvisa no gol deixa uma vaga de linha — o
+     time entra com um a menos se ninguém completar (D-117)                 */
+  const gp=comRodizio(lv)?planGks(liga,lv,pair):null;
+  const tam=[0,1].map(sd=>{const ids=(lv.teams[pair[sd]]||{ids:[]}).ids,g=gp&&gp.gks[sd];
+    return Math.min(per,ids.length)-(g&&ids.slice(0,per).includes(g)?1:0)});
   const alvo=Math.min(per,Math.max(tam[0],tam[1]));
   const fill=(Array.isArray(lv.fill)&&lv.fill.length===2)?lv.fill.map(x=>(x||[]).slice()):[[],[]];
   return {per,alvo,tam,fill,falta:[0,1].map(sd=>Math.max(0,alvo-tam[sd]-fill[sd].length))};
@@ -2540,6 +2550,55 @@ function benchList(liga,lv){
     .map(id=>{const i=lv.teams.findIndex(t=>t.ids.indexOf(id)>=0);
       return{id,ti:i,from:i>=0?lv.teams[i].name:null};});
 }
+/* Quem está fora de quadra e pode entrar: a fila e as reservas (benchList)
+   mais os goleiros do rodízio que estão descansando — também entram por
+   toque, no gol ou na linha (ti -2 = grupo "Rodízio").                        */
+function foraList(liga,lv){
+  const c=lv.cur,gks=c?c.gks:[];
+  return benchList(liga,lv).concat((lv.gkPool||[]).filter(id=>!gks.includes(id)).map(id=>({id,ti:-2,from:'Rodízio'})));
+}
+/* O que é cada coisa que se toca na partida ao vivo: um nome de fora, um de
+   linha, o goleiro, o slot 🧤 vazio ('gk:s') ou uma vaga de linha ('vaga:s').
+   A gramática da substituição (D-103) resolve o par a partir disso — o 🧤 e
+   a vaga são slots como os outros (D-117).                                   */
+function pecaAoVivo(liga,lv,key){
+  const c=lv.cur;if(!c||!key)return null;
+  if(/^gk:[01]$/.test(key))return {kind:'gkVazio',side:+key.slice(3),id:null};
+  if(/^vaga:[01]$/.test(key))return {kind:'vaga',side:+key.slice(5),id:null};
+  const side=[0,1].find(sd=>c.lineups[sd].includes(key));
+  if(side!==undefined)return {kind:c.gks[side]===key?'gk':'linha',side,id:key};
+  if(foraList(liga,lv).some(o=>o.id===key))return {kind:'fora',side:-1,id:key};
+  return null;
+}
+/* Par que resolve a marca atual — é quem ganha o tracejado verde:
+   de fora entra em qualquer slot (no lugar de alguém, no 🧤, numa vaga);
+   de linha ⇄ 🧤 do mesmo lado troca de papel; goleiro → vaga do mesmo lado
+   deixa o gol vazio; goleiro ⇄ goleiro do outro lado trocam de lugar (D-47). */
+function parAoVivo(a,b){
+  if(!a||!b)return false;
+  if(a.kind==='fora'||b.kind==='fora')return a.kind!==b.kind;
+  const k=[a.kind,b.kind].sort().join('+'),mesmo=a.side===b.side;
+  if(k==='gk+gk')return !mesmo;
+  return mesmo&&(k==='gk+linha'||k==='gkVazio+linha'||k==='gk+vaga');
+}
+/* Resolve o par marcado na partida ao vivo (toque ou arraste). Devolve true
+   se lançou um lance; false se o par não faz sentido (a marca só se move). */
+function lanceAoVivo(l,lv,ka,kb){
+  const a=pecaAoVivo(l,lv,ka),b=pecaAoVivo(l,lv,kb);
+  if(!parAoVivo(a,b))return false;
+  const de=k=>a.kind===k?a:b.kind===k?b:null;
+  const fora=de('fora');
+  if(fora){
+    const q=a===fora?b:a;                                   // o slot que recebe quem vem de fora
+    const gol=q.kind==='gk'||q.kind==='gkVazio';
+    A.doSub({dataset:{s:String(q.side),out:q.id||'',id:fora.id,gol:gol?'1':''}});
+    return true;
+  }
+  if(a.kind==='gk'&&b.kind==='gk')A.vaiProGol({dataset:{s:String(a.side),id:b.id}});
+  else if(de('linha'))A.vaiProGol({dataset:{s:String(de('linha').side),id:de('linha').id}});
+  else A.vaiProGol({dataset:{s:String(de('gk').side),id:''}});   // goleiro para a vaga: gol vazio
+  return true;
+}
 /* Chance esperada do confronto, pelo Elo dos que vão entrar. É a única % de
    nível que o app mostra: fala do CONFRONTO (o quanto os dois times estão
    parelhos), nunca do rating de uma pessoa. Some junto com os níveis quando
@@ -2568,13 +2627,15 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(liga,p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
   const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="entrou depois: substituto / completando">⇄</span>':'';
   const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}</button>`
-    :`<button class="pl ${cls} empty" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
-  let h=gk?`<button class="pl gk" ${act?act.gk:''}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
-    :`<button class="pl gk empty" ${act?act.gk:''}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
-  /* `per` é o tamanho do time. Goleiro do rodízio entra ALÉM dele; goleiro
-     fixo (partida única, ou um por time) é um dos `per` — senão sobra uma
-     vaga fantasma na escalação.                                             */
-  const n=Math.max(per-(gk&&!pool.includes(gk)?1:0),linha.length);
+    :`<button class="pl ${cls} empty ${extra.selVaga?'sel':''}" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':extra.vaga||(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
+  const gkAttrs=act?(typeof act.gk==='function'?act.gk(gk):act.gk):'';
+  let h=gk?`<button class="pl gk ${lv.sel===gk?'sel':''}" ${gkAttrs}>🧤<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}</button>`
+    :`<button class="pl gk empty ${extra.selGk?'sel':''}" ${gkAttrs}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
+  /* `per` é o tamanho do time. Com rodízio (per < formato) o goleiro entra
+     ALÉM das vagas de linha — venha ele do rodízio ou improvisado do time:
+     quem improvisa deixa uma vaga na linha, e ela tem que aparecer. Goleiro
+     fixo (partida única, ou um por time) é um dos `per`.                    */
+  const n=Math.max(comRodizio(lv)?per:per-(gk?1:0),linha.length);
   for(let i=0;i<n;i++){const id=linha[i];h+=slot(id,'',id&&act?act.pl(id):'')}
   return `<div class="col" ${extra.attrs||''}>${extra.head||''}${h}${extra.foot||''}</div>`;
 }
@@ -2695,18 +2756,23 @@ function viewJogo(liga,lv){
   if(!c)return viewProxima(liga,lv);
   const t=[lv.teams[c.a],lv.teams[c.b]];
   const nextq=lv.queue.length?lv.teams[lv.queue[0]]:null;
-  const banco=benchList(liga,lv);
+  const banco=benchList(liga,lv),foraTodos=foraList(liga,lv);
   const reservasDe=s=>banco.filter(o=>o.ti===(s===0?c.a:c.b));
-  const fora=banco.filter(o=>o.ti!==c.a&&o.ti!==c.b);
-  /* substituição por toque (D-103): um nome marcado em quadra pede alguém de
-     fora; um nome marcado fora pede alguém de quadra. O par elegível ganha o
-     tracejado do arraste; a dica abaixo da escalação diz o próximo passo.    */
-  const selQuadra=!!(lv.sel&&(c.lineups[0].includes(lv.sel)||c.lineups[1].includes(lv.sel)));
-  const selFora=!!(lv.sel&&!selQuadra&&banco.some(o=>o.id===lv.sel));
-  const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${selQuadra?' data-alvo="1"':''}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}</span></button>`;
-  const dicaSub=selQuadra?`Sai ${esc(nameOf(liga,lv.sel))} — toque em quem entra`
-    :selFora?`${esc(nameOf(liga,lv.sel))} entra — toque em quem sai`
-    :'Toque ou arraste num nome para substituir';
+  const fora=foraTodos.filter(o=>o.ti!==c.a&&o.ti!==c.b);
+  /* substituição por toque (D-103), e o 🧤 e a vaga são slots como os outros
+     (D-117): a marca pode ser um nome (de linha, no gol ou fora), o gol vazio
+     ou uma vaga de linha. O par elegível ganha o tracejado do arraste; a dica
+     abaixo da escalação diz o próximo passo.                                 */
+  const sel=pecaAoVivo(liga,lv,lv.sel);
+  const alvoDe=key=>sel&&parAoVivo(sel,pecaAoVivo(liga,lv,key))?' data-alvo="1"':'';
+  const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}</span></button>`;
+  const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
+  const dicaSub=!sel?'Toque ou arraste num nome para substituir'
+    :sel.kind==='linha'?`Sai ${nomeSel} — toque em quem entra, ou no 🧤 para ele ir ao gol`
+    :sel.kind==='gk'?`${nomeSel} sai do gol — toque em quem vai para o gol`
+    :sel.kind==='gkVazio'?'Gol vazio — toque em quem vai para o gol'
+    :sel.kind==='vaga'?'Vaga na linha — toque em quem entra'
+    :`${nomeSel} entra — toque em quem sai, no 🧤 ou numa vaga`;
   const alvo=liga.cfg.targetGoals>0
     ? liga.cfg.targetGoals+' gols · '+liga.cfg.targetMin+' min'
     : liga.cfg.targetMin+' min';
@@ -2741,9 +2807,13 @@ function viewJogo(liga,lv){
     return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">⚠️ ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
   <div class="esc2">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,(lv.teams[s===0?c.a:c.b].orig||(c.startLineups||c.lineups)[s]).concat([c.gks[s]].filter(Boolean)),
-      {gk:`data-a="gkSheet" data-s="${s}"`,pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${selFora?' data-alvo="1"':''}`})).join('')}
+      {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
+             :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
+       pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
+       empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
+      {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga'})).join('')}
   </div>
-  <div class="tiny ${selQuadra||selFora?'':'muted'}" style="margin:6px 2px 0">${dicaSub}</div>
+  <div class="tiny ${sel?'':'muted'}" style="margin:6px 2px 0">${dicaSub}</div>
   <div class="card" style="margin-top:8px">
     ${c.lineups[0].length<(lv.per+((lv.gkPool||[]).length?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
@@ -2757,11 +2827,9 @@ function viewJogo(liga,lv){
       /* agrupado pelo time de origem, em colunas, um nome por linha (D-98) */
       const grupos=[];fora.forEach(o=>{let g=grupos.find(x=>x.ti===o.ti);if(!g){g={ti:o.ti,from:o.from,ids:[]};grupos.push(g)}g.ids.push(o.id)});
       return `<div class="foragrid" style="margin-top:8px">${grupos.map(g=>`<div class="grp">
-        ${g.ti>=0?`<div class="teamtag ${TEAMBG[g.ti]}">${esc(g.from)}</div>`:'<div class="teamtag">Sem time</div>'}
+        ${g.ti>=0?`<div class="teamtag ${TEAMBG[g.ti]}">${esc(g.from)}</div>`:g.ti===-2?'<div class="teamtag cN">🧤 Rodízio</div>':'<div class="teamtag cN">Sem time</div>'}
         ${g.ids.map(id=>chipFora({id})).join('')}
       </div>`).join('')}</div>`})()}
-    ${(()=>{const descansa=(lv.gkPool||[]).filter(id=>id!==c.gks[0]&&id!==c.gks[1]);
-      return descansa.length?`<div class="tiny muted" style="margin-top:9px">🧤 Descansando: ${descansa.map(id=>esc(nameOf(liga,id))).join(', ')}</div>`:''})()}
     <div class="hr"></div>
     <div class="acts3">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
@@ -3467,9 +3535,10 @@ function revTempo(liga,m,podeEditar){
         <span class="plc num">${sc[0]}-${sc[1]}</span></${tag}>`;
     }
     if(ev.type==='sub'){
-      const sai=esc(nameOf(liga,ev.out));
-      return row('⇄',ev.in?`Sai ${sai} · entra ${esc(nameOf(liga,ev.in))}`:`Sai ${sai}`,
-        (ev.in?'troca':'saiu sem substituto')+' no '+esc(m.names[ev.side]),min,ev.side);
+      const sai=ev.out?esc(nameOf(liga,ev.out)):'',ent=ev.in?esc(nameOf(liga,ev.in)):'';
+      const noGol=ev.in&&Array.isArray(ev.gks)&&ev.gks[ev.side]===ev.in?' (no gol)':'';
+      return row('⇄',ev.in&&ev.out?`Sai ${sai} · entra ${ent}${noGol}`:ev.in?`Entra ${ent}${noGol}`:`Sai ${sai}`,
+        (ev.in&&ev.out?'troca':ev.in?'entrou sem ninguém sair':'saiu sem substituto')+' no '+esc(m.names[ev.side]),min,ev.side);
     }
     if(ev.type==='gk')return row('🧤',ev.id?esc(nameOf(liga,ev.id))+' foi para o gol':'sem goleiro fixo',
       'goleiro do '+esc(m.names[ev.side]),min,ev.side);
@@ -4206,7 +4275,7 @@ const A={
   backPres(){const l=L();l.live.stage='presenca';save();render()},
   teamsBack(){const l=L();
     if(l.live.cur&&l.live.cur.events.length&&!confirm('A partida atual será descartada. Continuar?'))return;
-    l.live.stage='times';l.live.cur=null;save();render()},
+    l.live.stage='times';l.live.cur=null;l.live.sel=null;save();render()},
   gkMode(){   // liga/desliga o rodízio de goleiros a qualquer momento
     const l=L(),lv=l.live;
     if(!lv.presentIds.some(id=>ehGkHoje(lv,id)))return toast('Ninguém marcado como goleiro hoje');
@@ -4490,30 +4559,25 @@ const A={
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){showScorer(c.events[i].side,el.dataset.own==='1');break}
   },
-  gkSheet(el){
+  /* Alguém do time vai para o gol (quem estava no gol volta para a linha), o
+     goleiro vai para a vaga da linha (gol fica vazio), ou os dois goleiros
+     trocam de lado por inteiro (D-47). Só o último mexe na escalação.        */
+  vaiProGol(el){
     const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
-    const s=+el.dataset.s;
-    const pool=(lv.gkPool||[]).filter(id=>id!==c.gks[s]);
-    openSheet(`<h2>Goleiro — ${esc(lv.teams[s===0?c.a:c.b].name)}</h2>
-      ${pool.length?`<div class="k" style="margin-bottom:8px">No rodízio</div>
-        <div class="chips" style="margin-bottom:14px">${pool.map(id=>`<button class="tp" data-a="setGk" data-s="${s}" data-id="${id}">🧤 ${esc(nameOf(l,id))}${id===c.gks[s===0?1:0]?' <small>do outro lado</small>':''}</button>`).join('')}</div>`:''}
-      <div class="k" style="margin-bottom:8px">Improvisar alguém do time</div>
-      <div class="chips" style="margin-bottom:14px">
-        ${c.lineups[s].map(id=>`<button class="tp" data-a="setGk" data-s="${s}" data-id="${id}">${esc(nameOf(l,id))}</button>`).join('')}
-      </div>
-      <button class="btn wide ghost" data-a="setGk" data-s="${s}" data-id="">Sem goleiro definido</button>
-      <div class="tiny muted" style="margin-top:10px;line-height:1.5">Quem está no rodízio troca de lado a cada partida e não ganha nem perde nível. Quem improvisa no gol continua contando normalmente pelo time.</div>`);
-  },
-  setGk(el){
-    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
-    const s=+el.dataset.s,id=el.dataset.id||null;
-    const other=s===0?1:0;
-    if(id&&c.gks[other]===id)c.gks[other]=c.gks[s]||null;   // veio do gol do outro time: os dois trocam de lugar
+    const s=+el.dataset.s,id=el.dataset.id||null,other=s===0?1:0;
+    const antes=c.gks[s],troca=!!(id&&c.gks[other]===id);
+    if(troca)c.gks[other]=c.gks[s]||null;                     // veio do gol do outro time: os dois trocam de lugar
     c.gks[s]=id;
     const mv=movesGk(c.lineups,c.gks);aplicaMv(c.lineups,mv);   // cada goleiro joga (e conta) do lado novo
     /* trocar quem está no gol muda o nível dos dois lados: fecha o trecho */
     c.events.push({t:Date.now(),type:'gk',side:s,id,gks:[...c.gks],mv});
+    /* improvisou do time num gol vazio: sobrou uma vaga na linha — já fica
+       marcada, o próximo toque (em quem está fora) fecha o time             */
+    const vaga=!antes&&!!id&&c.lineups[s].filter(x=>x!==id).length<(comRodizio(lv)?lv.per:lv.per-1);
+    lv.sel=vaga?'vaga:'+s:null;
     closeSheet();save();render();
+    const nm=x=>nameOf(l,x).split(' ')[0];
+    toast(troca?`${nm(id)} e ${nm(antes)} trocaram de gol`:id?`${nm(id)} foi para o gol`+(vaga?' — toque em quem entra na vaga':''):'Gol sem goleiro');
   },
   undo(){
     const l=L(),lv=l.live;if(!lv)return;
@@ -4529,8 +4593,9 @@ const A={
     if(ev.type==='goal')c.score[ev.side]--;
     if(ev.type==='sub'){
       if(!ev.in){if(!c.lineups[ev.side].includes(ev.out))c.lineups[ev.side].push(ev.out)}
-      else{const k=c.lineups[ev.side].indexOf(ev.in);if(k>=0)c.lineups[ev.side][k]=ev.out}
-      const t=l.live.teams[ev.side===0?c.a:c.b],j=t.ids.indexOf(ev.in),j0=t.ids.indexOf(ev.out);
+      else{const k=c.lineups[ev.side].indexOf(ev.in);
+        if(k>=0){if(ev.out)c.lineups[ev.side][k]=ev.out;else c.lineups[ev.side].splice(k,1)}}   // entrou numa vaga: só sai
+      const t=l.live.teams[ev.side===0?c.a:c.b],j=ev.in?t.ids.indexOf(ev.in):-1,j0=ev.out?t.ids.indexOf(ev.out):-1;
       if(j>=0&&j0>=0){t.ids[j]=ev.out;t.ids[j0]=ev.in}              // só a troca titular ⇄ reserva mexeu no time
     }
     if(ev.type==='pause')c.paused=false;
@@ -4545,43 +4610,39 @@ const A={
     }
     save();render();toast('Desfeito');
   },
-  /* Substituição por toque, sem folha (D-103): o primeiro toque marca o nome
-     (em quadra ou fora), o segundo, no par dele, faz a troca. Tocar no mesmo
-     nome desmarca; tocar em outro do mesmo lado move a marca. A escalação e
-     quem está fora continuam na tela o tempo todo — a folha escondia isso.   */
+  /* Substituição por toque, sem folha (D-103): o primeiro toque marca (um nome
+     de linha, o goleiro, alguém de fora, o gol vazio ou uma vaga de linha), o
+     segundo, no par dele, faz o lance — `lanceAoVivo` diz o que cada par
+     significa. Mesmo slot desmarca; par que não resolve só move a marca. A
+     escalação e quem está fora continuam na tela o tempo todo.               */
   subPick(el){
     const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
-    const id=el.dataset.id;if(!id)return;
-    const ladoDe=x=>[0,1].find(sd=>c.lineups[sd].includes(x));
-    const emQuadra=ladoDe(id)!==undefined;
-    if(lv.sel===id){lv.sel=null;render();return}
-    if(lv.sel){
-      const selQuadra=ladoDe(lv.sel)!==undefined,selFora=!selQuadra&&benchList(l,lv).some(o=>o.id===lv.sel);
-      if(selQuadra!==emQuadra&&(selQuadra||selFora)){
-        const out=emQuadra?id:lv.sel,inn=emQuadra?lv.sel:id;
-        return A.doSub({dataset:{s:String(ladoDe(out)),out,id:inn}});
-      }
-    }
-    lv.sel=id;render();
+    const key=el.dataset.id||(el.dataset.slot?el.dataset.slot+':'+el.dataset.s:null);if(!key)return;
+    if(lv.sel===key){lv.sel=null;render();return}
+    if(lv.sel&&lanceAoVivo(l,lv,lv.sel,key))return;
+    lv.sel=key;render();
   },
+  /* Entra `id` no lado `s`: no lugar de `out`, ou numa vaga (sem `out`). Com
+     `gol`, entra no gol. Quem entra no lugar do goleiro é o goleiro (D-117). */
   doSub(el){
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
-    const s=+el.dataset.s,out=el.dataset.out,inn=el.dataset.id,pool=lv.gkPool||[];
-    const k=c.lineups[s].indexOf(out);
+    const s=+el.dataset.s,out=el.dataset.out||null,inn=el.dataset.id,pool=lv.gkPool||[],gol=el.dataset.gol==='1';
+    if(!inn||c.lineups[0].includes(inn)||c.lineups[1].includes(inn))return;
+    const k=out?c.lineups[s].indexOf(out):-1;
     if(k>=0)c.lineups[s][k]=inn;else c.lineups[s].push(inn);
     /* Substituição vale só para ESTA partida. Quem entra emprestado (da fila
        ou de outro time) volta para onde estava na próxima; quem saiu continua
        no time dele. Mexer nos times aqui deixava um time com um a menos e
        mandava o substituído para a fila sem ninguém pedir. A única troca que
        fica é titular ⇄ reserva dentro do mesmo time.                        */
-    if(!pool.includes(out)&&!pool.includes(inn)){
+    if(out&&!pool.includes(out)&&!pool.includes(inn)){
       const ti=s===0?c.a:c.b,t=lv.teams[ti];
       const jOut=t.ids.indexOf(out),jIn=t.ids.indexOf(inn);
       if(jIn>=0&&jOut>=0){const tmp=t.ids[jOut];t.ids[jOut]=t.ids[jIn];t.ids[jIn]=tmp}   // titular ⇄ reserva
     }
-    if(c.gks[s]===out)c.gks[s]=pool.includes(inn)?inn:null;
+    if(gol||(out&&c.gks[s]===out))c.gks[s]=inn;
     c.events.push({t:Date.now(),type:'sub',side:s,out,in:inn,gks:[...c.gks]});
-    lv.sel=null;closeSheet();save();render();toast('Entrou '+nameOf(l,inn));
+    lv.sel=null;closeSheet();save();render();toast('Entrou '+nameOf(l,inn)+(c.gks[s]===inn?' no gol':''));
   },
   finish(el){
     const l=L(),lv=l.live,c=lv.cur;if(!c)return;
@@ -4799,7 +4860,8 @@ const A={
       <div class="tiny muted" style="margin-bottom:12px">${esc(m.names[ev.side])}</div>
       ${ev.type==='sub'?`
         <div class="k" style="margin-bottom:6px">Quem saiu</div>
-        <div class="chips" style="margin-bottom:14px">${emQuadra.map(id=>chip(id,'out',ev.out===id)).join('')}</div>
+        <div class="chips" style="margin-bottom:14px">${emQuadra.map(id=>chip(id,'out',ev.out===id)).join('')}
+          <button class="tp big ${ev.out?'':'sel'}" data-a="evSet" data-id="${m.id}" data-i="${i}" data-k="out" data-v="">ninguém</button></div>
         <div class="k" style="margin-bottom:6px">Quem entrou</div>
         <div class="chips" style="margin-bottom:16px">${fora.map(id=>chip(id,'in',ev.in===id)).join('')}
           <button class="tp big ${ev.in?'':'sel'}" data-a="evSet" data-id="${m.id}" data-i="${i}" data-k="in" data-v="">ninguém</button></div>`
@@ -4814,7 +4876,8 @@ const A={
     const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev)return;
     const k=el.dataset.k,v=el.dataset.v||null,quando=mmss(gameTime(m,ev.t));
     let txt='';
-    if(k==='out'){if(ev.out===v)return A.editEsc({dataset:{id:m.id}});ev.out=v;txt='Quem saiu aos '+quando+' foi '+nameOf(l,v)}
+    if(k==='out'){if((ev.out||null)===v)return A.editEsc({dataset:{id:m.id}});ev.out=v;
+      txt=v?'Quem saiu aos '+quando+' foi '+nameOf(l,v):'Aos '+quando+' entrou sem ninguém sair'}
     else if(k==='in'){if((ev.in||null)===v)return A.editEsc({dataset:{id:m.id}});ev.in=v;
       txt=v?'Quem entrou aos '+quando+' foi '+nameOf(l,v):'Aos '+quando+' saiu sem substituto'}
     else if(k==='gk'){if((ev.id||null)===v)return A.editEsc({dataset:{id:m.id}});ev.id=v;
@@ -5598,7 +5661,7 @@ document.addEventListener('mouseup',endPaint);
 let drag=null,suppressClick=false;
 function dropTargetAt(x,y){
   const el=document.elementFromPoint(x,y);
-  return el?el.closest('[data-drop-player],[data-drop-zone]'):null;
+  return el?el.closest('[data-drop-player],[data-drop-slot],[data-drop-zone]'):null;
 }
 function clearDropMarks(){$$('.dropok,.dropzone').forEach(e=>e.classList.remove('dropok','dropzone'))}
 function beginDrag(e){
@@ -5628,14 +5691,13 @@ function onDrop(fromId,target){
   /* soltar em "Foi embora": passa pela mesma confirmação do toque */
   if(zona==='leave')return A.leaveRacha({dataset:{id:fromId}});
   if(lv.stage==='jogo'&&lv.cur){
-    const c=lv.cur;
-    if(!alvo)return toast('Solte em cima de quem vai sair');
-    const sai=[0,1].find(sd=>c.lineups[sd].includes(alvo));
-    if(sai===undefined)return toast('Solte em cima de quem está em quadra');
-    if(c.lineups[0].includes(fromId)||c.lineups[1].includes(fromId))return toast('Esse já está em quadra');
+    /* mesma gramática do toque (D-117): de fora sobre quem sai, sobre o 🧤 ou
+       numa vaga; de linha sobre o 🧤 do seu lado; goleiro sobre o outro goleiro */
+    const key=alvo||target.dataset.dropSlot;
     lv.sel=null;
-    A.doSub({dataset:{s:String(sai),out:alvo,id:fromId}});
-    return;
+    if(key&&lanceAoVivo(l,lv,fromId,key))return;
+    const a=pecaAoVivo(l,lv,fromId);
+    return toast(a&&a.kind!=='fora'?'Solte em quem está fora, ou no 🧤 do mesmo lado':'Solte em cima de quem sai, no 🧤 ou numa vaga');
   }
   // montagem de times
   if(alvo){
@@ -5674,7 +5736,7 @@ document.addEventListener('pointermove',e=>{
   drag.ghost.style.top=(e.clientY-drag.gy)+'px';
   clearDropMarks();
   const t=dropTargetAt(e.clientX,e.clientY);
-  if(t&&t.dataset.dropPlayer!==drag.id)t.classList.add(t.dataset.dropPlayer?'dropok':'dropzone');
+  if(t&&t.dataset.dropPlayer!==drag.id)t.classList.add(t.dataset.dropPlayer||t.dataset.dropSlot?'dropok':'dropzone');
 },{passive:false});
 document.addEventListener('pointerup',e=>{
   if(!drag||e.pointerId!==drag.pid)return;

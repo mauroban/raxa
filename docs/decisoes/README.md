@@ -94,6 +94,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-100](partida-e-historico.md#d-100) · O racha em andamento se anuncia: selo "● ao vivo" e ponto vermelho na aba
 - [D-101](partida-e-historico.md#d-101) · Sem faixa "Trocando X"; autor do gol no polegar, com aviso enquanto faltar
 - [D-103](partida-e-historico.md#d-103) · Substituição por toque sem folha: marca um, toca no par
+- [D-117](partida-e-historico.md#d-117) · O 🧤 é um slot como os outros: goleiro entra pela substituição, improvisar não encurta o time
 
 ### [Stats e destaques](stats-e-destaques.md)
 
