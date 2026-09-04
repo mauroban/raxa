@@ -12,6 +12,8 @@ Uso:  python scripts/converge.py [bom|misto|nada] [rachas] [ligas] [cansaço]
   misto = palpites bons, mas 25% errados em uma patente inteira (e são justamente os esporádicos)
   poucos = palpites bons (±1 divisão) e só 2 de 20, assíduos, errados em uma patente inteira
   nada  = ninguém com palpite (todos 1500)
+  ruim  = todo mundo com palpite, mas SORTEADO (uma patente ao acaso, sem relação com a verdade):
+          mede quanto tempo o motor leva para as opiniões deixarem de importar ("sobra" abaixo)
 
 Modelo do racha: grupo de 20 com habilidade ~N(1500, 200); presença variável
 (13–18 por noite, quatro que vêm a cada 3 semanas); times montados pelo app
@@ -74,6 +76,7 @@ function runLiga(R){
     const t=clamp(Math.round(1500+gauss()*200),1000,1999);
     let elo,def=true;
     if(CEN==='nada'){elo=1500;def=false}
+    else if(CEN==='ruim'){elo=stepMid(Math.floor(Math.random()*5)*3+1)}     // patente sorteada: zero informação
     else{const ruim=(CEN==='misto'&&i<5)||(CEN==='poucos'&&(i===4||i===5));const e=ruim?(Math.random()<.5?-3:3):(Math.random()<.5?0:(Math.random()<.5?-1:1));elo=stepMid(clamp(stepOf(t)+e,0,TOP));}
     const p=mk('j'+i,elo,def);truth[p.id]=t;prior[p.id]=elo;sig[p.id]=def?100:300;
     if(CEN!=='nada'&&Math.abs(stepOf(elo)-stepOf(t))>=2)ruimDe[p.id]=1;
@@ -113,21 +116,28 @@ function runLiga(R){
     const el=liga.players.map(p=>p.L.elo),tv=liga.players.map(p=>truth[p.id]);
     const meanE=el.reduce((a,b)=>a+b,0)/POOL,meanT=tv.reduce((a,b)=>a+b,0)/POOL;
     let ok=0,err=0,okE=0,nE=0,okR=0,nR=0,errR=0;
+    /* "sobra" da entrada: quanto do ERRO do palpite (entrada − verdade, centrado) ainda está no
+       nível de hoje — inclinação da regressão do erro de hoje sobre o erro da entrada. 1 = tudo;
+       0 = as opiniões deixaram de importar (só o histórico manda).                            */
+    const meanP=liga.players.reduce((s,p)=>s+prior[p.id],0)/POOL;let sxy=0,sxx=0;
     liga.players.forEach(p=>{const st=stepOf(truth[p.id]-meanT+meanE);const d=Math.abs(p.L.rank-st),e=Math.abs(p.L.elo-meanE-(truth[p.id]-meanT));
       if(d<=1)ok++;err+=e;if(freq[p.id]<0.4){nE++;if(d<=1)okE++}
-      if(ruimDe[p.id]){nR++;errR+=e;if(d<=1)okR++}});
-    out.push({ok:ok/POOL,err:err/POOL,okE:okE/nE,okR:nR?okR/nR:1,errR:nR?errR/nR:0,gReal,gOra});
+      if(ruimDe[p.id]){nR++;errR+=e;if(d<=1)okR++}
+      const x=(prior[p.id]-meanP)-(truth[p.id]-meanT),y=(p.L.elo-meanE)-(truth[p.id]-meanT);sxy+=x*y;sxx+=x*x});
+    out.push({ok:ok/POOL,err:err/POOL,okE:okE/nE,okR:nR?okR/nR:1,errR:nR?errR/nR:0,gReal,gOra,sobra:sxx?sxy/sxx:0});
   }
   return out;
 }
 console.log('cenário: '+CEN+' · '+LIGAS+' ligas · 20 no grupo (4 vêm a cada 3 semanas), 13–18 por racha, vencedor fica, remontagem em 25% · cansaço -'+FAD+'/partida seguida');
 console.log('célula = todos %±1div · erro pts · esporádicos %±1div · errados-de-patente %±1div(erro pts) · desequilíbrio REAL entre times (pts; entre parênteses, com a verdade)');
-console.log('regra'.padEnd(50)+'| racha 3 | racha 5 | racha 10 | racha 20 | racha 40');
+const MARCOS=[2,4,9,19,39,59,79,119].filter(i=>i<RACHAS);
+console.log('regra'.padEnd(50)+'| '+MARCOS.map(i=>'racha '+(i+1)).join(' | '));
 for(const nome in REGRAS){
-  const acc=Array.from({length:RACHAS},()=>({ok:0,err:0,okE:0,okR:0,errR:0,gReal:0,gOra:0}));
+  const acc=Array.from({length:RACHAS},()=>({ok:0,err:0,okE:0,okR:0,errR:0,gReal:0,gOra:0,sobra:0}));
   for(let l=0;l<LIGAS;l++){const o=runLiga(REGRAS[nome]);o.forEach((x,i)=>{for(const k in x)acc[i][k]+=x[k]})}
   const cel=i=>{const a=acc[i];return Math.round(100*a.ok/LIGAS)+'%·'+Math.round(a.err/LIGAS)+'·'+Math.round(100*a.okE/LIGAS)+'%·'+Math.round(100*a.okR/LIGAS)+'%('+Math.round(a.errR/LIGAS)+')·'+Math.round(a.gReal/LIGAS)+'('+Math.round(a.gOra/LIGAS)+')'};
-  console.log(nome.padEnd(50)+'| '+[2,4,9,19,39].filter(i=>i<RACHAS).map(cel).join(' | '));
+  console.log(nome.padEnd(50)+'| '+MARCOS.map(cel).join(' | '));
+  if(CEN!=='nada')console.log('   sobra da entrada (1 = o erro do palpite inteiro; 0 = não importa mais)'.padEnd(50)+'| '+MARCOS.map(i=>(Math.round(100*acc[i].sobra/LIGAS)+'%').padStart(4)).join(' | '));
 }
 """
 f = os.path.join(OUT, 'converge.js')
