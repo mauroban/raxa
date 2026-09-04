@@ -1432,7 +1432,14 @@ function unidadesNivel(liga,m){
   return ordem;
 }
 function applyMatch(liga,m){
-  const seen={};m.deltas={};m.over={};m.pre=m.pre||{};
+  const seen={};m.deltas={};m.over={};m.pre=m.pre||{};m.papel={};
+  /* Elo de largada de TODOS os titulares, no papel em que começaram: é o que
+     a chance no apito (D-75) lê. Sem isto, o titular substituído num trecho
+     descartado ficava sem "antes" e a chance sumia da partida (D-118).     */
+  const ini=m.startLineups||m.lineups||[[],[]],st0=matchStints(liga,m)[0];
+  const gks0=(st0&&st0.gks)||m.startGks||m.gks||[null,null];
+  [0,1].forEach(sd=>(ini[sd]||[]).forEach(pid=>{const p=P(liga,pid);
+    if(p&&m.pre[pid]===undefined)m.pre[pid]=rt(p,gks0[sd]===pid?'G':'L').elo}));
   for(const st of unidadesNivel(liga,m)){
     const part=st.part;
     const r=computeElo(liga,part,st.S,m.mode,st.w);
@@ -1440,10 +1447,13 @@ function applyMatch(liga,m){
       const p=P(liga,pid);if(!p)continue;
       const role=part[pid].role||'L',tr=rt(p,role),k=pid+role;
       if(m.pre[pid]===undefined)m.pre[pid]=tr.elo;
+      /* Δ por papel (D-118): quem fez linha E gol na mesma partida move duas
+         patentes, e a revisão mostra cada uma — `deltas` segue sendo a soma */
+      const pp=m.papel[pid]=m.papel[pid]||{};if(!pp[role])pp[role]={pre:tr.elo,d:0};
       if(!seen[k])seen[k]={pid,role,from:tr.rank,rank:tr.rank,side:part[pid].side,dur:0};
       seen[k].side=part[pid].side;seen[k].dur+=st.dur||0;
       const d=r.deltas[pid]||0;
-      tr.elo+=d;m.deltas[pid]=(m.deltas[pid]||0)+d;
+      tr.elo+=d;m.deltas[pid]=(m.deltas[pid]||0)+d;pp[role].d+=d;
       /* Acima do esperado: (resultado - chance que ele tinha) x peso do trecho.
          Vale 1 = uma vitoria inteira a mais do que o confronto indicava.      */
       const Sv=st.S[part[pid].side];
@@ -2125,7 +2135,6 @@ function renderHome(){
       </div></div>`}
   <div style="height:10px"></div>
   <button class="btn wide pri" data-a="newLiga">+ Nova liga</button>
-  ${S.ligas.length?'':'<div style="height:8px"></div><button class="btn wide ghost" data-a="demo">Carregar o racha de sábado</button>'}
   <div style="height:8px"></div>
   <button class="btn wide ghost" data-a="joinLiga">Entrar com um código</button>
   ${PEND.length?`<div class="card" style="margin-top:12px"><div class="k" style="margin-bottom:6px">Aguardando aprovação</div>
@@ -3575,15 +3584,21 @@ function revTrechos(liga,m){
    enxerga o Elo cru na escada, então o número pode aparecer aqui.           */
 function revNivel(liga,m){
   if(m.voided)return `<div class="tiny muted" style="padding:6px 2px">Partida anulada: não mexeu no nível de ninguém.</div>`;
-  const ds=Object.keys(m.deltas||{}).map(pid=>({pid,d:m.deltas[pid]||0})).sort((a,b)=>b.d-a.d);
+  /* uma linha por PAPEL (D-118): quem jogou na linha e no gol na mesma partida
+     moveu duas patentes, e cada uma aparece com o seu Δ e o seu "antes → depois" */
+  const ds=[];
+  if(m.papel&&Object.keys(m.papel).length)
+    Object.keys(m.papel).forEach(pid=>Object.keys(m.papel[pid]).forEach(role=>ds.push({pid,role,d:m.papel[pid][role].d||0,pre:m.papel[pid][role].pre})));
+  else Object.keys(m.deltas||{}).forEach(pid=>ds.push({pid,role:null,d:m.deltas[pid]||0,pre:(m.pre||{})[pid]}));   // partida sem `papel` (versão antiga)
+  ds.sort((a,b)=>b.d-a.d);
   if(!ds.length)return `<div class="tiny muted" style="padding:6px 2px">Nada registrado — esta partida não moveu nível.</div>`;
-  const mv={};(m.moves||[]).forEach(x=>{mv[x.pid]=x});
+  const mv={};(m.moves||[]).forEach(x=>{mv[x.pid+(x.role||'L')]=x});
   return ds.map(x=>{
-    const sob=mv[x.pid],pre=(m.pre||{})[x.pid];
+    const sob=x.role?mv[x.pid+x.role]:(mv[x.pid+'L']||mv[x.pid+'G']);
     const nota=sob?`agora é ${esc(rankLabel(liga,sob.rank))}${sob.role==='G'?' no gol':''}`
-      :(pre!==undefined?Math.round(pre)+' → '+Math.round(pre+x.d):'');
+      :(x.pre!==undefined?Math.round(x.pre)+' → '+Math.round(x.pre+x.d):'');
     return `<div class="rk3"><span class="pos">${sob?(sob.dir>0?'🔺':'🔻'):'·'}</span>
-      <div class="nm">${esc(nameOf(liga,x.pid))}${nota?`<small>${nota}</small>`:''}</div>
+      <div class="nm">${esc(nameOf(liga,x.pid))}${x.role==='G'?' <span class="tiny muted">no gol</span>':''}${nota?`<small>${nota}</small>`:''}</div>
       <span class="val num ${x.d>0?'up':x.d<0?'dn':''}">${pmTxt(x.d)}</span></div>`;
   }).join('');
 }
@@ -5970,7 +5985,7 @@ function loadUI(){
 const playerFacts=p=>({id:p.id,name:p.name,gk:!!p.gk,owner:p.owner||null,role:p.role||'jogador',created:p.created||null,
   L:{base:p.L?p.L.base:undefined,def:!!(p.L&&p.L.def),op:(p.L&&Array.isArray(p.L.op))?p.L.op:[]},
   G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def),op:(p.G&&Array.isArray(p.G.op))?p.G.op:[]}});
-const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;return o};
+const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;delete o.papel;return o};
 const factsDoc=l=>({name:l.name,cfg:l.cfg,players:(l.players||[]).map(playerFacts),
   matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],live:l.live||null,log:l.log||[]});
 const snapNovo=()=>({players:{},matches:{},sessions:{},live:'null',log:0,name:null,cfg:null});
@@ -6558,6 +6573,8 @@ Object.assign(A,{
     closeSheet();createLeague(name,{cfg:cfgNova()});
   },
 
+  /* Liga de exemplo ("Racha de sábado"). Sem botão na tela (D-119): é a
+     massa de dados dos scripts de teste (smoke, layout, visual, sync).     */
   demo(){
     const base={cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
     const fake={cfg:base.cfg,players:base.players};

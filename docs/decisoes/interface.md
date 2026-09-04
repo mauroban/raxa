@@ -212,3 +212,14 @@ e o celular é o que importa, entra um segundo passo: `url(#gcred)`, filtro SVG 
 (`feColorMatrix`) que manda preto para vermelho e deixa branco branco. Resultado: no celular a
 bola fica branca com gomos vermelhos; no Windows, o azul vira vermelho. Descartado o `drop-shadow`
 vermelho (halo borrado em 14px, e não pinta os gomos).
+
+<a id="d-119"></a>
+### D-119 · Sem o botão "Carregar o racha de sábado"
+**04/09/2026.** A tela de ligas oferecia, para quem ainda não tinha liga, um botão que criava a
+liga de exemplo "Racha de sábado" com 19 nomes. Era resto do protótipo: em uso real, alguém que
+toca nele por curiosidade cria uma liga inteira de gente que não existe na conta dele. O botão
+saiu. A ação `A.demo` continua no código **sem botão**: é a massa de dados de `smoke.py`,
+`layout.py`, `visual.py` e `sync.py`, que a chamam direto.
+**Descartado:** mover a montagem do exemplo para os scripts (quatro cópias do mesmo seed, ou um
+prelúdio compartilhado só para isso); apagar o exemplo e reescrever os quatro scripts.
+**Onde:** tela inicial (`renderHome`) e `A.demo` em `index.html` · [Deploy §3](../tecnico/deploy.md).

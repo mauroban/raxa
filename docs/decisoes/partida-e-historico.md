@@ -396,3 +396,24 @@ com o celular).
 rodízio entra; de fora direto para o gol; goleiro para a vaga; arraste sobre o 🧤) ·
 `scripts/layout.py` ("partida com goleiro marcado para trocar") · [Fluxo do racha §3](../produto/fluxo-do-racha.md)
 · [Regras do racha §3](../produto/regras-do-racha.md).
+
+<a id="d-118"></a>
+### D-118 · Elo de largada de todos os titulares; efeito no nível por papel
+**04/09/2026.** Dois problemas vistos numa partida real (racha de 04/09): (1) a **chance no
+apito sumiu** da Stats e do histórico — o goleiro titular foi substituído 6 s depois da largada,
+o trecho foi descartado, e `applyMatch` só gravava o Elo "antes" (`m.pre`) de quem esteve em trecho
+que conta; `chanceHist` (D-75) exige o Elo de largada dos cinco de cada lado, então devolvia vazio.
+Agora `m.pre` é preenchido **antes** de aplicar os trechos, para toda a escalação de largada, no
+papel em que cada um começou (goleiro do primeiro trecho pela patente de goleiro). (2) O **efeito no
+nível** da revisão mostrava um número só por pessoa somando as duas patentes: o João Gabriel apareceu
+com +18 "mais que todo mundo", quando eram +1 na linha (igual aos colegas naquele trecho) e +17 no
+gol — patente nova, sem opinião e em calibração (K 64 contra K 32 dos que têm opinião). A partida
+passou a guardar `m.papel[pid][L|G] = {pre, d}` e a revisão lista **uma linha por papel**, com o Δ e
+o "antes → depois" daquela patente e a marca *no gol*. `m.deltas` continua sendo a soma (é o que
+ordena). `papel` é derivado, como `pre`/`deltas`/`moves`: sai de `matchFacts` e não vai para o banco.
+**Descartado:** mostrar a soma com um asterisco (esconde a informação que explica o número); pesar
+a chance pelo tamanho dos lados e o mínimo de tempo para trecho com gol (regras do motor, fora do
+escopo — passariam pela simulação de convergência, D-82).
+**Onde:** `applyMatch` (`m.pre` dos titulares, `m.papel`), `matchFacts`, `revNivel` em `index.html` ·
+`scripts/test.py` [17] · `scripts/smoke.py` (revisão: uma linha por papel, titular sem Elo de largada) ·
+[Contestação e correção](../produto/contestacao-e-correcao.md).

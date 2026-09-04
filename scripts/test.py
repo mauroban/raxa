@@ -597,6 +597,26 @@ console.log('\n[16] improviso no gol e gol de goleiro (D-110)');
   liga.players=liga.players.filter(p=>p!==lin&&p!==gol);rebuildAll(liga);
 }
 
+console.log('\n[17] Elo de largada de todos os titulares e Δ por papel (D-118)');
+{
+  liga.matches.length=0;rebuildAll(liga);
+  const gA='p15',gB='p16';
+  /* p15 começa no gol e sai aos 6 s (trecho descartado); p3 vai para o gol aos 4' e joga o resto lá */
+  const evs=[{at:6000,type:'sub',side:0,out:gA,in:'p6',gks:['p6',gB]},
+             {at:4*MIN,type:'gk',side:0,id:'p3',gks:['p3',gB],mv:[]}];
+  const antesL=elo('p3','L'),antesG=elo('p3','G'),preGk=elo(gA,'G');
+  const m=lanca(A5.concat(gA),B5.concat(gB),0,{dur:10*MIN,gks:[gA,gB],events:evs,resultados:[0,'draw',0],
+    fimA:['p1','p2','p3','p4','p5','p6'],fimB:B5.concat(gB)});
+  ok(m.stints.length===3&&!m.stints[0].counted,'o trecho de 6 s foi descartado');
+  ok(m.pre[gA]===preGk,'o titular que saiu no trecho descartado tem o Elo de largada gravado (pela patente de goleiro, que era o papel dele)');
+  ok(m.startLineups[0].concat(m.startLineups[1]).every(id=>typeof m.pre[id]==='number'),'todos os titulares tem Elo de largada: a chance no apito nao some');
+  ok(m.papel['p3']&&m.papel['p3'].L&&m.papel['p3'].G,'quem fez linha e gol tem um Δ por papel');
+  ok(m.papel['p3'].L.d+m.papel['p3'].G.d===m.deltas['p3'],'a soma dos papeis e o total da partida');
+  ok(m.papel['p3'].L.pre===antesL&&m.papel['p3'].G.pre===antesG,'cada papel guarda o seu proprio "antes"');
+  ok(Math.round(antesL+m.papel['p3'].L.d)===Math.round(elo('p3','L'))&&Math.round(antesG+m.papel['p3'].G.d)===Math.round(elo('p3','G')),'antes + Δ = depois, em cada patente');
+  ok(!m.papel['p2'].G&&m.papel['p2'].L.d===m.deltas['p2'],'quem so jogou na linha tem um papel so');
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """

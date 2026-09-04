@@ -825,6 +825,22 @@ step('revisar partida mostra a partida inteira',()=>{
   if(!/conta |descartado/.test(els['#sheet'].innerHTML))throw new Error('trechos nao abriram');
   A.revSec({dataset:{k:'nivel',id:m.id}});
   if(!/Efeito no nível/.test(els['#sheet'].innerHTML))throw new Error('efeito no nivel nao abriu');
+  /* D-118: quem fez linha E gol na mesma partida aparece duas vezes no efeito no nivel, uma por papel,
+     e o Δ de cada uma soma o total. Partida sintetica de dois trechos (a partida do smoke dura ms e vira um trecho so). */
+  {
+    const [a,b,c,d]=l.players.slice(0,4).map(p=>p.id);
+    const st=(gks,score,result,ended)=>({from:0,to:1,dur:300000,w:.5,counted:true,lineups:[[a,b],[c,d]],gks,score,result,ended});
+    const dois={id:'dois',ts:Date.now(),names:['X','Y'],teamIdx:[0,1],mode:'curtas',lineups:[[a,b],[c,d]],startLineups:[[a,b],[c,d]],gks:[b,c],
+      stints:[st([a,c],[1,0],0,'troca'),st([b,c],[0,1],1,'apito')],goals:[],events:[],disputes:[],voided:false};
+    applyMatch(l,dois);
+    try{
+      if(!dois.papel[a]||!dois.papel[a].L||!dois.papel[a].G)throw new Error('quem fez gol e linha deveria ter um Δ por papel');
+      if(dois.papel[a].L.d+dois.papel[a].G.d!==dois.deltas[a])throw new Error('a soma dos papeis nao bate com o total');
+      const h2=revNivel(l,dois),n=h2.split(esc(nameOf(l,a))).length-1;
+      if(n!==2||!/no gol/.test(h2))throw new Error('quem fez linha e gol deveria ter uma linha por papel no efeito no nivel (achou '+n+')');
+      if(![a,b,c,d].every(id=>typeof dois.pre[id]==='number'))throw new Error('titular sem Elo de largada');
+    }finally{rebuildAll(l)}                          // a partida sintetica nao entra no historico: desfaz o efeito dela
+  }
   A.revSec({dataset:{k:'tempo',id:m.id}});
   if(/toque para corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('linha do tempo nao fechou');
   A.revSec({dataset:{k:'tempo',id:m.id}});

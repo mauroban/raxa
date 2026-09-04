@@ -95,6 +95,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-101](partida-e-historico.md#d-101) · Sem faixa "Trocando X"; autor do gol no polegar, com aviso enquanto faltar
 - [D-103](partida-e-historico.md#d-103) · Substituição por toque sem folha: marca um, toca no par
 - [D-117](partida-e-historico.md#d-117) · O 🧤 é um slot como os outros: goleiro entra pela substituição, improvisar não encurta o time
+- [D-118](partida-e-historico.md#d-118) · Elo de largada de todos os titulares; efeito no nível por papel
 
 ### [Stats e destaques](stats-e-destaques.md)
 
@@ -130,6 +131,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-98](interface.md#d-98) · Montagem: times em duas colunas, um nome por linha
 - [D-106](interface.md#d-106) · Sem emoji no botão de iniciar; bolinha vermelha para gol contra
 - [D-107](interface.md#d-107) · Gol volta a ser ⚽ na "partida a partida"; gol contra é o mesmo ⚽, vermelho
+- [D-119](interface.md#d-119) · Sem o botão "Carregar o racha de sábado"
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 
