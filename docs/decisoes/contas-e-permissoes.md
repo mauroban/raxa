@@ -179,3 +179,5 @@ apagar, card "Arquivados") **só o admin** — moderador deixou de arquivar. O p
 respiro embaixo: colado nos cartões de números, parecia sobreposto. As linhas de gol/conta/
 permissão ficam depois dos números, com o Cancelar/Salvar logo abaixo, e arquivar/apagar dentro do
 bloco Admin, no fim. Log: `bio` ("mudou a descrição").
+**Ajuste no mesmo dia (2):** a folha "+ Novo jogador" tem o campo de descrição, opcional, logo
+abaixo do nome — é na hora do cadastro que se sabe "amigo de quem".

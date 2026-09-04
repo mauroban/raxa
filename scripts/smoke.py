@@ -1384,6 +1384,19 @@ step('ficha: nome e descricao no cabecalho (quem lanca); gol, permissao e arquiv
   if(!h.includes('>Sou eu<'))throw new Error('sem perfil vinculado, "Sou eu" aparece');
   me.owner='tester';me.role='admin';delete P(l,p.id).bio;closeSheet();
 });
+step('novo jogador: descricao opcional no cadastro',()=>{
+  const l=L();A.addPlayer();
+  if(!$('#sheet').innerHTML.includes('id="pb"'))throw new Error('a folha de novo jogador devia ter o campo de descricao');
+  ['#pn','#ps','#pg','#pb'].forEach(k=>els[k]=new El(k));
+  els['#pn'].value='Bruninho';els['#ps'].value='';els['#pg'].value='0';els['#pb'].value='  amigo do Matheus  ';
+  A.savePlayer();
+  const p=l.players.find(x=>x.name==='Bruninho');if(!p)throw new Error('nao cadastrou');
+  if(p.bio!=='amigo do Matheus')throw new Error('descricao nao entrou no cadastro: '+p.bio);
+  els['#pn'].value='Sem descrição';els['#pb'].value='';A.savePlayer();
+  const q=l.players.find(x=>x.name==='Sem descrição');if(!q||q.bio!==undefined)throw new Error('descricao vazia nao vira campo');
+  ['#pn','#ps','#pg','#pb'].forEach(k=>delete els[k]);
+  l.players=l.players.filter(x=>x!==p&&x!==q);
+});
 step('minhas opinioes nao diz se a opiniao vale; ajustes de quem nao e admin so mostram, sem controles',()=>{
   const l=L(),eu=euId(l),me=P(l,eu);
   me.role='jogador';S.ui.opRole='L';OPV.ordem=[];A.opSheet();

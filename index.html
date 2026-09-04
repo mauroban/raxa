@@ -4474,6 +4474,8 @@ const A={
     openSheet(`<h2>Novo jogador</h2>
       <input id="pn" placeholder="Nome — como chamam ele" autocomplete="off" aria-label="nome"
         style="font-family:var(--disp);font-size:20px;padding:10px 12px;width:100%;margin-bottom:4px">
+      <input id="pb" placeholder="Descrição (opcional) — apelido, amigo de quem, como chegou…" autocomplete="off" aria-label="descrição" maxlength="120"
+        style="font-size:13px;padding:8px 12px;width:100%;margin-bottom:4px;color:var(--mute)">
       <div class="trow">
         <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
         <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costuma ir ao gol"></button>
@@ -4495,6 +4497,7 @@ const A={
     const n=$('#pn').value.trim();if(!n)return toast('Digite o nome');
     const l=L(),sv=$('#ps').value,gk=$('#pg').value==='1';
     const p=mkPlayer(l,n,sv===''?null:stepMid(+sv),gk,euId(l));   // sem opinião: fica sem nível até calibrar
+    const bio=String(($('#pb')&&$('#pb').value)||'').trim().slice(0,120);if(bio)p.bio=bio;   // descrição opcional (D-128)
     l.players.push(p);
     if(l.live){
       if(!l.live.presentIds.includes(p.id))l.live.presentIds.push(p.id);
