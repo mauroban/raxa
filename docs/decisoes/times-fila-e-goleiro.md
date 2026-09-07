@@ -333,6 +333,13 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    embora" com um nome marcado é ele. Tudo com **↶ desfazer** (`preHist`, `preUndo`).
 8. **Chegou** no curto vai para o fim da fila (ou "🧤 Veio para o gol"). `toPool` no curto vira goleiro
    do dia + fila. Racha gravado antes com 3–4 times é convertido ao carregar.
+9. **Substituição ao vivo vale para o lado** *(ajuste no mesmo dia; substitui D-30 no racha curto)*: quem
+   saiu vai para o fim da fila, quem entrou é do lado e guarda a preferência (`lv.pref` = a posição que
+   tinha na fila). Se o lado perde e ele tem que sair, `rodaFila` o devolve a esse lugar — "volta para a
+   fila sem perder a vez"; se o lado ganha, fica, e a preferência acaba no fim da partida. Quem entra no
+   lugar do goleiro fixo é o goleiro do lado (ganha o 🧤 do dia). O `↶` desfaz lado e fila (evento `sub`
+   com `roda`). Na quadra ninguém "volta para o próprio time" quando a partida acaba — o substituído já
+   está na fila.
 **Por quê:** no racha real (o de 14 e o de 15 pessoas) os times perdem a definição em três partidas — quem
 está fora há mais tempo entra, e o app insistia em "Time C", "reserva", "empréstimo", "vaga no time que
 espera", cada um com seu remendo. O lançador precisava entender cinco ideias para uma coisa que na quadra é

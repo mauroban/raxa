@@ -37,6 +37,9 @@ recálculo futuro recupera. Agora o app registra os fatos independentemente de c
 
 <a id="d-30"></a>
 ### D-30 · Substituição é da partida, não do time; "foi embora" tira a pessoa do racha
+> **Superada no racha curto por D-129 (2026-09-07):** a substituição vale para o lado — quem saiu vai
+> para o fim da fila, quem entrou é do lado e guarda a preferência na fila. Continua valendo na partida única.
+
 **28/08/2026.** Trocar alguém durante a partida não mexe mais em `lv.teams`: quem entra emprestado
 (da fila ou de outro time) volta para onde estava na partida seguinte, e quem saiu continua no time
 dele. A única troca que fica é titular ⇄ reserva dentro do mesmo time. Novo: **Foi embora /

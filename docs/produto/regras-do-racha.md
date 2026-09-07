@@ -101,7 +101,11 @@ gramática da partida ao vivo, e tudo tem **↶ desfazer**:
   fila, a **vaga fica à vista** ("＋ vaga · entra o próximo") e os dois lados entram menores e iguais;
   quem chega entra nela num toque — na vaga, para o próximo da fila; no nome e depois na vaga, para quem
   você escolher;
-- **Chegou**: fim da fila — ou, com o 🧤, espera na fila e entra no gol de quem perder.
+- **Chegou**: fim da fila — ou, com o 🧤, espera na fila e entra no gol de quem perder;
+- **substituição no meio da partida** (alguém da fila entra no lugar de alguém em quadra): vale para o
+  lado. Quem saiu vai para o **fim da fila**; quem entrou é do lado — **se o lado ganha, fica; se perde e
+  tem que sair, volta para o lugar que tinha na fila**, sem perder a vez. Quem entra no lugar do goleiro é
+  o goleiro do lado daí em diante.
 
 A tela em repouso não explica nada; a dica só aparece com um nome marcado, dizendo o próximo passo.
 

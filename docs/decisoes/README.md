@@ -87,7 +87,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 
 - [D-18](partida-e-historico.md#d-18) · A tela da partida é o placar
 - [D-28](partida-e-historico.md#d-28) · Fatos completos na partida, registro de correções, gol contra
-- [D-30](partida-e-historico.md#d-30) · Substituição é da partida, não do time; "foi embora" tira a pessoa do racha
+- [D-30](partida-e-historico.md#d-30) · Substituição é da partida, não do time; "foi embora" tira a pessoa do racha *(no racha curto, superada por D-129)*
 - [D-31](partida-e-historico.md#d-31) · A vaga mora no cartão do time
 - [D-47](partida-e-historico.md#d-47) · Trocar o goleiro pelo do outro lado é troca de lugar — gol E escalação
 - [D-48](partida-e-historico.md#d-48) · Fim sem querer tem volta: "Voltar a partida"

@@ -505,11 +505,17 @@ step('substituir tocando em quem esta em quadra e depois em quem entra',()=>{
   if(c.lineups[0].includes(out)||!c.lineups[0].includes(fora[0].id))throw new Error('a troca nao aconteceu');
   if(L().live.sel)throw new Error('a marca deveria sumir depois da troca');
 });
-step('substituicao nao mexe no time: quem entrou emprestado nao vira titular',()=>{
+step('substituicao vale para o lado: quem entrou e do lado, quem saiu vai para o fim da fila; ↶ desfaz (D-129)',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;
-  const ti=c.a,t=lv.teams[ti],emprestado=c.lineups[0].find(id=>!t.ids.includes(id));
-  if(emprestado&&t.ids.includes(emprestado))throw new Error('o emprestado entrou no time');
-  lv.teams.forEach((tt,i)=>{if(tt.ids.length!==tt.ids.filter(Boolean).length)throw new Error('time com buraco')});
+  const t=lv.teams[c.a],ev=c.events[c.events.length-1];
+  if(ev.type!=='sub'||!ev.in||!ev.out||!ev.roda||ev.roda.jOut<0||ev.roda.filaPos<0)return;   // so o caso limpo: da fila, no lugar de alguem do lado
+  if(!t.ids.includes(ev.in)||t.ids.includes(ev.out))throw new Error('quem entrou devia ser do lado, quem saiu nao');
+  const f=filaDe(lv);if(f[f.length-1]!==ev.out)throw new Error('quem saiu vai para o fim da fila');
+  if(ev.roda&&ev.roda.filaPos>=0&&!(lv.pref&&lv.pref[ev.in]>=0))throw new Error('quem entrou da fila guarda a preferencia');
+  lv.teams.forEach(tt=>{if(tt.ids.length!==tt.ids.filter(Boolean).length)throw new Error('time com buraco')});
+  A.undo();
+  if(t.ids.includes(ev.in)||!t.ids.includes(ev.out)||filaDe(lv).includes(ev.out)||!filaDe(lv).includes(ev.in))throw new Error('↶ devia devolver lado e fila');
+  A.doSub({dataset:{s:'0',out:ev.out,id:ev.in}});          // refaz a troca para os passos seguintes
 });
 step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;
@@ -525,7 +531,7 @@ step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos
 });
 step('quem nao e do time original leva o icone de substituto',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;render();
-  const ti=c.a,orig=lv.teams[ti].orig||[];
+  const orig=(c.startLineups||c.lineups)[0];              // o ⇄ e contra a escalacao de largada (D-129: o lado muda de gente a cada giro)
   const estranho=c.lineups[0].find(id=>!orig.includes(id)&&id!==c.gks[0]);
   if(estranho&&!/⇄/.test(els['#app'].innerHTML))throw new Error('substituto sem o icone ⇄');
 });
@@ -1307,6 +1313,29 @@ step('empate com fila curta: fica o lado que esta ha menos tempo em quadra, o ou
     if(lv.teams[1].ids.join()!==B1.join())throw new Error('quem esta ha menos tempo (B) devia ficar');
     if(A1.filter(id=>!ehGkHoje(lv,id)).filter(id=>lv.teams[0].ids.includes(id)).length!==2)throw new Error('A devia rodar 2: '+lv.teams[0].ids);
     if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===1))throw new Error('lastStay devia ser B');
+  }finally{S=salvo;render()}
+});
+step('quem entrou no meio da partida e perdeu volta para a fila sem perder a vez; quem entrou e ganhou fica (D-129)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,13).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  A.toTimes();A.startJogo();
+  try{
+    const f0=filaDe(lv);if(f0.length!==5)throw new Error('cenario pede fila de 5');
+    A.startMatch();const c=lv.cur;
+    const out=c.lineups[1].find(id=>!ehGkHoje(lv,id)),inn=f0[0];
+    A.doSub({dataset:{s:'1',out,id:inn}});                       // o 1º da fila entra no lugar de alguem do lado B
+    if(!lv.teams[1].ids.includes(inn)||filaDe(lv)[filaDe(lv).length-1]!==out)throw new Error('a troca devia valer para o lado e mandar quem saiu para o fim');
+    A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});       // B perde inteiro (fila repoe 4): quem entrou volta ao lugar 1
+    if(filaDe(lv)[0]!==inn)throw new Error('quem entrou no meio e perdeu devia voltar para a frente da fila: '+filaDe(lv).map(id=>nameOf(l,id)));
+    if(Object.keys(lv.pref||{}).length)throw new Error('a preferencia acaba no fim da partida');
+    /* agora entra de novo, o lado ganha: fica como qualquer um */
+    A.startMatch();const c2=lv.cur;
+    const out2=c2.lineups[0].find(id=>!ehGkHoje(lv,id));
+    A.doSub({dataset:{s:'0',out:out2,id:inn}});
+    A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});
+    if(!lv.teams[0].ids.includes(inn))throw new Error('quem entrou e ganhou fica no lado');
   }finally{S=salvo;render()}
 });
 step('sem ninguem na fila, os dois lados entram menores e iguais',()=>{

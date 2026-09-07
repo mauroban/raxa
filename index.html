@@ -2629,7 +2629,11 @@ function rodaFila(liga,lv,saiu){
   const ficam=rodam.filter(id=>!saem.includes(id));
   t.ids=(gkEntra?[gkEntra]:fixo?[fixo]:[]).concat(ficam,entram);
   const sairam=saem.concat(gkSai?[gkSai]:[]),entraram=entram.concat(gkEntra?[gkEntra]:[]);
-  lv.fila=fila.filter(id=>!entraram.includes(id)).concat(sairam);
+  const nova=fila.filter(id=>!entraram.includes(id)),pref=lv.pref||{};
+  /* quem entrou no meio da partida e perdeu não perde a vez: volta ao lugar que tinha na fila */
+  sairam.filter(id=>pref[id]>=0).sort((a,b)=>pref[a]-pref[b]).forEach(id=>nova.splice(Math.min(pref[id],nova.length),0,id));
+  sairam.filter(id=>!(pref[id]>=0)).forEach(id=>nova.push(id));
+  lv.fila=nova;
   return {entram:entraram,saem:sairam,ficam:(fixo&&!gkSai?[fixo]:[]).concat(ficam)};
 }
 /* Lado com gente a menos (alguém foi embora, alguém saiu para a fila) é
@@ -4569,6 +4573,7 @@ const A={
     lv.queue=[...le.queue];lv.lastWinner=le.lastWinner;lv.lastSide=le.lastSide===undefined?null:le.lastSide;lv.lastStay=le.lastStay;lv.lastGks=le.lastGks;
     lv.nextPair=le.nextPair;
     if(le.fila)lv.fila=[...le.fila];   // a fila de pessoas volta como estava antes do giro
+    lv.pref=Object.assign({},le.pref||{});
     lv.ult=null;lv.preHist=[];
     const c=le.cur;
     c.events.push({t:le.endedAt,type:'pause'},{t:Date.now(),type:'resume'});
@@ -5133,7 +5138,15 @@ const A={
       else{const k=c.lineups[ev.side].indexOf(ev.in);
         if(k>=0){if(ev.out)c.lineups[ev.side][k]=ev.out;else c.lineups[ev.side].splice(k,1)}}   // entrou numa vaga: só sai
       const t=l.live.teams[ev.side===0?c.a:c.b],j=ev.in?t.ids.indexOf(ev.in):-1,j0=ev.out?t.ids.indexOf(ev.out):-1;
-      if(j>=0&&j0>=0){t.ids[j]=ev.out;t.ids[j0]=ev.in}              // só a troca titular ⇄ reserva mexeu no time
+      if(ev.roda&&ev.in){                                          // a roda: quem entrou volta à fila no lugar que tinha, quem saiu volta ao lado
+        const tt=lv.teams[ev.roda.ti]||t,k=tt.ids.indexOf(ev.in);
+        if(k>=0){if(ev.out)tt.ids[k]=ev.out;else tt.ids.splice(k,1)}
+        let fila=filaDe(lv).filter(x=>x!==ev.out&&x!==ev.in);
+        fila.splice(ev.roda.filaPos>=0?Math.min(ev.roda.filaPos,fila.length):fila.length,0,ev.in);
+        lv.fila=fila;if(lv.pref)delete lv.pref[ev.in];
+        if(!ev.roda.gkHoje)lv.gkToday=(lv.gkToday||[]).filter(x=>x!==ev.in);
+      }
+      else if(j>=0&&j0>=0){t.ids[j]=ev.out;t.ids[j0]=ev.in}         // partida única: só a troca titular ⇄ reserva mexeu no time
     }
     if(ev.type==='pause')c.paused=false;
     if(ev.type==='resume')c.paused=true;
@@ -5167,18 +5180,27 @@ const A={
     if(!inn||c.lineups[0].includes(inn)||c.lineups[1].includes(inn))return;
     const k=out?c.lineups[s].indexOf(out):-1;
     if(k>=0)c.lineups[s][k]=inn;else c.lineups[s].push(inn);
-    /* Substituição vale só para ESTA partida. Quem entra emprestado (da fila
-       ou de outro time) volta para onde estava na próxima; quem saiu continua
-       no time dele. Mexer nos times aqui deixava um time com um a menos e
-       mandava o substituído para a fila sem ninguém pedir. A única troca que
-       fica é titular ⇄ reserva dentro do mesmo time.                        */
-    if(out&&!pool.includes(out)&&!pool.includes(inn)){
+    const curto=(lv.mode||l.cfg.matchMode)!=='unica';
+    let roda=null;
+    if(curto&&!pool.includes(inn)){
+      /* A roda (D-129): a substituição vale para o LADO. Quem saiu vai para o
+         fim da fila; quem entrou é do lado — se o lado ganha, fica; se perde e
+         tem que sair, volta para o lugar que tinha na fila (preferência).  */
+      const ti=s===0?c.a:c.b,t=lv.teams[ti],fila=filaDe(lv);
+      roda={ti,jOut:out?t.ids.indexOf(out):-1,filaPos:fila.indexOf(inn),gkHoje:ehGkHoje(lv,inn)};
+      lv.teams.forEach(x=>{if(x!==t)x.ids=x.ids.filter(y=>y!==inn)});   // veio de outro lugar: sai de lá
+      if(roda.jOut>=0)t.ids[roda.jOut]=inn;else if(!t.ids.includes(inn))t.ids.push(inn);
+      lv.fila=fila.filter(x=>x!==inn).concat(out&&!pool.includes(out)?[out]:[]);
+      lv.pref=lv.pref||{};if(roda.filaPos>=0)lv.pref[inn]=roda.filaPos;
+      /* entrou no lugar do goleiro do lado: é o goleiro do lado daqui em diante (D-117) */
+      if(!comRodizio(lv)&&out&&ehGkHoje(lv,out)&&(gol||c.gks[s]===out))marcaGkHoje(lv,inn);
+    }else if(out&&!pool.includes(out)&&!pool.includes(inn)){
       const ti=s===0?c.a:c.b,t=lv.teams[ti];
       const jOut=t.ids.indexOf(out),jIn=t.ids.indexOf(inn);
-      if(jIn>=0&&jOut>=0){const tmp=t.ids[jOut];t.ids[jOut]=t.ids[jIn];t.ids[jIn]=tmp}   // titular ⇄ reserva
+      if(jIn>=0&&jOut>=0){const tmp=t.ids[jOut];t.ids[jOut]=t.ids[jIn];t.ids[jIn]=tmp}   // partida única: titular ⇄ reserva
     }
     if(gol||(out&&c.gks[s]===out))c.gks[s]=inn;
-    c.events.push({t:Date.now(),type:'sub',side:s,out,in:inn,gks:[...c.gks]});
+    c.events.push({t:Date.now(),type:'sub',side:s,out,in:inn,gks:[...c.gks],roda});
     lv.sel=null;closeSheet();save();render();toast('Entrou '+nameOf(l,inn)+(c.gks[s]===inn?' no gol':''));
   },
   finish(el){
@@ -5216,7 +5238,7 @@ const A={
        partida e o estado da rodada ANTES do giro (times, fila, vencedor, goleiros) */
     lv.lastEnd={mid:m.id,endedAt,cur:JSON.parse(JSON.stringify(c)),
       teams:lv.teams.map(t=>[...t.ids]),queue:[...lv.queue],
-      fila:Array.isArray(lv.fila)?[...lv.fila]:null,
+      fila:Array.isArray(lv.fila)?[...lv.fila]:null,pref:Object.assign({},lv.pref||{}),
       lastWinner:lv.lastWinner===undefined?null:lv.lastWinner,
       lastSide:lv.lastSide===undefined?null:lv.lastSide,
       lastStay:Array.isArray(lv.lastStay)?[...lv.lastStay]:null,
@@ -5256,6 +5278,7 @@ const A={
     }
     /* "de próximo": quem estava esperando entra no lugar de quem saiu */
     const giros=saiu.map(i=>({i,r:rodaFila(l,lv,i)})).filter(x=>x.r&&x.r.entram.length);
+    lv.pref={};                                                    // quem entrou e ficou é do lado: a preferência acaba aqui
     lv.cur=null;lv.nextPair=suggestPair(l,lv);resetFill(lv);
     const compl=completaLados(l,lv,planGks(l,lv,lv.nextPair).gks);
     const placar=result==='draw'?`Empate ${m.score[0]}-${m.score[1]}`
