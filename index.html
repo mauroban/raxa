@@ -308,7 +308,7 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .done .mov{grid-column:1/-1;font-size:13px;line-height:1.45}
 .done .mov .out{color:var(--mute)} .done .mov .in{color:var(--ok);font-weight:600}
 .btn.ok{background:color-mix(in srgb,var(--ok) 12%,var(--panel));color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
-.esc2 .pl .tag{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ok);flex:0 0 auto}
+.esc2 .pl .tag{font-size:13px;line-height:1;color:var(--ok);flex:0 0 auto}
 .esc2 .pl.novo{background:color-mix(in srgb,var(--ok) 10%,var(--fill))}
 .esc2 .pl.sel .tag{color:var(--onink)}
 .slot .sub .fica{color:var(--ok);font-weight:700}
@@ -316,8 +316,8 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .filagrid>div{position:relative;display:flex;align-items:center;min-width:0}
 .filagrid .tp.big{flex:1;min-width:0;justify-content:flex-start;min-height:42px;font-size:14px;padding:0 9px 0 28px;width:100%}
 .filagrid .filapos{position:absolute;left:10px;top:50%;transform:translateY(-50%);min-width:12px;text-align:right;font-variant-numeric:tabular-nums;pointer-events:none;z-index:1}
-.filagrid .tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--bad);pointer-events:none}
-.filagrid>div.out .tp{background:color-mix(in srgb,var(--bad) 9%,var(--fill));padding-right:44px}
+.filagrid .tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;line-height:1;color:var(--bad);pointer-events:none}
+.filagrid>div.out .tp{background:color-mix(in srgb,var(--bad) 9%,var(--fill));padding-right:26px}
 .filawrap{margin-top:10px;padding-top:2px;border-top:1px dashed var(--line2)}
 .filawrap[data-alvo]{outline:2px dashed var(--ok);outline-offset:4px;border-radius:8px}
 .corte{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 1px}
@@ -3079,7 +3079,7 @@ function viewProxima(liga,lv){
     :sel&&sel.kind==='vaga'&&unica?` · <button class="lnk" data-a="fillPick" data-sd="${sel.side}">escolher da lista</button>`:'';
   const desfaz=(lv.preHist||[]).length?`${sel?' · ':''}<button class="lnk" data-a="preUndo">↶ desfazer</button>`:'';
   const chipFora=id=>tpChip(liga,lv,id,true,alvoDe('fora:'+id),'fora:'+id);
-  const tag=id=>entrou.has(id)?'<span class="tag">entrou</span>':'';
+  const tag=id=>entrou.has(id)?'<span class="tag" title="entrou">▲</span>':'';
   const cab=sd=>{const ti=pair[sd],t=lv.teams[ti];
     const ficou=u&&Array.isArray(u.fica)&&u.fica.includes(ti);
     const venceu=u&&u.venceu===ti;
@@ -3091,7 +3091,7 @@ function viewProxima(liga,lv){
   /* a fila, numerada: quem está fora há mais tempo entra primeiro; um risco
      separa quem entra no próximo giro de quem espera mais um                */
   const saiu=new Set(u?(u.mov||[]).flatMap(m=>m.saem):[]);
-  const tagSaiu=id=>saiu.has(id)?'<span class="tag">saiu</span>':'';
+  const tagSaiu=id=>saiu.has(id)?'<span class="tag" title="saiu">▼</span>':'';
   const filaHtml=()=>filaGrid(liga,lv,soltos,chipFora,tagSaiu);
   const nomes=ids=>ids.map(prim).join(', ');
   return `
@@ -3226,7 +3226,7 @@ function viewJogo(liga,lv){
       const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
       const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
       const saiu=new Set(c.events.filter(e=>e.type==='sub'&&e.out&&e.in).map(e=>e.out));
-      return filaGrid(liga,lv,lista,id=>chipFora({id}),id=>saiu.has(id)?'<span class="tag">saiu</span>':'')})()}
+      return filaGrid(liga,lv,lista,id=>chipFora({id}),id=>saiu.has(id)?'<span class="tag" title="saiu">▼</span>':'')})()}
     <div class="hr"></div>
     <div class="acts3">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
