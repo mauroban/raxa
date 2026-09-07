@@ -95,7 +95,7 @@ Cronômetro grande, dois blocos coloridos e os slots de goleiro:
 - **Entre uma partida e outra existe uma tela inteira: a próxima partida.** Não é um modal que some — é a tela padrão do racha enquanto nada está rolando (D-129), e ela mostra, nesta ordem:
   - **o placar registrado e o ↩ Voltar a partida**, num cartão fixo no topo até a próxima começar, com a linha "Saem X, Y → fim da fila · Entram Z, W";
   - **os dois lados que vão entrar**, com a chance de cada um, "venceu, fica" no lado que ficou e a etiqueta **entrou** em quem acabou de entrar; editáveis ali mesmo, por toque ou arraste;
-  - **a fila, numerada**, com o risco "entram no próximo" separando quem entra no próximo giro de quem espera mais um ("depois"); o goleiro que espera aparece com o 🧤, junto do time dele. A partida ao vivo mostra a mesma fila, com o mesmo corte, no card "Fila — toque para colocar em quadra";
+  - **a fila, numerada**, com o risco "entram no próximo" separando quem entra no próximo giro de quem espera mais um ("depois"); o goleiro que espera aparece com o 🧤, junto do time dele. A partida ao vivo mostra a mesma fila, com o mesmo corte, no card "Fila";
   - `＋ Chegou`, `🚑 Foi embora` e `Refazer times`.
   A tela em repouso não explica nada: a dica só aparece com um nome marcado, dizendo o próximo passo, e leva o **↶ desfazer** de qualquer mexida na mão.
 - **Quem entra é sugestão, não regra.** O app sugere seguindo a roda — e quem venceu continua do mesmo lado da quadra em que jogou (D-71). Mas você decide: qualquer nome troca de lugar em dois toques, inclusive repetir quem acabou de sair. Só depois de conferir tudo é que você toca em **▶ Começar partida**.
