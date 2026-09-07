@@ -312,10 +312,14 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .pl.novo{background:color-mix(in srgb,var(--ok) 10%,var(--fill))}
 .esc2 .pl.sel .tag{color:var(--onink)}
 .slot .sub .fica{color:var(--ok);font-weight:700}
-.filagrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px}
-.filagrid>div{display:flex;align-items:center;gap:6px;min-width:0}
-.filagrid .tp.big{flex:1;min-width:0;justify-content:flex-start;min-height:36px;font-size:13.5px;padding:0 9px}
-.filagrid .filapos{min-width:14px;text-align:right;font-variant-numeric:tabular-nums}
+.filagrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px 8px}
+.filagrid>div{position:relative;display:flex;align-items:center;min-width:0}
+.filagrid .tp.big{flex:1;min-width:0;justify-content:flex-start;min-height:42px;font-size:14px;padding:0 9px 0 28px;width:100%}
+.filagrid .filapos{position:absolute;left:10px;top:50%;transform:translateY(-50%);min-width:12px;text-align:right;font-variant-numeric:tabular-nums;pointer-events:none;z-index:1}
+.filagrid .tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--bad);pointer-events:none}
+.filagrid>div.out .tp{background:color-mix(in srgb,var(--bad) 9%,var(--fill));padding-right:44px}
+.filawrap{margin-top:10px;padding-top:2px;border-top:1px dashed var(--line2)}
+.filawrap[data-alvo]{outline:2px dashed var(--ok);outline-offset:4px;border-radius:8px}
 .corte{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 1px}
 .corte::before,.corte::after{content:"";flex:1;border-top:1px dashed var(--line2)}
 .benchcard[data-alvo]{outline:2px dashed var(--ok);outline-offset:2px}
@@ -351,8 +355,8 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .pl.sel{background:var(--chalk);color:var(--onink);border-color:var(--chalk)}
 .esc2 .pl.sel .ic,.esc2 .pl.sel .nm{color:var(--onink)}
 .esc2 .col .teamtag{margin-bottom:6px;display:block}
-.esc2.vs3{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;margin-top:10px}
-.esc2.vs3 .vs{align-self:center}
+.esc2.vs3{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;margin-top:10px}
+.esc2.vs3 .vs{display:none}
 .esc2 .col>.slot{display:block;width:100%;margin-bottom:6px}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
@@ -2686,13 +2690,14 @@ function entramNoProximo(liga,lv,filaL){
 }
 /* A fila desenhada: numerada, com o corte "entram no próximo" / "depois";
    goleiro sem número, junto do time dele. `chip(id)` desenha cada nome.   */
-function filaGrid(liga,lv,ids,chip){
+function filaGrid(liga,lv,ids,chip,tag){
   const filaL=ids.filter(id=>!ehGkHoje(lv,id)),n=entramNoProximo(liga,lv,filaL.length);
   let pos=0,corte=false;const out=[];
   if(n)out.push(`<div class="corte">${n===filaL.length||n>=entramNoProximo(liga,lv,99)?'entram no próximo':`entram ${n} no próximo`}</div>`);
   ids.forEach(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
     if(!g&&pos===n+1&&!corte&&filaL.length>n){out.push('<div class="corte">depois</div>');corte=true}
-    out.push(`<div><span class="filapos">${g?'':pos}</span>${chip(id)}</div>`)});
+    const t=tag?tag(id):'';
+    out.push(`<div class="${t?'out':''}"><span class="filapos">${g?'':pos}</span>${chip(id)}${t}</div>`)});
   return `<div class="filagrid">${out.join('')}</div>`;
 }
 /* os times como foram montados (D-50): a montagem guardada, ou a composição original dos lados */
@@ -3085,7 +3090,9 @@ function viewProxima(liga,lv){
       <div class="sub">${venceu||ficou?'<span class="fica">fica</span>':''}${gp.fica[sd]?(venceu||ficou?' · ':'')+'🧤 fica':''}&nbsp;</div></div>`};
   /* a fila, numerada: quem está fora há mais tempo entra primeiro; um risco
      separa quem entra no próximo giro de quem espera mais um                */
-  const filaHtml=()=>filaGrid(liga,lv,soltos,chipFora);
+  const saiu=new Set(u?(u.mov||[]).flatMap(m=>m.saem):[]);
+  const tagSaiu=id=>saiu.has(id)?'<span class="tag">saiu</span>':'';
+  const filaHtml=()=>filaGrid(liga,lv,soltos,chipFora,tagSaiu);
   const nomes=ids=>ids.map(prim).join(', ');
   return `
   ${u?`<div class="card done">
@@ -3110,15 +3117,19 @@ function viewProxima(liga,lv){
            foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false,alvoDe('fora:'+id),'fora:'+id)).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
     </div>
     ${sel||desfaz?`<div class="tiny" style="margin:6px 2px 0">${dica}${saiFila}${maisOpc}${desfaz}</div>`:''}
+    ${unica?'':`<div class="filawrap" data-a="toTeam" data-i="-1" data-drop-zone="bench"${podeSair?' data-alvo="1"':''}>
+      ${descansam.length?`<div class="chips">${descansam.map(chipFora).join('')}</div>`:''}
+      ${soltos.length?filaHtml():!descansam.length?'<div class="tiny muted">Ninguém na fila: todo mundo em quadra.</div>':''}
+    </div>`}
   </div>
   ${cardCompletar(liga,lv,pair)}
-  <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px"${podeSair?' data-alvo="1"':''}>
-    ${unica?`<div class="row"><div class="k">Fora desta partida</div>
-      <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+descansam.length}</div></div>`:''}
-    ${descansam.length?`<div class="chips" style="margin-top:${unica?8:0}px">${descansam.map(chipFora).join('')}</div>`:''}
-    ${soltos.length?(unica?`<div class="chips" style="margin-top:8px">${soltos.map(chipFora).join('')}</div>`:filaHtml())
+  ${unica?`<div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
+    <div class="row"><div class="k">Fora desta partida</div>
+      <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+descansam.length}</div></div>
+    ${descansam.length?`<div class="chips" style="margin-top:8px">${descansam.map(chipFora).join('')}</div>`:''}
+    ${soltos.length?`<div class="chips" style="margin-top:8px">${soltos.map(chipFora).join('')}</div>`
       :!descansam.length?'<div class="tiny muted">Ninguém na fila: todo mundo em quadra.</div>':''}
-  </div>
+  </div>`:''}
   <div class="acts3" style="margin-top:10px">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
     <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
@@ -3214,7 +3225,8 @@ function viewJogo(liga,lv){
       /* na ordem da fila (D-129), com o mesmo corte da pré-partida; o goleiro que descansa no fim */
       const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
       const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
-      return filaGrid(liga,lv,lista,id=>chipFora({id}))})()}
+      const saiu=new Set(c.events.filter(e=>e.type==='sub'&&e.out&&e.in).map(e=>e.out));
+      return filaGrid(liga,lv,lista,id=>chipFora({id}),id=>saiu.has(id)?'<span class="tag">saiu</span>':'')})()}
     <div class="hr"></div>
     <div class="acts3">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>

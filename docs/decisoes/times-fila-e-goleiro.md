@@ -326,7 +326,9 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    (até a próxima começar — sai do toast de 7 s e do bloco de partidas), a linha "Saem … → fim da fila ·
    Entram …" (`lv.ult`), a etiqueta **entrou** em quem entrou, a fila **numerada** com o corte "entram no
    próximo"/"depois", e o goleiro que espera com o 🧤 (`filaGrid`, a mesma fila e o mesmo corte na
-   partida ao vivo). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
+   partida ao vivo). *Ajuste no mesmo dia:* a fila entrou no mesmo cartão dos lados, com as colunas
+   alinhadas às dos lados (o "VS" saiu, o número e a etiqueta ficam dentro do nome), sem título nem
+   contador; quem saiu na última roda leva a etiqueta **saiu**, como quem entrou leva **entrou**. Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
    perde o texto de ajuda em repouso ("toque ou arraste num nome para substituir"). A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
 7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
    frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi
