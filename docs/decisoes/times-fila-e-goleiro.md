@@ -329,7 +329,10 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    partida ao vivo). *Ajuste no mesmo dia:* a fila entrou no mesmo cartão dos lados, com as colunas
    alinhadas às dos lados (o "VS" saiu, o número e a etiqueta ficam dentro do nome), sem título nem
    contador; quem saiu na última roda leva **▼ vermelha**, como quem entrou leva **▲ verde** — setas de
-   substituição em vez de "entrou"/"saiu" escrito, que tampava o nome. Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
+   substituição em vez de "entrou"/"saiu" escrito, que tampava o nome. A partida ao vivo ganhou o mesmo
+   desenho (escalação + fila num cartão, colunas alinhadas, ▲/▼ da partida). E o toque para trocar mudou de
+   cara: com um nome marcado, **o par possível fica verde suave e o resto apaga** (classe `picking`), sem
+   o tracejado; arrastar e desistir (voltar ao lugar ou soltar no vazio) não marca ninguém (`drag.longe`). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
    perde o texto de ajuda em repouso ("toque ou arraste num nome para substituir"). A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
 7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
    frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi

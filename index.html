@@ -319,7 +319,8 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .filagrid .tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;line-height:1;color:var(--bad);pointer-events:none}
 .filagrid>div.out .tp{background:color-mix(in srgb,var(--bad) 9%,var(--fill));padding-right:26px}
 .filawrap{margin-top:10px;padding-top:2px;border-top:1px dashed var(--line2)}
-.filawrap[data-alvo]{outline:2px dashed var(--ok);outline-offset:4px;border-radius:8px}
+.filawrap[data-alvo]{background:color-mix(in srgb,var(--ok) 6%,transparent);border-radius:10px;margin-left:-6px;margin-right:-6px;padding-left:6px;padding-right:6px}
+.filawrap[data-alvo] .corte{color:var(--ok)}
 .corte{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 1px}
 .corte::before,.corte::after{content:"";flex:1;border-top:1px dashed var(--line2)}
 .benchcard[data-alvo]{outline:2px dashed var(--ok);outline-offset:2px}
@@ -338,7 +339,10 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .dragghost{position:fixed!important;pointer-events:none;z-index:300}
 .dropok{outline:2px dashed var(--ok);outline-offset:3px;border-radius:10px}
 /* substituição por toque: com um nome marcado, quem pode ser o par dele ganha o mesmo tracejado do arraste */
-.esc2 .pl[data-alvo],.tp[data-alvo]{outline:2px dashed var(--ok);outline-offset:2px}
+.esc2 .pl[data-alvo],.tp[data-alvo]{background:color-mix(in srgb,var(--ok) 13%,var(--fill));border-color:color-mix(in srgb,var(--ok) 55%,transparent)}
+/* com um nome marcado, quem não pode ser o par apaga; o par fica verde suave (D-129) */
+.picking .esc2 .pl:not([data-alvo]):not(.sel),.picking .tp:not([data-alvo]):not(.sel){opacity:.38}
+.picking .esc2 .pl.sel,.picking .tp.sel{opacity:1}
 .lnk{background:none;border:0;padding:0;margin:0;color:var(--cyan);font:inherit;text-decoration:underline;cursor:pointer}
 .dropzone{outline:2px dashed color-mix(in srgb,var(--ok) 55%,transparent);outline-offset:2px}
 
@@ -3101,7 +3105,7 @@ function viewProxima(liga,lv){
     <div class="mov">${(u.mov||[]).length?u.mov.map(m=>`<span class="out">${m.saem.length?`Saem ${nomes(m.saem)} → fim da fila`:''}</span>${m.saem.length?' · ':''}<span class="in">Entram ${nomes(m.entram)}</span>`).join('<br>')
       :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}</div>
   </div>`:''}
-  <div class="card">
+  <div class="card ${sel?'picking':''}">
     <div class="row"><div class="k">Próxima partida</div>
       <div class="sp tiny muted">${lv.matchIds.length?'':'primeira do dia'}</div></div>
     <div class="esc2 vs3">
@@ -3205,35 +3209,42 @@ function viewJogo(liga,lv){
   <div id="scorer"></div>
   ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
     return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">⚠️ ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
-  <div class="esc2">
+  ${(()=>{
+    /* mesma tela da pré-partida (D-129): escalação e fila num cartão só, as
+       colunas da fila embaixo das colunas dos lados; ▲ em quem entrou nesta
+       partida, ▼ em quem saiu                                              */
+    const entrou=new Set(c.events.filter(e=>e.type==='sub'&&e.in).map(e=>e.in));
+    const saiu=new Set(c.events.filter(e=>e.type==='sub'&&e.out&&e.in).map(e=>e.out));
+    const tagIn=id=>entrou.has(id)?'<span class="tag" title="entrou">▲</span>':'';
+    const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
+    const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
+    const res=[0,1].map(s=>reservasDe(s));
+    return `<div class="card ${sel?'picking':''}" style="margin-top:8px">
+    <div class="esc2" style="margin-top:0">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,((c.startLineups||c.lineups)[s]).concat([(c.startGks||c.gks)[s]].filter(Boolean)),
       {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
              :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
        pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
        empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
-      {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga'})).join('')}
-  </div>
-  ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
-  <div class="card" style="margin-top:8px">
-    ${Math.min(c.lineups[0].length,c.lineups[1].length)<(lv.per+(comRodizio(lv)?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
+      {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga',tag:tagIn})).join('')}
+    </div>
+    ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
+    ${Math.min(c.lineups[0].length,c.lineups[1].length)<(lv.per+(comRodizio(lv)?1:0))?`<div class="tiny" style="color:var(--gold);margin-top:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
-    ${(()=>{const res=[0,1].map(s=>reservasDe(s));return res.some(x=>x.length)?`<div class="foragrid" style="margin-bottom:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
+    ${res.some(x=>x.length)?`<div class="foragrid" style="margin-top:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
         ${res[s].map(chipFora).join('')}
-      </div>`:'').join('')}</div>`:''})()}
-    ${(()=>{if(!fora.length)return '<div class="tiny muted">Ninguém de fora.</div>';
-      /* na ordem da fila (D-129), com o mesmo corte da pré-partida; o goleiro que descansa no fim */
-      const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
-      const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
-      const saiu=new Set(c.events.filter(e=>e.type==='sub'&&e.out&&e.in).map(e=>e.out));
-      return filaGrid(liga,lv,lista,id=>chipFora({id}),id=>saiu.has(id)?'<span class="tag" title="saiu">▼</span>':'')})()}
-    <div class="hr"></div>
-    <div class="acts3">
-      <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
-      <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
-      <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
+      </div>`:'').join('')}</div>`:''}
+    <div class="filawrap">
+      ${fora.length?filaGrid(liga,lv,lista,id=>chipFora({id}),id=>saiu.has(id)?'<span class="tag" title="saiu">▼</span>':'')
+        :'<div class="tiny muted">Ninguém de fora.</div>'}
     </div>
   </div>
+  <div class="acts3" style="margin-top:10px">
+    <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
+    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
+    <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
+  </div>`})()}
   ${golsCard(liga,lv,c)}
   ${lv.matchIds.length?todayBlock(liga,lv):''}`;
 }
@@ -6396,6 +6407,7 @@ document.addEventListener('pointermove',e=>{
     else if(dist>20){endDrag(false);return}                // rolou a tela de verdade: deixa o navegador cuidar
     if(!drag||!drag.active)return;
   }
+  if(dist>24)drag.longe=true;                              // saiu do lugar de verdade: soltar sem alvo é desistir, não toque
   e.preventDefault();
   drag.ghost.style.left=(e.clientX-drag.gx)+'px';
   drag.ghost.style.top=(e.clientY-drag.gy)+'px';
@@ -6409,9 +6421,11 @@ document.addEventListener('pointerup',e=>{
   const from=drag.id,el=drag.el,t=dropTargetAt(e.clientX,e.clientY);
   /* segurou o nome (o arraste armou) mas soltou no lugar: é um toque, não um
      arraste — antes isso caía no vazio e o nome "não respondia" (D-103)       */
-  const parado=Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<12||(t&&t.dataset.dropPlayer===from);
+  const parado=!drag.longe&&(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<12||(t&&t.dataset.dropPlayer===from));
+  const desistiu=drag.longe&&(!t||t.dataset.dropPlayer===from);
   endDrag(true);
   if(parado){dispara(el);return}
+  if(desistiu)return;                                       // arrastou e trouxe de volta (ou soltou no vazio): nada acontece
   onDrop(from,t);
 });
 document.addEventListener('pointercancel',()=>endDrag(false));

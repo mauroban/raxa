@@ -52,6 +52,7 @@ TELAS = {
     12: 'minhas opinioes',
     13: 'ficha com opinioes',
     14: 'fim de racha',
+    15: 'marcando',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -93,8 +94,8 @@ DRIVER = r"""
     if(step>=3){A.startMatch();A.goal({dataset:{s:'0'}});A.goal({dataset:{s:'1'}});
       const g=L().live.cur.events.find(e=>e.type==='goal');
       A.setGoalScorer({dataset:{t:String(g.t),id:L().live.cur.lineups[0][0]}});closeSheet();}
-    if(step>=4){A.goal({dataset:{s:'0'}});A.endMatch();closeSheet();}
-    if(step>=5){                     /* assume um perfil: e o que marca "VOCE" no historico */
+    if(step>=4&&step!==15){A.goal({dataset:{s:'0'}});A.endMatch();closeSheet();}
+    if(step>=5&&step!==15){          /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
     if(step===11||step===12||step===13)S.ui.tab='ranking';
@@ -120,6 +121,10 @@ DRIVER = r"""
       if(k===5)A.goal({dataset:{s:s==='0'?'1':'0'}});
       A.endMatch();closeSheet();}
     A.endRacha();
+  }
+  if(step===15){                   /* partida ao vivo com um nome marcado: quem pode ser o par fica verde, o resto apaga (D-129) */
+    const c=L().live.cur,y=c.lineups[1].find(id=>id!==c.gks[1]);
+    A.subPick({dataset:{s:'1',id:y}});
   }
   if(step===13){                   /* ficha do admin com opinioes de varias pessoas, uma divergente e um "nao sei" */
     const l=L(),eu=l.players[1];eu.role='admin';
