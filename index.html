@@ -312,11 +312,11 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .pl.novo{background:color-mix(in srgb,var(--ok) 10%,var(--fill))}
 .esc2 .pl.sel .tag{color:var(--onink)}
 .slot .sub .fica{color:var(--ok);font-weight:700}
-.filagrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px;margin-top:8px}
+.filagrid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px}
 .filagrid>div{display:flex;align-items:center;gap:6px;min-width:0}
 .filagrid .tp.big{flex:1;min-width:0;justify-content:flex-start;min-height:36px;font-size:13.5px;padding:0 9px}
 .filagrid .filapos{min-width:14px;text-align:right;font-variant-numeric:tabular-nums}
-.corte{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:3px 0 1px}
+.corte{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 1px}
 .corte::before,.corte::after{content:"";flex:1;border-top:1px dashed var(--line2)}
 .benchcard[data-alvo]{outline:2px dashed var(--ok);outline-offset:2px}
 .balbar i{display:block;height:100%;background:var(--ok)}
@@ -2560,12 +2560,12 @@ function viewTimes(liga,lv){
     ${lv.teams.map((t,i)=>timeCard(liga,lv,i,per)).join('')}
   </div>
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
-    <div class="row"><div class="k">${unica?'Fora / esperando':n>2?'Fora':'Fila'}</div>
-      <div class="sp num" style="font-family:var(--disp);font-size:18px">${bench.length}</div></div>
+    ${unica?`<div class="row"><div class="k">Fora / esperando</div>
+      <div class="sp num" style="font-family:var(--disp);font-size:18px">${bench.length}</div></div>`:''}
     ${bench.length?(unica?`<div class="chips" style="margin-top:8px">${bench.map(id=>tpChip(liga,lv,id,true)).join('')}</div>`
       :(()=>{const ordem=filaDe(lv);let pos=0;return `<div class="filagrid">${ordem.map(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
         return `<div><span class="filapos">${g?'':pos}</span>${tpChip(liga,lv,id,true)}</div>`}).join('')}</div>`})())
-      :'<div class="tiny muted" style="margin-top:8px">Todo mundo em quadra.</div>'}
+      :'<div class="tiny muted">Todo mundo em quadra.</div>'}
   </div>`;
 }
 /* ---------- completar o time menor ----------
@@ -3113,11 +3113,11 @@ function viewProxima(liga,lv){
   </div>
   ${cardCompletar(liga,lv,pair)}
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px"${podeSair?' data-alvo="1"':''}>
-    <div class="row"><div class="k">${unica?'Fora desta partida':'Fila'}</div>
-      <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+descansam.length}</div></div>
-    ${descansam.length?`<div class="chips" style="margin-top:8px">${descansam.map(chipFora).join('')}</div>`:''}
+    ${unica?`<div class="row"><div class="k">Fora desta partida</div>
+      <div class="sp num" style="font-family:var(--disp);font-size:18px">${soltos.length+descansam.length}</div></div>`:''}
+    ${descansam.length?`<div class="chips" style="margin-top:${unica?8:0}px">${descansam.map(chipFora).join('')}</div>`:''}
     ${soltos.length?(unica?`<div class="chips" style="margin-top:8px">${soltos.map(chipFora).join('')}</div>`:filaHtml())
-      :!descansam.length?'<div class="tiny muted" style="margin-top:8px">Ninguém na fila: todo mundo em quadra.</div>':''}
+      :!descansam.length?'<div class="tiny muted">Ninguém na fila: todo mundo em quadra.</div>':''}
   </div>
   <div class="acts3" style="margin-top:10px">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
@@ -3210,9 +3210,7 @@ function viewJogo(liga,lv){
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
         ${res[s].map(chipFora).join('')}
       </div>`:'').join('')}</div>`:''})()}
-    <div class="row"><div class="k">Fila</div>
-      <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
-    ${(()=>{if(!fora.length)return '<div class="tiny muted" style="margin-top:8px">Ninguém de fora.</div>';
+    ${(()=>{if(!fora.length)return '<div class="tiny muted">Ninguém de fora.</div>';
       /* na ordem da fila (D-129), com o mesmo corte da pré-partida; o goleiro que descansa no fim */
       const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
       const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
