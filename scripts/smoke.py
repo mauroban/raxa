@@ -1199,6 +1199,8 @@ step('12 na linha + 2 goleiros: dois lados e fila de 4 (o terceiro time); empate
   A.toTimes();
   try{
     if(lv.teams.length!==3||filaDe(lv).length)throw new Error('na montagem, 3 times inteiros: veio '+lv.teams.length+' / fora '+filaDe(lv).length);
+    if(lv.teams[2].ids.length!==4||lv.teams[2].ids.some(id=>ehGkHoje(lv,id)))throw new Error('o time sem goleiro e 4 de linha: '+lv.teams[2].ids.length);
+    if(!/4 de linha/.test(viewTimes(l,lv)))throw new Error('o cartao do time sem goleiro devia dizer "4 de linha"');
     A.startJogo();
     if(lv.teams.length!==2||filaDe(lv).length!==4)throw new Error('esperava 2 lados e fila de 4, veio '+lv.teams.length+' / '+filaDe(lv).length);
     const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),C0=filaDe(lv).slice();
@@ -1220,6 +1222,28 @@ step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>
   if(fila.length){onDrop(fila[0],{dataset:{dropPlayer:tit}});
     if(!lv.teams[1].ids.includes(fila[0]))throw new Error('arrastar da fila sobre um titular nao trocou');
     onDrop(tit,{dataset:{dropPlayer:fila[0]}});}
+});
+step('3 goleiros e 3 times: o goleiro sai e entra com o time, nao e rodizio (D-129)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,12).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,3).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,3).map(p=>p.id);
+  A.toTimes();
+  try{
+    if(lv.teams.length!==3||!lv.teams.every(t=>t.ids.length===5&&t.ids.filter(id=>ehGkHoje(lv,id)).length===1))throw new Error('3 times de 4 + goleiro: '+lv.teams.map(t=>t.ids.length));
+    if(!/um por time/.test(viewTimes(l,lv)))throw new Error('a montagem devia dizer que e um goleiro por time');
+    const gk=t=>t.ids.find(id=>ehGkHoje(lv,id)),A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),C0=lv.teams[2].ids.slice(),gA=gk(lv.teams[0]),gB=gk(lv.teams[1]),gC=gk(lv.teams[2]);
+    A.startJogo();
+    const f=filaDe(lv);if(f.length!==5||!C0.every(id=>f.includes(id)))throw new Error('a fila e o time C inteiro, com o goleiro: '+f.length);
+    A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});          // A vence: B sai inteiro (goleiro junto), C entra inteiro (goleiro junto)
+    const B1=lv.teams[1].ids;
+    if(!C0.every(id=>B1.includes(id))||B1.includes(gB)||gk(lv.teams[1])!==gC)throw new Error('o time C devia entrar inteiro, com o goleiro dele: '+B1);
+    const f1=filaDe(lv);if(f1.length!==5||!B0.every(id=>f1.includes(id)))throw new Error('o time B inteiro, goleiro junto, vai para a fila: '+f1);
+    if(!lv.ult.mov[0].saem.includes(gB)||!lv.ult.mov[0].entram.includes(gC))throw new Error('o resumo devia listar os goleiros saindo e entrando com o time');
+    A.startMatch();A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}});          // C vence: A sai inteiro, B volta inteiro
+    const A2=lv.teams[0].ids;
+    if(!B0.every(id=>A2.includes(id))||gk(lv.teams[0])!==gB||A0.some(id=>A2.includes(id)))throw new Error('o time B devia voltar inteiro, com o goleiro: '+A2);
+  }finally{S=salvo;render()}
 });
 step('nome em quadra para a fila: vai para o fim, e a frente da fila entra no lugar; tem desfazer',()=>{
   const lv=L().live,x=lv.teams[1].ids[0],f0=filaDe(lv)[0],n=lv.teams[1].ids.length;

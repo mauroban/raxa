@@ -308,8 +308,11 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    primeira versão já mostrava "dois lados + fila" na montagem; com a conta exata a galera quer ver os
    times, e a fila por pessoa é coisa da hora do racha.)*
 2. **Goleiro:** reveza só quando é **um só** (`gkPool`); com dois ou mais, cada lado tem o seu (fixo,
-   dentro dos `per`) e o terceiro espera na fila com o 🧤, entrando no gol de quem perder (`rodaFila`
-   troca o goleiro do perdedor pelo da fila). Substitui "2 goleiros para 3 times viram rodízio".
+   dentro dos `per`). Se há goleiro esperando na fila, `rodaFila` troca o goleiro do perdedor pelo da
+   fila — com **um goleiro por time** (3 e 3, 4 e 4) isso é exatamente "o goleiro sai e entra com o
+   time", porque a fila nasce na ordem da montagem com o goleiro junto do time dele. Time sem goleiro
+   na montagem (C, D com menos goleiros que times) é N−1 de linha e entra com o goleiro do lado.
+   Substitui "2 goleiros para 3 times viram rodízio".
 3. **Quem sai:** `seguidasHoje` (partidas seguidas em quadra, lidas das escalações — só fatos) em vez de
    "quem mais jogou hoje" (que tirava de quadra quem acabava de entrar); "mais jogou" é desempate.
 4. **Empate**, dito em pessoas: a fila repõe os dois lados → os dois rodam; repõe um → roda o que está há

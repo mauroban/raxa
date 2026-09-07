@@ -115,8 +115,12 @@ troca de lugar em dois toques, antes do apito.
 
 - **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença (🧤), e isso
   muda de racha para racha — e no meio do racha.
-- **Dois goleiros ou mais** → um em cada lado, e ele fica com o lado. O terceiro espera **na fila, com o
-  🧤**, e **entra no gol de quem perder** (o goleiro de quem perdeu vai para a fila).
+- **Um goleiro por time** (3 goleiros e 3 times, 4 e 4) → **o goleiro sai e entra com o time.** Não é
+  rodízio: o time da fila entra inteiro, goleiro junto, e o de quem perdeu vai para a fila inteiro.
+- **Menos goleiros que times, mas dois ou mais** → um em cada lado, e ele fica com o lado; o time sem
+  goleiro (o C, o D) é N−1 de linha e entra com o goleiro do lado. Se em algum momento há um goleiro
+  esperando na fila, ele entra no gol de quem perder, e o de quem perdeu vai para a fila. É a mesma roda
+  dos dois casos acima: o goleiro roda quando há goleiro para entrar.
 - **Um goleiro só** → ele reveza: fica com o lado que venceu; no resto, troca de lado. Do outro lado
   alguém da linha improvisa (a tela mostra o gol vazio para você escolher).
 - Racha em que todo mundo reveza no gol: não marque ninguém, e escolha o goleiro na tela da partida.

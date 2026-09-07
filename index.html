@@ -1799,7 +1799,10 @@ function applyPlan(liga,lv,force,modo){
      que entra primeiro é um time parelho (D-129).                          */
   /* os lados têm o tamanho real do plano (menor que o formato só quando nem
      dois times cheios dão); os grupos da fila, o tamanho de um time         */
-  const ng=curto?(pl.grupos||2):pl.n,caps=curto?Array.from({length:ng},(_,i)=>i<2?pl.caps[i]:pl.per):pl.caps;
+  /* time sem goleiro (só há um por lado) é N−1 de linha: o goleiro dele é o
+     do lado onde entrar, ou o que espera na fila                           */
+  const nGkFixo=curto&&!pl.rotating?lv.presentIds.filter(id=>pl.gkIds.includes(id)).length:0;
+  const ng=curto?(pl.grupos||2):pl.n,caps=curto?Array.from({length:ng},(_,i)=>i<2?pl.caps[i]:(nGkFixo&&i>=nGkFixo?pl.per-1:pl.per)):pl.caps;
   const grupos=modo==='shuffle'?shuffleTeams(liga,pl.ids,ng,caps,curto)
     :buildTeams(liga,pl.ids,ng,caps,pl.gkIds,curto);
   /* os dois lados saem cheios: o guloso pode deixar um lado com um a menos
@@ -2542,12 +2545,13 @@ function viewTimes(liga,lv){
     <div class="tiny muted" style="margin-top:6px">Falta${faltando.length>1?'m':''} ${faltando.reduce((a,b)=>a+b,0)} jogador(es) para todos os times ficarem com ${per}. Dá para jogar assim mesmo — ou reduzir o formato.</div>
   </div>`:''}
   ${temGk?`<div class="card gkcard" data-a="toPool" data-drop-zone="pool" style="margin-top:10px">
-    <div class="row"><div class="k" style="color:var(--cyan)">🧤 Goleiros ${rod?'no rodízio':unica?'fixos nos times':'um em cada lado'}</div>
+    <div class="row"><div class="k" style="color:var(--cyan)">🧤 Goleiros ${rod?'no rodízio':unica?'fixos nos times':lv.teams.every(t=>t.ids.some(id=>ehGkHoje(lv,id)))?'um por time':'um em cada lado'}</div>
       ${unica?`<button class="btn sm sp ${rod?'pri':'ghost'}" data-a="gkMode">${rod?'Rodízio ✓':'Voltar ao rodízio'}</button>`:''}</div>
     <div class="chips" style="margin-top:8px">
       ${rod?pool.map(id=>`<button class="tp big ${lv.sel===id?'sel':''}" data-a="sel" data-id="${id}">🧤 ${esc(nameOf(liga,id))}</button>`).join('')
         :unica?'<span class="tiny muted">Cada goleiro está escalado dentro de um time.</span>'
-        :'<span class="tiny muted">Goleiro na fila entra no gol de quem perder.</span>'}
+        :lv.teams.every(t=>t.ids.some(id=>ehGkHoje(lv,id)))?'<span class="tiny muted">Cada goleiro sai e entra com o seu time.</span>'
+        :'<span class="tiny muted">Time sem goleiro entra com o goleiro do lado, ou com o que espera na fila.</span>'}
     </div>
     ${rod?`<div class="tiny muted" style="margin-top:8px">${unica?'Trocam de lado a cada partida.':'Fica com quem vence; no resto, troca de lado.'}</div>`:''}
   </div>`:''}
@@ -2660,10 +2664,12 @@ function fechaMontagem(liga,lv){
     return;
   }
   lv.montagem=lv.teams.map(t=>({name:t.name,ids:[...t.ids]}));
+  /* a fila nasce na ordem da montagem, time a time, com o goleiro junto do
+     time dele: com um goleiro por time ele sai e entra com o time — é a
+     mesma roda, sem "rodízio"                                             */
   const resto=lv.teams.slice(2).flatMap(t=>t.ids);
   lv.teams=lv.teams.slice(0,2);
-  const fila=resto.concat(filaDe(lv).filter(id=>!resto.includes(id)));
-  lv.fila=fila.filter(id=>!ehGkHoje(lv,id)).concat(fila.filter(id=>ehGkHoje(lv,id)));
+  lv.fila=resto.concat(filaDe(lv).filter(id=>!resto.includes(id)));
   lv.queue=[];lv.nextPair=null;
 }
 /* os times como foram montados (D-50): a montagem guardada, ou a composição original dos lados */
@@ -2995,7 +3001,7 @@ function timeCard(liga,lv,i,per,completando,sd){
       ${vePat(liga)&&t.ids.length?`<span title="nível médio do time">${patBadgeShort(liga,stepOf(teamAvg(liga,t,lv.gkToday)))}</span>`:''}
       <span class="sp" style="font-size:12px;opacity:.8">${cN?`${t.ids.length}+${cN} completando`
         :falta>0?`${t.ids.length}/${alvo} · falta ${falta}`
-        :res.length?`${per} + ${res.length} reserva${res.length>1?'s':''}`:alvo<per?`${alvo} + 🧤 da fila`:`${per}/${per}`}</span></div>
+        :res.length?`${per} + ${res.length} reserva${res.length>1?'s':''}`:alvo<per?`${t.ids.length} de linha`:`${per}/${per}`}</span></div>
     <div class="bd" data-a="toTeam" data-i="${i}" data-drop-zone="team:${i}">
       ${tit.map(id=>tpChip(liga,lv,id,true)).join('')+emprestados+vagas
         ||'<span class="tiny muted" style="padding:6px">toque num jogador e depois aqui</span>'}

@@ -51,9 +51,9 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 | Presentes (formato 5v5) | O que o app monta |
 |---|---|
 | 10 de linha + 2 goleiros | dois lados de 4 + goleiro, fila de 2 |
-| 12 de linha + 2 goleiros | montagem: 3 times de 4 (goleiro nos dois primeiros); no racha: dois lados de 4 + goleiro, fila de 4 (o Time C, que entra inteiro) |
+| 12 de linha + 2 goleiros | montagem: 3 times, A e B com goleiro e C com 4 de linha; no racha: dois lados de 4 + goleiro, fila de 4 (o Time C, que entra com o goleiro do lado) |
 | 13 de linha + 2 goleiros | dois lados de 4 + goleiro, fila de 5 |
-| 12 de linha + 3 goleiros | montagem: 3 times de 4 + goleiro; no racha: dois lados, fila de 4 + o goleiro que espera |
+| 12 de linha + 3 goleiros | 3 times de 4 + goleiro; o goleiro sai e entra com o time |
 | 13 sem goleiro marcado | dois lados de 5, fila de 3 |
 | 8 pessoas | 4v4 — único caso em que se joga com menos, e a tela avisa |
 | Partida única, 10 de linha + 2 goleiros | 2 times de 6: 5 em quadra + 1 reserva cada |
