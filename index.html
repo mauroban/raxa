@@ -507,11 +507,11 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .esc2.rev{gap:6px 10px;margin-top:0}
 .esc2.rev .k2{margin:0 0 2px;display:flex;justify-content:space-between;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
 .esc2.rev .k2 .tiny{font-size:10px;text-transform:none;letter-spacing:0;font-weight:500}
-.rv{display:grid;grid-template-columns:16px minmax(0,1fr);align-items:center;column-gap:4px;padding:4px 0;border-bottom:1px solid var(--line);font-size:13.5px;min-width:0}
-.rv:last-child{border-bottom:0}
-.rv .pos{font-size:12px;text-align:center}
-.rv .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.rv small{grid-column:2;font-size:10.5px;color:var(--mute);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rvl{display:grid;grid-template-columns:16px minmax(0,1fr);align-items:center;column-gap:4px;padding:4px 0;border-bottom:1px solid var(--line);font-size:13.5px;min-width:0}
+.rvl:last-child{border-bottom:0}
+.rvl .pos{font-size:12px;text-align:center}
+.rvl .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rvl small{grid-column:2;font-size:10.5px;color:var(--mute);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .evr.one{padding:6px 8px}
 .evr.one .nm{font-size:13.5px}
 .trecho.off{opacity:.55}
@@ -3936,7 +3936,7 @@ function fichaLinha(liga,m,j){
   if(j.volta)t.push('voltou depois');
   /* sem número solto na ponta da linha: o +/− tem lugar próprio nos rankings,
      aqui ele só aparecia sem rótulo e ninguém sabia o que era               */
-  return `<div class="rv"><span class="pos">${j.gk?'🧤':''}</span>
+  return `<div class="rvl"><span class="pos">${j.gk?'🧤':''}</span>
     <div class="nm">${esc(nameOf(liga,j.pid))}</div>${t.length?`<small>${t.join(' · ')}</small>`:''}</div>`;
 }
 /* Linha do tempo: o log bruto da partida em português. Gol é botão para o

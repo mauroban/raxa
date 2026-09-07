@@ -102,7 +102,7 @@ rodízio de goleiros já giraram de novo — a volta deixaria o estado inconsist
 ### D-58 · Revisar é abrir a partida inteira, não só o placar
 > **Ajuste 2026-09-07 (D-129):** a mesma informação em um terço da altura — placar + uma linha de
 > contexto (saíram os quatro blocos de número), os dois times lado a lado com uma linha por pessoa
-> (`.esc2.rev`, `.rv`), um evento por linha na linha do tempo, resultado em três botões numa linha.
+> (`.esc2.rev`, `.rvl`), um evento por linha na linha do tempo, resultado em três botões numa linha.
 
 **31/08/2026.** A revisão passa a mostrar **tudo o que a partida guardou**, antes dos botões de
 correção: resumo (minutos de jogo, quantas pessoas jogaram, gols, trechos que contam); **quem jogou
