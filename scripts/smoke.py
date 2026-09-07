@@ -406,10 +406,12 @@ step('toques que nao tem volta perguntam antes — e o "nao" segura tudo',()=>{
   if(l.matches.length!==n-1)throw new Error('delMatch com ok nao apagou');
   A.startMatch();A.goal({dataset:{s:'0'}});A.endMatch();
 });
-step('o fim deixa um toast com "voltar" — e comecar outra partida o fecha',()=>{
-  if(!/voltar/.test(els['#toast'].innerHTML)||!/voltarPartida/.test(els['#toast'].innerHTML))throw new Error('toast do fim sem o botao de voltar');
+step('o fim nao deixa aviso que some: o cartao fixo no topo tem o placar e o "Voltar a partida" (D-129)',()=>{
+  if(els['#toast'].classList._s.has('on'))throw new Error('o fim nao devia deixar toast');
+  const h=viewProxima(L(),L().live);
+  if(!/data-a="voltarPartida"/.test(h)||!/registrado/.test(h))throw new Error('o cartao do placar registrado com o voltar nao apareceu');
   A.startMatch();
-  if(/voltarPartida/.test(els['#toast'].innerHTML)&&els['#toast'].classList._s.has('on'))throw new Error('o toast de voltar devia fechar ao comecar outra partida');
+  if(/data-a="voltarPartida"/.test(viewJogo(L(),L().live)))throw new Error('com a proxima partida rodando, a anterior nao tem mais volta');
   A.goal({dataset:{s:'0'}});A.endMatch();
 });
 step('marcado por engano sai sem contar presenca; quem ja jogou sempre conta',()=>{

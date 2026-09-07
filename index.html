@@ -5312,10 +5312,9 @@ const A={
     lv.preHist=[];
     closeSheet();save();render();
     /* sem modal e sem falar de nível aqui: o que mudou aparece no fim do racha */
-    /* fica 7 s e leva o "↩ voltar": o Fim errado se desfaz sem rolar até o fim da página */
-    toast(giros.length
-      ?`${placar} · entra ${giros[0].r.entram.map(id=>nameOf(l,id).split(' ')[0]).join(', ')}`
-      :`${placar} · registrado`,{ms:7000,act:{label:'voltar',a:'voltarPartida'}});
+    /* sem aviso que some: o cartão fixo no topo da próxima partida já traz o
+       placar registrado, o "Voltar a partida" e quem saiu/entrou (D-129)     */
+    fechaToast();
   },
 
   /* ----- contestação e revisão ----- */
