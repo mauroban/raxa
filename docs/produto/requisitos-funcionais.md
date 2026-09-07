@@ -91,7 +91,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | RF-04.3b | A lista de jogadores vem ordenada por **quem tem mais presenças em rachas** | P1 | ✅ v1 |
 | RF-04.3c | Marcar na presença **quem veio para ser goleiro hoje**, com 1 toque por pessoa, independente do cadastro | P0 | ✅ v1 |
 | RF-04.3d | Trocar quem está no gol durante o racha, em partidas específicas | P0 | ✅ v1 |
-| RF-04.4 | Adicionar quem chegou atrasado durante o racha, mandando direto para um time, para o rodízio de goleiros ou **para o fim da fila** | P0 | ✅ v1 |
+| RF-04.4 | Adicionar quem chegou atrasado durante o racha: vai para o **fim da fila** — ou, com o 🧤, espera na fila e entra no gol de quem perder (D-129); na partida única, direto para um time | P0 | ✅ v1 |
 | RF-04.4b | Tirar alguém do racha: **foi embora** (conta presença) ou, se ainda não jogou hoje, **marcado por engano** (sai sem contar) | P1 | ✅ v1 |
 | RF-04.5 | Retomar o racha em andamento após fechar e reabrir o app | P0 | ✅ v1 |
 | RF-04.6 | Encerrar o racha com resumo: partidas, artilheiro e mudanças de patente — **confirmando antes**, porque não tem volta e o botão fica ao lado do "Começar partida" | P1 | ✅ v1 |
@@ -106,24 +106,24 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | # | Requisito | Pri | Status |
 |---|---|---|---|
 | RF-05.1 | Sugerir a quantidade de times a partir do formato e da quantidade de presentes | P1 | ✅ v1 |
-| RF-05.2 | Forçar 2, 3 ou 4 times — **limitado a quantos times CHEIOS cabem**: o botão que não cabe fica apagado, e nem forçando sai time incompleto | P1 | ✅ v1 |
+| RF-05.2 | ~~Forçar 2, 3 ou 4 times~~ — removido no racha curto (D-129): a quadra tem dois lados e o resto é fila; a roda decide sozinha quantos grupos giram | — | ❌ removido |
 | RF-05.3 | Montar times equilibrados por nível em 1 toque | P0 | ✅ v1 |
 | RF-05.3b | Cada time tem o número de jogadores do formato (N, ou N−1 de linha quando o goleiro reveza) | P0 | ✅ v1 |
 | RF-05.3c | Os dois times que entram juntos têm sempre o mesmo número de jogadores — nunca 5x4, nunca 5x3 | P0 | ✅ v1 |
-| RF-05.3g | Time que ficou curto (alguém saiu, alguém foi movido) é **completado com quem está de fora** até igualar o outro; só quando não há ninguém de fora os dois entram menores | P0 | ✅ v1 |
-| RF-05.3h | O app sugere quem completa (quem menos jogou na noite), mas **o usuário escolhe**: tirar, trocar por outro ou jogar sem completar | P0 | ✅ v1 |
-| RF-05.3i | Quem completa joga aquela partida pelo time que o chamou e **volta para o time dele** quando ela acaba | P0 | ✅ v1 |
-| RF-05.3j | Quem não cabe num time forma a **fila** (de pessoas, não de times): ao fim da partida quem perdeu sai, a fila entra no lugar e quem sai vai para o fim | P0 | ✅ v1 |
-| RF-05.3k | Quando a fila não dá para trocar o time inteiro, **alguns do time que saiu ficam para completar**; sai quem mais jogou na noite | P0 | ✅ v1 |
+| RF-05.3g | Lado que ficou curto (alguém saiu, alguém foi movido) é **completado na hora pela frente da fila**; só quando não há ninguém na fila os dois entram menores e iguais, com a vaga à vista | P0 | ✅ v1 |
+| RF-05.3h | Quem entra na vaga é escolha sua: um toque na vaga põe o próximo da fila; toque num nome e depois na vaga põe quem você quiser; tudo com ↶ desfazer | P0 | ✅ v1 |
+| RF-05.3i | ~~Quem completa joga emprestado e volta para o time dele~~ — removido (D-129): no racha curto não existe empréstimo; quem entra, entra | — | ❌ removido |
+| RF-05.3j | Quem não cabe nos dois lados forma a **fila** (uma só, de pessoas, numerada): ao fim da partida quem ganhou fica, do lado que perdeu sai quem está há mais tempo em quadra, entra quem está há mais tempo fora, e quem sai vai para o fim | P0 | ✅ v1 |
+| RF-05.3k | Quando a fila não dá para trocar o lado inteiro, **ficam os que entraram por último** (desempate: quem menos jogou hoje); a tela diz quem saiu e quem entrou, com o placar registrado e o Voltar a partida fixos até a próxima começar | P0 | ✅ v1 |
 | RF-05.3l | ~~Girar a fila na mão em 1 toque~~ — removido (D-32): trocar qualquer time na tela da próxima partida cobre o caso | — | ❌ removido |
-| RF-05.3d | No racha curto **todo time é cheio** (do tamanho do formato): o app monta quantos times inteiros couberem e quem sobra fica **de fora**, num banco compartilhado. Não existe time menor esperando a vez, e reserva presa a um time só existe na partida única | P0 | ✅ v1 |
+| RF-05.3d | No racha curto **lado é sempre cheio** (do tamanho do formato): dois lados e uma fila só. Não existe time menor esperando a vez, time que espera com nome, nem reserva presa a um time — isso só existe na partida única | P0 | ✅ v1 |
 | RF-05.3e | Na partida única são sempre 2 times, com todos divididos entre eles: N titulares + reservas | P0 | ✅ v1 |
 | RF-05.3f | Time incompleto é sinalizado na tela de times e na partida, com atalho para chamar alguém | P1 | ✅ v1 |
 | RF-05.4 | Distribuir goleiros: um por time quando houver quantidade suficiente | P0 | ✅ v1 |
-| RF-05.5 | Colocar goleiros em rodízio quando houver menos goleiros que times | P0 | ✅ v1 |
-| RF-05.6 | Alternar entre goleiros em rodízio e goleiros fixos nos times, **nos dois sentidos e em um toque**, com o controle sempre visível | P1 | ✅ v1 |
-| RF-05.6b | Mandar um jogador selecionado para o rodízio de goleiros | P2 | ✅ v1 |
-| RF-05.7 | Trocar jogadores de time arrastando um sobre o outro, ou arrastando para um time, para "fora" ou para o rodízio de goleiros | P0 | ✅ v1 |
+| RF-05.5 | Com um goleiro só, ele reveza (fica com quem vence; no resto troca de lado); com dois ou mais, um em cada lado e o que espera entra no gol de quem perder (D-129) | P0 | ✅ v1 |
+| RF-05.6 | ~~Alternar entre rodízio e goleiros fixos em um toque~~ — no racha curto a regra é automática (D-129); o controle continua na partida única | P1 | ✅ v1 (só partida única) |
+| RF-05.6b | Mandar um jogador selecionado para o card de goleiros: vira goleiro do dia e espera na fila (com um goleiro só, entra no rodízio) | P2 | ✅ v1 |
+| RF-05.7 | Trocar jogadores de lado arrastando um sobre o outro, ou arrastando para um lado, para a fila (fim dela, e a frente entra) ou para o card de goleiros; na fila, arrastar um nome sobre o outro troca a ordem | P0 | ✅ v1 |
 | RF-05.7b | Quem está de fora aparece em card próprio, com contador, sempre visível — nunca escondido | P0 | ✅ v1 |
 | RF-05.7c | Indicação persistente de quem está selecionado, com cancelar | P1 | ✅ v1 |
 | RF-05.7d | O mesmo por toque, para quem preferir (toca em um, toca no outro / toca no time) | P0 | ✅ v1 |

@@ -18,77 +18,93 @@ O modo é escolhido na abertura de cada racha — a mesma liga pode ter quinta l
 
 ---
 
-## 2. Racha curto: o "de próximo"
+## 2. Racha curto: a roda
 
-### 2.1 Time é sempre cheio
+**Quem ganhou fica. Do lado que perdeu, sai quem está há mais tempo em quadra. Entra quem está há mais
+tempo fora.** É a regra inteira (D-129).
 
-**No 5v5 se joga 5 contra 5.** Não existe time de 3 esperando a vez, nem lado com um a menos —
-quadra no Brasil não tem jogo menor que o formato.
+### 2.1 Dois lados e uma fila só
 
-O app monta **quantos times inteiros couberem** e o resto vira **fila**:
+A quadra tem **dois lados**, cada um com o goleiro e N−1 de linha no formato NvN. Todo mundo que não está
+em quadra está numa **fila só, de pessoas**, na ordem de quem está fora há mais tempo. Não existe "Time C
+esperando", reserva de time nem empréstimo: o app monta os dois lados e a ordem da fila em fatias
+equilibradas do tamanho de um time, e daí em diante só a roda gira.
 
-| Presentes (5v5) | Times | Fila |
-|---|---|---|
-| 10 de linha + 2 goleiros | 2 times de 4 + goleiro fixo em cada | 2 |
-| 11 de linha + 2 goleiros | 2 times de 5 (4 + goleiro) | 3 |
-| 12 de linha + 2 goleiros | 3 times de 4, goleiros revezando | 0 |
-| 13 sem goleiro marcado | 2 times de 5 | 3 |
-| 16 de linha + 3 goleiros | 4 times de 4, goleiros revezando | 0 |
-| 8 pessoas no total | 4v4 — único caso em que se joga com menos, e a tela avisa | 0 |
+| Presentes (5v5) | Cada lado | Fila | Quando um lado perde |
+|---|---|---|---|
+| 8 de linha + 2 goleiros | 4 + goleiro | 0 | ninguém sai: jogam de novo |
+| 10 de linha + 2 goleiros | 4 + goleiro | 2 | saem 2, entram 2 |
+| 11 de linha + 2 goleiros | 4 + goleiro | 3 | saem 3, ficam o goleiro e mais um |
+| 12 de linha + 2 goleiros | 4 + goleiro | 4 | sai o lado inteiro, entram 4 — os times de sempre, intactos |
+| 13 de linha + 2 goleiros | 4 + goleiro | 5 | saem 4, entram 4, um espera mais uma |
+| 12 de linha + 3 goleiros | 4 + goleiro | 4 + 🧤 | saem 4 e o goleiro; entram 4 e o goleiro que esperava |
+| 13 sem goleiro marcado | 5 | 3 | saem 3, ficam 2 |
+| 8 pessoas no total | 4v4 — único caso em que se joga com menos, e a tela avisa | 0 | — |
 
-**A fila também é equilibrada.** Quem sobra não é "os piores": o app escolhe quem espera atravessando
-todos os níveis, um de cada faixa. E como cada toque em **Equilibrar** varia o arranjo, ninguém fica marcado
-como o eterno reserva.
+Quando a conta fecha em 3 ou 4 times inteiros, a roda faz os grupos entrarem e saírem intactos sozinha —
+é o racha de 3 times de sempre. Quando não fecha, os grupos giram uma pessoa por vez, e a tela mostra
+exatamente isso, com nomes.
 
-**Reserva de time não existe no racha curto.** Quem está fora é da *fila*, do racha inteiro — não do banco
-de um time específico. Reserva só faz sentido na partida única, onde os dois times são fixos a noite toda.
+**A fila também é equilibrada.** Quem sobra não é "os piores": o montador monta grupos inteiros e
+parelhos, os dois primeiros são os lados e os outros viram a fila, na ordem — o grupo que entra primeiro é
+um time parelho. Cada toque em **Equilibrar** varia o arranjo, então ninguém fica marcado como o eterno
+reserva.
 
-### 2.2 Vencedor fica, perdedor roda com a fila
+**Reserva de time não existe no racha curto.** Só na partida única, onde os dois times são fixos a noite toda.
 
-O ciclo de toda partida encerrada:
+### 2.2 A roda
+
+Ao fim de cada partida:
 
 1. **Quem ganhou fica em quadra**, inteiro.
-2. **Quem perdeu sai.**
-3. **A fila entra no lugar de quem saiu** — quem está esperando há mais tempo entra primeiro.
-4. **Se a fila não dá para trocar o time inteiro, alguns do time que perdeu ficam para completar.**
-   É o clássico: *entram 3, ficam 2 — normalmente o goleiro e mais um.*
-5. **Quem saiu vai para o fim da fila.**
+2. **Do lado que perdeu sai quem está há mais tempo em quadra** — tantos quantos a fila puder repor.
+   Desempate: quem mais jogou hoje.
+3. **Entra a frente da fila**: quem está fora há mais tempo.
+4. **Quem saiu vai para o fim da fila.**
+5. **Goleiro:** o goleiro do lado só roda se há goleiro esperando na fila — aí o de quem perdeu sai e o que
+   esperava entra no gol.
 
-Exemplo real, 13 pessoas no 5v5 (2 times de 5, fila de 3):
+Exemplo real, 13 pessoas no 5v5 (dois lados de 5, fila de 3):
 
 ```
-Time A 5  x  5 Time B          fila: Rodrigo, Gleik, Maike
+Lado A 5  x  5 Lado B          fila: Rodrigo, Gleik, Maike
 A ganha ─────────────────────────────────────────────────
-Time A fica inteiro
-Time B: saem 3 (os que mais jogaram)   →  fim da fila
-        ficam 2 (goleiro e mais um)
+Lado A fica inteiro
+Lado B: saem 3 (os que estão há mais tempo em quadra)  →  fim da fila
+        ficam 2 (o goleiro e mais um)
         entram Rodrigo, Gleik e Maike
-Time A 5  x  5 Time B (novo)   fila: os 3 que saíram
+Lado A 5  x  5 Lado B (novo)   fila: os 3 que saíram
 ```
 
-**Quem sai do time que perdeu:** o app tira quem **mais jogou na noite** — é o que faz a fila girar parelho.
-Quem fica é sempre visível na tela da próxima partida, e trocar é um toque.
+**Empate:** a fila repõe os dois lados inteiros → os dois saem; repõe um lado → sai o que está há mais
+tempo em quadra; não repõe nenhum → ninguém sai, jogam de novo. Com 3 times de sempre isso é "fica o que
+entrou por último"; com 4, "os dois saem"; com 2, "jogam de novo" — D-39 continua valendo, dito em pessoas.
 
-**Empate:** com 4 times, os dois saem e entram os próximos; com 3, um fica — o que entrou por último
-(o que já estava sai). Com 2 times, ninguém sai automaticamente — eles jogam de novo. Se o pessoal
-combinar outra coisa (alguém cansado, quem tomou o último gol), é trocar os times na tela da
-próxima partida — toque ou arraste.
+**Depois do Fim, a tela diz o que a roda fez.** O placar registrado fica num cartão fixo no topo, com o
+**↩ Voltar a partida** ao lado, até a próxima começar; embaixo, "Saem X, Y → fim da fila · Entram Z, W".
+Quem entrou aparece marcado no lado. Nada de aviso que some.
 
-### 2.3 Quando um time fica curto
+### 2.3 Mexer na mão: cansado, foi embora, chegou
 
-Racha é racha: alguém vai embora no meio, alguém é puxado para o outro lado. Quando o time da vez entra
-com menos gente que o adversário, **ninguém joga em inferioridade e ninguém senta**:
+Racha é racha: alguém cansa, alguém sai por qualquer razão. Tudo é toque ou arraste, com a mesma
+gramática da partida ao vivo, e tudo tem **↶ desfazer**:
 
-- o app **completa o time curto com quem está na fila**, sugerindo quem menos jogou na noite;
-- **quem escolhe é você** — toque no nome para tirar e escolher outro;
-- quem completa **joga aquela partida por aquele time e volta para o dele depois** (é empréstimo, não transferência);
-- se preferir, **Jogar 4v4 assim** faz os dois lados entrarem menores, iguais — e a vaga continua à vista, para quem quiser preencher com um toque (D-123).
+- **nome em quadra sobre nome da fila**: trocam de lugar — quem sai assume a posição de quem entrou;
+- **nome em quadra sobre a fila** (ou o link "sai para a fila, entra Fulano" que aparece com o nome
+  marcado): vai para o fim da fila e **a frente da fila entra no lugar** na hora;
+- **dois nomes da fila**: trocam de ordem;
+- **Foi embora** (com um nome marcado, é ele): a frente da fila entra na vaga na hora. Sem ninguém na
+  fila, a **vaga fica à vista** ("＋ vaga · entra o próximo") e os dois lados entram menores e iguais;
+  quem chega entra nela num toque — na vaga, para o próximo da fila; no nome e depois na vaga, para quem
+  você escolher;
+- **Chegou**: fim da fila — ou, com o 🧤, espera na fila e entra no gol de quem perder.
+
+A tela em repouso não explica nada; a dica só aparece com um nome marcado, dizendo o próximo passo.
 
 ### 2.4 Quem entra é sugestão, não regra
 
-O app propõe o próximo confronto pelo "vencedor fica" e pela ordem da fila. Trocar qualquer um dos dois
-lados custa dois toques, e as escalações são editáveis antes do apito — inclusive puxando gente de outro
-time ou da fila. **Racha real não obedece fila; obedece o que a galera combinou.**
+O app propõe a roda. **Racha real não obedece fila; obedece o que a galera combinou.** Qualquer nome
+troca de lugar em dois toques, antes do apito.
 
 ---
 
@@ -96,14 +112,13 @@ time ou da fila. **Racha real não obedece fila; obedece o que a galera combinou
 
 - **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença (🧤), e isso
   muda de racha para racha — e no meio do racha.
-- **Um goleiro por time ou mais** → cada um fica **fixo** no seu time e não entra na rotação da fila:
-  o time roda em volta dele.
-- **Menos goleiros que times** → eles ficam **fora dos times**, no rodízio: a cada partida o app escala um
-  para cada lado, **alternando os lados** para ninguém ficar preso ao desempenho de um time só.
+- **Dois goleiros ou mais** → um em cada lado, e ele fica com o lado. O terceiro espera **na fila, com o
+  🧤**, e **entra no gol de quem perder** (o goleiro de quem perdeu vai para a fila).
+- **Um goleiro só** → ele reveza: fica com o lado que venceu; no resto, troca de lado. Do outro lado
+  alguém da linha improvisa (a tela mostra o gol vazio para você escolher).
 - Racha em que todo mundo reveza no gol: não marque ninguém, e escolha o goleiro na tela da partida.
-- **Com rodízio, o goleiro é sempre além dos N−1 de linha** — venha do rodízio ou improvisado do time.
-  Quem do time vai para o gol deixa uma **vaga de linha**, e a vaga aparece para ser fechada com alguém de
-  fora; o time nunca fica com um a menos por causa do gol (D-117).
+- **Com um goleiro só (rodízio), ele é sempre além dos N−1 de linha.** Quem do lado vai para o gol deixa
+  uma **vaga de linha**, e a frente da fila entra nela na hora (D-117, D-129).
 
 ---
 
@@ -149,12 +164,10 @@ Mais o artilheiro, o goleiro menos vazado e quem mais apareceu. Cada linha diz `
 
 | O app faz sozinho | Você decide sempre |
 |---|---|
-| montar times equilibrados e cheios | quem joga em qual time |
-| manter a ordem da fila | quem entra e quem fica |
-| sugerir o próximo confronto | qual time entra em cada lado |
-| sugerir quem completa um time curto | quem completa — ou jogar com menos |
-| girar a fila quando um time sai | trocar qualquer time da próxima partida na mão |
-| escalar e alternar os goleiros do rodízio | quem pega no gol, a qualquer momento |
+| montar dois lados equilibrados e a fila em fatias parelhas | quem joga de que lado |
+| girar a roda: quem sai, quem entra, e dizer isso na tela | trocar qualquer nome, por toque ou arraste, com desfazer |
+| completar um lado curto pela frente da fila | quem entra na vaga |
+| pôr o goleiro que espera no gol de quem perdeu | quem pega no gol, a qualquer momento |
 
 Nenhuma dessas sugestões bloqueia nada. Se a decisão do app não bate com o que a galera combinou na quadra,
 a galera ganha — em dois toques.

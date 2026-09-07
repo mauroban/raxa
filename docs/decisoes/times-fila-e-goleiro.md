@@ -294,3 +294,50 @@ time e ele segue no gol. Teste: os dois últimos passos do bloco D-123 do smoke.
 **Ajuste no mesmo dia (2):** o slot do 🧤 na escalação (pré-partida e ao vivo) leva o ponto do
 nível pela **patente de goleiro**, como os chips do rodízio no card "Fora" já levavam — o goleiro
 era o único nome da escalação sem nível.
+
+<a id="d-129"></a>
+### D-129 · A roda: dois lados e uma fila só; sai quem está há mais tempo em quadra
+**Quando:** 2026-09-07.
+**O quê:** o racha curto deixa de ser "N times com identidade + uma fila de pessoas colada por cima" e
+passa a ser **dois lados de quadra e uma fila só, de pessoas**, com uma regra: *quem ganhou fica; do lado
+que perdeu sai quem está há mais tempo em quadra; entra quem está há mais tempo fora.*
+1. **Montagem:** `planTeams` no curto devolve sempre `n=2`; o montador ainda monta grupos inteiros e
+   parelhos (`grupos`, contados pela linha), mas só os dois primeiros são os lados — os outros viram
+   `lv.fila`, na ordem. Somem os botões 2/3/4 times e o botão de rodízio no curto.
+2. **Goleiro:** reveza só quando é **um só** (`gkPool`); com dois ou mais, cada lado tem o seu (fixo,
+   dentro dos `per`) e o terceiro espera na fila com o 🧤, entrando no gol de quem perder (`rodaFila`
+   troca o goleiro do perdedor pelo da fila). Substitui "2 goleiros para 3 times viram rodízio".
+3. **Quem sai:** `seguidasHoje` (partidas seguidas em quadra, lidas das escalações — só fatos) em vez de
+   "quem mais jogou hoje" (que tirava de quadra quem acabava de entrar); "mais jogou" é desempate.
+4. **Empate**, dito em pessoas: a fila repõe os dois lados → os dois rodam; repõe um → roda o que está há
+   mais tempo em quadra; não repõe nenhum → jogam de novo. D-39 continua valendo como caso particular.
+5. **Sem empréstimo:** `fillDe` é vazio no curto; um lado curto é completado na hora pela frente da fila
+   (`completaLados`, chamado no fim, na largada, no "foi embora" e no "sai para a fila"). Sem fila, a vaga
+   fica à vista e um toque nela põe o próximo (ou o nome tocado antes).
+6. **Tela da próxima partida:** cartão fixo no topo com o placar registrado e o **↩ Voltar a partida**
+   (até a próxima começar — sai do toast de 7 s e do bloco de partidas), a linha "Saem … → fim da fila ·
+   Entram …" (`lv.ult`), a etiqueta **entrou** em quem entrou, a fila **numerada** com o corte "entram no
+   próximo"/"depois", e o goleiro que espera com o 🧤. Some "Fora agrupado por time", "Sem time" e
+   "🧤 Rodízio". A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
+7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
+   frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi
+   embora" com um nome marcado é ele. Tudo com **↶ desfazer** (`preHist`, `preUndo`).
+8. **Chegou** no curto vai para o fim da fila (ou "🧤 Veio para o gol"). `toPool` no curto vira goleiro
+   do dia + fila. Racha gravado antes com 3–4 times é convertido ao carregar.
+**Por quê:** no racha real (o de 14 e o de 15 pessoas) os times perdem a definição em três partidas — quem
+está fora há mais tempo entra, e o app insistia em "Time C", "reserva", "empréstimo", "vaga no time que
+espera", cada um com seu remendo. O lançador precisava entender cinco ideias para uma coisa que na quadra é
+uma frase. E "sai quem mais jogou hoje" tirava quem tinha acabado de entrar. O que decide se a coisa é
+usada na quadra é ser fácil de mudar e claro sobre o que aconteceu: por isso o cartão fixo do placar com
+o voltar, o "saem/entram" e o desfazer.
+**Descartado:** manter times com identidade e rotular o grupo da fila com o nome do time quando ele está
+intacto (magia que some quando a conta não fecha); "sai quem mais jogou hoje" (injusto com quem acabou de
+entrar); toast de 7 s como único voltar (erro acontece na hora, e o aviso some); texto de ajuda parado na
+tela ("toque num nome e depois no outro…") — o usuário pediu para não explicar o óbvio.
+**Onde:** `planTeams`, `applyPlan`, `seguidasHoje`, `rodaFila`, `completaLados`, `marcaPre`, `trocaLugar`,
+`fillDe`/`cardCompletar` (só partida única), `lancePre`, `escalPre`, `finish` (`lv.ult`), `viewProxima`,
+`viewJogo` (fila ordenada), `viewTimes`, `A.saiFila`, `A.preUndo`, `A.toTeam`, `A.lateIn`, `A.leaveDo`,
+`A.startMatch`, `A.toPool`, `A.gkMode`, migração em `normalize` — em `index.html` ·
+[Regras do racha §2–3](../produto/regras-do-racha.md) · [Fluxo §2–3](../produto/fluxo-do-racha.md) ·
+RF-04.4, RF-05.2/3d/3g–3k/5/6/6b/7 · `scripts/test.py` (plano) · `scripts/smoke.py` (blocos "de próximo",
+D-122, D-123 reescritos para a roda) · mockup navegável que fechou a tela antes do código: artifact "Roda do Racha".

@@ -112,12 +112,13 @@ step('chip de presenca mostra o nivel do papel de hoje: gol com luva acesa, linh
   if(lv.presentIds.indexOf(p.id)<0)throw new Error('esperava devolver a presenca');
 });
 step('montar times',()=>A.toTimes());
-step('lista real: 19 presentes no 5v5 viram 4 times de 4 + 3 goleiros no rodizio',()=>{
+step('lista real: 19 presentes no 5v5 viram dois lados de 4 + goleiro e uma fila de 8 + goleiro (D-129)',()=>{
   const lv=L().live;
   if(L().players.length!==19)throw new Error('esperava 19 jogadores no exemplo');
-  if(lv.gkPool.length!==3)throw new Error('esperava 3 goleiros no rodizio, veio '+lv.gkPool.length);
-  if(lv.teams.length!==4)throw new Error('esperava 4 times, veio '+lv.teams.length);
-  if(!lv.teams.every(t=>t.ids.length===4))throw new Error('times de '+lv.teams.map(t=>t.ids.length).join('/'));
+  if(lv.gkPool.length)throw new Error('com mais de um goleiro nao ha rodizio: cada lado tem o seu');
+  if(lv.teams.length!==2)throw new Error('esperava 2 lados, veio '+lv.teams.length);
+  if(!lv.teams.every(t=>t.ids.length===5&&t.ids.filter(id=>ehGkHoje(lv,id)).length===1))throw new Error('lados de '+lv.teams.map(t=>t.ids.length).join('/'));
+  const f=filaDe(lv);if(f.length!==9||f.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('fila devia ter 8 de linha + 1 goleiro: '+f.length);
 });
 step('nova liga escolhe formato e modo na criacao',()=>{
   A.newLiga();A.novaOpt({dataset:{k:'format',v:'7'}});A.novaOpt({dataset:{k:'modo',v:'unica'}});NOVA.nome='Sete';
@@ -205,9 +206,9 @@ step('goleiro foi embora: gol vazio, alguem do time improvisa e a vaga da linha 
   if(lv.sel!=='vaga:1')throw new Error('a vaga da linha deveria ficar marcada, veio '+lv.sel);
   if(!/＋ vaga/.test(els['#app'].innerHTML)||!/Vaga na linha — toque em quem entra/.test(els['#app'].innerHTML))throw new Error('a vaga nao apareceu na escalacao');
   /* o goleiro que saiu volta como goleiro do rodizio descansando: aparece no grupo Rodizio, tocavel */
-  lv.presentIds.push(g);lv.gkPool.push(g);lv.leftIds=(lv.leftIds||[]).filter(x=>x!==g);render();
-  if(!/🧤 Rodízio/.test(els['#app'].innerHTML))throw new Error('o grupo do rodizio nao apareceu entre quem esta fora');
-  if(!new RegExp('data-a="subPick" data-id="'+g+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o goleiro do rodizio nao e par da vaga');
+  lv.presentIds.push(g);lv.gkToday.push(g);lv.fila=filaDe(lv).filter(x=>x!==g).concat([g]);lv.leftIds=(lv.leftIds||[]).filter(x=>x!==g);render();
+  if(!new RegExp('data-a="subPick" data-id="'+g+'"[\\s\\S]{0,300}?🧤').test(els['#app'].innerHTML))throw new Error('o goleiro que espera devia aparecer na fila com o 🧤');
+  if(!new RegExp('data-a="subPick" data-id="'+g+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o goleiro da fila nao e par da vaga');
   A.subPick({dataset:{id:g}});                     // entra na vaga, de linha
   if(c.lineups[1].length!==cheio||!c.lineups[1].includes(g)||c.gks[1]!==y)throw new Error('nao entrou na vaga: '+c.lineups[1].length+' de '+cheio);
   const ev=c.events[c.events.length-1];
@@ -542,12 +543,18 @@ step('ninguem duplicado apos substituicoes',()=>{
   if(new Set(todos).size!==todos.length)throw new Error('jogador em dois times ao mesmo tempo');
 });
 step('voltar para a tela de times',()=>A.teamsBack());
-step('tirar goleiros do rodizio (fixos)',()=>A.gkMode());
-step('voltar para o rodizio de goleiros',()=>A.gkMode());
-step('selecionar jogador e mandar para o rodizio',()=>{
-  const alguem=L().live.teams[0].ids[0];
+step('no racha curto nao ha botao de rodizio: cada lado tem o seu goleiro (D-129)',()=>{
+  A.gkMode();render();
+  if(/data-a="gkMode"/.test(els['#app'].innerHTML))throw new Error('o botao de rodizio nao devia aparecer no racha curto');
+  A.balance();
+});
+step('selecionar jogador e mandar para o card de goleiros: vira goleiro do dia e espera na fila',()=>{
+  const lv=L().live,alguem=lv.teams[0].ids[0];
   A.sel({dataset:{id:alguem},classList:{toggle(){}}});
   A.toPool({dataset:{}});
+  if(lv.teams.some(t=>t.ids.includes(alguem))||!ehGkHoje(lv,alguem))throw new Error('devia sair do lado com o 🧤');
+  /* com um goleiro so o racha esta em rodizio e ele entra no rodizio; com dois ou mais, espera na fila */
+  if(comRodizio(lv)?!lv.gkPool.includes(alguem):(!filaDe(lv).includes(alguem)||(lv.gkPool||[]).length))throw new Error('rodizio so com um goleiro; senao, fila');
 });
 step('arrastar entre times troca os dois de lugar',()=>{
   const lv=L().live,a=lv.teams[0].ids[0],b=lv.teams[1].ids[0];
@@ -1148,46 +1155,54 @@ step('quem ganhou fica, quem perdeu roda com a fila (entram 3, ficam 2)',()=>{
     throw new Error('quem saiu tem que ir para o fim da fila');
   render();
 });
-step('4 times: quem espera ha mais tempo joga antes (A×B, A×C, C×D, ...)',()=>{
+step('a roda com 16 na linha + 3 goleiros: dois lados de 4 + goleiro e fila de 8 + goleiro; quem perde sai inteiro, entra quem espera ha mais tempo (D-129)',()=>{
   const salvo=S;S=defState();A.demo();A.startRacha();
   const l=L(),lv=l.live;
   lv.presentIds=l.players.map(p=>p.id);lv.gkToday=l.players.filter(p=>p.gk).map(p=>p.id);
-  A.toTimes();if(L().live.teams.length!==4)A.nteams({dataset:{v:'4'}});
+  A.toTimes();
   try{
-  if(L().live.teams.length!==4)throw new Error('esperava 4 times, veio '+L().live.teams.length);
-  const nomes=()=>L().live.cur?[L().live.cur.a,L().live.cur.b].join('x'):'-';
-  const joga=(vencedor)=>{A.startMatch();const c=L().live.cur;const s=vencedor===c.a?0:1;A.goal({dataset:{s:String(s)}});A.finish({dataset:{r:String(s)}})};
-  L().live.nextPair=[0,1];joga(0);                        // A×B, A ganha → fila C,D,B
-  let par=suggestPair(L(),L().live);
-  if(par.join()!=='0,2')throw new Error('depois de A×B esperava A×C, veio '+par.join('x'));
-  L().live.nextPair=par;joga(2);                          // A×C, C ganha (do lado direito) → fila D,B,A
-  par=suggestPair(L(),L().live);
-  if(par.join()!=='3,2')throw new Error('C ganhou do lado direito e fica NELE (D-71): esperava D×C, veio '+par.join('x'));
-  L().live.nextPair=par;joga(3);                          // D×C, D ganha (do lado esquerdo) → fila B,A,C
-  {const lv=L().live;if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===3))throw new Error('lastStay deveria ser o vencedor (D)')}
-  par=suggestPair(L(),L().live);
-  if(par.join()!=='3,1')throw new Error('D ganhou do lado esquerdo e fica nele: esperava D×B, veio '+par.join('x'));
+    if(lv.teams.length!==2)throw new Error('esperava 2 lados, veio '+lv.teams.length);
+    if(!lv.teams.every(t=>t.ids.length===5&&t.ids.some(id=>ehGkHoje(lv,id))))throw new Error('cada lado = 4 + goleiro: '+lv.teams.map(t=>t.ids.length));
+    const fila=filaDe(lv);
+    if(fila.length!==9||fila.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('fila devia ter 8 de linha + 1 goleiro: '+fila.length);
+    A.startJogo();
+    const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),prox=fila.filter(id=>!ehGkHoje(lv,id)).slice(0,4),gkFila=fila.find(id=>ehGkHoje(lv,id));
+    A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence: B sai inteiro, entram os 4 da frente + o goleiro que esperava
+    if(lv.teams[0].ids.join()!==A0.join())throw new Error('quem ganhou tinha que ficar inteiro');
+    const B1=lv.teams[1].ids;
+    if(!prox.every(id=>B1.includes(id))||!B1.includes(gkFila))throw new Error('deviam entrar os 4 da frente da fila e o goleiro que esperava: '+B1);
+    const f1=filaDe(lv);
+    if(f1.slice(-5).sort().join()!==B0.slice().sort().join())throw new Error('quem saiu vai para o fim da fila: '+f1);
+    if(!lv.ult||lv.ult.mov.length!==1||lv.ult.mov[0].entram.length!==5)throw new Error('o resumo da roda devia dizer quem saiu e quem entrou');
+    const h=viewProxima(l,lv);
+    if(!/Voltar a partida/.test(h)||!/Saem /.test(h)||!/Entram /.test(h)||!/entrou/.test(h))throw new Error('a tela da proxima nao mostra o placar, o voltar e quem entrou');
+    if(!/entram no próximo/.test(h))throw new Error('a fila devia marcar quem entra no proximo');
+    A.startMatch();A.goal({dataset:{s:'1'}});A.finish({dataset:{r:'1'}});      // B (novo) vence: A sai inteiro, entram os 4 que esperavam ha mais tempo
+    const A2=lv.teams[0].ids;
+    if(A0.some(id=>A2.includes(id)))throw new Error('quem perdeu inteiro sai inteiro');
+    if(!f1.filter(id=>!ehGkHoje(lv,id)).slice(0,4).every(id=>A2.includes(id)))throw new Error('entra quem esta ha mais tempo fora');
+    if(!ehGkHoje(lv,A2[0])||A2.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('o lado novo tem um goleiro: '+A2);
   }finally{S=salvo;render()}
 });
-step('3 times e empate: um time fica (o que entrou por ultimo) e o goleiro fica com ele',()=>{
+step('12 na linha + 2 goleiros: dois lados e fila de 4 (o terceiro time); empate roda o lado que esta ha mais tempo em quadra (D-129)',()=>{
   const salvo=S;S=defState();A.demo();A.startRacha();
   const l=L(),lv=l.live;
   lv.presentIds=l.players.filter(p=>!p.gk).slice(0,12).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
   lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
-  A.toTimes();if(L().live.teams.length!==3)A.nteams({dataset:{v:'3'}});
+  A.toTimes();
   try{
-    if(L().live.teams.length!==3)throw new Error('esperava 3 times, veio '+L().live.teams.length);
-    L().live.nextPair=[0,1];A.startMatch();
-    A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence B → A fica, C entra
-    let par=suggestPair(L(),L().live);
-    if(par.join()!=='0,2')throw new Error('esperava A×C, veio '+par.join('x'));
-    L().live.nextPair=par;A.startMatch();A.finish({dataset:{r:'draw'}}); // A×C empata → C fica (entrou por ultimo), A sai
-    const lv2=L().live;
-    if(!(lv2.lastStay&&lv2.lastStay.length===1&&lv2.lastStay[0]===2))throw new Error('no empate com 3 times, C (o que entrou) deveria ficar');
-    par=suggestPair(L(),lv2);
-    if(par[1]!==2)throw new Error('C ficou no empate e continua do lado direito (D-71), veio '+par.join('x'));
-    const gp=planGks(L(),lv2,par);
-    if(lv2.gkPool.length&&lv2.lastGks[2]&&!(gp.gks[1]===lv2.lastGks[2]&&gp.fica[1]))throw new Error('o goleiro do time que ficou no empate deveria ficar');
+    if(lv.teams.length!==2||filaDe(lv).length!==4)throw new Error('esperava 2 lados e fila de 4, veio '+lv.teams.length+' / '+filaDe(lv).length);
+    A.startJogo();
+    const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),C0=filaDe(lv).slice();
+    A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence B: o grupo da fila entra inteiro no lugar de B
+    const B1=lv.teams[1].ids;
+    if(!C0.every(id=>B1.includes(id))||B1.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('o grupo da fila entra inteiro, com o goleiro do lado: '+B1);
+    if(filaDe(lv).slice().sort().join()!==B0.filter(id=>!ehGkHoje(lv,id)).sort().join())throw new Error('a linha de B vai para a fila; o goleiro fica no lado');
+    A.startMatch();A.finish({dataset:{r:'draw'}});                            // empate: a fila repoe um lado -> roda o que esta ha mais tempo (A)
+    const A2=lv.teams[0].ids;
+    if(A0.filter(id=>!ehGkHoje(lv,id)).some(id=>A2.includes(id)))throw new Error('no empate, o lado que esta ha mais tempo em quadra (A) devia rodar: '+A2);
+    if(!B0.filter(id=>!ehGkHoje(lv,id)).every(id=>A2.includes(id)))throw new Error('quem esperava (a linha de B) devia entrar no lugar de A');
+    if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===1))throw new Error('o lado que entrou por ultimo fica');
   }finally{S=salvo;render()}
 });
 step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>{
@@ -1198,68 +1213,64 @@ step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>
     if(!lv.teams[1].ids.includes(fila[0]))throw new Error('arrastar da fila sobre um titular nao trocou');
     onDrop(tit,{dataset:{dropPlayer:fila[0]}});}
 });
-step('alguem vai embora e o time fica curto',()=>{
-  const lv=L().live,x=lv.teams[1].ids[0];
+step('nome em quadra para a fila: vai para o fim, e a frente da fila entra no lugar; tem desfazer',()=>{
+  const lv=L().live,x=lv.teams[1].ids[0],f0=filaDe(lv)[0],n=lv.teams[1].ids.length;
   onDrop(x,{dataset:{dropZone:'bench'}});
-  if(lv.teams[1].ids.length!==4)throw new Error('o time deveria ter ficado com 4');
+  if(lv.teams[1].ids.length!==n||lv.teams[1].ids.includes(x)||!lv.teams[1].ids.includes(f0))throw new Error('devia sair x e entrar o primeiro da fila');
+  const fila=filaDe(lv);if(fila[fila.length-1]!==x)throw new Error('quem saiu vai para o fim da fila');
+  if(!(lv.preHist||[]).length)throw new Error('a mexida na mao tem desfazer');
+  A.preUndo();
+  if(!lv.teams[1].ids.includes(x)||filaDe(lv)[0]!==f0)throw new Error('desfazer nao devolveu');
 });
-step('time curto mostra uma vaga no cartao; tocar nela puxa alguem da fila',()=>{
-  const lv=L().live;
-  if(lv.stage==='jogo'){A.endMatch&&0;}
-  render();
-  const h=els['#app'].innerHTML;
-  if(!/＋ vaga|＋ completar|tp big emp/.test(h))throw new Error('cartao do time curto sem vaga nem emprestado');
-  if(lv.stage!=='jogo'){
-    const antes=lv.teams[1].ids.length,fila=filaDe(lv);
-    A.slotPick({dataset:{i:'1'}});
-    if(!/Vaga no/.test(els['#sheet'].innerHTML))throw new Error('folha da vaga nao abriu');
-    A.slotSet({dataset:{i:'1',id:fila[0]}});
-    if(lv.teams[1].ids.length!==antes+1||!lv.teams[1].ids.includes(fila[0]))throw new Error('a vaga nao foi preenchida');
-    onDrop(fila[0],{dataset:{dropZone:'bench'}});   // devolve para os passos seguintes
-  }
+step('lado curto sem fila: a vaga fica a vista; quem chega entra nela por toque',()=>{
+  const l=L(),lv=l.live;
+  filaDe(lv).slice().forEach(id=>A.leaveDo({dataset:{id,modo:'foi'}}));          // esvazia a fila
+  const x=lv.teams[1].ids[0];A.leaveDo({dataset:{id:x,modo:'foi'}});
+  if(lv.teams[1].ids.length!==4)throw new Error('sem fila, o lado fica curto: '+lv.teams[1].ids.length);
+  const h=viewProxima(l,lv);
+  if(!h.includes('data-drop-slot="vaga:1"'))throw new Error('a vaga devia estar a vista');
+  A.prePick({dataset:{slot:'vaga',s:'1'}});
+  if(lv.teams[1].ids.length!==4)throw new Error('sem ninguem na fila, a vaga nao tem quem entrar');
+  const novo=l.players.find(p=>!lv.presentIds.includes(p.id));
+  A.lateIn({dataset:{id:novo.id}});A.lateFila({dataset:{id:novo.id}});
+  if(filaDe(lv)[0]!==novo.id)throw new Error('quem chegou vai para a fila');
+  A.prePick({dataset:{slot:'vaga',s:'1'}});
+  if(lv.teams[1].ids.length!==5||!lv.teams[1].ids.includes(novo.id))throw new Error('toque na vaga devia por o proximo da fila');
 });
-step('a partida ainda entra 5v5: o time curto e completado por quem esta na fila',()=>{
+step('a partida entra 5v5 com quem entrou na vaga; ninguem joga emprestado',()=>{
   A.startMatch();
   const c=L().live.cur;
-  if(c.lineups[0].length!==c.lineups[1].length)
-    throw new Error('lados desiguais: '+c.lineups[0].length+'x'+c.lineups[1].length);
-  if(c.lineups[0].length!==5)throw new Error('nao se joga com menos de 5: veio '+c.lineups[0].length);
+  if(c.lineups[0].length!==5||c.lineups[1].length!==5)throw new Error('lados: '+c.lineups[0].length+'x'+c.lineups[1].length);
   const todos=[...c.lineups[0],...c.lineups[1]];
   if(new Set(todos).size!==todos.length)throw new Error('alguem entrou nos dois lados');
-  if(!c.fill[0].length&&!c.fill[1].length)throw new Error('ninguem completou o time curto');
-});
-step('quem completa joga emprestado: o time nao muda durante a partida',()=>{
-  const lv=L().live,emprestado=[...lv.cur.fill[0],...lv.cur.fill[1]][0];
-  if(lv.teams.some(t=>t.ids.indexOf(emprestado)>=0))
-    throw new Error('o emprestimo nao pode mexer no time');
+  if(c.fill[0].length||c.fill[1].length)throw new Error('no racha curto nao existe emprestimo');
   A.finish({dataset:{r:'0'}});
-  render();
 });
-step('o usuario escolhe quem completa',()=>{
+step('quem entra na vaga e escolha sua: foi embora com fila = a frente entra; desfazer; ou toque no nome e em quem eu quiser',()=>{
   const l=L(),lv=l.live;
-  const x=lv.teams[1].ids[0];onDrop(x,{dataset:{dropZone:'bench'}});   /* deixa o time curto de novo */
-  const pair=(lv.nextPair||suggestPair(l,lv)).slice();
-  const f=fillDe(l,lv,pair),sd=f[0].length?0:1;
-  if(!f[sd].length)throw new Error('nao veio sugestao de quem completa');
-  const sugerido=f[sd][0];
-  A.fillDel({dataset:{sd:String(sd),id:sugerido}});
-  const outro=candidatosFill(l,lv,pair,[]).filter(id=>id!==sugerido)[0];
-  A.fillSet({dataset:{sd:String(sd),id:outro}});
-  if(L().live.fill[sd].indexOf(outro)<0)throw new Error('a escolha do usuario nao ficou de pe');
+  const novos=l.players.filter(p=>!lv.presentIds.includes(p.id)).slice(0,2);
+  if(novos.length<2)throw new Error('cenario pede dois nomes fora do racha');
+  novos.forEach(p=>{A.lateIn({dataset:{id:p.id}});A.lateFila({dataset:{id:p.id}})});
+  const x=lv.teams[1].ids[0];A.leaveDo({dataset:{id:x,modo:'foi'}});                 // com fila, a frente entra na hora
+  if(!lv.teams[1].ids.includes(novos[0].id))throw new Error('a frente da fila devia entrar na vaga de quem foi embora');
+  A.preUndo();
+  if(lv.teams[1].ids.includes(novos[0].id)||!lv.teams[1].ids.includes(x)||!lv.presentIds.includes(x))throw new Error('desfazer devia devolver quem foi embora');
+  A.prePick({dataset:{id:x}});A.prePick({dataset:{id:'fora:'+novos[1].id}});         // troca de lugar com quem eu escolher
+  if(!lv.teams[1].ids.includes(novos[1].id)||lv.teams[1].ids.includes(x))throw new Error('a troca escolhida nao ficou de pe');
   A.startMatch();
-  if(L().live.cur.lineups[sd].indexOf(outro)<0)throw new Error('quem foi escolhido nao entrou');
+  if(!L().live.cur.lineups[1].includes(novos[1].id))throw new Error('quem foi escolhido nao entrou');
   A.finish({dataset:{r:'draw'}});
 });
-step('da para jogar sem completar: os dois lados entram menores e iguais',()=>{
-  const lv=L().live,x=lv.teams[1].ids[0];onDrop(x,{dataset:{dropZone:'bench'}});
-  A.fillOff();
+step('sem ninguem na fila, os dois lados entram menores e iguais',()=>{
+  const lv=L().live;
+  filaDe(lv).slice().forEach(id=>A.leaveDo({dataset:{id,modo:'foi'}}));
+  const x=lv.teams[1].ids[0];A.leaveDo({dataset:{id:x,modo:'foi'}});
   A.startMatch();
   const c=L().live.cur;
-  if(c.lineups[0].length!==c.lineups[1].length)throw new Error('lados desiguais sem completar');
-  if(c.fill[0].length||c.fill[1].length)throw new Error('completou mesmo com o completar desligado');
+  if(c.lineups[0].length!==c.lineups[1].length)throw new Error('lados desiguais sem fila');
+  if(c.lineups[0].length!==4)throw new Error('esperava 4v4, veio '+c.lineups[0].length);
   A.finish({dataset:{r:'draw'}});
 });
-
 console.log('\n[smoke] as opinioes que um membro deu: so o admin ve (D-124)');
 step('ficha: admin ve o botao com a contagem; a folha lista por posicao; nao-admin nem ve o botao nem abre',()=>{
   S=defState();A.demo();const l=L();
@@ -1438,43 +1449,45 @@ step('goleiro do rodizio que foi embora em quadra + ↶: volta ao rodizio e ao g
   A.undo();
   if(c.gks[0]!==g||JSON.stringify(lv.gkPool)!==JSON.stringify(pool)||!lv.gkToday.includes(g))throw new Error('nao voltou ao rodizio: '+lv.gkPool);
 });
-step('goleiro escolhido na mao para a proxima foi embora: nao entra em quadra',()=>{
-  const lv=rachaNovo(12,2);const g=lv.gkPool[1];
-  A.setPreGk({dataset:{sd:'0',id:g}});
+step('goleiro posto no gol na mao foi embora: a escolha cai e o goleiro que esperava volta ao gol',()=>{
+  const lv=rachaNovo(12,3),l=L();const pair=(lv.nextPair||suggestPair(l,lv)).slice();
+  const g=filaDe(lv).find(id=>ehGkHoje(lv,id)),g0=escalPre(l,lv,pair).gks[0];
+  if(!g)throw new Error('cenario pede um goleiro esperando na fila');
+  onDrop(g,{dataset:{dropPlayer:g0}});
+  if(escalPre(l,lv,pair).gks[0]!==g)throw new Error('o goleiro da fila devia estar no gol');
   A.leaveDo({dataset:{id:g,modo:'foi'}});
   if(lv.nextGks)throw new Error('a escolha manual devia cair');
+  if(escalPre(l,lv,pair).gks[0]!==g0)throw new Error('sem ele, o goleiro que esperava volta ao gol: '+escalPre(l,lv,pair).gks);
   A.startMatch();const c=lv.cur;
   if(c.lineups[0].includes(g)||c.lineups[1].includes(g)||c.gks.includes(g))throw new Error('quem foi embora entrou em quadra');
-  /* sobrou um goleiro no rodizio: ele entra de um lado; o outro fica sem, como a sugestao do app faria */
-  if(c.gks.filter(Boolean).length!==1||!c.gks.includes(lv.gkPool[0]))throw new Error('o goleiro que ficou devia estar em quadra: '+c.gks);
+  if(c.gks.filter(Boolean).length!==2)throw new Error('cada lado com o seu goleiro: '+c.gks);
 });
-step('rodizio: alguem do time improvisa no gol na pre-partida e quem completa a vaga ENTRA (nao 4v5)',()=>{
-  const lv=rachaNovo(12,2),l=L();const pair=(lv.nextPair||suggestPair(l,lv)).slice();
-  const imp=lv.teams[pair[0]].ids[0];
-  A.setPreGk({dataset:{sd:'0',id:imp}});
-  const f=fillDe(l,lv,pair);if(f[0].length!==1)throw new Error('devia sugerir 1 para completar a vaga: '+JSON.stringify(f));
+step('rodizio (um goleiro so): alguem do lado improvisa no gol e a frente da fila entra na vaga da linha (nao 4v5)',()=>{
+  const lv=rachaNovo(13,1),l=L();const pair=(lv.nextPair||suggestPair(l,lv)).slice();
+  if(!comRodizio(lv))throw new Error('com um goleiro so ele reveza');
+  const sd=escalPre(l,lv,pair).gks[0]?0:1,imp=lv.teams[pair[sd]].ids[0],f0=filaDe(lv)[0];
+  A.prePick({dataset:{id:imp}});A.prePick({dataset:{id:escalPre(l,lv,pair).gks[sd]}});
+  if(escalPre(l,lv,pair).gks[sd]!==imp)throw new Error('nao improvisou: '+escalPre(l,lv,pair).gks);
+  if(!lv.teams[pair[sd]].ids.includes(f0))throw new Error('a frente da fila devia entrar na vaga de linha');
   A.startMatch();const c=lv.cur;
-  if(c.gks[0]!==imp)throw new Error('o improvisado nao esta no gol');
-  if(!c.lineups[0].includes(f[0][0]))throw new Error('quem completava foi cortado na largada');
-  if(c.lineups[0].length!==c.lineups[1].length)throw new Error('largou '+c.lineups[0].length+'v'+c.lineups[1].length);
+  if(c.gks[sd]!==imp)throw new Error('o improvisado nao esta no gol');
+  if(c.lineups[sd].filter(id=>id!==imp).length!==4)throw new Error('largou com a linha incompleta: '+c.lineups[sd].length);
   A.finish({dataset:{r:'draw'}});
 });
-step('racha com goleiro fixo: "chegou para ser goleiro" vai para a fila com o 🧤, nao para um rodizio que nao existe (sem 6v5)',()=>{
+step('goleiro que chega no racha de goleiros fixos: vai para a fila com o 🧤 e entra no gol de quem perder',()=>{
   const lv=rachaNovo(11,2),l=L();
   if(comRodizio(lv))throw new Error('o cenario pede goleiros fixos');
   const novo=l.players.find(p=>!lv.presentIds.includes(p.id));
   A.lateIn({dataset:{id:novo.id}});A.lateGk({dataset:{id:novo.id}});
   if((lv.gkPool||[]).length)throw new Error('entrou num rodizio inexistente');
   if(!ehGkHoje(lv,novo.id)||filaDe(lv)[filaDe(lv).length-1]!==novo.id)throw new Error('devia estar no fim da fila, marcado como goleiro');
+  const gB=lv.teams[1].ids.find(id=>ehGkHoje(lv,id));
   A.startMatch();const c=lv.cur;
   if(c.lineups[0].length!==c.lineups[1].length)throw new Error('largou '+c.lineups[0].length+'v'+c.lineups[1].length);
-  A.finish({dataset:{r:'0'}});
-  /* o time que perdeu rodou com a fila (o recem-chegado entrou nele); o goleiro fixo desse time
-     foi embora: quem tem o 🧤 do dia no time assume o gol na largada seguinte */
-  const pair=lv.nextPair||suggestPair(l,lv);const tB=lv.teams[pair[1]];
-  if(!tB.ids.includes(novo.id))throw new Error('o recem-chegado devia ter entrado no time que perdeu, pela fila');
-  const gB=tB.ids.find(id=>ehGkHoje(lv,id)&&id!==novo.id);if(!gB)throw new Error('o time devia ter o goleiro fixo original');
-  A.leaveDo({dataset:{id:gB,modo:'foi'}});
+  A.finish({dataset:{r:'0'}});                                  // B perdeu: o goleiro que esperava entra no gol de B, o de B vai para a fila
+  const tB=lv.teams[1];
+  if(!tB.ids.includes(novo.id)||tB.ids.includes(gB))throw new Error('o goleiro da fila devia entrar no gol de quem perdeu: '+tB.ids);
+  if(!filaDe(lv).includes(gB)||!ehGkHoje(lv,gB))throw new Error('o goleiro que saiu espera na fila, com o 🧤');
   A.startMatch();
   if(lv.cur.gks[1]!==novo.id)throw new Error('quem chegou com o 🧤 devia ser o goleiro do lado: '+lv.cur.gks);
   if(lv.cur.lineups[0].length!==lv.cur.lineups[1].length)throw new Error('largou '+lv.cur.lineups[0].length+'v'+lv.cur.lineups[1].length);
@@ -1495,41 +1508,43 @@ step('refazer times no meio do racha: o "🧤 fica" e o goleiro do time antigo n
 
 console.log('\n[smoke] pré-partida com a gramática da partida ao vivo: 🧤, vaga e nomes como slots (D-123)');
 const parPre_=(lv,l)=>(lv.nextPair||suggestPair(l,lv)).slice();
-step('rodizio: de fora (fila) sobre o 🧤 = goleiro so desta partida; o do rodizio descansa e aparece em "🧤 Rodízio"',()=>{
-  const lv=rachaNovo(12,2),l=L();
+step('rodizio (um goleiro): de fora (fila) sobre o 🧤 = goleiro so desta partida; o do rodizio descansa e aparece na fila',()=>{
+  const lv=rachaNovo(12,1),l=L();
   const novo=l.players.find(p=>!lv.presentIds.includes(p.id));A.lateIn({dataset:{id:novo.id}});A.lateFila({dataset:{id:novo.id}});
-  const pair=parPre_(lv,l),g0=escalPre(l,lv,pair).gks[0];
+  const pair=parPre_(lv,l),e0=escalPre(l,lv,pair),sd=e0.gks[0]?0:1,g0=e0.gks[sd];
   onDrop(novo.id,{dataset:{dropPlayer:g0}});
   const e=escalPre(l,lv,pair);
-  if(e.gks[0]!==novo.id)throw new Error('quem veio de fora devia estar no gol: '+e.gks);
+  if(e.gks[sd]!==novo.id)throw new Error('quem veio de fora devia estar no gol: '+e.gks);
   if(lv.teams.some(t=>t.ids.includes(novo.id)))throw new Error('no rodizio o goleiro nao entra no time');
-  if(!viewProxima(l,lv).includes('🧤 Rodízio'))throw new Error('o goleiro que descansa devia aparecer no grupo Rodízio');
-  A.startMatch();if(lv.cur.gks[0]!==novo.id||!lv.cur.lineups[0].includes(novo.id))throw new Error('a largada nao respeitou o goleiro escolhido por toque');
+  if(!viewProxima(l,lv).includes('data-drop-player="fora:'+g0+'"'))throw new Error('o goleiro que descansa devia aparecer na fila');
+  A.startMatch();if(lv.cur.gks[sd]!==novo.id||!lv.cur.lineups[sd].includes(novo.id))throw new Error('a largada nao respeitou o goleiro escolhido por toque');
   A.finish({dataset:{r:'draw'}});
 });
-step('rodizio: toque no goleiro e depois no goleiro que descansa = troca; ↶ nao existe aqui, tocar de novo desfaz',()=>{
+step('goleiro fixo: toque no goleiro e depois no goleiro que espera na fila = trocam de lugar; tocar de novo desfaz',()=>{
   const lv=rachaNovo(16,3),l=L();const pair=parPre_(lv,l);
-  const e0=escalPre(l,lv,pair),g0=e0.gks[0],desc=lv.gkPool.find(g=>!e0.gks.includes(g));
-  if(!desc)throw new Error('cenario precisa de goleiro descansando');
+  const e0=escalPre(l,lv,pair),g0=e0.gks[0],desc=filaDe(lv).find(id=>ehGkHoje(lv,id));
+  if(!desc)throw new Error('cenario precisa de goleiro esperando');
   A.prePick({dataset:{id:g0}});if(lv.sel!==g0)throw new Error('primeiro toque devia marcar');
-  A.prePick({dataset:{id:desc}});
+  A.prePick({dataset:{id:'fora:'+desc}});
   if(escalPre(l,lv,pair).gks[0]!==desc||lv.sel)throw new Error('segundo toque devia por o outro no gol');
-  A.prePick({dataset:{id:desc}});A.prePick({dataset:{id:g0}});
+  if(!filaDe(lv).includes(g0)||!lv.teams[pair[0]].ids.includes(desc))throw new Error('com goleiro fixo, trocam de lugar: um no lado, outro na fila');
+  A.prePick({dataset:{id:desc}});A.prePick({dataset:{id:'fora:'+g0}});
   if(escalPre(l,lv,pair).gks[0]!==g0)throw new Error('trocar de volta nao funcionou');
 });
-step('rodizio: de linha sobre o 🧤 = improvisa; abre a vaga, que completa por toque em quem esta fora',()=>{
-  const lv=rachaNovo(12,2),l=L();const pair=parPre_(lv,l);
-  const imp=lv.teams[pair[0]].ids[1];
-  A.prePick({dataset:{id:imp}});A.prePick({dataset:{slot:'gk',s:'0'}});
-  const e=escalPre(l,lv,pair);if(e.gks[0]!==imp)throw new Error('nao improvisou');
-  if(e.compl[0].length!==1)throw new Error('a vaga do improvisado devia vir com uma sugestao de quem completa');
-  A.fillDel({dataset:{sd:'0',id:e.compl[0][0]}});           // tira a sugestao para completar na mao
-  const h=viewProxima(l,lv);if(!h.includes('data-drop-slot="vaga:0"'))throw new Error('sem a sugestao, a vaga do improvisado devia aparecer');
-  const fora=lv.teams[lv.queue[0]].ids[0];
-  A.prePick({dataset:{slot:'vaga',s:'0'}});A.prePick({dataset:{id:fora}});
-  if(!escalPre(l,lv,pair).compl[0].includes(fora))throw new Error('toque na vaga + toque em quem esta fora devia completar');
+step('rodizio (um goleiro): de linha sobre o 🧤 = improvisa e a frente da fila entra na vaga; desfazer volta; a vaga aceita quem eu escolher',()=>{
+  const lv=rachaNovo(12,1),l=L();const pair=parPre_(lv,l);
+  const sd=escalPre(l,lv,pair).gks[0]?0:1,imp=lv.teams[pair[sd]].ids[1],f0=filaDe(lv)[0],f2=filaDe(lv)[2];
+  A.prePick({dataset:{id:imp}});A.prePick({dataset:{id:escalPre(l,lv,pair).gks[sd]}});
+  const e=escalPre(l,lv,pair);if(e.gks[sd]!==imp)throw new Error('nao improvisou');
+  if(!lv.teams[pair[sd]].ids.includes(f0))throw new Error('a frente da fila devia entrar na vaga do improvisado');
+  A.preUndo();
+  if(lv.teams[pair[sd]].ids.includes(f0)||escalPre(l,lv,pair).gks[sd]===imp)throw new Error('desfazer devia voltar o gol e a vaga');
+  A.setPreGk({dataset:{sd:String(sd),id:imp}});                   // pela folha: improvisa sem preencher
+  const h=viewProxima(l,lv);if(!h.includes('data-drop-slot="vaga:'+sd+'"'))throw new Error('a vaga do improvisado devia aparecer');
+  A.prePick({dataset:{id:'fora:'+f2}});A.prePick({dataset:{slot:'vaga',s:String(sd)}});
+  if(!lv.teams[pair[sd]].ids.includes(f2))throw new Error('toque em quem esta fora + toque na vaga devia por ele no lado');
   A.startMatch();const c=lv.cur;
-  if(c.gks[0]!==imp||!c.lineups[0].includes(fora)||c.lineups[0].length!==c.lineups[1].length)throw new Error('largada errada: '+c.lineups.map(x=>x.length)+' gk '+c.gks);
+  if(c.gks[sd]!==imp||!c.lineups[sd].includes(f2)||c.lineups[sd].filter(id=>id!==imp).length!==4)throw new Error('largada errada: '+c.lineups.map(x=>x.length)+' gk '+c.gks);
   A.finish({dataset:{r:'draw'}});
 });
 step('goleiro fixo: de fora sobre o goleiro = entra no time no lugar dele e e o goleiro; o antigo vai para a fila',()=>{
@@ -1557,17 +1572,18 @@ step('goleiro fixo: de linha sobre o 🧤 do mesmo lado = trocam de papel so nes
   if(e2.gks[0]!==g1||e2.gks[1]!==g0)throw new Error('🧤 ⇄ 🧤 devia trocar os goleiros de lado: '+e2.gks);
   if(!lv.teams[pair[0]].ids.includes(g1)||!lv.teams[pair[1]].ids.includes(g0))throw new Error('com goleiro fixo a troca e de time');
 });
-step('"jogar 4v4 assim" deixa a vaga a vista; um toque nela + em quem esta fora volta a completar',()=>{
-  const lv=rachaNovo(11,2),l=L();const pair=parPre_(lv,l);
+step('sem fila, o lado curto mostra a vaga e larga 4v4; quem chega entra nela por toque',()=>{
+  const lv=rachaNovo(8,2),l=L();const pair=parPre_(lv,l);
+  if(filaDe(lv).length)throw new Error('cenario pede fila vazia');
   const x=lv.teams[pair[1]].ids.find(id=>!ehGkHoje(lv,id));A.leaveDo({dataset:{id:x,modo:'foi'}});
-  A.fillOff();if(!lv.fillOff)throw new Error('devia desligar o completar');
   const h=viewProxima(l,lv);
-  if(!h.includes('data-drop-slot="vaga:1"'))throw new Error('sem completar, a vaga sumiu — tem que ficar a vista');
-  const f=filaDe(lv)[0];
-  A.prePick({dataset:{slot:'vaga',s:'1'}});A.prePick({dataset:{id:f}});
-  if(lv.fillOff||!escalPre(l,lv,pair).compl[1].includes(f))throw new Error('tocar na vaga devia voltar a completar com quem foi tocado');
-  A.prePick({dataset:{id:f,fill:'1'}});                          // quem completa, tocado sem marca: sai
-  if(escalPre(l,lv,pair).compl[1].includes(f))throw new Error('toque em quem completa devia tirar');
+  if(!h.includes('data-drop-slot="vaga:1"'))throw new Error('a vaga tem que ficar a vista');
+  A.startMatch();const c=lv.cur;
+  if(c.lineups[0].length!==c.lineups[1].length||c.lineups[0].length!==4)throw new Error('sem fila os dois lados entram com 4: '+c.lineups.map(v=>v.length));
+  A.finish({dataset:{r:'draw'}});
+  const novo=l.players.find(p=>!lv.presentIds.includes(p.id));A.lateIn({dataset:{id:novo.id}});A.lateFila({dataset:{id:novo.id}});
+  A.prePick({dataset:{slot:'vaga',s:'1'}});
+  if(!lv.teams[pair[1]].ids.includes(novo.id))throw new Error('toque na vaga devia por quem chegou');
 });
 step('troca de lugar continua: linha ⇄ linha entre os lados, e linha ⇄ fila (definitiva)',()=>{
   const lv=rachaNovo(11,2),l=L();const pair=parPre_(lv,l);
@@ -1581,39 +1597,26 @@ step('troca de lugar continua: linha ⇄ linha entre os lados, e linha ⇄ fila 
   A.prePick({dataset:{slot:'gk',s:'0'}});A.toTeam({dataset:{i:'-1'}});   // marca num slot nao "se move"
 });
 
-step('improvisado no gol vindo de um time que espera: trocar ele com alguem de outro time de fora troca de TIME, e ele segue no gol',()=>{
-  const lv=rachaNovo(16,3),l=L();const pair=parPre_(lv,l);
-  const esperam=lv.teams.map((_,i)=>i).filter(i=>!pair.includes(i));
-  if(esperam.length<2)throw new Error('cenario pede dois times esperando');
-  const x=lv.teams[esperam[0]].ids[0],y=lv.teams[esperam[1]].ids[0];
-  onDrop('fora:'+x,{dataset:{dropSlot:'gk:0'}});             // x improvisa no gol do lado 0 (so nesta partida)
-  A.prePick({dataset:{id:x}});                                  // ainda esta no 🧤? (chave sem prefixo = o slot do gol)
-  if(pecaPre(l,lv,pair,x).kind!=='gk')throw new Error('x devia estar no gol do lado 0');
-  lv.sel=null;
-  onDrop('fora:'+x,{dataset:{dropPlayer:'fora:'+y}});          // no card Fora: x ⇄ y
-  if(!lv.teams[esperam[1]].ids.includes(x)||!lv.teams[esperam[0]].ids.includes(y))throw new Error('devia trocar de time');
-  if(escalPre(l,lv,pair).gks[0]!==x)throw new Error('a troca de time nao pode trocar o goleiro junto: '+escalPre(l,lv,pair).gks);
-  if(!viewProxima(l,lv).includes('data-drop-player="fora:'+x+'"'))throw new Error('x continua no card Fora como pessoa');
+step('na fila, arrastar um nome sobre o outro troca a ordem de entrada',()=>{
+  const lv=rachaNovo(16,3),l=L();
+  const f=filaDe(lv),x=f[0],y=f[3];
+  onDrop('fora:'+x,{dataset:{dropPlayer:'fora:'+y}});
+  const g=filaDe(lv);
+  if(g[0]!==y||g[3]!==x)throw new Error('devia trocar de posicao na fila: '+g.indexOf(x)+'/'+g.indexOf(y));
+  if(!viewProxima(l,lv).includes('data-drop-player="fora:'+x+'"'))throw new Error('x continua na fila como pessoa');
 });
-step('time que espera com um a menos mostra a vaga; quem esta na fila entra nele por toque ou arraste',()=>{
-  const lv=rachaNovo(16,3),l=L();const pair=parPre_(lv,l);
-  const esp=lv.teams.map((_,i)=>i).find(i=>!pair.includes(i));
-  const saiu=lv.teams[esp].ids[0];A.leaveDo({dataset:{id:saiu,modo:'foi'}});
+step('a fila e numerada e diz quem entra no proximo; quem chega vai para o fim; nome do lado sobre a fila sai e entra o primeiro',()=>{
+  const lv=rachaNovo(15,3),l=L();
   const novo=l.players.find(p=>!lv.presentIds.includes(p.id));A.lateIn({dataset:{id:novo.id}});A.lateFila({dataset:{id:novo.id}});
+  const f=filaDe(lv);if(f[f.length-1]!==novo.id)throw new Error('quem chegou vai para o fim da fila');
   const h=viewProxima(l,lv);
-  if(!h.includes('data-drop-slot="vagaT:'+esp+'"'))throw new Error('o time que espera devia mostrar a vaga');
-  A.prePick({dataset:{slot:'vagaT',s:String(esp)}});A.prePick({dataset:{id:'fora:'+novo.id}});
-  if(!lv.teams[esp].ids.includes(novo.id)||filaDe(lv).includes(novo.id))throw new Error('devia entrar no time que espera');
-  if(viewProxima(l,lv).includes('data-drop-slot="vagaT:'+esp+'"'))throw new Error('time completo nao mostra vaga');
-  /* arrastar alguem de um lado que joga para a vaga de um time que espera: sai do lado, entra no time */
-  const outro=lv.teams[esp].ids[0];A.leaveDo({dataset:{id:outro,modo:'foi'}});
-  const lin=escalPre(l,lv,pair).escal[0].find(id=>id!==escalPre(l,lv,pair).gks[0]);
-  onDrop(lin,{dataset:{dropSlot:'vagaT:'+esp}});
-  if(!lv.teams[esp].ids.includes(lin)||lv.teams[pair[0]].ids.includes(lin))throw new Error('devia mudar de time');
-  A.prePick({dataset:{id:'fora:'+lin}});A.toTeam({dataset:{i:'-1'}});     // chave com prefixo tambem move para fora
-  if(lv.teams[esp].ids.includes(lin))throw new Error('toque no card Fora com chave fora: devia tirar do time');
+  if(!/entram no próximo/.test(h)||!/class="corte">depois</.test(h))throw new Error('a fila devia mostrar o corte de quem entra no proximo e quem espera mais um');
+  if(!/filapos">1</.test(h)||!/filapos">8</.test(h))throw new Error('a fila devia estar numerada');
+  const pair=parPre_(lv,l),e=escalPre(l,lv,pair),lin=e.escal[0].find(id=>id!==e.gks[0]),f0=f.find(id=>!ehGkHoje(lv,id));
+  onDrop(lin,{dataset:{dropZone:'bench'}});
+  if(lv.teams[pair[0]].ids.includes(lin)||!lv.teams[pair[0]].ids.includes(f0))throw new Error('devia sair para a fila e entrar o primeiro');
+  const g=filaDe(lv);if(g[g.length-1]!==lin)throw new Error('quem sai vai para o fim');
 });
-
 console.log('\n[smoke] dados antigos no localStorage');
 const antigo={v:1,me:{id:'x',name:''},active:'old',ui:{tab:'racha'},ligas:[{id:'old',name:'Antiga',
   cfg:{startElo:1500,kNew:40,kBase:24,placement:5,tiers:[1700,1600,1450,1350],tierNames:['a','b','c','d','e'],

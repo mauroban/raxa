@@ -147,9 +147,9 @@ function monta(nLinha,nGk,modo){
 }
 let r3=monta(12,2);
 console.log('  5v5, 12 de linha + 2 goleiros: '+r3.pl.n+' times de '+r3.tam.join('/')+' (linha por time = '+r3.pl.per+')');
-ok(r3.pl.rotating&&r3.pl.gkPool.length===2,'2 goleiros para 3 times viram rodizio');
-ok(r3.pl.per===4,'no 5v5 com goleiro rodando, o time tem 4 de linha');
-ok(r3.pl.n===3&&r3.tam.every(x=>x===4),'3 times completos de 4');
+ok(!r3.pl.rotating&&r3.pl.gkPool.length===0,'2 goleiros: nao ha rodizio, cada lado tem o seu (D-129)');
+ok(r3.pl.per===5,'no 5v5 com goleiro fixo, o lado e 4 de linha + goleiro');
+ok(r3.pl.n===2&&r3.pl.grupos===3&&r3.tam.every(x=>x===5),'2 lados cheios; a fila e o terceiro grupo (4 de linha)');
 
 r3=monta(11,2);
 console.log('  5v5, 11 de linha + 2 goleiros: times de '+r3.tam.join('/')+' e '+r3.fora+' de fora');
