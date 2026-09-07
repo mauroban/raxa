@@ -272,5 +272,8 @@ acima da escalação e o "VS" do meio (ele estreitava as colunas). A fila fica f
 mesmo cartão. O aviso de gol sem autor e a tirinha do autor ficam logo abaixo das colunas.
 **Por quê:** "os jogadores em campo podem estar mais ligados ao seu time, como uma continuação de
 TIME A e TIME B — fica claro quem está em campo e quem está fora".
+*Ajuste no mesmo dia:* a moldura ficou sem fundo tingido (o chip do jogador misturado com a cor do
+time ficava estranho) — só a borda e o cabeçalho levam a cor; e o cartão dos lados abriu mão do
+respiro (`.card.lados`, 8px) para as colunas ficarem mais largas no celular.
 **Onde:** `escCol` (`extra.cls`), `viewJogo` (`placar(s)` como `head`), `viewProxima` em `index.html` ·
 `scripts/visual.py` (telas 3, 4 e 15).

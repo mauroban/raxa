@@ -372,17 +372,21 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .col>.slot{display:block;width:100%;margin-bottom:6px}
 /* Coluna do time (D-133): cabeçalho e jogadores são uma peça só, na cor do
    time — fica claro quem está em quadra por qual lado; a fila fica fora   */
-.esc2 .col.team{--tc:var(--bibA);border-radius:16px;padding:6px;border:1.5px solid color-mix(in srgb,var(--tc) 55%,transparent);background:color-mix(in srgb,var(--tc) 7%,var(--panel))}
+.esc2 .col.team{--tc:var(--bibA);border-radius:14px;padding:4px;border:1.5px solid color-mix(in srgb,var(--tc) 60%,transparent);background:var(--panel)}
+/* o cartão dos lados abre mão do respiro: coluna larga é o que importa no celular */
+.card.lados{padding:8px}
+.card.lados .esc2{gap:6px}
+.card.lados .filawrap{padding:0 2px}
 .esc2 .col.team.tB{--tc:var(--bibB)} .esc2 .col.team.tC{--tc:var(--bibC)} .esc2 .col.team.tD{--tc:var(--bibD)}
-.esc2 .col.team>.slot{background:var(--tc);color:#fff;border-top:0;border-radius:11px;padding:10px 8px}
+.esc2 .col.team>.slot{background:var(--tc);color:#fff;border-top:0;border-radius:10px;padding:9px 6px;margin-bottom:4px}
 .esc2 .col.team>.slot .sub,.esc2 .col.team>.slot .pc{color:#fff;opacity:.85}
 .esc2 .col.team>.slot .sub .fica{color:#fff;opacity:1}
 .esc2 .col.team.tD>.slot{color:#0F1F16} .esc2 .col.team.tD>.slot .sub,.esc2 .col.team.tD>.slot .pc,.esc2 .col.team.tD>.slot .sub .fica{color:#0F1F16}
-.esc2 .col.team>.side{width:100%;margin-bottom:6px;border-radius:11px;min-height:112px;display:flex;flex-direction:column;justify-content:center;padding:10px 8px 8px}
+.esc2 .col.team>.side{width:100%;margin-bottom:4px;border-radius:10px;min-height:108px;display:flex;flex-direction:column;justify-content:center;padding:8px 6px 6px}
 .esc2 .col.team>.side .sc{font-size:clamp(44px,12vw,64px);margin:2px 0}
 .esc2 .col.team>.side .nm{font-size:13px}
 .esc2 .col.team>.side .minuszone{width:56px;height:56px} .esc2 .col.team>.side .minus{top:8px;right:8px;width:34px;height:34px;font-size:19px}
-.esc2 .col.team .pl{margin-top:4px}
+.esc2 .col.team .pl{margin-top:3px;padding:0 8px}
 .esc2 .col.team .pl.gk{margin-top:0}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
@@ -3151,8 +3155,8 @@ function viewProxima(liga,lv){
     <div class="mov">${(u.mov||[]).length?u.mov.map(m=>`<span class="out">${m.saem.length?`Saem ${nomes(m.saem)} → fim da fila`:''}</span>${m.saem.length?' · ':''}<span class="in">Entram ${nomes(m.entram)}</span>`).join('<br>')
       :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}</div>
   </div>`:''}
-  <div class="card ${sel?'picking':''}">
-    <div class="row"><div class="k">Próxima partida</div>
+  <div class="card lados ${sel?'picking':''}">
+    <div class="row" style="padding:0 4px"><div class="k">Próxima partida</div>
       <div class="sp tiny muted">${lv.matchIds.length?'':'primeira do dia'}</div></div>
     <div class="esc2 vs3">
       ${[0,1].map(sd=>{const ti=pair[sd],t=lv.teams[ti],res=t.ids.slice(per);
@@ -3263,7 +3267,7 @@ function viewJogo(liga,lv){
     const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
     const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
     const res=[0,1].map(s=>reservasDe(s));
-    return `<div class="card ${sel?'picking':''}" style="margin-top:8px">
+    return `<div class="card lados ${sel?'picking':''}" style="margin-top:8px">
     <div class="esc2" style="margin-top:0">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,((c.startLineups||c.lineups)[s]).concat([(c.startGks||c.gks)[s]].filter(Boolean)),
       {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
