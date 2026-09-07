@@ -20,7 +20,7 @@ Quando o Bruninho entra na Liga, ele vê os perfis sem dono e **assume o seu**, 
 | Caminho | Como é | Quando serve |
 |---|---|---|
 | **Link de convite** — *ainda não existe (v2)* | o admin gera o link e joga no grupo do WhatsApp; quem abre escolhe o próprio perfil e entra | começar uma Liga, chamar a galera toda de uma vez |
-| **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova em Membros — **implementado** | alguém que ouviu falar do racha e quer entrar. O admin troca o código em Ajustes → **Novo** quando ele vazou: o antigo deixa de valer na hora e quem já entrou não muda nada (D-130). |
+| **Código da Liga** | código curto de 6 caracteres (`RXA7Q2`), visível nos ajustes; quem digita **pede para entrar** e o admin aprova em Membros — **implementado** | alguém que ouviu falar do racha e quer entrar. O admin manda o **link de convite** (`…/?c=CODIGO`, botão Enviar/Copiar link em Ajustes): quem abre cria a conta ou entra e o pedido vai sozinho, sem digitar nada (D-132). O admin troca o código em Ajustes → **Novo** quando ele vazou: o antigo deixa de valer na hora e quem já entrou não muda nada (D-130). |
 | **Busca dentro do app** — *ainda não existe (v2)* | o admin procura a pessoa por `@usuário` ou nome e convida direto — já apontando qual perfil é dela | o mais comum: a pessoa já joga há meses e só agora criou conta |
 
 A regra única, nos três: **ninguém entra sem aceitar, e ninguém entra sem o admin querer.** Hoje só o código existe, e ele **gera pedido, não entrada** — o admin aprova em Membros. O link com vencimento, a entrada livre e o convite direto de uso único são desenho da v2.

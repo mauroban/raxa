@@ -671,6 +671,20 @@ await step('quem nao e dono so sai',async()=>{
   ok('e sumiu da tela dele',S.ligas.length===0);
 });
 
+await step('link de convite: ?c=CODIGO vira pedido de entrada depois de entrar (D-132)',async()=>{
+  ok('a URL e lida com o codigo em maiusculas',leConvite('?c=abc123')==='ABC123'&&leConvite('#c=XyZ789')==='XYZ789'&&leConvite('?x=1')===null);
+  const code=srv(ligaId).code;                     // luis esta logado e ja saiu da liga
+  localStorage.setItem('raxa_convite',code);
+  const r=await usaConvite();
+  ok('o pedido de entrada foi sozinho',r==='pendente'&&DB.requests.some(q=>q.league_id===ligaId&&q.user_id===ME.id));
+  ok('aparece em "aguardando aprovacao"',PEND.some(x=>x.league_id===ligaId));
+  ok('o convite e consumido',!localStorage.getItem('raxa_convite'));
+  localStorage.setItem('raxa_convite','NAOEXI');
+  const r2=await usaConvite();
+  ok('codigo que nao existe e descartado',r2==='invalido'&&!localStorage.getItem('raxa_convite'));
+  await sb.rpc('cancel_request',{p_id:ligaId});PEND=[];
+});
+
 await step('o dono apaga de verdade — so com o nome certo',async()=>{
   await A.logout();
   val('#au','mauro');val('#ap','segredo1');authMode='entrar';

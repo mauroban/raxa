@@ -7052,8 +7052,11 @@ function renderSetup(){
 
 let authMode='entrar';
 function renderAuth(erro){
+  const conv=convitePendente();
+  if(conv&&!localStorage.getItem('raxa_last_user')&&!erro)authMode='criar';   // convidado sem conta: já abre em "criar"
   const criar=authMode==='criar';
   $('#app').innerHTML=topo('níveis de quadra')+`
+    ${conv?`<div class="card" style="box-shadow:inset 5px 0 0 var(--ok);margin-bottom:10px"><b>Você recebeu um convite para uma liga.</b><div class="tiny muted" style="margin-top:3px">Entre ou crie a conta: o pedido de entrada vai sozinho.</div></div>`:''}
     <div class="tabs">
       <button class="${criar?'':'on'}" data-a="authMode" data-v="entrar">Entrar</button>
       <button class="${criar?'on':''}" data-a="authMode" data-v="criar">Criar conta</button>
@@ -7122,10 +7125,57 @@ async function afterLogin(session){
   render();
   ligaPulso();
   if(dirty.size){tentativas=0;agenda()}     // o que não subiu antes de a aba fechar sobe agora
+  await usaConvite();                       // veio pelo link de convite: pede a entrada agora
 }
 
+/* Link de convite (D-132): a URL com ?c=CODIGO guarda o código no aparelho e
+   some da barra; quem já está logado pede a entrada na hora, quem não está
+   pede assim que entrar ou criar a conta. Um toque só, sem digitar código. */
+const CONVITE_KEY='raxa_convite';
+function leConvite(qs){
+  const m=/[?&#]c=([A-Za-z0-9]{4,8})\b/.exec(qs||'');
+  return m?m[1].toUpperCase():null;
+}
+function guardaConvite(){
+  if(typeof location==='undefined')return;
+  const c=leConvite(location.search)||leConvite(location.hash);
+  if(!c)return;
+  try{localStorage.setItem(CONVITE_KEY,c)}catch(e){}
+  try{history.replaceState(null,'',location.pathname)}catch(e){}
+}
+const convitePendente=()=>{try{return localStorage.getItem(CONVITE_KEY)||null}catch(e){return null}};
+const limpaConvite=()=>{try{localStorage.removeItem(CONVITE_KEY)}catch(e){}};
+const linkConvite=code=>(typeof location!=='undefined'?location.origin+location.pathname:'')+'?c='+code;
+/* Entra (ou pede para entrar) numa liga pelo código. `silencioso`: veio do link, sem folha aberta. */
+async function entrarComCodigo(c,silencioso){
+  const {data,error}=await sb.rpc('join_league',{p_code:c});
+  if(error){
+    const naoExiste=/codigo/i.test(error.message);
+    toast(naoExiste?'Código não encontrado':traduz(error));
+    return naoExiste?'invalido':'erro';
+  }
+  if(data&&data.status==='pending'){            // o admin precisa aprovar
+    if(!PEND.some(x=>x.league_id===data.id))PEND.push({league_id:data.id,name:data.name,requested_at:new Date().toISOString()});
+    closeSheet();render();toast('Pedido enviado — o admin de '+data.name+' precisa aprovar',{ms:4500});
+    return 'pendente';
+  }
+  const lg=data&&data.league;if(!lg)return 'erro';
+  const r=await sb.rpc('league_delta',{p_id:lg.id,p_since:0});
+  if(r.data)applyDelta(lg.id,r.data);
+  S.active=lg.id;S.ui.tab='racha';closeSheet();saveUI();render();
+  toast('Você já está em '+lg.name);
+  return 'membro';
+}
+/* depois do login: se há convite guardado, usa; só descarta se o código não existe */
+async function usaConvite(){
+  const c=convitePendente();if(!c||!sb||!ME)return null;
+  const r=await entrarComCodigo(c,true);
+  if(r!=='erro')limpaConvite();
+  return r;
+}
 async function boot(){
   if(!CONFIGURADO){renderSetup();return}
+  guardaConvite();
   let session=null;
   try{const r=await sb.auth.getSession();session=r.data.session}catch(e){}
   if(!session){renderAuth();return}
@@ -7255,18 +7305,7 @@ Object.assign(A,{
   async doJoin(){
     const c=($('#jc')&&$('#jc').value.trim().toUpperCase())||'';
     if(c.length<4){toast('Digite o código');return}
-    const {data,error}=await sb.rpc('join_league',{p_code:c});
-    if(error){toast(/codigo/i.test(error.message)?'Código não encontrado':traduz(error));return}
-    if(data&&data.status==='pending'){            // o admin precisa aprovar
-      if(!PEND.some(x=>x.league_id===data.id))PEND.push({league_id:data.id,name:data.name,requested_at:new Date().toISOString()});
-      closeSheet();render();toast('Pedido enviado — o admin de '+data.name+' precisa aprovar');
-      return;
-    }
-    const lg=data&&data.league;if(!lg)return;
-    const r=await sb.rpc('league_delta',{p_id:lg.id,p_since:0});
-    if(r.data)applyDelta(lg.id,r.data);
-    S.active=lg.id;S.ui.tab='racha';closeSheet();saveUI();render();
-    toast('Você já está em '+lg.name);
+    await entrarComCodigo(c);
   },
   async cancelPend(el){
     const id=el.dataset.id;
@@ -7314,11 +7353,14 @@ Object.assign(A,{
     if(error)return toast('Não deu para trocar: '+traduz(error),{ms:4000});
     CODE[id]=data;cacheSave();render();toast('Novo código: '+data,{ms:5000});
   },
+  /* o link de convite (D-132): quem abre já pede a entrada, sem digitar código */
   copyCode(){
-    const c=CODE[S.active]||'';
+    const c=CODE[S.active]||'',l=L();
     if(!c)return;
-    if(navigator.clipboard)navigator.clipboard.writeText(c).then(()=>toast('Código copiado'),()=>toast(c));
-    else toast(c);
+    const link=linkConvite(c),texto=`Entra na liga ${l?l.name:''} do Raxa: ${link}`;
+    if(navigator.share){navigator.share({title:'Raxa',text:texto,url:link}).catch(()=>{});return}
+    if(navigator.clipboard)navigator.clipboard.writeText(link).then(()=>toast('Link copiado — quem abrir já pede a entrada'),()=>toast(link));
+    else toast(link);
   },
 
   doImport(){
@@ -7469,7 +7511,7 @@ function viewCfg(liga){
         <div class="k">Código de convite</div>
         <div style="font-family:var(--disp);font-size:26px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>
       </div>
-      <button class="btn ghost sm" data-a="copyCode">Copiar</button>
+      <button class="btn ghost sm" data-a="copyCode" title="link que já entra na liga">${typeof navigator!=='undefined'&&navigator.share?'Enviar link':'Copiar link'}</button>
       ${souAdmin(liga)&&CODE[liga.id]?`<button class="btn ghost sm" data-a="newCode" title="trocar o código: o antigo deixa de valer">Novo</button>`:''}
     </div>`+viewCfgBody(liga)+logCard(liga);
 }

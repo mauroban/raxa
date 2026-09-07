@@ -197,3 +197,21 @@ nada. Pergunta antes; o código novo aparece no toast e no cartão.
 **Onde:** `A.newCode` (`index.html`), `rotate_code` + grant em `supabase/schema.sql` (**rodar o SQL de
 novo**), rpc falsa e teste em `scripts/sync.py` · [Contas e permissões](../produto/contas-e-permissoes.md) ·
 [Deploy §3](../tecnico/deploy.md).
+
+<a id="d-132"></a>
+### D-132 · Link de convite: a URL já pede a entrada
+**Quando:** 2026-09-07.
+**O quê:** o botão do código em Ajustes vira **Enviar link** (folha de compartilhar do celular) ou
+**Copiar link**: `https://…/raxa/?c=CODIGO`. Ao abrir, o app guarda o código no aparelho
+(`raxa_convite`), limpa a URL e: logado → chama `join_league` na hora; deslogado → a tela de entrar
+mostra "Você recebeu um convite" (abre em *Criar conta* para quem nunca entrou neste aparelho) e o
+pedido vai sozinho logo depois do login/cadastro (`usaConvite` no fim de `afterLogin`). Código
+inexistente é descartado com aviso; falha de rede guarda o convite para a próxima abertura. O
+código continua visível e "Entrar com um código" continua existindo, para quem recebeu só o código.
+**Por quê:** "mandar o link mais o código" eram dois passos e dois erros possíveis (digitar errado,
+colar no lugar errado). Um link é um toque.
+**Descartado:** entrada automática sem pedido (o admin continua aprovando, D-26); código na URL
+permanente (a URL é limpa para o recarregar não repetir o pedido).
+**Onde:** `leConvite`, `guardaConvite`, `usaConvite`, `entrarComCodigo`, `linkConvite`, `A.copyCode`,
+`renderAuth`, `boot`, `afterLogin` em `index.html` · teste em `scripts/sync.py` ·
+[Contas e permissões](../produto/contas-e-permissoes.md) · [Deploy §3](../tecnico/deploy.md).
