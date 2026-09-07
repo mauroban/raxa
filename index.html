@@ -2516,7 +2516,7 @@ function viewTimes(liga,lv){
   const bench=lv.presentIds.filter(id=>!lv.teams.some(t=>t.ids.indexOf(id)>=0)&&pool.indexOf(id)<0);
   const temGk=lv.presentIds.some(id=>ehGkHoje(lv,id));
   const rod=pool.length>0;
-  const faltando=lv.teams.map(t=>per-t.ids.length).filter(x=>x>0);
+  const faltando=lv.teams.map(t=>alvoTime(liga,lv,t,per)-t.ids.length).filter(x=>x>0);
   return `
   <div class="card">
     <div class="row"><div class="k">Times · ${liga.cfg.format}v${liga.cfg.format}${rod?' (goleiro reveza)':''}</div>
@@ -2973,10 +2973,19 @@ function tpChip(liga,lv,id,big,attrs,key){
 /* Time com gente a menos mostra uma VAGA por lugar vazio, dentro do próprio
    cartão. Na montagem a vaga puxa alguém da fila/reserva para o time; na
    pré-partida ela escolhe quem completa só aquela partida (fillPick).      */
+/* Tamanho que um time da montagem precisa ter. No racha curto com goleiros
+   um por lado, o time que não tem goleiro (o C, o D) é só a linha: quando
+   ele entrar, o goleiro é o do lado ou o que espera na fila (D-129).       */
+function alvoTime(liga,lv,t,per){
+  const curto=(lv.mode||liga.cfg.matchMode)!=='unica';
+  const temGk=lv.presentIds.some(id=>ehGkHoje(lv,id));
+  return curto&&!comRodizio(lv)&&temGk&&!t.ids.some(id=>ehGkHoje(lv,id))?per-1:per;
+}
 function timeCard(liga,lv,i,per,completando,sd){
   const t=lv.teams[i];if(!t)return '';
   const cIds=Array.isArray(completando)?completando:[],cN=Array.isArray(completando)?completando.length:(completando||0);
-  const tit=t.ids.slice(0,per),res=t.ids.slice(per),falta=per-t.ids.length-cN;
+  const alvo=alvoTime(liga,lv,t,per);
+  const tit=t.ids.slice(0,per),res=t.ids.slice(per),falta=alvo-t.ids.length-cN;
   const emprestados=cIds.map(id=>`<button class="tp big emp" data-a="fillDel" data-sd="${sd}" data-id="${id}" title="joga esta partida emprestado">${esc(nameOf(liga,id))} <small>✕</small></button>`).join('');
   const vagas=falta>0&&!lv.fillOff?Array.from({length:falta},()=>sd===undefined
       ?`<button class="tp big vaga" data-a="slotPick" data-i="${i}">＋ vaga</button>`
@@ -2985,8 +2994,8 @@ function timeCard(liga,lv,i,per,completando,sd){
     <div class="hd ${TEAMBG[i]}">${esc(t.name)}
       ${vePat(liga)&&t.ids.length?`<span title="nível médio do time">${patBadgeShort(liga,stepOf(teamAvg(liga,t,lv.gkToday)))}</span>`:''}
       <span class="sp" style="font-size:12px;opacity:.8">${cN?`${t.ids.length}+${cN} completando`
-        :falta>0?`${t.ids.length}/${per} · falta ${falta}`
-        :res.length?`${per} + ${res.length} reserva${res.length>1?'s':''}`:`${per}/${per}`}</span></div>
+        :falta>0?`${t.ids.length}/${alvo} · falta ${falta}`
+        :res.length?`${per} + ${res.length} reserva${res.length>1?'s':''}`:alvo<per?`${alvo} + 🧤 da fila`:`${per}/${per}`}</span></div>
     <div class="bd" data-a="toTeam" data-i="${i}" data-drop-zone="team:${i}">
       ${tit.map(id=>tpChip(liga,lv,id,true)).join('')+emprestados+vagas
         ||'<span class="tiny muted" style="padding:6px">toque num jogador e depois aqui</span>'}
