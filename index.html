@@ -3832,7 +3832,7 @@ ${cardJuntos}  <div class="card">
         gk:rkSec('gk','shield','var(--cyan)','Menos vazado','sofridos/10 min · mín. 1 h',rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol','Ninguém com 1 h no gol ainda.'),
         golsgk:rkGolsGk.length?rkSec('golsgk','shield','var(--gold)','Gols de goleiro','feitos de dentro do gol',rkGolsGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):'',
         seq:rkSec('seq','flame','var(--coral)','Maior sequência','3 ou mais',rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.'),
-        duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>x.pct+'%',x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
+        duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
       const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','golsgk','duplas']
         :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','golsgk','duplas']
