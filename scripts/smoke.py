@@ -345,7 +345,7 @@ step('nada de modal de patente entre partidas',()=>{
 step('tela de proxima partida, com escalacao editavel antes do apito',()=>{
   const lv=L().live,html=viewProxima(L(),lv);
   if(html.indexOf('Próxima partida')<0)throw new Error('nao renderizou a tela de proxima partida');
-  if(html.indexOf('de chance')<0)throw new Error('faltou a chance esperada de cada lado');
+  if(!/class="pc">\(\d+%\)/.test(html))throw new Error('faltou a chance esperada de cada lado, junto do nome do time');
   const pair=lv.nextPair||suggestPair(L(),lv);
   if(pair[0]===pair[1])return;
   const a=lv.teams[pair[0]].ids[0],b=lv.teams[pair[1]].ids[0];

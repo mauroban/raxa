@@ -358,7 +358,8 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
 .slot{border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;border:1px solid transparent;
   background:var(--fill);color:var(--chalk);border-top-width:5px}
-.slot .nm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:18px}
+.slot .nm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .nm .pc{font-weight:700;font-size:15px;color:var(--mute);letter-spacing:.02em}
 .slot .sub{font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .slot.a{border-top-color:var(--bibA)} .slot.b{border-top-color:var(--bibB)}
 .slot.c{border-top-color:var(--bibC)} .slot.d{border-top-color:var(--bibD)}
@@ -3077,9 +3078,11 @@ function viewProxima(liga,lv){
   const cab=sd=>{const ti=pair[sd],t=lv.teams[ti];
     const ficou=u&&Array.isArray(u.fica)&&u.fica.includes(ti);
     const venceu=u&&u.venceu===ti;
+    /* a chance vai junto do nome ("Time A (52%)"); a linha de baixo só diz
+       "fica" e tem sempre a mesma altura nos dois lados — nada quebra linha */
     return `<div class="slot ${TEAMCLASS[ti]}">
-      <div class="nm">${esc(t.name)}</div>
-      <div class="sub">${ex?'<b>'+pct(ex[sd])+'</b> de chance':escal[sd].length+' em quadra'}${venceu||ficou?' · <span class="fica">fica</span>':''}${gp.fica[sd]?' · 🧤 fica':''}</div></div>`};
+      <div class="nm">${esc(t.name)}${ex?` <span class="pc">(${pct(ex[sd])})</span>`:''}</div>
+      <div class="sub">${venceu||ficou?'<span class="fica">fica</span>':''}${gp.fica[sd]?(venceu||ficou?' · ':'')+'🧤 fica':''}&nbsp;</div></div>`};
   /* a fila, numerada: quem está fora há mais tempo entra primeiro; um risco
      separa quem entra no próximo giro de quem espera mais um                */
   const filaHtml=()=>filaGrid(liga,lv,soltos,chipFora);

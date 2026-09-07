@@ -94,7 +94,7 @@ Cronômetro grande, dois blocos coloridos e os slots de goleiro:
 - **Empate: com 4 times os dois saem; com 3, um fica — o que entrou por último** (o que já estava sai, D-39). Não dá para o "vencedor fica" decidir sozinho quando ninguém venceu; com 4 times deixar os dois faria a fila nunca andar, e com 3 tirar os dois esvaziaria a quadra. Com 2 times, empate não muda nada — eles jogam de novo.
 - **Entre uma partida e outra existe uma tela inteira: a próxima partida.** Não é um modal que some — é a tela padrão do racha enquanto nada está rolando (D-129), e ela mostra, nesta ordem:
   - **o placar registrado e o ↩ Voltar a partida**, num cartão fixo no topo até a próxima começar, com a linha "Saem X, Y → fim da fila · Entram Z, W";
-  - **os dois lados que vão entrar**, com a chance de cada um, "venceu, fica" no lado que ficou e a etiqueta **entrou** em quem acabou de entrar; editáveis ali mesmo, por toque ou arraste;
+  - **os dois lados que vão entrar**, com a chance de cada um junto do nome (`Time A (52%)`), "fica" sob o lado que ficou e a etiqueta **entrou** em quem acabou de entrar; editáveis ali mesmo, por toque ou arraste;
   - **a fila, numerada**, com o risco "entram no próximo" separando quem entra no próximo giro de quem espera mais um ("depois"); o goleiro que espera aparece com o 🧤, junto do time dele. A partida ao vivo mostra a mesma fila, com o mesmo corte, no card "Fila";
   - `＋ Chegou`, `🚑 Foi embora` e `Refazer times`.
   A tela em repouso não explica nada: a dica só aparece com um nome marcado, dizendo o próximo passo, e leva o **↶ desfazer** de qualquer mexida na mão.
