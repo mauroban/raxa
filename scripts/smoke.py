@@ -166,7 +166,7 @@ step('remover gol do time B',()=>A.ungoal({dataset:{s:'1'}}));
 step('alguem do time vai para o gol pelo toque: quem estava no gol volta para a linha, ninguem sai',()=>{
   const lv=L().live,c=lv.cur,g=c.gks[0],y=c.lineups[0].find(id=>id!==g),antes=c.lineups[0].length;
   A.subPick({dataset:{s:'0',id:y}});
-  if(!/toque em quem entra, ou no 🧤/.test(els['#app'].innerHTML))throw new Error('a dica nao oferece o gol');
+  if(!/— toque em quem entra/.test(els['#app'].innerHTML))throw new Error('a dica do nome marcado nao apareceu');
   if(!new RegExp('data-id="'+g+'"[^>]*data-alvo="1"').test(els['#app'].innerHTML))throw new Error('o slot do goleiro nao ficou marcado como par');
   A.subPick({dataset:{s:'0',id:g}});
   if(c.gks[0]!==y)throw new Error('nao foi para o gol: '+c.gks);

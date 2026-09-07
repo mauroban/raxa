@@ -3068,17 +3068,15 @@ function viewProxima(liga,lv){
   const u=lv.ult||null;
   const entrou=new Set(u?[...(u.mov||[]).flatMap(m=>m.entram),...(u.compl||[])]:[]);
   const proxL=soltos.find(id=>!ehGkHoje(lv,id)),proxG=soltos.find(id=>ehGkHoje(lv,id));
-  /* nome em quadra marcado: a fila inteira vira o "sai para a fila, entra o próximo" */
+  /* nome em quadra marcado: a fila inteira é alvo — toque nela = sai para o fim, entra o próximo */
   const podeSair=!unica&&sel&&sel.id&&sel.kind!=='fora';
-  const saiFila=podeSair?(()=>{const q=sel.kind==='gk'&&!comRodizio(lv)?proxG:proxL;
-    return ` · <button class="lnk" data-a="saiFila" data-id="${sel.id}">${nomeSel} sai para a fila${q?', entra '+prim(q):''}</button>`})():'';
   const dica=!sel?''
-    :sel.kind==='linha'?`${nomeSel} — toque em quem entra no lugar, ou no 🧤 para ele ir ao gol`
+    :sel.kind==='linha'?`${nomeSel} — toque em quem entra no lugar`
     :sel.kind==='gk'?`${nomeSel} sai do gol — toque em quem vai para o gol`
     :sel.kind==='gkVazio'?'Gol vazio — toque em quem vai para o gol'
     :sel.kind==='vaga'?'Vaga — toque em quem entra'
     :sel.kind==='vagaT'?`Vaga no ${esc(lv.teams[sel.ti].name)} — toque em quem entra`
-    :`${nomeSel} — toque em quem sai, no 🧤 ou numa vaga`;
+    :`${nomeSel} — toque em quem sai`;
   const maisOpc=sel&&(sel.kind==='gk'||sel.kind==='gkVazio')?` · <button class="lnk" data-a="preGk" data-sd="${sel.side}">outras opções</button>`
     :sel&&sel.kind==='vaga'&&unica?` · <button class="lnk" data-a="fillPick" data-sd="${sel.side}">escolher da lista</button>`:'';
   const desfaz=(lv.preHist||[]).length?`${sel?' · ':''}<button class="lnk" data-a="preUndo">↶ desfazer</button>`:'';
@@ -3120,7 +3118,7 @@ function viewProxima(liga,lv){
            selGk:lv.sel==='gk:'+sd,selVaga:lv.sel==='vaga:'+sd,vaga:unica?'＋ completar':'＋ vaga · entra o próximo',
            foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false,alvoDe('fora:'+id),'fora:'+id)).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
     </div>
-    ${sel||desfaz?`<div class="tiny" style="margin:6px 2px 0">${dica}${saiFila}${maisOpc}${desfaz}</div>`:''}
+    ${sel||desfaz?`<div class="tiny" style="margin:6px 2px 0">${dica}${maisOpc}${desfaz}</div>`:''}
     ${unica?'':`<div class="filawrap" data-a="toTeam" data-i="-1" data-drop-zone="bench"${podeSair?' data-alvo="1"':''}>
       ${descansam.length?`<div class="chips">${descansam.map(chipFora).join('')}</div>`:''}
       ${soltos.length?filaHtml():!descansam.length?'<div class="tiny muted">Ninguém na fila: todo mundo em quadra.</div>':''}
@@ -3172,11 +3170,11 @@ function viewJogo(liga,lv){
   const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
   const dicaSub=!sel?''
-    :sel.kind==='linha'?`Sai ${nomeSel} — toque em quem entra, ou no 🧤 para ele ir ao gol`
+    :sel.kind==='linha'?`Sai ${nomeSel} — toque em quem entra`
     :sel.kind==='gk'?`${nomeSel} sai do gol — toque em quem vai para o gol`
     :sel.kind==='gkVazio'?'Gol vazio — toque em quem vai para o gol'
     :sel.kind==='vaga'?'Vaga na linha — toque em quem entra'
-    :`${nomeSel} entra — toque em quem sai, no 🧤 ou numa vaga`;
+    :`${nomeSel} entra — toque em quem sai`;
   const alvo=liga.cfg.targetGoals>0
     ? liga.cfg.targetGoals+' gols · '+liga.cfg.targetMin+' min'
     : liga.cfg.targetMin+' min';

@@ -335,7 +335,9 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    o tracejado; arrastar e desistir (voltar ao lugar ou soltar no vazio) não marca ninguém (`drag.longe`). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
    perde o texto de ajuda em repouso ("toque ou arraste num nome para substituir"). A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
 7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
-   frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi
+   frente entra; a fila inteira é alvo com um nome marcado) e fila ⇄ fila (trocam de ordem). A dica com
+   um nome marcado diz só o próximo passo ("João — toque em quem entra no lugar"); saiu o link "sai para
+   a fila" e o "ou no 🧤 para ele ir ao gol". "Foi
    embora" com um nome marcado é ele. Tudo com **↶ desfazer** (`preHist`, `preUndo`).
 8. **Chegou** no curto vai para o fim da fila (ou "🧤 Veio para o gol"). `toPool` no curto vira goleiro
    do dia + fila. Racha gravado antes com 3–4 times é convertido ao carregar.

@@ -94,8 +94,8 @@ Racha é racha: alguém cansa, alguém sai por qualquer razão. Tudo é toque ou
 gramática da partida ao vivo, e tudo tem **↶ desfazer**:
 
 - **nome em quadra sobre nome da fila**: trocam de lugar — quem sai assume a posição de quem entrou;
-- **nome em quadra sobre a fila** (ou o link "sai para a fila, entra Fulano" que aparece com o nome
-  marcado): vai para o fim da fila e **a frente da fila entra no lugar** na hora;
+- **nome em quadra sobre a fila** (arrastar, ou tocar no nome e depois no espaço da fila): vai para o fim
+  da fila e **a frente da fila entra no lugar** na hora;
 - **dois nomes da fila**: trocam de ordem;
 - **Foi embora** (com um nome marcado, é ele): a frente da fila entra na vaga na hora. Sem ninguém na
   fila, a **vaga fica à vista** ("＋ vaga · entra o próximo") e os dois lados entram menores e iguais;
@@ -107,7 +107,8 @@ gramática da partida ao vivo, e tudo tem **↶ desfazer**:
   tem que sair, volta para o lugar que tinha na fila**, sem perder a vez. Quem entra no lugar do goleiro é
   o goleiro do lado daí em diante.
 
-A tela em repouso não explica nada; a dica só aparece com um nome marcado, dizendo o próximo passo.
+A tela em repouso não explica nada; a dica só aparece com um nome marcado, e diz só o próximo passo
+("João — toque em quem entra no lugar").
 
 ### 2.4 Quem entra é sugestão, não regra
 

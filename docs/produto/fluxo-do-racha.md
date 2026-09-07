@@ -111,7 +111,7 @@ Cronômetro grande, dois blocos coloridos e os slots de goleiro:
   A dica abaixo da escalação diz o que a marca pede ("Fulano sai do gol — toque em quem vai para o gol", "Gol vazio — toque em quem vai para o gol", "Vaga na linha — toque em quem entra"). Quem entra no lugar do goleiro **é o goleiro**, venha do rodízio ou não. `↶` desfaz qualquer um desses lances inteiro.
 - **Na pré-partida vale a mesma gramática (D-123, D-129)** — sem folha de goleiro: toque ou arraste, com o 🧤, o gol vazio e a vaga como slots, e o tracejado verde mostrando o par. O que muda é que ali não há partida rodando, então o toque mexe no **estado da rodada**:
   - **nome ⇄ nome** (em quadra, na fila, entre os dois lados): **trocam de lugar de vez** — na fila, quem troca assume a **posição** do outro;
-  - **nome em quadra → fila** (arrastar até o card, ou o link "sai para a fila, entra Fulano" na dica): vai para o fim da fila e a frente da fila entra no lugar na hora;
+  - **nome em quadra → fila** (arrastar até a fila, ou tocar no nome e depois no espaço da fila): vai para o fim da fila e a frente da fila entra no lugar na hora;
   - **de fora → vaga**: entra de vez; **vaga tocada sem marca**: entra o próximo da fila;
   - **de fora → 🧤** com goleiro fixo: entra no lado no lugar do goleiro (ganha o 🧤 do dia) e o antigo vai para a fila com o 🧤; com um goleiro só (rodízio) é o goleiro **só desta partida**, e o do rodízio descansa na fila, de onde volta com um toque;
   - **de linha ⇄ 🧤 do mesmo lado**: trocam de papel nesta partida. Com rodízio, quem improvisa deixa a **vaga de linha** e a frente da fila entra nela na hora (D-122);
