@@ -412,7 +412,6 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .clock .t.hit{color:var(--ok);animation:pulse .9s infinite alternate}
 .clock .t.pause{color:var(--mute);opacity:.6}
 @keyframes pulse{to{opacity:.45}}
-.stintline{margin:-4px 0 9px;text-align:center}
 /* ao vivo, mais compacto (D-98): relógio em evidência, placar mais baixo,
    escalação e "fora" mais apertados — a tela toda cabe com menos rolagem   */
 .livetop{padding:2px 0 8px}
@@ -3245,8 +3244,6 @@ function viewJogo(liga,lv){
     <button class="iconbtn" data-a="pauseMatch" title="${c.paused?'retomar':'pausar'}" aria-label="${c.paused?'Retomar partida':'Pausar partida'}">${c.paused?ICO.play:ICO.pause}</button>
     <button class="iconbtn" data-a="cancelMatch" title="cancelar partida" aria-label="Cancelar partida">${ICO.close}</button>
   </div>
-  ${trechos.length>1?`<div class="stintline tiny muted">Trecho ${trechos.length} ·
-    <span class="num">${atual.score[0]}-${atual.score[1]}</span> em ${mmss(atual.dur)} — cada formação conta como uma partida</div>`:''}
   ${(()=>{
     /* o placar de cada lado é o CABEÇALHO da coluna do time (D-133): tocar
        nele é gol, e os jogadores embaixo são desse lado, dentro da mesma
