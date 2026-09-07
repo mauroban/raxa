@@ -647,18 +647,21 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .posc b.pod{color:var(--gold)}
 .posc span{font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
 /* gráfico de colunas em CSS puro (racha a racha): sem biblioteca, obedece ao tema */
-.chart{display:flex;align-items:flex-end;gap:5px;height:112px;padding-top:18px;margin-top:10px;position:relative}
-.chart .col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;position:relative}
-.chart .col i{display:block;width:100%;border-radius:2px;min-height:2px}
-.chart .col i.g{background:var(--gold)}
+.chart{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:28px;position:relative;border-bottom:1px solid var(--line2)}
+.chart .col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.chart .col i{display:block;width:100%;border-radius:4px 4px 0 0;min-height:2px}
+/* uma série, um matiz: os rachas passados num verde suave, o último no verde cheio */
+.chart .col i.g{background:color-mix(in srgb,var(--lime) 42%,var(--fill))}
 .chart .col.cur i.g{background:var(--lime)}
 .chart .col em{position:absolute;left:-4px;right:-4px;bottom:100%;text-align:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:12px;color:var(--mute);margin-bottom:3px;line-height:1}
-.chart .avg{position:absolute;left:0;right:0;border-top:1px dashed var(--mute2);pointer-events:none}
+.chart .col.cur em{color:var(--chalk)}
+.chart .avg{position:absolute;left:0;right:0;border-top:1.5px dashed var(--chalk);opacity:.75;pointer-events:none;z-index:1}
+.chart .avg b{position:absolute;right:0;bottom:2px;font-family:var(--body);font-weight:600;font-size:10px;color:var(--chalk);background:var(--panel);padding:0 4px;border-radius:4px;line-height:1.4}
 .chartx{display:flex;gap:5px;margin-top:5px}
 .chartx span{flex:1 1 0;min-width:0;text-align:center;font-size:9.5px;color:var(--mute2);font-family:var(--body);overflow:hidden;white-space:nowrap}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--mute)}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.legend i.avg{width:14px;height:0;border-top:1px dashed var(--mute2);border-radius:0;vertical-align:2px}
+.legend i.avg{width:14px;height:0;border-top:1.5px dashed var(--chalk);opacity:.75;border-radius:0;vertical-align:2px}
 /* ritmo: número grande, rótulo, e a média da liga para comparar */
 .rates{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .rate{background:var(--fill);border-radius:12px;padding:10px 12px;min-width:0}
@@ -3803,10 +3806,10 @@ ${cardPP}  <div class="card">
       const arr=ord.slice(-12);if(arr.length<2)return '';
       const max=Math.max(1,...arr.map(r=>r.gols)),media=ord.reduce((a,r)=>a+r.gols,0)/ord.length;
       return `<div class="k2" style="margin:16px 0 0">Gols por racha <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${arr.length<ord.length?'últimos '+arr.length:''}</span></div>
-      <div class="chart"><div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"></div>
+      <div class="chart"><div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"><b>média ${media.toFixed(1).replace('.',',')}</b></div>
         ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em>${r.gols}</em><i class="g" style="height:${(r.gols/max*100).toFixed(1)}%"></i></div>`).join('')}</div>
       ${eixoX(arr)}
-      <div class="legend"><span><i class="avg"></i>média ${media.toFixed(1).replace('.',',')} gols por racha</span><span><i style="background:var(--lime)"></i>último</span></div>`})()}
+      <div class="legend"><span><i class="avg"></i>média de gols por racha</span><span><i style="background:var(--lime)"></i>último racha</span></div>`})()}
   </div>
 
 ${cardJuntos}  <div class="card">
