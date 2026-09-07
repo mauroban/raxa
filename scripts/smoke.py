@@ -274,7 +274,7 @@ step('toque em quem esta em quadra marca o nome; o segundo toque desmarca',()=>{
   if(!/data-alvo="1"/.test(els['#app'].innerHTML))throw new Error('quem esta fora nao ficou marcado como par');
   A.subPick({dataset:{s:'0',id}});
   if(L().live.sel)throw new Error('tocar de novo deveria desmarcar');
-  if(!/Toque ou arraste num nome para substituir/.test(els['#app'].innerHTML))throw new Error('a dica padrao nao voltou');
+  if(/Toque ou arraste num nome para substituir/.test(els['#app'].innerHTML))throw new Error('sem nome marcado a tela nao explica nada');
 });
 step('toque em quem esta fora marca o nome',()=>{
   const b=benchList(L(),L().live);if(!b.length)return;
@@ -1292,6 +1292,22 @@ step('quem entra na vaga e escolha sua: foi embora com fila = a frente entra; de
   A.startMatch();
   if(!L().live.cur.lineups[1].includes(novos[1].id))throw new Error('quem foi escolhido nao entrou');
   A.finish({dataset:{r:'draw'}});
+});
+step('empate com fila curta: fica o lado que esta ha menos tempo em quadra, o outro roda o que a fila repoe',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,10).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  A.toTimes();A.startJogo();
+  try{
+    if(filaDe(lv).length!==2)throw new Error('cenario pede fila de 2');
+    A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});     // A vence: B roda 2
+    const B1=lv.teams[1].ids.slice(),A1=lv.teams[0].ids.slice();
+    A.startMatch();A.finish({dataset:{r:'draw'}});                           // empate: A esta ha mais tempo -> roda 2; B fica
+    if(lv.teams[1].ids.join()!==B1.join())throw new Error('quem esta ha menos tempo (B) devia ficar');
+    if(A1.filter(id=>!ehGkHoje(lv,id)).filter(id=>lv.teams[0].ids.includes(id)).length!==2)throw new Error('A devia rodar 2: '+lv.teams[0].ids);
+    if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===1))throw new Error('lastStay devia ser B');
+  }finally{S=salvo;render()}
 });
 step('sem ninguem na fila, os dois lados entram menores e iguais',()=>{
   const lv=L().live;

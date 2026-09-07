@@ -315,8 +315,10 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    Substitui "2 goleiros para 3 times viram rodízio".
 3. **Quem sai:** `seguidasHoje` (partidas seguidas em quadra, lidas das escalações — só fatos) em vez de
    "quem mais jogou hoje" (que tirava de quadra quem acabava de entrar); "mais jogou" é desempate.
-4. **Empate**, dito em pessoas: a fila repõe os dois lados → os dois rodam; repõe um → roda o que está há
-   mais tempo em quadra; não repõe nenhum → jogam de novo. D-39 continua valendo como caso particular.
+4. **Empate**, dito em pessoas: a fila repõe os dois lados inteiros → os dois rodam; senão fica o lado que
+   está há menos tempo em quadra e o outro roda o que a fila repuser (com fila de 2, saem 2 dele). D-39
+   continua valendo como caso particular. *(Ajuste no mesmo dia: a primeira versão deixava os dois quando
+   a fila não repunha um lado inteiro; a regra da quadra é a de cima.)*
 5. **Sem empréstimo:** `fillDe` é vazio no curto; um lado curto é completado na hora pela frente da fila
    (`completaLados`, chamado no fim, na largada, no "foi embora" e no "sai para a fila"). Sem fila, a vaga
    fica à vista e um toque nela põe o próximo (ou o nome tocado antes).
@@ -324,7 +326,8 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
    (até a próxima começar — sai do toast de 7 s e do bloco de partidas), a linha "Saem … → fim da fila ·
    Entram …" (`lv.ult`), a etiqueta **entrou** em quem entrou, a fila **numerada** com o corte "entram no
    próximo"/"depois", e o goleiro que espera com o 🧤 (`filaGrid`, a mesma fila e o mesmo corte na
-   partida ao vivo). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
+   partida ao vivo). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A partida ao vivo também
+   perde o texto de ajuda em repouso ("toque ou arraste num nome para substituir"). A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
 7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
    frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi
    embora" com um nome marcado é ele. Tudo com **↶ desfazer** (`preHist`, `preUndo`).

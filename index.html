@@ -3149,7 +3149,7 @@ function viewJogo(liga,lv){
   const alvoDe=key=>sel&&parAoVivo(sel,pecaAoVivo(liga,lv,key))?' data-alvo="1"':'';
   const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
-  const dicaSub=!sel?'Toque ou arraste num nome para substituir'
+  const dicaSub=!sel?''
     :sel.kind==='linha'?`Sai ${nomeSel} — toque em quem entra, ou no 🧤 para ele ir ao gol`
     :sel.kind==='gk'?`${nomeSel} sai do gol — toque em quem vai para o gol`
     :sel.kind==='gkVazio'?'Gol vazio — toque em quem vai para o gol'
@@ -3195,7 +3195,7 @@ function viewJogo(liga,lv){
        empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
       {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga'})).join('')}
   </div>
-  <div class="tiny ${sel?'':'muted'}" style="margin:6px 2px 0">${dicaSub}</div>
+  ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
   <div class="card" style="margin-top:8px">
     ${Math.min(c.lineups[0].length,c.lineups[1].length)<(lv.per+(comRodizio(lv)?1:0))?`<div class="tiny" style="color:var(--gold);margin-bottom:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
@@ -5241,8 +5241,8 @@ const A={
       lv.lastStay=result==='draw'?[c.a,c.b]:[lv.lastWinner];
       /* a roda (D-129): quem ganhou fica; do lado que perdeu sai quem está há
          mais tempo em quadra e entra a frente da fila. Empate: a fila repõe os
-         dois lados → os dois rodam; repõe um → roda o que está há mais tempo em
-         quadra; não repõe nenhum → ninguém sai, jogam de novo.               */
+         dois lados inteiros → os dois rodam; senão fica o lado que está há
+         menos tempo em quadra e o outro roda (tanto quanto a fila repuser). */
       if((lv.mode||l.cfg.matchMode)!=='unica'&&l.cfg.winnerStays){
         if(result!=='draw')saiu.push(result===0?c.b:c.a);
         else{
@@ -5250,7 +5250,7 @@ const A={
           const linha=ti=>lv.teams[ti].ids.filter(id=>rod||!ehGkHoje(lv,id)).length;
           const seg=seguidasHoje(l,lv),tempo=ti=>lv.teams[ti].ids.reduce((a,id)=>a+(seg[id]||0),0);
           if(filaL>=linha(c.a)+linha(c.b))saiu.push(c.a,c.b);
-          else if(filaL>=Math.min(linha(c.a),linha(c.b))){const mais=tempo(c.a)>=tempo(c.b)?c.a:c.b;saiu.push(mais);lv.lastStay=[mais===c.a?c.b:c.a]}
+          else if(filaL){const mais=tempo(c.a)>=tempo(c.b)?c.a:c.b;saiu.push(mais);lv.lastStay=[mais===c.a?c.b:c.a];lv.lastSide=mais===c.a?1:0}
         }
       }
     }

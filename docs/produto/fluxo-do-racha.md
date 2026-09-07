@@ -58,7 +58,7 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 | 8 pessoas | 4v4 — único caso em que se joga com menos, e a tela avisa |
 | Partida única, 10 de linha + 2 goleiros | 2 times de 6: 5 em quadra + 1 reserva cada |
 
-**A roda.** Ao fim de cada partida: **quem ganhou fica; do lado que perdeu sai quem está há mais tempo em quadra, tantos quantos a fila puder repor; entra quem está há mais tempo fora; quem saiu vai para o fim da fila.** O goleiro do lado só roda se há goleiro esperando na fila. Empate: a fila repõe os dois lados → os dois saem; repõe um → sai o que está há mais tempo em quadra; não repõe nenhum → jogam de novo. O ciclo inteiro está em [Regras do racha](regras-do-racha.md).
+**A roda.** Ao fim de cada partida: **quem ganhou fica; do lado que perdeu sai quem está há mais tempo em quadra, tantos quantos a fila puder repor; entra quem está há mais tempo fora; quem saiu vai para o fim da fila.** O goleiro do lado só roda se há goleiro esperando na fila. Empate: a fila repõe os dois lados inteiros → os dois saem; senão fica o lado que está há menos tempo em quadra e o outro roda o que a fila repuser; sem ninguém na fila, jogam de novo. O ciclo inteiro está em [Regras do racha](regras-do-racha.md).
 
 **Lado curto.** Alguém foi embora, alguém saiu para a fila: a frente da fila entra no lugar **na hora**, com aviso e desfazer. Não há empréstimo — quem entra, entra, e o rating enxerga isso naturalmente, porque a unidade é o trecho. Sem ninguém na fila, a **vaga tracejada fica à vista** ("＋ vaga · entra o próximo"): um toque nela põe o próximo da fila; um toque num nome e depois nela põe quem você escolher.
 

@@ -35,7 +35,7 @@ maioria o improviso chega em algum momento, e a roda é feita para ele.
 
 | Presentes (5v5) | Cada lado | Fila | Quando um lado perde |
 |---|---|---|---|
-| 8 de linha + 2 goleiros | 4 + goleiro | 0 | ninguém sai: jogam de novo |
+| 8 de linha + 2 goleiros | 4 + goleiro | 0 | ninguém sai: jogam de novo (empate também) |
 | 10 de linha + 2 goleiros | 4 + goleiro | 2 | saem 2, entram 2 |
 | 11 de linha + 2 goleiros | 4 + goleiro | 3 | saem 3, ficam o goleiro e mais um |
 | 12 de linha + 2 goleiros | 4 + goleiro | 4 | sai o lado inteiro, entram 4 — os times de sempre, intactos |
@@ -79,9 +79,10 @@ Lado B: saem 3 (os que estão há mais tempo em quadra)  →  fim da fila
 Lado A 5  x  5 Lado B (novo)   fila: os 3 que saíram
 ```
 
-**Empate:** a fila repõe os dois lados inteiros → os dois saem; repõe um lado → sai o que está há mais
-tempo em quadra; não repõe nenhum → ninguém sai, jogam de novo. Com 3 times de sempre isso é "fica o que
-entrou por último"; com 4, "os dois saem"; com 2, "jogam de novo" — D-39 continua valendo, dito em pessoas.
+**Empate:** se a fila tem gente para repor os dois lados inteiros, **os dois saem** e entram os próximos.
+Senão, **fica o lado que está há menos tempo em quadra** e o outro roda, tanto quanto a fila repuser (com
+fila de 2, saem 2 dele). Com 3 times de sempre isso é "fica o que entrou por último"; com 4, "os dois
+saem". Sem ninguém na fila, jogam de novo.
 
 **Depois do Fim, a tela diz o que a roda fez.** O placar registrado fica num cartão fixo no topo, com o
 **↩ Voltar a partida** ao lado, até a próxima começar; embaixo, "Saem X, Y → fim da fila · Entram Z, W".
