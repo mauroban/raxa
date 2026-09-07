@@ -128,6 +128,10 @@ input,textarea,select{font-family:var(--body);font-size:16px;background:var(--fi
 input:focus,textarea:focus{border-color:var(--chalk);box-shadow:0 0 0 1px var(--chalk) inset}
 label.f{display:block;margin-bottom:12px}
 label.f .k{display:block;margin-bottom:6px}
+/* campos lado a lado: cada um na sua coluna, rótulo numa linha só, alinhados pela base */
+.row.fields{align-items:flex-end}
+.row.fields .f{flex:1 1 0;min-width:0;margin:0}
+.row.fields .f .k{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* abas dentro de conteúdo (login) e segmentos */
 .tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--fill);border:0;
@@ -4252,20 +4256,20 @@ function viewCfgBody(liga){
   </div>
   <div class="card">
     <div class="k" style="margin-bottom:6px">Partida</div>
-    <div class="row" style="gap:8px">
-      <label class="f" style="flex:1;margin:0"><span class="k">Gols (0 = sem alvo)</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals"></label>
-      <label class="f" style="flex:1;margin:0"><span class="k">Minutos</span><input type="number" value="${c.targetMin}" data-cfg="targetMin"></label>
-      <label class="f" style="flex:1;margin:0"><span class="k">Trecho mín. (min)</span><input type="number" value="${c.stintMin}" data-cfg="stintMin"></label>
+    <div class="row fields" style="gap:8px">
+      <label class="f" title="0 = sem alvo de gols"><span class="k">Gols</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals" placeholder="0 = sem"></label>
+      <label class="f"><span class="k">Minutos</span><input type="number" value="${c.targetMin}" data-cfg="targetMin"></label>
+      <label class="f" title="trecho mínimo para contar, em minutos"><span class="k">Trecho mín.</span><input type="number" value="${c.stintMin}" data-cfg="stintMin"></label>
     </div>
     ${[['winnerStays','Vencedor fica em quadra'],['askScorer','Perguntar autor do gol'],['avoidRepeat','Evitar repetir quem já jogou junto']]
       .map(x=>`<div class="row" style="padding:6px 0 0"><div>${x[1]}</div>
         <button class="btn sm sp ${c[x[0]]?'pri':'ghost'}" data-a="toggleCfg" data-k="${x[0]}">${c[x[0]]?'Sim':'Não'}</button></div>`).join('')}
   </div>
   <div class="card">
-    <div class="row" style="gap:8px">
-      <label class="f" style="flex:1;margin:0"><span class="k">Contestações para disputar</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
-      <div style="flex:1;min-width:0"><div class="k" style="margin-bottom:6px">Ao atingir</div>
-        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
+    <div class="row fields" style="gap:8px">
+      <label class="f" title="quantas contestações marcam a partida como disputada"><span class="k">Contestações</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
+      <div class="f"><div class="k" style="margin-bottom:6px">Ao atingir</div>
+        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%;min-height:48px">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
     </div>
   </div>
   <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
