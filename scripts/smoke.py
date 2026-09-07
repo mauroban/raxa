@@ -531,11 +531,10 @@ step('foi embora no meio da partida: sai de tudo, a partida segue com um a menos
   const st=splitStints(c,Date.now()+60000,L().cfg);
   if(st[st.length-1].lineups[1].includes(id))throw new Error('o trecho seguinte ainda conta com ele');
 });
-step('quem nao e do time original leva o icone de substituto',()=>{
+step('a escalacao nao leva o icone ⇄ de substituto: quem entrou tem a seta verde (D-129)',()=>{
   const lv=L().live,c=lv.cur;if(!c)return;render();
-  const orig=(c.startLineups||c.lineups)[0];              // o ⇄ e contra a escalacao de largada (D-129: o lado muda de gente a cada giro)
-  const estranho=c.lineups[0].find(id=>!orig.includes(id)&&id!==c.gks[0]);
-  if(estranho&&!/⇄/.test(els['#app'].innerHTML))throw new Error('substituto sem o icone ⇄');
+  if(/class="ic sub"/.test(els['#app'].innerHTML))throw new Error('o ⇄ de substituto devia ter saido');
+  if(c.events.some(e=>e.type==='sub'&&e.in)&&!/title="entrou">▲/.test(els['#app'].innerHTML))throw new Error('quem entrou nesta partida devia levar a seta verde');
 });
 step('substituir tocando em quem esta fora e depois em quem sai',()=>{
   const fora=benchList(L(),L().live),out=L().live.cur.lineups[1][0];

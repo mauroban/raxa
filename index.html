@@ -3032,7 +3032,7 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const pool=lv.gkPool||[];extra=extra||{};
   const linha=ids.filter(id=>id!==gk);
   const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(liga,p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
-  const subIc=id=>orig&&!orig.includes(id)?'<span class="ic sub" title="entrou depois: substituto / completando">⇄</span>':'';
+  const subIc=()=>'';   // sem o ⇄ de substituto: quem entrou leva a seta verde, e só (D-129)
   const tag=id=>extra.tag?extra.tag(id):'';
   const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''} ${tag(id)?'novo':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}${tag(id)}</button>`
     :`<button class="pl ${cls} empty ${extra.selVaga?'sel':''}" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':extra.vaga||(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
