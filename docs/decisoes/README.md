@@ -142,6 +142,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-119](interface.md#d-119) · Sem o botão "Carregar o racha de sábado"
 - [D-120](interface.md#d-120) · O cartão de opinião cabe na tela do celular
 - [D-131](interface.md#d-131) · Ajustes enxutos: só o que se mexe, cartões agrupados, sem texto explicando o óbvio
+- [D-133](interface.md#d-133) · O placar é o cabeçalho da coluna do time: cada lado é uma coluna na cor do time, a fila fica fora
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 

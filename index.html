@@ -370,6 +370,20 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2.vs3{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;margin-top:10px}
 .esc2.vs3 .vs{display:none}
 .esc2 .col>.slot{display:block;width:100%;margin-bottom:6px}
+/* Coluna do time (D-133): cabeçalho e jogadores são uma peça só, na cor do
+   time — fica claro quem está em quadra por qual lado; a fila fica fora   */
+.esc2 .col.team{--tc:var(--bibA);border-radius:16px;padding:6px;border:1.5px solid color-mix(in srgb,var(--tc) 55%,transparent);background:color-mix(in srgb,var(--tc) 7%,var(--panel))}
+.esc2 .col.team.tB{--tc:var(--bibB)} .esc2 .col.team.tC{--tc:var(--bibC)} .esc2 .col.team.tD{--tc:var(--bibD)}
+.esc2 .col.team>.slot{background:var(--tc);color:#fff;border-top:0;border-radius:11px;padding:10px 8px}
+.esc2 .col.team>.slot .sub,.esc2 .col.team>.slot .pc{color:#fff;opacity:.85}
+.esc2 .col.team>.slot .sub .fica{color:#fff;opacity:1}
+.esc2 .col.team.tD>.slot{color:#0F1F16} .esc2 .col.team.tD>.slot .sub,.esc2 .col.team.tD>.slot .pc,.esc2 .col.team.tD>.slot .sub .fica{color:#0F1F16}
+.esc2 .col.team>.side{width:100%;margin-bottom:6px;border-radius:11px;min-height:112px;display:flex;flex-direction:column;justify-content:center;padding:10px 8px 8px}
+.esc2 .col.team>.side .sc{font-size:clamp(44px,12vw,64px);margin:2px 0}
+.esc2 .col.team>.side .nm{font-size:13px}
+.esc2 .col.team>.side .minuszone{width:56px;height:56px} .esc2 .col.team>.side .minus{top:8px;right:8px;width:34px;height:34px;font-size:19px}
+.esc2 .col.team .pl{margin-top:4px}
+.esc2 .col.team .pl.gk{margin-top:0}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
 .slot{border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;border:1px solid transparent;
@@ -3028,7 +3042,7 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
      fixo (partida única, ou um por time) é um dos `per`.                    */
   const n=Math.max(comRodizio(lv)?per:per-(gk?1:0),linha.length);
   for(let i=0;i<n;i++){const id=linha[i];h+=slot(id,'',id&&act?act.pl(id):'')}
-  return `<div class="col" ${extra.attrs||''}>${extra.head||''}${h}${extra.foot||''}</div>`;
+  return `<div class="col ${extra.cls||''}" ${extra.attrs||''}>${extra.head||''}${h}${extra.foot||''}</div>`;
 }
 
 /* Um nome dentro de um time, com o ponto do nível e o arraste ligado. */
@@ -3148,7 +3162,7 @@ function viewProxima(liga,lv){
            pl:id=>`data-a="prePick" data-id="${id}" data-drag="1" data-drop-player="${id}"${compl[sd].includes(id)?` data-fill="${sd}" title="completa só esta partida — toque para tirar"`:''}${alvoDe(id)}`,
            /* a vaga fica sempre à vista: um toque nela e entra o próximo da fila */
            empty:`data-a="prePick" data-slot="vaga" data-s="${sd}" data-drop-slot="vaga:${sd}"${alvoDe('vaga:'+sd)}`},
-          {attrs:`data-a="toTeam" data-i="${ti}" data-drop-zone="team:${ti}"`,head:cab(sd),tag,
+          {attrs:`data-a="toTeam" data-i="${ti}" data-drop-zone="team:${ti}"`,head:cab(sd),tag,cls:'team t'+TEAMCLASS[ti].toUpperCase(),
            selGk:lv.sel==='gk:'+sd,selVaga:lv.sel==='vaga:'+sd,vaga:unica?'＋ completar':'＋ vaga · entra o próximo',
            foot:res.length?`<div class="res"><div class="k">Reservas</div><div class="chips">${res.map(id=>tpChip(liga,lv,id,false,alvoDe('fora:'+id),'fora:'+id)).join('')}</div></div>`:''})}).join('<div class="vs">VS</div>')}
     </div>
@@ -3229,19 +3243,17 @@ function viewJogo(liga,lv){
   </div>
   ${trechos.length>1?`<div class="stintline tiny muted">Trecho ${trechos.length} ·
     <span class="num">${atual.score[0]}-${atual.score[1]}</span> em ${mmss(atual.dur)} — cada formação conta como uma partida</div>`:''}
-  <div class="scoreb big">
-    ${[0,1].map(s=>{const ti=s===0?c.a:c.b;return `
+  ${(()=>{
+    /* o placar de cada lado é o CABEÇALHO da coluna do time (D-133): tocar
+       nele é gol, e os jogadores embaixo são desse lado, dentro da mesma
+       moldura na cor do time                                               */
+    const placar=s=>{const ti=s===0?c.a:c.b;return `
       <div class="side ${TEAMCLASS[ti]}" data-a="goal" data-s="${s}">
         <div class="nm">${esc(t[s].name)}</div>
         <div class="sc num">${c.score[s]}</div>
         <div class="hint">${ex?pct(ex[s])+' de chance':'toque = gol'}</div>
         ${c.score[s]?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
-      </div>`}).join('<div class="vs">VS</div>')}
-  </div>
-  <div id="scorer"></div>
-  ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
-    return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">${bi('warn')} ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
-  ${(()=>{
+      </div>`};
     /* mesma tela da pré-partida (D-129): escalação e fila num cartão só, as
        colunas da fila embaixo das colunas dos lados; ▲ em quem entrou nesta
        partida, ▼ em quem saiu                                              */
@@ -3258,8 +3270,11 @@ function viewJogo(liga,lv){
              :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
        pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
        empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
-      {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga',tag:tagIn})).join('')}
+      {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga',tag:tagIn,head:placar(s),cls:'team t'+TEAMCLASS[s===0?c.a:c.b].toUpperCase()})).join('')}
     </div>
+    <div id="scorer"></div>
+    ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
+      return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">${bi('warn')} ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
     ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
     ${Math.min(c.lineups[0].length,c.lineups[1].length)<(lv.per+(comRodizio(lv)?1:0))?`<div class="tiny" style="color:var(--gold);margin-top:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}

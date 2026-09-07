@@ -261,3 +261,16 @@ numa linha, Aparência, arquivados, Dados. A tela do admin caiu de ~10 telas de 
 **Por quê:** "a tela de ajustes tem muito texto que não devia estar lá". O que precisa de explicação
 mora em `docs/produto/`, não na quadra (mesma régua de D-129: não explicar o óbvio).
 **Onde:** `viewCfg`, `viewCfgBody` em `index.html` · `scripts/visual.py` (tela 7 passa a ser a do admin).
+
+<a id="d-133"></a>
+### D-133 · O placar é o cabeçalho da coluna do time
+**Quando:** 2026-09-07.
+**O quê:** na partida ao vivo e na próxima partida, cada lado é **uma coluna na cor do time**
+(`.esc2 .col.team`, moldura e fundo tingidos por `--tc`): o bloco do placar (toque = gol) ou o nome com a
+chance é o cabeçalho, e os jogadores vêm logo abaixo, dentro da mesma moldura. Some o placar solto
+acima da escalação e o "VS" do meio (ele estreitava as colunas). A fila fica fora das molduras, no
+mesmo cartão. O aviso de gol sem autor e a tirinha do autor ficam logo abaixo das colunas.
+**Por quê:** "os jogadores em campo podem estar mais ligados ao seu time, como uma continuação de
+TIME A e TIME B — fica claro quem está em campo e quem está fora".
+**Onde:** `escCol` (`extra.cls`), `viewJogo` (`placar(s)` como `head`), `viewProxima` em `index.html` ·
+`scripts/visual.py` (telas 3, 4 e 15).

@@ -74,7 +74,7 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 
 ## 3. Durante — 1 toque por partida
 
-Cronômetro grande, dois blocos coloridos e os slots de goleiro:
+Cronômetro grande e, embaixo, **uma coluna por time, na cor do time** (D-133): o bloco do placar é o cabeçalho da coluna e a escalação vem logo abaixo, dentro da mesma moldura — quem está em quadra por qual lado se vê sem ler. A fila fica fora das molduras. A tela da próxima partida tem o mesmo desenho, com o nome e a chance do time no cabeçalho.
 
 - **Tocar no bloco do time = +1 gol.** Aparece uma tirinha logo abaixo do placar com os nomes daquele time para marcar o autor — toca ou ignora, ela some sozinha em 10 s. **Nunca bloqueia.** Enquanto houver **gol sem autor**, um aviso discreto fica abaixo do placar ("⚠️ 1 gol sem autor — toque para marcar") e abre a escolha do autor (D-101).
 - **Os gols ficam listados abaixo do placar**, com minuto e autor: `3'12 — Rodrigo ✕`. Toque no nome para corrigir o autor (ou colocar um que você tinha pulado), e no **✕** para apagar aquele gol específico. É mais direto que um "desfazer" cego, porque você vê exatamente o que está removendo.
