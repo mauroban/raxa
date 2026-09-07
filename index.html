@@ -2672,6 +2672,24 @@ function fechaMontagem(liga,lv){
   lv.fila=resto.concat(filaDe(lv).filter(id=>!resto.includes(id)));
   lv.queue=[];lv.nextPair=null;
 }
+/* Quantos de linha a fila repõe no próximo giro: um lado inteiro (N−1 de
+   linha com goleiro fixo, N com rodízio ou sem goleiro), ou o que a fila tem. */
+function entramNoProximo(liga,lv,filaL){
+  const per=lv.per||perTeamSize(liga,comRodizio(lv));
+  const temGk=lv.presentIds.some(id=>ehGkHoje(lv,id));
+  return Math.min(per-(comRodizio(lv)||!temGk?0:1),filaL);
+}
+/* A fila desenhada: numerada, com o corte "entram no próximo" / "depois";
+   goleiro sem número, junto do time dele. `chip(id)` desenha cada nome.   */
+function filaGrid(liga,lv,ids,chip){
+  const filaL=ids.filter(id=>!ehGkHoje(lv,id)),n=entramNoProximo(liga,lv,filaL.length);
+  let pos=0,corte=false;const out=[];
+  if(n)out.push(`<div class="corte">${n===filaL.length||n>=entramNoProximo(liga,lv,99)?'entram no próximo':`entram ${n} no próximo`}</div>`);
+  ids.forEach(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
+    if(!g&&pos===n+1&&!corte&&filaL.length>n){out.push('<div class="corte">depois</div>');corte=true}
+    out.push(`<div><span class="filapos">${g?'':pos}</span>${chip(id)}</div>`)});
+  return `<div class="filagrid">${out.join('')}</div>`;
+}
 /* os times como foram montados (D-50): a montagem guardada, ou a composição original dos lados */
 const timesMontados=lv=>Array.isArray(lv.montagem)&&lv.montagem.length?lv.montagem.map(t=>({name:t.name,ids:[...t.ids]}))
   :(lv.teams||[]).map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids||[])]}));
@@ -3060,16 +3078,7 @@ function viewProxima(liga,lv){
       <div class="sub">${ex?'<b>'+pct(ex[sd])+'</b> de chance':escal[sd].length+' em quadra'}${venceu?' · <span class="fica">venceu, fica</span>':ficou?' · <span class="fica">fica</span>':''}${gp.fica[sd]?' · 🧤 fica':''}</div></div>`};
   /* a fila, numerada: quem está fora há mais tempo entra primeiro; um risco
      separa quem entra no próximo giro de quem espera mais um                */
-  const filaHtml=()=>{
-    const filaL=soltos.filter(id=>!ehGkHoje(lv,id));
-    const nLinha=Math.min(per-(comRodizio(lv)?0:(lv.teams[pair[0]].ids.some(id=>ehGkHoje(lv,id))?1:0)),filaL.length);
-    let pos=0,corte=false;const out=[];
-    if(nLinha)out.push(`<div class="corte">${nLinha===filaL.length&&filaL.length<per?'entram no próximo':nLinha>=per-1?'entram no próximo':`entram ${nLinha} no próximo`}</div>`);
-    soltos.forEach(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
-      if(!g&&pos===nLinha+1&&!corte&&filaL.length>nLinha){out.push('<div class="corte">depois</div>');corte=true}
-      out.push(`<div><span class="filapos">${g?'':pos}</span>${chipFora(id)}</div>`)});
-    return `<div class="filagrid">${out.join('')}</div>`;
-  };
+  const filaHtml=()=>filaGrid(liga,lv,soltos,chipFora);
   const nomes=ids=>ids.map(prim).join(', ');
   return `
   ${u?`<div class="card done">
@@ -3197,11 +3206,10 @@ function viewJogo(liga,lv){
     <div class="row"><div class="k">Fila — toque para colocar em quadra</div>
       <div class="sp num" style="font-family:var(--disp);font-size:16px">${fora.length}</div></div>
     ${(()=>{if(!fora.length)return '<div class="tiny muted" style="margin-top:8px">Ninguém de fora.</div>';
-      /* na ordem da fila (D-129): quem está fora há mais tempo primeiro; o goleiro que descansa no fim */
+      /* na ordem da fila (D-129), com o mesmo corte da pré-partida; o goleiro que descansa no fim */
       const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
-      const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id));let pos=0;
-      return `<div class="filagrid">${lista.map(o=>{const g=ehGkHoje(lv,o.id)||o.ti===-2;if(!g)pos++;
-        return `<div><span class="filapos">${g?'':pos}</span>${chipFora(o)}</div>`}).join('')}</div>`})()}
+      const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
+      return filaGrid(liga,lv,lista,id=>chipFora({id}))})()}
     <div class="hr"></div>
     <div class="acts3">
       <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>

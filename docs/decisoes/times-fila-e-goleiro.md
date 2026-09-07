@@ -323,8 +323,8 @@ que perdeu sai quem está há mais tempo em quadra; entra quem está há mais te
 6. **Tela da próxima partida:** cartão fixo no topo com o placar registrado e o **↩ Voltar a partida**
    (até a próxima começar — sai do toast de 7 s e do bloco de partidas), a linha "Saem … → fim da fila ·
    Entram …" (`lv.ult`), a etiqueta **entrou** em quem entrou, a fila **numerada** com o corte "entram no
-   próximo"/"depois", e o goleiro que espera com o 🧤. Some "Fora agrupado por time", "Sem time" e
-   "🧤 Rodízio". A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
+   próximo"/"depois", e o goleiro que espera com o 🧤 (`filaGrid`, a mesma fila e o mesmo corte na
+   partida ao vivo). Some "Fora agrupado por time", "Sem time" e "🧤 Rodízio". A tela em repouso **não explica nada**: a dica só aparece com um nome marcado.
 7. **Mexer na mão** com a gramática que já existia mais dois pares: nome em quadra → fila (fim dela, e a
    frente entra; link "sai para a fila, entra Fulano" na dica) e fila ⇄ fila (trocam de ordem). "Foi
    embora" com um nome marcado é ele. Tudo com **↶ desfazer** (`preHist`, `preUndo`).
