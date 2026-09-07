@@ -248,3 +248,16 @@ abaixo do cartão parou em "Pense no que o time ganha com a pessoa em quadra"; o
 Tocar de novo tira" saiu. E com **todas as opiniões dadas** a folha abre no "✓ todas dadas", não
 no cartão da primeira pessoa da lista (`OPV.i = -1`): o cartão por padrão dava a sensação de que
 ainda faltava opinar. Tocar num nome da lista continua abrindo o cartão dele.
+
+<a id="d-131"></a>
+### D-131 · Ajustes enxutos: só o que se mexe
+**Quando:** 2026-09-07.
+**O quê:** a tela de Ajustes perdeu todo texto que explicava o óbvio ou repetia a documentação:
+"Quem tiver esse código entra", "Definido na criação…", o parágrafo inteiro de "Como o nível anda"
+(K, calibração, D-94), as frases sob "Quem vê os níveis", sob os nomes dos níveis, sob Aparência,
+sob "Trecho mínimo" e sob Dados. Os cartões foram agrupados: **Liga** (formato, quem vê, nomes dos
+níveis), **Partida** (gols, minutos e trecho mínimo numa linha; os três interruptores), Contestação
+numa linha, Aparência, arquivados, Dados. A tela do admin caiu de ~10 telas de rolagem para ~3.
+**Por quê:** "a tela de ajustes tem muito texto que não devia estar lá". O que precisa de explicação
+mora em `docs/produto/`, não na quadra (mesma régua de D-129: não explicar o óbvio).
+**Onde:** `viewCfg`, `viewCfgBody` em `index.html` · `scripts/visual.py` (tela 7 passa a ser a do admin).

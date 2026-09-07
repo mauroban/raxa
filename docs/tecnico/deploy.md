@@ -79,7 +79,9 @@ gh api -X POST repos/:owner/raxa/pages -f "source[branch]=main" -f "source[path]
 
 1. Abra a URL, **Criar conta**, usuário e senha (mínimo 6 caracteres).
 2. **+ Nova liga** (não há mais liga de exemplo pronta — D-119; os scripts de teste ainda montam a deles).
-3. Aba **Ajustes** → o **código de convite** de 6 caracteres está no topo. Compartilhe.
+3. Aba **Ajustes** → o **código de convite** de 6 caracteres está no topo. Compartilhe. O admin
+   pode trocá-lo a qualquer momento em **Novo** (o antigo deixa de valer na hora; quem já é membro
+   não muda nada — D-130).
 4. Cada pessoa cria a conta dela e usa **Entrar com um código**. Isso gera um
    **pedido**: o admin aprova em **Jogadores → Membros** e a liga aparece para a
    pessoa na hora (ela vê "Aguardando aprovação" na home até lá).

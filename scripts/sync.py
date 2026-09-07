@@ -104,6 +104,11 @@ function fakeClient(){
         DB.requests.push({league_id:row.id,user_id:uidNow(),requested_at:new Date().toISOString()});
       return{data:{status:'pending',id:row.id,name:row.name},error:null};
     },
+    rotate_code({p_id}){
+      const l=DB.leagues.find(x=>x.id===p_id);
+      if(!l||l.owner_id!==uidNow())return{data:null,error:{message:'so o admin troca o codigo'}};
+      l.code='COD'+(++CODEN);emit('UPDATE',l);return{data:l.code,error:null};
+    },
     my_requests(){
       return{data:DB.requests.filter(r=>r.user_id===uidNow()).map(r=>({league_id:r.league_id,name:DB.leagues.find(l=>l.id===r.league_id).name,requested_at:r.requested_at})),error:null};
     },
@@ -627,6 +632,17 @@ await step('a batida de rede confere a liga quando o realtime ficou mudo',async(
 });
 
 console.log('\n[sync] sair da liga e apagar');
+await step('trocar o codigo de convite: o antigo deixa de valer, o novo aparece nos ajustes (D-130)',async()=>{
+  const id=S.active;if(!id)throw new Error('sem liga ativa');
+  const antes=CODE[id];global.confirm=()=>true;
+  await A.newCode();
+  if(!CODE[id]||CODE[id]===antes)throw new Error('o codigo nao mudou: '+CODE[id]);
+  const r=await sb.rpc('join_league',{p_code:antes});
+  if(!r.error)throw new Error('o codigo antigo ainda entra');
+  S.ui.tab='cfg';render();
+  if(document.querySelector('#app').innerHTML.indexOf(CODE[id])<0)throw new Error('o codigo novo nao aparece nos ajustes');
+});
+
 await step('o dono nao apaga enquanto ha outro membro',async()=>{
   S.active=ligaId;
   ok('o app sabe que mauro e o dono',DONO[ligaId]===true);

@@ -101,6 +101,7 @@ DRIVER = r"""
     }
     if(step===11||step===12||step===13)S.ui.tab='ranking';
     if(step===16){const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';}
+    if(step===7){const eu=L().players[1];eu.role='admin';}   /* ajustes: a tela cheia e a do admin */
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';

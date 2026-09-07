@@ -186,3 +186,14 @@ sido marcado presente em algum racha — a presença sai das sessões junto com 
 **Ajuste no mesmo dia (4):** a descrição aparece também no cartão de *Minhas opiniões*, abaixo do
 nome e mais discreta — é lá que mais importa saber de quem se está falando. Alinhamento: a foto
 fica ao lado de nome e apelido; o "hoje" com o badge vai numa linha própria embaixo da foto.
+
+<a id="d-130"></a>
+### D-130 · Trocar o código de convite
+**Quando:** 2026-09-07.
+**O quê:** botão **Novo** ao lado do código em Ajustes (só o admin): `rotate_code(p_id)` gera outro
+código no servidor (`gen_code`, único), o antigo deixa de valer na hora e quem já é membro não muda
+nada. Pergunta antes; o código novo aparece no toast e no cartão.
+**Por quê:** código vaza (print no grupo, pessoa que saiu). Sem isso a única saída era criar outra liga.
+**Onde:** `A.newCode` (`index.html`), `rotate_code` + grant em `supabase/schema.sql` (**rodar o SQL de
+novo**), rpc falsa e teste em `scripts/sync.py` · [Contas e permissões](../produto/contas-e-permissoes.md) ·
+[Deploy §3](../tecnico/deploy.md).

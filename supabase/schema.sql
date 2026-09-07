@@ -256,6 +256,18 @@ begin
   return jsonb_build_object('status','pending','id',l.id,'name',l.name);
 end $fn$;
 
+-- Trocar o código de convite (D-130): o admin gera outro e o antigo deixa de
+-- valer na hora — quem já é membro não muda nada. Devolve o código novo.
+create or replace function public.rotate_code(p_id uuid)
+returns text language plpgsql security definer set search_path = public as $fn$
+declare c text;
+begin
+  if not public.is_league_admin(p_id) then raise exception 'so o admin troca o codigo'; end if;
+  update public.leagues set code = public.gen_code() where id = p_id returning code into c;
+  if c is null then raise exception 'liga nao encontrada'; end if;
+  return c;
+end $fn$;
+
 -- Meus pedidos pendentes (a liga em si não é legível antes de virar membro).
 create or replace function public.my_requests()
 returns table(league_id uuid, name text, requested_at timestamptz)
@@ -320,6 +332,7 @@ begin
 end $do$;
 
 grant execute on function public.join_league(text)                to authenticated;
+grant execute on function public.rotate_code(uuid)                to authenticated;
 grant execute on function public.my_requests()                    to authenticated;
 grant execute on function public.cancel_request(uuid)             to authenticated;
 grant execute on function public.league_accounts(uuid)            to authenticated;

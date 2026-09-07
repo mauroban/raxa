@@ -2312,7 +2312,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
   'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer','arquivar','reativar']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -4221,95 +4221,61 @@ function cardArquivados(liga){
 }
 function viewCfgBody(liga){
   const c=liga.cfg;
-  if(!souAdmin(liga))return `
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Formato da liga</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}</div>
-    <div class="tiny muted" style="margin-top:4px">Alvo: ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}.</div>
-  </div>
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Como o nível anda</div>
-    <div class="tiny muted" style="line-height:1.55">Elo de time, igual em toda liga. A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>, separada para linha e para goleiro. Quem sobe só cai depois de passar bem abaixo do corte.</div>
-  </div>
-  ${cardArquivados(liga)}
-  <div class="card">
-    <div class="k" style="margin-bottom:8px">Aparência</div>
-    <div class="row" style="gap:6px;margin-bottom:8px">
+  const fmt=`${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}`;
+  const tema=`<div class="row" style="gap:6px">
       ${[['claro','☀ Claro'],['escuro','☽ Escuro'],['auto','Automático']].map(x=>
         `<button class="btn sm ${(S.ui.theme||'claro')===x[0]?'pri':'ghost'}" data-a="setTheme" data-v="${x[0]}" style="flex:1">${x[1]}</button>`).join('')}
-    </div>
-    <div class="tiny muted">Vale só neste aparelho.</div>
-  </div>
+    </div>`;
+  /* Ajustes enxutos (D-131): só o que se mexe, sem texto explicando o óbvio */
+  if(!souAdmin(liga))return `
   <div class="card">
-    <div class="row"><div class="tiny muted" style="min-width:0">Os ajustes da liga são do admin.</div>
-      ${DONO[liga.id]?'':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}</div>
-  </div>`;
+    <div class="k" style="margin-bottom:6px">Formato</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${fmt}</div>
+    <div class="tiny muted" style="margin-top:4px">Alvo ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}</div>
+  </div>
+  ${cardArquivados(liga)}
+  <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
+  ${DONO[liga.id]?'':`<div class="card"><div class="row"><div class="tiny muted">Os ajustes da liga são do admin.</div><button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button></div></div>`}`;
   return `
   <div class="card">
-    <div class="k" style="margin-bottom:6px">Formato da liga</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}</div>
-    <div class="tiny muted" style="margin-top:4px">Definido na criação. Para outro formato ou modo, crie outra liga.</div>
-  </div>
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Como o nível anda</div>
-    <div class="tiny muted" style="line-height:1.55">Igual em toda liga, sem ajuste: Elo de time. O peso de cada partida acompanha a incerteza: quem entra sem nível anda rápido (K 64) e vai assentando (K 20) conforme joga; quem entra com palpite anda na metade disso (K 32 → 20). Quem sobe só cai depois de passar bem abaixo do corte — isso segura o sobe-e-desce entre duas divisões.
-      A patente aparece depois de <b>${calMeta(liga).n} ${calMeta(liga).u}</b>; o peso continua assentando até 3× isso. Vale separado para o nível de linha e o de goleiro.${souAdmin(liga)?' O app não avisa "palpite errado" — com times equilibrados os resultados não dizem isso mais rápido que meses (D-94); quem conhece o jogador corrige na ficha.':''}</div>
-  </div>
-  <div class="card">
-    <div class="k" style="margin-bottom:8px">Quem vê os níveis</div>
-    <div class="row" style="gap:6px;margin-bottom:8px">
+    <div class="k" style="margin-bottom:6px">Liga</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${fmt}</div>
+    <div class="k" style="margin:14px 0 6px">Quem vê os níveis</div>
+    <div class="row" style="gap:6px">
       <button class="btn sm ${c.rankVisibility!=='admin'?'pri':'ghost'}" data-a="setVis" data-v="todos" style="flex:1">Todo mundo</button>
       <button class="btn sm ${c.rankVisibility==='admin'?'pri':'ghost'}" data-a="setVis" data-v="admin" style="flex:1">Só o admin</button>
     </div>
-    <div class="tiny muted">${c.rankVisibility==='admin'
-      ?'A aba Jogadores mostra só as estatísticas para quem não é admin. Serve para grupo em que o nível exposto viraria zoação.'
-      :'Todo mundo vê a escada completa. O rating numérico continua invisível para todos.'}</div>
-  </div>
-  <div class="card">
-    <div class="k" style="margin-bottom:10px">Nomes dos níveis (da pior para a melhor)</div>
-    ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:8px">
+    <div class="k" style="margin:14px 0 6px">Nomes dos níveis · da pior para a melhor</div>
+    ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:6px">
       <span class="swatch" style="--pc:${PATFILL[i]}"></span>
       <input value="${esc(n)}" data-pat="${i}" style="flex:1"></div>`).join('')}
-    <div class="tiny muted">Cada nível tem 3 divisões, marcadas por riscos: um risco é o primeiro degrau, três é o melhor. Cada jogador tem duas: uma de linha e uma de goleiro.</div>
   </div>
   <div class="card">
-    <div class="k" style="margin-bottom:8px">Aparência</div>
-    <div class="row" style="gap:6px;margin-bottom:8px">
-      ${[['claro','☀ Claro'],['escuro','☽ Escuro'],['auto','Automático']].map(x=>
-        `<button class="btn sm ${(S.ui.theme||'claro')===x[0]?'pri':'ghost'}" data-a="setTheme" data-v="${x[0]}" style="flex:1">${x[1]}</button>`).join('')}
-    </div>
-    <div class="tiny muted" style="margin-bottom:14px">Claro é o padrão: é o que se lê no sol, em quadra descoberta. Para racha à noite, o escuro cansa menos a vista. Vale só neste aparelho.</div>
-    <div class="hr"></div>
-    <div class="k" style="margin-bottom:10px">Alvo (0 gols = sem alvo de gols)</div>
+    <div class="k" style="margin-bottom:6px">Partida</div>
     <div class="row" style="gap:8px">
-      <label class="f" style="flex:1;margin:0"><span class="k">Gols</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals"></label>
+      <label class="f" style="flex:1;margin:0"><span class="k">Gols (0 = sem alvo)</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals"></label>
       <label class="f" style="flex:1;margin:0"><span class="k">Minutos</span><input type="number" value="${c.targetMin}" data-cfg="targetMin"></label>
+      <label class="f" style="flex:1;margin:0"><span class="k">Trecho mín. (min)</span><input type="number" value="${c.stintMin}" data-cfg="stintMin"></label>
     </div>
-    <div class="hr"></div>
-    <label class="f"><span class="k">Trecho mínimo para contar (minutos)</span><input type="number" value="${c.stintMin}" data-cfg="stintMin"></label>
-    <div class="tiny muted" style="margin:-6px 0 12px">Cada formação em campo é uma partida no motor. Trecho cortado por substituição só conta se durou pelo menos isso <b>ou um terço da partida</b>, o que for menor; o trecho que termina no apito conta sempre. O peso do descartado é dividido entre os que contam.</div>
     ${[['winnerStays','Vencedor fica em quadra'],['askScorer','Perguntar autor do gol'],['avoidRepeat','Evitar repetir quem já jogou junto']]
-      .map(x=>`<div class="row" style="padding:7px 0"><div>${x[1]}</div>
+      .map(x=>`<div class="row" style="padding:6px 0 0"><div>${x[1]}</div>
         <button class="btn sm sp ${c[x[0]]?'pri':'ghost'}" data-a="toggleCfg" data-k="${x[0]}">${c[x[0]]?'Sim':'Não'}</button></div>`).join('')}
   </div>
   <div class="card">
-    <div class="k" style="margin-bottom:10px">Contestação</div>
-    <label class="f"><span class="k">Contestações para marcar como disputada</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
-    <div class="row" style="padding:3px 0">
-      <div style="flex:1">Ao atingir o limite
-        <div class="tiny muted">${c.disputeMode==='suspend'?'A partida para de valer até um admin revisar.':'A partida só é sinalizada; o resultado continua valendo.'}</div></div>
-      <button class="btn sm sp ${c.disputeMode==='suspend'?'pri':'ghost'}" data-a="toggleDispute">${c.disputeMode==='suspend'?'Suspende':'Sinaliza'}</button>
+    <div class="row" style="gap:8px">
+      <label class="f" style="flex:1;margin:0"><span class="k">Contestações para disputar</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
+      <div style="flex:1;min-width:0"><div class="k" style="margin-bottom:6px">Ao atingir</div>
+        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
     </div>
   </div>
+  <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
   ${cardArquivados(liga)}
   <div class="card">
-    <div class="k" style="margin-bottom:10px">Dados</div>
     <div class="row" style="gap:6px">
       <button class="btn sm" data-a="export">Exportar</button>
       <button class="btn sm" data-a="import">Importar</button>
       ${DONO[liga.id]?'<button class="btn sm danger sp" data-a="delLiga">Apagar liga</button>':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}
     </div>
-    <div class="tiny muted" style="margin-top:10px;line-height:1.5">O rating numérico por trás dos níveis fica só no arquivo de backup — nenhuma tela do app mostra pontos.${DONO[liga.id]?' Apagar a liga só é possível quando não há nenhum outro membro, e pede o nome dela digitado.':''}</div>
   </div>`;
 }
 
@@ -7339,6 +7305,15 @@ Object.assign(A,{
     S=normalize(S);saveUI();cacheSave();render();
   },
 
+  /* Trocar o código de convite (D-130): quem tinha o antigo não entra mais por ele;
+     quem já é membro não muda nada. Só o admin, e o servidor confere.        */
+  async newCode(){
+    const id=S.active,l=L();if(!l||!sb||!ME)return;
+    if(!confirm('Trocar o código de convite? O antigo deixa de valer na hora.'))return;
+    const {data,error}=await sb.rpc('rotate_code',{p_id:id});
+    if(error)return toast('Não deu para trocar: '+traduz(error),{ms:4000});
+    CODE[id]=data;cacheSave();render();toast('Novo código: '+data,{ms:5000});
+  },
   copyCode(){
     const c=CODE[S.active]||'';
     if(!c)return;
@@ -7489,13 +7464,13 @@ Object.assign(A,{
    declaração de função sobe, então drawApp o encontra normalmente.         */
 function viewCfg(liga){
   const c=CODE[liga.id]||'——————';
-  return `<div class="card" style="display:flex;align-items:center;gap:12px">
+  return `<div class="card" style="display:flex;align-items:center;gap:10px">
       <div style="min-width:0;flex:1">
         <div class="k">Código de convite</div>
         <div style="font-family:var(--disp);font-size:26px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>
-        <div class="tiny muted">Quem tiver esse código entra nesta liga.</div>
       </div>
-      <button class="btn ghost" data-a="copyCode" style="width:auto;padding:10px 14px">Copiar</button>
+      <button class="btn ghost sm" data-a="copyCode">Copiar</button>
+      ${souAdmin(liga)&&CODE[liga.id]?`<button class="btn ghost sm" data-a="newCode" title="trocar o código: o antigo deixa de valer">Novo</button>`:''}
     </div>`+viewCfgBody(liga)+logCard(liga);
 }
 function logCard(liga){

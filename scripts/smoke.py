@@ -1497,7 +1497,7 @@ step('minhas opinioes nao diz se a opiniao vale; ajustes de quem nao e admin so 
   closeSheet();
   let h=viewCfgBody(l);
   if(/data-a="setVis"|data-a="toggleCfg"|data-cfg=|data-pat=|data-a="export"|data-a="import"/.test(h))throw new Error('jogador nao pode ver os controles dos ajustes');
-  if(!h.includes('Formato da liga')||!h.includes('data-a="setTheme"'))throw new Error('jogador ve formato e aparencia');
+  if(!h.includes('Formato')||!h.includes('data-a="setTheme"'))throw new Error('jogador ve formato e aparencia');
   me.role='admin';h=viewCfgBody(l);
   if(!/data-a="setVis"/.test(h)||!/data-cfg=/.test(h))throw new Error('admin continua com os controles');
 });

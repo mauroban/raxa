@@ -69,7 +69,7 @@ create table profiles (
 create table ligas (
   id            uuid primary key default gen_random_uuid(),
   nome          text not null,
-  codigo        char(6) unique not null,       -- código curto para entrar: "RXA7Q2"
+  codigo        char(6) unique not null,       -- código curto para entrar: "RXA7Q2"; o admin troca por `rotate_code` (D-130)
   entrada_livre boolean not null default false,-- código entra direto ou vira pedido?
   cfg           jsonb  not null default '{}',  -- alvo, estabilidade, nomes de patente, visibilidade…
   criada_por    uuid   not null references profiles(id),

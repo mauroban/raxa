@@ -141,6 +141,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-107](interface.md#d-107) · Gol volta a ser ⚽ na "partida a partida"; gol contra é o mesmo ⚽, vermelho
 - [D-119](interface.md#d-119) · Sem o botão "Carregar o racha de sábado"
 - [D-120](interface.md#d-120) · O cartão de opinião cabe na tela do celular
+- [D-131](interface.md#d-131) · Ajustes enxutos: só o que se mexe, cartões agrupados, sem texto explicando o óbvio
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 
@@ -154,6 +155,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-93](contas-e-permissoes.md#d-93) · Juntar dois cadastros da mesma pessoa — reversível pela ficha
 - [D-105](contas-e-permissoes.md#d-105) · Apagar liga: só o dono, só sem outros membros, digitando o nome
 - [D-128](contas-e-permissoes.md#d-128) · Arquivar em vez de remover jogador; ficha por blocos (olhar → cadastro → admin → arquivar); ajustes e permissão só para o admin; "Sou eu" só sem perfil
+- [D-130](contas-e-permissoes.md#d-130) · Trocar o código de convite: botão Novo, o antigo deixa de valer na hora
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 
