@@ -82,6 +82,10 @@ button{font-family:inherit;color:inherit}
   width:40px;height:40px;border-radius:11px;font-size:17px;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
 .iconbtn:active{transform:scale(.94)}
 .iconbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
+/* ícone dentro de botão de texto: do tamanho da letra, alinhado ao meio */
+.btn svg.bi,.lnk svg.bi,.noauthor svg.bi{width:1.05em;height:1.05em;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;vertical-align:-.15em}
+.btn.sm svg.bi{width:15px;height:15px}
+.lnk svg.bi{width:13px;height:13px;margin-right:2px}
 .livetop .iconbtn svg{width:18px;height:18px}
 
 /* ---------- navegação de polegar ---------- */
@@ -2154,7 +2158,17 @@ const ICO={
   pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/></svg>',
   play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></svg>',
   close:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
-  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l-5 5 5 5M5 12h14"/></svg>'};
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l-5 5 5 5M5 12h14"/></svg>',
+  /* ícones de botão (D-129): traço na cor do texto; o 🧤 e o ⚽ continuam emoji, de propósito */
+  check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/></svg>',
+  ret:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-4 4 4 4"/><path d="M4 12h12a4 4 0 0 0 0-8h-2"/></svg>',
+  scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M6 20h12M4 8h16"/><path d="M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/></svg>',
+  dice:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  exit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.5"/></svg>',
+  queue:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>',
+  arrows:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>'};
 /* ícones de seção da Stats (D-108): só o miolo do SVG; ic() embrulha com a cor */
 const SICO={
   cal:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
@@ -2172,6 +2186,8 @@ const SICO={
   smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.5 1.7 5.5 1.7 7 0M9 10h.01M15 10h.01"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/>'};
 const ic=(n,cor)=>`<svg class="ic"${cor?` style="color:${cor}"`:''} viewBox="0 0 24 24" aria-hidden="true">${SICO[n]||''}</svg>`;
+/* ícone de botão: o SVG de ICO com a classe que o dimensiona pela letra */
+const bi=n=>(ICO[n]||'').replace('<svg ','<svg class="bi" ');
 const NAV_ICON={
   racha:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l4.5 3.3-1.7 5.4H9.2L7.5 10.3z"/><path d="M12 3v4M16.5 10.3l3.8-1.2M14.8 15.7l2.4 3.4M9.2 15.7l-2.4 3.4M7.5 10.3L3.7 9.1"/></svg>',
   stats:'<svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg>',
@@ -2541,8 +2557,8 @@ function viewTimes(liga,lv){
            return [2,3,4].map(k=>{const cabe=k===2||Math.floor(nLinha/perLinha)>=k;
              return `<button class="btn sm ${n===k?'pri':'ghost'}" data-a="nteams" data-v="${k}"
                ${cabe?'':'disabled title="não dá '+k+' times cheios com quem está aqui"'}>${k} times</button>`}).join('')})()}
-      <button class="btn sm sp" data-a="balance">⚖ Equilibrar</button>
-      <button class="btn sm ghost" data-a="shuffle">🎲</button>
+      <button class="btn sm sp" data-a="balance">${bi('scale')} Equilibrar</button>
+      <button class="btn sm ghost" data-a="shuffle" title="sortear ignorando o nível" aria-label="Sortear">${bi('dice')}</button>
     </div>
     <div class="tiny muted" style="margin-top:10px">${unica
       ?`<b>${per} em quadra</b> por time, o resto é reserva.`
@@ -3079,7 +3095,7 @@ function viewProxima(liga,lv){
     :`${nomeSel} — toque em quem sai`;
   const maisOpc=sel&&(sel.kind==='gk'||sel.kind==='gkVazio')?` · <button class="lnk" data-a="preGk" data-sd="${sel.side}">outras opções</button>`
     :sel&&sel.kind==='vaga'&&unica?` · <button class="lnk" data-a="fillPick" data-sd="${sel.side}">escolher da lista</button>`:'';
-  const desfaz=(lv.preHist||[]).length?`${sel?' · ':''}<button class="lnk" data-a="preUndo">↶ desfazer</button>`:'';
+  const desfaz=(lv.preHist||[]).length?`${sel?' · ':''}<button class="lnk" data-a="preUndo">${bi('undo')}desfazer</button>`:'';
   const chipFora=id=>tpChip(liga,lv,id,true,alvoDe('fora:'+id),'fora:'+id);
   const tag=id=>entrou.has(id)?'<span class="tag" title="entrou">▲</span>':'';
   const cab=sd=>{const ti=pair[sd],t=lv.teams[ti];
@@ -3099,7 +3115,7 @@ function viewProxima(liga,lv){
   return `
   ${u?`<div class="card done">
     <div class="placar">${esc(u.placar)}<small>registrado · ${pl(u.n,'partida hoje','partidas hoje')}</small></div>
-    ${lv.lastEnd&&lv.lastEnd.mid===lv.matchIds[lv.matchIds.length-1]?`<button class="btn ok" data-a="voltarPartida">↩ Voltar a partida</button>`:'<span></span>'}
+    ${lv.lastEnd&&lv.lastEnd.mid===lv.matchIds[lv.matchIds.length-1]?`<button class="btn ok" data-a="voltarPartida">${bi('ret')} Voltar a partida</button>`:'<span></span>'}
     <div class="mov">${(u.mov||[]).length?u.mov.map(m=>`<span class="out">${m.saem.length?`Saem ${nomes(m.saem)} → fim da fila`:''}</span>${m.saem.length?' · ':''}<span class="in">Entram ${nomes(m.entram)}</span>`).join('<br>')
       :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}</div>
   </div>`:''}
@@ -3134,7 +3150,7 @@ function viewProxima(liga,lv){
   </div>`:''}
   <div class="acts3" style="margin-top:10px">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
-    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
+    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">${bi('exit')} Foi embora</button>
     <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
   </div>
   ${lv.matchIds.length?todayBlock(liga,lv):''}`;
@@ -3206,7 +3222,7 @@ function viewJogo(liga,lv){
   </div>
   <div id="scorer"></div>
   ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
-    return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">⚠️ ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
+    return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">${bi('warn')} ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
   ${(()=>{
     /* mesma tela da pré-partida (D-129): escalação e fila num cartão só, as
        colunas da fila embaixo das colunas dos lados; ▲ em quem entrou nesta
@@ -3240,7 +3256,7 @@ function viewJogo(liga,lv){
   </div>
   <div class="acts3" style="margin-top:10px">
     <button class="btn sm ghost" data-a="lateSheet">＋ Chegou</button>
-    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">🚑 Foi embora</button>
+    <button class="btn sm ghost" data-a="leaveSheet" data-drop-zone="leave" title="ou arraste um nome para cá">${bi('exit')} Foi embora</button>
     <button class="btn sm ghost" data-a="teamsBack">Refazer times</button>
   </div>`})()}
   ${golsCard(liga,lv,c)}
@@ -3269,7 +3285,7 @@ function todayBlock(liga,lv){
   /* o Fim foi sem querer: enquanto a próxima não começa, a última tem volta —
      o botão mora no cartão do placar registrado, no topo da tela (D-129)   */
   return `<div class="card" style="margin-top:12px"><div class="row" style="margin-bottom:8px"><div class="k">Partidas de hoje (${lv.matchIds.length})</div>
-      ${ult?`<button class="btn sm ghost sp" data-a="delMatch" data-id="${ult}">↶ Desfazer a última</button>`:''}</div>
+      ${ult?`<button class="btn sm ghost sp" data-a="delMatch" data-id="${ult}">${bi('undo')} Desfazer a última</button>`:''}</div>
     ${lv.matchIds.slice(-5).reverse().map(id=>{const m=liga.matches.find(x=>x.id===id);return m?mrow(liga,m,true,euId(liga)):''}).join('')}</div>`;
 }
 
@@ -4333,8 +4349,8 @@ function resumoRacha(liga,sess,ms){
         <div class="val"><span class="vedx"><b class="v">${t.v}</b>V <b>${t.e}</b>E <b class="d">${t.d}</b>D</span><small class="gols">${t.gp}·${t.gc} gols</small></div></div>`).join(''):'')}
     ${sec('⚽ Artilheiros',art.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
     ${sec('🔥 Quem mais ganhou',venc.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}<small>${x.e}E ${x.d}D</small></div><div class="val">${x.v}<small>V · ${aprDe(x.v,x.e,x.n)}%</small></div></div>`).join(''))}
-    ${sec('📈 Subiu de nível',subiu.map(x=>`<div class="sumrow"><span class="arr up">▲</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
-    ${sec('📉 Caiu de nível',caiu.map(x=>`<div class="sumrow"><span class="arr dn">▼</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
+    ${sec(ic('up')+' Subiu de nível',subiu.map(x=>`<div class="sumrow"><span class="arr up">▲</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
+    ${sec(ic('down')+' Caiu de nível',caiu.map(x=>`<div class="sumrow"><span class="arr dn">▼</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
     ${ver&&!mudou.length?'<div class="tiny muted" style="margin-top:14px">Ninguém mudou de nível hoje.</div>':''}
     <div style="height:14px"></div>
     <button class="btn wide pri" data-a="closeSheet">Fechar</button>`;
@@ -4349,17 +4365,17 @@ function barFor(liga){
     <button class="btn pri" data-a="toTimes" ${lv.presentIds.length<4?'disabled':''}>Montar times (${lv.presentIds.length})</button>`;
   if(lv.stage==='times')return `
     <button class="btn ghost" data-a="backPres">Voltar</button>
-    <button class="btn pri" data-a="startJogo">▶ Começar racha</button>`;
+    <button class="btn pri" data-a="startJogo">${bi('play')} Começar racha</button>`;
   if(!lv.cur)return `
     <button class="btn ghost" data-a="endRacha">Encerrar racha</button>
-    <button class="btn pri" data-a="startMatch">▶ Começar partida</button>`;
+    <button class="btn pri" data-a="startMatch">${bi('play')} Começar partida</button>`;
   const c=lv.cur,n=[lv.teams[c.a].name,lv.teams[c.b].name];
   const txt=c.score[0]===c.score[1]?`Empate ${c.score[0]}-${c.score[1]}`
     :`${c.score[0]>c.score[1]?n[0]:n[1]} ${Math.max(...c.score)}-${Math.min(...c.score)}`;
   /* Nada de "Encerrar racha" ao lado do "Fim": um toque errado com o proximo
      time entrando nao pode acabar com a noite.                              */
-  return `<button class="btn ghost" data-a="undo" style="flex:0 0 62px;padding:13px 0" title="desfazer">↶</button>
-    <button class="btn pri" data-a="endMatch">✓ Fim · ${esc(txt)}</button>`;
+  return `<button class="btn ghost" data-a="undo" style="flex:0 0 62px;padding:13px 0" title="desfazer" aria-label="Desfazer">${bi('undo')}</button>
+    <button class="btn pri" data-a="endMatch">${bi('check')} Fim · ${esc(txt)}</button>`;
 }
 
 /* ---------- relógio ---------- */
@@ -4908,7 +4924,7 @@ const A={
       openSheet(`<h2>${esc(nameOf(l,id))}</h2>
         <div class="tiny muted" style="margin-bottom:12px">Ainda não jogou hoje. Esteve aqui e precisou sair, ou foi marcado sem ter vindo?</div>
         <div style="display:grid;gap:7px">
-          <button class="btn wide ghost" data-a="leaveDo" data-id="${id}" data-modo="foi">🚑 Foi embora — esteve no racha<span class="tiny muted" style="display:block;font-weight:400;text-transform:none;letter-spacing:0">conta presença no racha de hoje</span></button>
+          <button class="btn wide ghost" data-a="leaveDo" data-id="${id}" data-modo="foi">${bi('exit')} Foi embora — esteve no racha<span class="tiny muted" style="display:block;font-weight:400;text-transform:none;letter-spacing:0">conta presença no racha de hoje</span></button>
           <button class="btn wide ghost" data-a="leaveDo" data-id="${id}" data-modo="nao">✕ Marquei errado — não veio<span class="tiny muted" style="display:block;font-weight:400;text-transform:none;letter-spacing:0">sai sem contar presença</span></button>
           <button class="btn wide ghost" data-a="closeSheet">Cancelar</button>
         </div>`);
@@ -4981,7 +4997,7 @@ const A={
       <div style="display:grid;gap:7px">
         ${lv.teams.map((t,i)=>`<button class="btn wide ghost" data-a="lateTeam" data-id="${id}" data-i="${i}">${esc(t.name)} <span class="tiny muted">(${t.ids.length})</span></button>`).join('')}
         <button class="btn wide ghost" data-a="lateGk" data-id="${id}">🧤 Chegou para ser goleiro</button>
-        <button class="btn wide ghost" data-a="lateFila" data-id="${id}">⏳ Entra na fila (próximo a jogar)</button>
+        <button class="btn wide ghost" data-a="lateFila" data-id="${id}">${bi('queue')} Entra na fila (próximo a jogar)</button>
         <button class="btn wide ghost" data-a="closeSheet">Só marcar presença</button>
       </div>`);
   },
@@ -5316,7 +5332,7 @@ const A={
     /* fica 7 s e leva o "↩ voltar": o Fim errado se desfaz sem rolar até o fim da página */
     toast(giros.length
       ?`${placar} · entra ${giros[0].r.entram.map(id=>nameOf(l,id).split(' ')[0]).join(', ')}`
-      :`${placar} · registrado`,{ms:7000,act:{label:'↩ voltar',a:'voltarPartida'}});
+      :`${placar} · registrado`,{ms:7000,act:{label:bi('ret')+' voltar',a:'voltarPartida'}});
   },
 
   /* ----- contestação e revisão ----- */
@@ -5343,7 +5359,7 @@ const A={
         <div class="tiny">${d.map(x=>esc(x.by)).join(', ')}</div></div>`:''}
       ${revDetalhe(l,m)}
       <div style="height:18px"></div>
-      <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">⇄ Corrigir escalação e trocas</button>
+      <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">${bi('arrows')} Corrigir escalação e trocas</button>
       <div class="k" style="margin:18px 0 8px">Corrigir resultado</div>
       <div style="display:grid;gap:7px;margin-bottom:14px">
         ${[[0,esc(m.names[0])+' venceu'],['draw','Empate'],[1,esc(m.names[1])+' venceu']]
