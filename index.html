@@ -1118,7 +1118,7 @@ function normalize(st){
       /* D-129: no racha curto a quadra tem dois lados e o resto é fila. Racha
          gravado antes com 3–4 times: os times que esperavam viram a fila, na
          ordem; goleiros a mais no rodízio vão para os lados                */
-      if((lv.mode||l.cfg.matchMode)!=='unica'&&lv.teams.length>2){
+      if((lv.mode||l.cfg.matchMode)!=='unica'&&lv.stage==='jogo'&&lv.teams.length>2){
         const ordem=(lv.queue||[]).filter(i=>i>=2).concat(lv.teams.map((_,i)=>i).filter(i=>i>=2&&!(lv.queue||[]).includes(i)));
         lv.fila=lv.fila.concat(ordem.flatMap(i=>lv.teams[i].ids)).filter((id,i,a)=>a.indexOf(id)===i);
         lv.teams=lv.teams.slice(0,2);lv.queue=[];
@@ -1773,8 +1773,9 @@ function planTeams(liga,presentIds,force,mode,gkToday){
     /* grupos da montagem: contados pela linha (o goleiro é um por lado) — é
        o que faz a fila ser feita de grupos parelhos do tamanho de um time  */
     const nLinha=r.ids.filter(id=>!isGk(id)).length,perLinha=r.per-(rot||!gks.length?0:1);
+    const cabem=Math.max(2,Math.floor(nLinha/perLinha));
     return{rotating:rot,gkPool:rot?gks.slice():[],per:r.per,n:2,ids:r.ids,gkIds:gkAll,
-      caps:planCaps(r.total,2,r.per,mode),grupos:Math.max(2,Math.floor(nLinha/perLinha))};
+      caps:planCaps(r.total,2,r.per,mode),grupos:clamp(force.n?Math.min(force.n,cabem):cabem,2,4),cabem};
   }
   let rot=force.rotating!==undefined?force.rotating:gks.length>0;
   let r=calc(rot);
@@ -1808,10 +1809,13 @@ function applyPlan(liga,lv,force,modo){
   grupos.slice(0,2).forEach((t,i)=>{while(t.ids.length<pl.caps[i]&&resto.length){const id=resto.find(x=>!pl.gkIds.includes(x))||resto[0];resto.splice(resto.indexOf(id),1);t.ids.push(id)}});
   const sobra=new Set(resto);
   grupos.slice(2).forEach(t=>{t.ids=t.ids.filter(id=>sobra.has(id))});
-  lv.teams=grupos.slice(0,2).map((t,i)=>({name:TEAMNAMES[i],ids:t.ids}));
+  /* na montagem os times aparecem inteiros (A, B, C…), para equilibrar bem;
+     ao começar o racha, os que não são os dois lados viram a fila, na ordem */
+  lv.teams=grupos.filter(t=>t.ids.length).map((t,i)=>({name:TEAMNAMES[i],ids:t.ids}));
   const dentro=new Set(lv.teams.flatMap(t=>t.ids).concat(lv.gkPool));
-  const filaIds=curto?grupos.slice(2).flatMap(t=>t.ids).concat(lv.presentIds.filter(id=>!dentro.has(id)&&!grupos.some(t=>t.ids.includes(id)))):[];
+  const filaIds=curto?lv.presentIds.filter(id=>!dentro.has(id)):[];
   lv.fila=filaIds.filter(id=>!pl.gkIds.includes(id)).concat(filaIds.filter(id=>pl.gkIds.includes(id)));   // goleiro que espera fica no fim da lista
+  lv.montagem=null;
   resetFill(lv);
   lv.queue=[];lv.ult=null;lv.preHist=[];
   liga.cfg.teamCount=lv.teams.length;
@@ -2351,8 +2355,7 @@ function teamRecord(liga,lv,ti){
   /* goleiro de rodízio não é de time nenhum */
   const ms=(lv.matchIds||[]).map(id=>liga.matches.find(x=>x.id===id)).filter(Boolean);
   const pool=rodizioDoRacha(liga,ms,{gkPool:lv.gkPool||[]});
-  const orig=(lv.teams||[]).map((t,i)=>({name:t.name,i,
-    ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).filter(id=>!pool.has(id))}));
+  const orig=timesMontados(lv).map((t,i)=>({name:t.name,i,ids:t.ids.filter(id=>!pool.has(id))}));
   let w=0,d=0,l=0;
   (lv.matchIds||[]).forEach(id=>{
     const m=liga.matches.find(x=>x.id===id);
@@ -2521,13 +2524,17 @@ function viewTimes(liga,lv){
     <div class="balbar"><i style="width:${clamp(100-diff*1.6,4,100)}%"></i></div>
     <div style="height:12px"></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">
-      <span class="k" style="color:var(--chalk)">${unica?'2 times fixos':'dois lados + fila'}</span>
+      ${unica?'<span class="k" style="color:var(--chalk)">2 times fixos</span>'
+        :(()=>{const nLinha=lv.presentIds.filter(id=>!ehGkHoje(lv,id)).length,perLinha=per-(rod||!temGk?0:1);
+           return [2,3,4].map(k=>{const cabe=k===2||Math.floor(nLinha/perLinha)>=k;
+             return `<button class="btn sm ${n===k?'pri':'ghost'}" data-a="nteams" data-v="${k}"
+               ${cabe?'':'disabled title="não dá '+k+' times cheios com quem está aqui"'}>${k} times</button>`}).join('')})()}
       <button class="btn sm sp" data-a="balance">⚖ Equilibrar</button>
       <button class="btn sm ghost" data-a="shuffle">🎲</button>
     </div>
     <div class="tiny muted" style="margin-top:10px">${unica
       ?`<b>${per} em quadra</b> por time, o resto é reserva.`
-      :`<b>${per}</b>${rod?' de linha + goleiro do rodízio':''} por time.`}</div>
+      :`<b>${per}</b>${rod?' de linha + goleiro do rodízio':''} por time.${n>2?' Os dois primeiros começam; os outros entram pela fila, nesta ordem.':''}`}</div>
   </div>
   ${faltando.length?`<div class="card" style="margin-top:10px;border-color:rgba(245,197,66,.45)">
     <div class="row"><div>⚠️ ${faltando.length===1?'Um time está incompleto':'Times incompletos'}</div>
@@ -2548,7 +2555,7 @@ function viewTimes(liga,lv){
     ${lv.teams.map((t,i)=>timeCard(liga,lv,i,per)).join('')}
   </div>
   <div class="card benchcard" data-a="toTeam" data-i="-1" data-drop-zone="bench" style="margin-top:10px">
-    <div class="row"><div class="k">${unica?'Fora / esperando':'Fila · nesta ordem'}</div>
+    <div class="row"><div class="k">${unica?'Fora / esperando':n>2?'Fora · entram depois dos times':'Fila · nesta ordem'}</div>
       <div class="sp num" style="font-family:var(--disp);font-size:18px">${bench.length}</div></div>
     ${bench.length?(unica?`<div class="chips" style="margin-top:8px">${bench.map(id=>tpChip(liga,lv,id,true)).join('')}</div>`
       :(()=>{const ordem=filaDe(lv);let pos=0;return `<div class="filagrid">${ordem.map(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
@@ -2643,6 +2650,25 @@ function completaLados(liga,lv,gks){
   });
   return mov;
 }
+/* Começou o racha (D-129): os dois primeiros times são os lados da quadra e
+   os outros viram a fila, na ordem em que foram montados (goleiro por
+   último). A montagem inteira fica guardada em `lv.montagem` — é ela que a
+   sessão grava como "os times como foram montados" (D-50).                 */
+function fechaMontagem(liga,lv){
+  if((lv.mode||liga.cfg.matchMode)==='unica'||!Array.isArray(lv.teams)||lv.teams.length<=2){
+    if(!lv.montagem)lv.montagem=lv.teams.map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids)]}));
+    return;
+  }
+  lv.montagem=lv.teams.map(t=>({name:t.name,ids:[...t.ids]}));
+  const resto=lv.teams.slice(2).flatMap(t=>t.ids);
+  lv.teams=lv.teams.slice(0,2);
+  const fila=resto.concat(filaDe(lv).filter(id=>!resto.includes(id)));
+  lv.fila=fila.filter(id=>!ehGkHoje(lv,id)).concat(fila.filter(id=>ehGkHoje(lv,id)));
+  lv.queue=[];lv.nextPair=null;
+}
+/* os times como foram montados (D-50): a montagem guardada, ou a composição original dos lados */
+const timesMontados=lv=>Array.isArray(lv.montagem)&&lv.montagem.length?lv.montagem.map(t=>({name:t.name,ids:[...t.ids]}))
+  :(lv.teams||[]).map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids||[])]}));
 /* Desfazer na pré-partida: foto do estado da rodada antes de cada mexida na mão. */
 function marcaPre(lv){
   lv.preHist=(lv.preHist||[]).slice(-7);
@@ -3596,7 +3622,7 @@ ${cardPP}  <div class="card">
        times e o rodízio de goleiro vêm do próprio racha em andamento        */
     const lv=liga.live;
     const sess=(liga.sessions||[]).find(x=>x.id===sid)
-      ||(lv&&lv.id===sid?{teams:(lv.teams||[]).map(t=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice()})),
+      ||(lv&&lv.id===sid?{teams:timesMontados(lv),
           gkPool:(lv.gkPool||[]).slice(),presentIds:lv.presentIds||[]}:null);
     const ini=Math.min(...ms.map(m=>m.startedAt||m.ts)),fim=Math.max(...ms.map(m=>m.endedAt||m.ts));
     const jogo=ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.counted?(st.dur||0):0),0),0);
@@ -4951,6 +4977,7 @@ const A={
     lv.stage='jogo';lv.cur=null;
     lv.per=lv.per||perTeamSize(l,(lv.gkPool||[]).length>0);
     lv.teams.forEach(t=>{t.orig=t.ids.slice()});      // composição original: é contra ela que o ⇄ é marcado
+    fechaMontagem(l,lv);                              // dois lados + fila (D-129)
     lv.nextPair=suggestPair(l,lv);resetFill(lv);lv.ult=null;lv.preHist=[];
     save();render();
   },
@@ -4959,6 +4986,7 @@ const A={
     if(lv.cur)return;
     if(lv.teams.length<2)return toast('Monte os times primeiro');
     if(!Array.isArray(lv.queue))lv.queue=[];
+    if(lv.stage!=='jogo'){lv.teams.forEach(t=>{t.orig=t.ids.slice()});fechaMontagem(l,lv)}
     const all=lv.teams.map((_,i)=>i);
     let pair=(lv.nextPair||[]).filter(i=>all.includes(i));
     if(pair.length!==2||pair[0]===pair[1])pair=suggestPair(l,lv);
@@ -5555,7 +5583,7 @@ const A={
        do fim); os times ficam guardados como foram montados, para consulta */
     l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],
       presentIds:[...new Set([...lv.presentIds,...(lv.leftIds||[])])],
-      teams:lv.teams.map(t=>({name:t.name,ids:[...(t.orig&&t.orig.length?t.orig:t.ids)]})),
+      teams:timesMontados(lv),
       gkPool:[...(lv.gkPool||[])]});
     l.live=null;save();render();
     openSheet(resumoRacha(l,l.sessions[l.sessions.length-1],ms));
@@ -6013,7 +6041,7 @@ const A={
     /* racha ainda aberto não tem sessão gravada: os times vêm do racha em andamento (mesma regra do card) */
     const lv=l.live;
     const sess=(l.sessions||[]).find(x=>x.id===sid)
-      ||(lv&&lv.id===sid?{teams:(lv.teams||[]).map(t=>({name:t.name,ids:(t.orig&&t.orig.length?t.orig:t.ids||[]).slice()})),gkPool:(lv.gkPool||[]).slice()}:null);
+      ||(lv&&lv.id===sid?{teams:timesMontados(lv),gkPool:(lv.gkPool||[]).slice()}:null);
     const daMontagem=!!(sess&&Array.isArray(sess.teams)&&sess.teams.length);
     const orig=timesDoRacha(l,ms,sess),t=orig.find(x=>x.name===nome);
     const ids=t?t.ids.slice():[];

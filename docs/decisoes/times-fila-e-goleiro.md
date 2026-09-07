@@ -301,9 +301,12 @@ era o único nome da escalação sem nível.
 **O quê:** o racha curto deixa de ser "N times com identidade + uma fila de pessoas colada por cima" e
 passa a ser **dois lados de quadra e uma fila só, de pessoas**, com uma regra: *quem ganhou fica; do lado
 que perdeu sai quem está há mais tempo em quadra; entra quem está há mais tempo fora.*
-1. **Montagem:** `planTeams` no curto devolve sempre `n=2`; o montador ainda monta grupos inteiros e
-   parelhos (`grupos`, contados pela linha), mas só os dois primeiros são os lados — os outros viram
-   `lv.fila`, na ordem. Somem os botões 2/3/4 times e o botão de rodízio no curto.
+1. **Montagem:** continua mostrando os **times inteiros** que cabem (A, B, C, D — `grupos`, contados pela
+   linha, com os botões 2/3/4), porque equilibrar bem é o ponto. É ao **começar o racha** (`fechaMontagem`)
+   que os dois primeiros viram os lados e os outros viram `lv.fila`, na ordem; a montagem inteira fica em
+   `lv.montagem` para a sessão (D-50). Some só o botão de rodízio no curto. *(Ajuste no mesmo dia: a
+   primeira versão já mostrava "dois lados + fila" na montagem; com a conta exata a galera quer ver os
+   times, e a fila por pessoa é coisa da hora do racha.)*
 2. **Goleiro:** reveza só quando é **um só** (`gkPool`); com dois ou mais, cada lado tem o seu (fixo,
    dentro dos `per`) e o terceiro espera na fila com o 🧤, entrando no gol de quem perder (`rodaFila`
    troca o goleiro do perdedor pelo da fila). Substitui "2 goleiros para 3 times viram rodízio".

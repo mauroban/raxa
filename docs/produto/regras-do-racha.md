@@ -25,10 +25,13 @@ tempo fora.** É a regra inteira (D-129).
 
 ### 2.1 Dois lados e uma fila só
 
-A quadra tem **dois lados**, cada um com o goleiro e N−1 de linha no formato NvN. Todo mundo que não está
-em quadra está numa **fila só, de pessoas**, na ordem de quem está fora há mais tempo. Não existe "Time C
-esperando", reserva de time nem empréstimo: o app monta os dois lados e a ordem da fila em fatias
-equilibradas do tamanho de um time, e daí em diante só a roda gira.
+**Na montagem, times inteiros.** O app monta quantos times cheios couberem — A, B, C, D — e mostra todos,
+porque equilibrar bem continua sendo o ponto; quem não completa um time fica de fora. Dá para forçar 2, 3
+ou 4, dentro do que cabe. **Ao começar o racha, a quadra vira dois lados e uma fila só.** Os dois primeiros
+times entram; os outros viram a fila, na ordem em que foram montados, junto com quem estava de fora. Daí em
+diante não existe "Time C esperando", reserva de time nem empréstimo: a fila é **de pessoas**, na ordem de
+quem está fora há mais tempo, e só a roda gira. Em alguns dias ela gira redondo, sempre os mesmos times; na
+maioria o improviso chega em algum momento, e a roda é feita para ele.
 
 | Presentes (5v5) | Cada lado | Fila | Quando um lado perde |
 |---|---|---|---|

@@ -106,7 +106,7 @@ Prioridade: **P0** o produto não existe sem isso · **P1** importante · **P2**
 | # | Requisito | Pri | Status |
 |---|---|---|---|
 | RF-05.1 | Sugerir a quantidade de times a partir do formato e da quantidade de presentes | P1 | ✅ v1 |
-| RF-05.2 | ~~Forçar 2, 3 ou 4 times~~ — removido no racha curto (D-129): a quadra tem dois lados e o resto é fila; a roda decide sozinha quantos grupos giram | — | ❌ removido |
+| RF-05.2 | Forçar 2, 3 ou 4 times na montagem — **limitado a quantos times CHEIOS cabem** (contados pela linha): o botão que não cabe fica apagado. Ao começar o racha, os dois primeiros são os lados e os outros viram a fila, na ordem (D-129) | P1 | ✅ v1 |
 | RF-05.3 | Montar times equilibrados por nível em 1 toque | P0 | ✅ v1 |
 | RF-05.3b | Cada time tem o número de jogadores do formato (N, ou N−1 de linha quando o goleiro reveza) | P0 | ✅ v1 |
 | RF-05.3c | Os dois times que entram juntos têm sempre o mesmo número de jogadores — nunca 5x4, nunca 5x3 | P0 | ✅ v1 |

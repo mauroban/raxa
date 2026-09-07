@@ -25,7 +25,7 @@ Os dois convivem na mesma Liga: o modo é do racha, não do grupo.
 
 ## 2. Times — 1 toque
 
-No racha curto a quadra tem **dois lados** e o resto é **uma fila só** (D-129). No formato NvN cada lado é N−1 de linha mais o goleiro. **12 de linha + 2 goleiros em 5v5 → dois lados de 4 + goleiro e uma fila de 4**, que é o terceiro time e entra inteiro quando um lado perde. Não há botão de 2/3/4 times: a roda decide sozinha quantos grupos giram.
+O app calcula sozinho quantos times **inteiros** cabem e mostra todos na montagem: no formato NvN cada time é N−1 de linha mais o goleiro (ou N de linha, sem goleiro marcado). **12 de linha + 2 goleiros em 5v5 → 3 times de 4 + goleiro nos dois primeiros.** Dá para forçar 2, 3 ou 4 times, dentro do que cabe cheio. **Ao começar o racha, os dois primeiros times são os lados da quadra e os outros viram a fila, na ordem** — uma fila só, de pessoas (D-129).
 
 **"Equilibrar"** faz:
 1. distribui goleiros (um por time) ou separa o rodízio — cada goleiro entra na conta pela **patente de goleiro** dele, e os de linha pela de linha;
@@ -45,15 +45,15 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 **Quantos por lado.** No formato NvN cada lado entra com N: N−1 de linha e o goleiro. A partir daí:
 
 - **lado é sempre cheio.** No 5v5 se joga 5 contra 5. Se a fila tem gente, um lado curto é completado na hora pela frente dela; só se joga com menos quando não há ninguém na fila — e aí os dois lados entram menores e iguais, com aviso;
-- **quem não cabe nos dois lados é a fila**, uma só, de pessoas, na ordem de quem está fora há mais tempo. O montador monta grupos inteiros e parelhos: os dois primeiros são os lados, os outros viram a fila nessa ordem, então o grupo que entra primeiro é um time parelho;
+- **quem não está nos dois lados é a fila**, uma só, de pessoas, na ordem de quem está fora há mais tempo. Ela nasce dos times da montagem (o Time C inteiro, depois o D, depois quem ficou de fora), então o grupo que entra primeiro é um time parelho — e, se ninguém improvisar, os times de sempre entram e saem intactos a noite toda;
 - na **partida única** são **sempre 2 times**: todo mundo dividido entre eles, N em quadra e o resto como reserva do próprio time — o único lugar onde existe reserva de time.
 
 | Presentes (formato 5v5) | O que o app monta |
 |---|---|
 | 10 de linha + 2 goleiros | dois lados de 4 + goleiro, fila de 2 |
-| 12 de linha + 2 goleiros | dois lados de 4 + goleiro, fila de 4 (o terceiro time, que entra inteiro) |
+| 12 de linha + 2 goleiros | montagem: 3 times de 4 (goleiro nos dois primeiros); no racha: dois lados de 4 + goleiro, fila de 4 (o Time C, que entra inteiro) |
 | 13 de linha + 2 goleiros | dois lados de 4 + goleiro, fila de 5 |
-| 12 de linha + 3 goleiros | dois lados de 4 + goleiro, fila de 4 + o goleiro que espera |
+| 12 de linha + 3 goleiros | montagem: 3 times de 4 + goleiro; no racha: dois lados, fila de 4 + o goleiro que espera |
 | 13 sem goleiro marcado | dois lados de 5, fila de 3 |
 | 8 pessoas | 4v4 — único caso em que se joga com menos, e a tela avisa |
 | Partida única, 10 de linha + 2 goleiros | 2 times de 6: 5 em quadra + 1 reserva cada |
@@ -70,7 +70,7 @@ O resultado aparece **sem número nenhum**: uma barra de equilíbrio e o veredit
 - **arraste um nome sobre o outro para trocar de lugar**, ou arraste para dentro de um time, para o card "fora" ou para o card de goleiros — no celular, segure um instante antes de arrastar;
 - quem preferir tocar: toca em um jogador e em outro para trocar; toca no espaço de um time (ou no card "fora") para mover;
 - quem está selecionado fica marcado no próprio nome (tocar nele de novo desmarca) — sem faixa de aviso (D-101);
-- "Equilibrar" refaz tudo e 🎲 sorteia ignorando o nível; a fila aparece numerada, nessa ordem, e dois nomes dela trocam de ordem como qualquer troca.
+- "Equilibrar" refaz tudo, 🎲 sorteia ignorando o nível, e os botões 2/3/4 times remontam na hora; quem ficou de fora aparece numerado, na ordem em que vai entrar depois dos times.
 
 ## 3. Durante — 1 toque por partida
 

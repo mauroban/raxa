@@ -112,13 +112,19 @@ step('chip de presenca mostra o nivel do papel de hoje: gol com luva acesa, linh
   if(lv.presentIds.indexOf(p.id)<0)throw new Error('esperava devolver a presenca');
 });
 step('montar times',()=>A.toTimes());
-step('lista real: 19 presentes no 5v5 viram dois lados de 4 + goleiro e uma fila de 8 + goleiro (D-129)',()=>{
+step('lista real: 19 presentes no 5v5 viram 4 times na montagem (3 com goleiro); ao comecar, dois lados + fila de 8 + goleiro (D-129)',()=>{
   const lv=L().live;
   if(L().players.length!==19)throw new Error('esperava 19 jogadores no exemplo');
   if(lv.gkPool.length)throw new Error('com mais de um goleiro nao ha rodizio: cada lado tem o seu');
-  if(lv.teams.length!==2)throw new Error('esperava 2 lados, veio '+lv.teams.length);
-  if(!lv.teams.every(t=>t.ids.length===5&&t.ids.filter(id=>ehGkHoje(lv,id)).length===1))throw new Error('lados de '+lv.teams.map(t=>t.ids.length).join('/'));
+  if(lv.teams.length!==4)throw new Error('a montagem mostra os times inteiros: esperava 4, veio '+lv.teams.length);
+  if(!lv.teams.slice(0,2).every(t=>t.ids.length===5&&t.ids.filter(id=>ehGkHoje(lv,id)).length===1))throw new Error('lados de '+lv.teams.map(t=>t.ids.length).join('/'));
+  if(filaDe(lv).length)throw new Error('com 4 times cheios ninguem fica de fora na montagem');
+  const salvo=JSON.stringify(lv.teams);
+  A.startJogo();
+  if(lv.teams.length!==2)throw new Error('ao comecar o racha ficam os dois lados, veio '+lv.teams.length);
   const f=filaDe(lv);if(f.length!==9||f.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('fila devia ter 8 de linha + 1 goleiro: '+f.length);
+  if(!lv.montagem||lv.montagem.length!==4)throw new Error('a montagem inteira fica guardada para a sessao');
+  lv.stage='times';lv.teams=JSON.parse(salvo);lv.montagem=null;   // volta para a montagem, para os passos seguintes
 });
 step('nova liga escolhe formato e modo na criacao',()=>{
   A.newLiga();A.novaOpt({dataset:{k:'format',v:'7'}});A.novaOpt({dataset:{k:'modo',v:'unica'}});NOVA.nome='Sete';
@@ -1161,11 +1167,12 @@ step('a roda com 16 na linha + 3 goleiros: dois lados de 4 + goleiro e fila de 8
   lv.presentIds=l.players.map(p=>p.id);lv.gkToday=l.players.filter(p=>p.gk).map(p=>p.id);
   A.toTimes();
   try{
+    if(lv.teams.length!==4)throw new Error('na montagem, 4 times: veio '+lv.teams.length);
+    A.startJogo();
     if(lv.teams.length!==2)throw new Error('esperava 2 lados, veio '+lv.teams.length);
     if(!lv.teams.every(t=>t.ids.length===5&&t.ids.some(id=>ehGkHoje(lv,id))))throw new Error('cada lado = 4 + goleiro: '+lv.teams.map(t=>t.ids.length));
     const fila=filaDe(lv);
     if(fila.length!==9||fila.filter(id=>ehGkHoje(lv,id)).length!==1)throw new Error('fila devia ter 8 de linha + 1 goleiro: '+fila.length);
-    A.startJogo();
     const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),prox=fila.filter(id=>!ehGkHoje(lv,id)).slice(0,4),gkFila=fila.find(id=>ehGkHoje(lv,id));
     A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence: B sai inteiro, entram os 4 da frente + o goleiro que esperava
     if(lv.teams[0].ids.join()!==A0.join())throw new Error('quem ganhou tinha que ficar inteiro');
@@ -1191,8 +1198,9 @@ step('12 na linha + 2 goleiros: dois lados e fila de 4 (o terceiro time); empate
   lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
   A.toTimes();
   try{
-    if(lv.teams.length!==2||filaDe(lv).length!==4)throw new Error('esperava 2 lados e fila de 4, veio '+lv.teams.length+' / '+filaDe(lv).length);
+    if(lv.teams.length!==3||filaDe(lv).length)throw new Error('na montagem, 3 times inteiros: veio '+lv.teams.length+' / fora '+filaDe(lv).length);
     A.startJogo();
+    if(lv.teams.length!==2||filaDe(lv).length!==4)throw new Error('esperava 2 lados e fila de 4, veio '+lv.teams.length+' / '+filaDe(lv).length);
     const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),C0=filaDe(lv).slice();
     A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});      // A vence B: o grupo da fila entra inteiro no lugar de B
     const B1=lv.teams[1].ids;
