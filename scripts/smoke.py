@@ -1339,6 +1339,20 @@ step('quem entrou no meio da partida e perdeu volta para a fila sem perder a vez
     if(!lv.teams[0].ids.includes(inn))throw new Error('quem entrou e ganhou fica no lado');
   }finally{S=salvo;render()}
 });
+step('nome no chip: primeiro nome; dois Guilhermes ganham o pedaco do sobrenome que diferencia (D-129)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  const a=l.players[0],b=l.players[1],c=l.players[2];
+  a.name='Guilherme Alves';b.name='Guilherme Almeida';c.name='Matheus Bonfá Jr';
+  const resto=l.players.filter(p=>p!==a&&p!==b&&p!==c&&!/guilherme|matheus/i.test(p.name)).slice(0,7);
+  lv.presentIds=[a,b,c,...resto].map(p=>p.id);lv.gkToday=[];
+  try{
+    if(nomeChip(l,c.id)!=='Matheus')throw new Error('nome unico devia virar so o primeiro nome: '+nomeChip(l,c.id));
+    if(nomeChip(l,a.id)!=='Guilherme Alv.'||nomeChip(l,b.id)!=='Guilherme Alm.')throw new Error('homonimos deviam levar o pedaco do sobrenome: '+nomeChip(l,a.id)+' / '+nomeChip(l,b.id));
+    lv.presentIds=lv.presentIds.filter(id=>id!==b.id);
+    if(nomeChip(l,a.id)!=='Guilherme')throw new Error('sem o outro Guilherme presente, volta a ser so o primeiro nome');
+  }finally{S=salvo;render()}
+});
 step('sem ninguem na fila, os dois lados entram menores e iguais',()=>{
   const lv=L().live;
   filaDe(lv).slice().forEach(id=>A.leaveDo({dataset:{id,modo:'foi'}}));
@@ -1518,7 +1532,7 @@ step('foi embora em quadra + ↶: volta a presenca, ao time e a escalacao, e seg
   if(!lv.presentIds.includes(x)||(lv.leftIds||[]).includes(x))throw new Error('nao voltou a presenca');
   if(lv.teams[ti].ids[ix]!==x)throw new Error('nao voltou ao time na mesma posicao');
   A.finish({dataset:{r:'0'}});
-  if(!viewProxima(L(),lv).includes(nameOf(L(),x)))throw new Error('sumiu da tela da proxima partida');
+  if(!viewProxima(L(),lv).includes(esc(nomeChip(L(),x))))throw new Error('sumiu da tela da proxima partida');
 });
 step('goleiro do rodizio que foi embora em quadra + ↶: volta ao rodizio e ao gol',()=>{
   const lv=rachaNovo(12,2);A.startMatch();const c=lv.cur;const g=c.gks[0],pool=lv.gkPool.slice();

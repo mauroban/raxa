@@ -2403,6 +2403,26 @@ function timesDoRacha(liga,ms,sess){
 }
 /* Primeiro nome de cada um, com a inicial do sobrenome só quando dois se
    chamam igual dentro do mesmo time.                                        */
+/* Nome no chip (D-129): o primeiro nome, e só. Quando há outro presente com o
+   mesmo primeiro nome, entra o pedaço do sobrenome que diferencia — "Guilherme
+   Alv." e "Guilherme Alm." — o mínimo para ninguém confundir no celular.   */
+function nomeChip(liga,id,entre){
+  const p=P(liga,id);if(!p)return '';
+  const partes=String(p.name).trim().split(/\s+/),f=partes[0],sob=partes.slice(1).join(' ');
+  const lv=liga.live;
+  const ids=entre||(lv?[...new Set([...(lv.presentIds||[]),...(lv.leftIds||[])])]:ativos(liga).map(x=>x.id));
+  const iguais=ids.filter(o=>o!==id).map(o=>P(liga,o)).filter(Boolean)
+    .map(o=>String(o.name).trim().split(/\s+/)).filter(w=>w[0].toLowerCase()===f.toLowerCase());
+  if(!iguais.length)return f;
+  if(!sob)return p.name;
+  const outros=iguais.map(w=>w.slice(1).join(' ').toLowerCase());
+  const s=sob.toLowerCase();
+  for(let k=1;k<=sob.length;k++){
+    const pre=s.slice(0,k);
+    if(outros.every(o=>o.slice(0,k)!==pre))return f+' '+(k<sob.length?sob.slice(0,Math.max(k,2))+'.':sob);
+  }
+  return p.name;
+}
 function nomesCurtos(liga,ids){
   const partes=ids.map(id=>String(nameOf(liga,id)).trim().split(/\s+/));
   return partes.map((w,i)=>{
@@ -3034,10 +3054,10 @@ function escCol(liga,lv,ids,gk,per,orig,act,extra){
   const dot=id=>{const p=P(liga,id);if(!p)return '';const r=id===gk?'G':'L';return temPatente(liga,p,r)&&vePat(liga)?patDot(liga,rt(p,r).rank):''};
   const subIc=()=>'';   // sem o ⇄ de substituto: quem entrou leva a seta verde, e só (D-129)
   const tag=id=>extra.tag?extra.tag(id):'';
-  const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''} ${tag(id)?'novo':''}" ${attrs||''}>${dot(id)}<span class="nm">${esc(nameOf(liga,id))}</span>${subIc(id)}${tag(id)}</button>`
+  const slot=(id,cls,attrs)=>id?`<button class="pl ${cls} ${lv.sel===id?'sel':''} ${tag(id)?'novo':''}" ${attrs||''} title="${esc(nameOf(liga,id))}">${dot(id)}<span class="nm">${esc(nomeChip(liga,id))}</span>${subIc(id)}${tag(id)}</button>`
     :`<button class="pl ${cls} empty ${extra.selVaga?'sel':''}" ${attrs||(act&&act.empty?act.empty:'')}><span class="nm">${cls==='gk'?'🧤 sem goleiro':extra.vaga||(act&&act.empty?'＋ completar':'vaga')}</span></button>`;
   const gkAttrs=act?(typeof act.gk==='function'?act.gk(gk):act.gk):'';
-  let h=gk?`<button class="pl gk ${lv.sel===gk?'sel':''} ${tag(gk)?'novo':''}" ${gkAttrs}>🧤${dot(gk)}<span class="nm">${esc(nameOf(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}${tag(gk)}</button>`
+  let h=gk?`<button class="pl gk ${lv.sel===gk?'sel':''} ${tag(gk)?'novo':''}" ${gkAttrs} title="${esc(nameOf(liga,gk))}">🧤${dot(gk)}<span class="nm">${esc(nomeChip(liga,gk))}</span>${pool.includes(gk)?'<span class="ic" title="rodízio">↻</span>':''}${subIc(gk)}${tag(gk)}</button>`
     :`<button class="pl gk empty ${extra.selGk?'sel':''}" ${gkAttrs}><span class="nm">🧤 ${act?'definir goleiro':'sem goleiro'}</span></button>`;
   /* `per` é o tamanho do time. Com rodízio (per < formato) o goleiro entra
      ALÉM das vagas de linha — venha ele do rodízio ou improvisado do time:
@@ -3056,7 +3076,7 @@ function tpChip(liga,lv,id,big,attrs,key){
   const p=P(liga,id);if(!p)return '';key=key||id;
   const gk=ehGkHoje(lv,id),role=gk?'G':'L',tem=temPatente(liga,p,role)&&vePat(liga);
   return `<button class="tp ${big?'big':''} ${lv.sel===key?'sel':''} ${tem?'lv '+divCls(rt(p,role).rank):''}" ${tem?`style="--pc:${patColor(rt(p,role).rank)}"`:''} data-a="sel" data-id="${key}" data-drag="1" data-drop-player="${key}"${attrs||''}>
-    ${tem?patDot(liga,rt(p,role).rank):''}<span class="nm">${esc(p.name)}${gk?' 🧤':''}</span></button>`;
+    ${tem?patDot(liga,rt(p,role).rank):''}<span class="nm">${esc(lv&&lv.stage&&lv.stage!=='presenca'?nomeChip(liga,id):p.name)}${gk?' 🧤':''}</span></button>`;
 }
 /* Card de um time: titulares, reservas e as duas formas de mexer (toque e arraste). */
 /* Time com gente a menos mostra uma VAGA por lugar vazio, dentro do próprio
@@ -3115,7 +3135,7 @@ function viewProxima(liga,lv){
   const sel=pecaPre(liga,lv,pair,lv.sel);
   const alvoDe=key=>sel&&parPre(sel,pecaPre(liga,lv,pair,key))?' data-alvo="1"':'';
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id).split(' ')[0]):'';
-  const prim=id=>esc(nameOf(liga,id).split(' ')[0]);
+  const prim=id=>esc(nomeChip(liga,id));
   const u=lv.ult||null;
   const entrou=new Set(u?[...(u.mov||[]).flatMap(m=>m.entram),...(u.compl||[])]:[]);
   const proxL=soltos.find(id=>!ehGkHoje(lv,id)),proxG=soltos.find(id=>ehGkHoje(lv,id));
@@ -3218,7 +3238,7 @@ function viewJogo(liga,lv){
      abaixo da escalação diz o próximo passo.                                 */
   const sel=pecaAoVivo(liga,lv,lv.sel);
   const alvoDe=key=>sel&&parAoVivo(sel,pecaAoVivo(liga,lv,key))?' data-alvo="1"':'';
-  const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
+  const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)} title="${esc(nameOf(liga,o.id))}">${dotF(o.id)}<span class="nm">${esc(nomeChip(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
   const dicaSub=!sel?''
     :sel.kind==='linha'?`Sai ${nomeSel} — toque em quem entra`
