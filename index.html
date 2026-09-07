@@ -3304,6 +3304,7 @@ function todayBlock(liga,lv){
      o botão mora no cartão do placar registrado, no topo da tela (D-129)   */
   return `<div class="card" style="margin-top:12px"><div class="row" style="margin-bottom:8px"><div class="k">Partidas de hoje (${lv.matchIds.length})</div>
       ${ult?`<button class="btn sm ghost sp" data-a="delMatch" data-id="${ult}">${bi('undo')} Desfazer a última</button>`:''}</div>
+    <div class="tiny muted" style="margin-bottom:8px">Para corrigir gols, autores ou trocas de uma partida anterior, use a aba Jogos.</div>
     ${lv.matchIds.slice(-5).reverse().map(id=>{const m=liga.matches.find(x=>x.id===id);return m?mrow(liga,m,true,euId(liga)):''}).join('')}</div>`;
 }
 
@@ -5314,7 +5315,7 @@ const A={
     /* fica 7 s e leva o "↩ voltar": o Fim errado se desfaz sem rolar até o fim da página */
     toast(giros.length
       ?`${placar} · entra ${giros[0].r.entram.map(id=>nameOf(l,id).split(' ')[0]).join(', ')}`
-      :`${placar} · registrado`,{ms:7000,act:{label:bi('ret')+' voltar',a:'voltarPartida'}});
+      :`${placar} · registrado`,{ms:7000,act:{label:'voltar',a:'voltarPartida'}});
   },
 
   /* ----- contestação e revisão ----- */
