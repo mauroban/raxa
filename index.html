@@ -503,6 +503,17 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .evr .plc{font-family:var(--disp);font-weight:800;font-size:15px;color:var(--mute);flex:0 0 auto}
 .evr.mut .nm{font-weight:500;color:var(--mute)}
 .trecho{background:var(--panel2);border-radius:12px;padding:10px 11px;margin-bottom:7px}
+/* revisão enxuta (D-129): dois times lado a lado, uma linha por pessoa; evento numa linha */
+.esc2.rev{gap:6px 10px;margin-top:0}
+.esc2.rev .k2{margin:0 0 2px;display:flex;justify-content:space-between;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
+.esc2.rev .k2 .tiny{font-size:10px;text-transform:none;letter-spacing:0;font-weight:500}
+.rv{display:grid;grid-template-columns:16px minmax(0,1fr);align-items:center;column-gap:4px;padding:4px 0;border-bottom:1px solid var(--line);font-size:13.5px;min-width:0}
+.rv:last-child{border-bottom:0}
+.rv .pos{font-size:12px;text-align:center}
+.rv .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rv small{grid-column:2;font-size:10.5px;color:var(--mute);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evr.one{padding:6px 8px}
+.evr.one .nm{font-size:13.5px}
 .trecho.off{opacity:.55}
 .rachaRow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;
   border:0;border-bottom:1px solid var(--line);color:var(--chalk);padding:14px 12px;cursor:pointer;font-family:inherit;min-height:60px}
@@ -3925,8 +3936,8 @@ function fichaLinha(liga,m,j){
   if(j.volta)t.push('voltou depois');
   /* sem número solto na ponta da linha: o +/− tem lugar próprio nos rankings,
      aqui ele só aparecia sem rótulo e ninguém sabia o que era               */
-  return `<div class="rk3"><span class="pos">${j.gk?'🧤':'·'}</span>
-    <div class="nm">${esc(nameOf(liga,j.pid))}${t.length?`<small>${t.join(' · ')}</small>`:''}</div></div>`;
+  return `<div class="rv"><span class="pos">${j.gk?'🧤':''}</span>
+    <div class="nm">${esc(nameOf(liga,j.pid))}</div>${t.length?`<small>${t.join(' · ')}</small>`:''}</div>`;
 }
 /* Linha do tempo: o log bruto da partida em português. Gol é botão para o
    admin trocar o autor sem sair do contexto em que o gol aconteceu.         */
@@ -3937,10 +3948,10 @@ function revTempo(liga,m,podeEditar){
   const jogou=[emQuadraNo(liga,m,0),emQuadraNo(liga,m,1)];
   const foraDaEscala=g=>!!(g.pid&&!jogou[g.own?1-g.side:g.side].has(g.pid));
   const minDe=t=>m.startedAt?mmss(gameTime(m,t)):'';
-  const row=(ic,txt,meta,min,side)=>`<div class="evr mut">
+  const row=(ic,txt,meta,min,side)=>`<div class="evr mut one">
     <span class="num tiny muted t">${min}</span>
     <span class="swatch" style="background:${side===null?'var(--mute2)':corTime(m,side)}"></span>
-    <div class="d"><div class="nm">${ic} ${txt}</div>${meta?`<div class="meta">${meta}</div>`:''}</div></div>`;
+    <div class="d"><div class="nm">${ic} ${txt}</div></div></div>`;
   const sc=[0,0];let gi=-1;
   const linhas=evs.map(ev=>{
     const min=minDe(ev.t);
@@ -3949,11 +3960,11 @@ function revTempo(liga,m,podeEditar){
       const g=(m.goals||[])[gi]||ev,i=gi,tag=podeEditar?'button':'div';
       const quem=g.pid?esc(nameOf(liga,g.pid))+(g.own?' <span class="tiny muted">(contra)</span>':'')
         :'<span class="muted">sem autor</span>';
-      return `<${tag} class="evr" ${podeEditar?`data-a="goalScorerM" data-id="${m.id}" data-i="${i}"`:''}>
+      const aviso=foraDaEscala(g);
+      return `<${tag} class="evr ${aviso?'':'one'}" ${podeEditar?`data-a="goalScorerM" data-id="${m.id}" data-i="${i}" title="toque para corrigir o autor"`:''}>
         <span class="num tiny muted t">${min}</span>
         <span class="swatch" style="background:${corTime(m,ev.side)}"></span>
-        <div class="d"><div class="nm">⚽ ${quem}</div>
-          <div class="meta">gol do ${esc(m.names[ev.side])}${foraDaEscala(g)?' · <b class="dn">⚠ o autor não estava em quadra</b>':''}${podeEditar?' · toque para corrigir o autor':''}</div></div>
+        <div class="d"><div class="nm">⚽ ${quem}</div>${aviso?'<div class="meta"><b class="dn">⚠ o autor não estava em quadra</b></div>':''}</div>
         <span class="plc num">${sc[0]}-${sc[1]}</span></${tag}>`;
     }
     if(ev.type==='sub'){
@@ -4023,26 +4034,24 @@ function revDetalhe(liga,m){
   const ficha=fichaPartida(liga,m),ab=S.ui.revAb||{};
   const sec=(k,titulo,nota,html,aberto)=>`<div class="sec"><div class="k2"><span>${titulo}</span>${nota?`<span class="tiny">${nota}</span>`:''}</div>
     ${aberto?html:''}<button class="more" data-a="revSec" data-k="${k}" data-id="${m.id}">${aberto?'▴ esconder':'▾ ver'}</button></div>`;
+  /* enxuto (D-129): placar, uma linha de contexto, e os dois times lado a
+     lado com uma linha por pessoa — a mesma leitura em um terço da altura */
   const bloco=sd=>{
     const time=ficha.filter(j=>j.side===sd);
-    return `<div class="sec"><div class="k2"><span style="color:${corTime(m,sd)}">${esc(m.names[sd])}</span>
-      <span class="tiny">${pl(m.score[sd],'gol')} · ${pl(time.length,'jogador','jogadores')}</span></div>
-      ${time.length?time.map(j=>fichaLinha(liga,m,j)).join(''):'<div class="tiny muted" style="padding:6px 2px">sem escalação registrada</div>'}</div>`;
+    return `<div class="col"><div class="k2" style="color:${corTime(m,sd)}">${esc(m.names[sd])}<span class="tiny muted">${pl(time.length,'jogador','jogadores')}</span></div>
+      ${time.length?time.map(j=>fichaLinha(liga,m,j)).join(''):'<div class="tiny muted">sem escalação</div>'}</div>`;
   };
+  const dt=new Date(m.ts);
   return `
-    <div class="mini" style="margin-bottom:12px">
+    <div class="mini" style="margin:0 0 6px">
       <div class="tm" style="color:${corTime(m,0)}">${esc(m.names[0])}</div>
       <div class="sc num">${m.score[0]}<span class="muted">–</span>${m.score[1]}</div>
       <div class="tm r" style="color:${corTime(m,1)}">${esc(m.names[1])}</div></div>
-    <div class="tiny muted" style="margin:-4px 0 12px">${new Date(m.ts).toLocaleString('pt-BR')}
+    <div class="tiny muted" style="margin:0 0 10px">${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
       · ${m.result==='draw'?'empate':'venceu '+esc(m.names[m.result])}
+      · ${durTot?MINS(durTot)+' min':'—'} · ${pl(ficha.length,'jogador','jogadores')} · ${pl(cont.length,'trecho')}
       · ${m.mode==='unica'?'partida única':'racha curto'}${m.voided?' · <b class="dn">ANULADA</b>':''}</div>
-    <div class="stat four">
-      <div><b class="num">${durTot?MINS(durTot):'—'}</b><span>min de jogo</span></div>
-      <div><b class="num">${ficha.length}</b><span>jogadores</span></div>
-      <div><b class="num">${m.score[0]+m.score[1]}</b><span>gols</span></div>
-      <div><b class="num">${cont.length}</b><span>${cont.length===1?'trecho':'trechos'}</span></div></div>
-    ${bloco(0)}${bloco(1)}
+    <div class="esc2 rev">${bloco(0)}${bloco(1)}</div>
     ${sec('tempo','Linha do tempo',pl((m.events||[]).length,'evento'),revTempo(liga,m,souAdmin(liga)),ab.tempo!==false)}
     ${sec('trechos','Trechos',cont.length+' de '+sts.length+' contam',revTrechos(liga,m),!!ab.trechos)}
     ${sec('nivel','Efeito no nível',null,revNivel(liga,m),!!ab.nivel)}`;
@@ -5358,12 +5367,12 @@ const A={
         <div class="k" style="margin-bottom:6px">${d.length} contestação(ões)</div>
         <div class="tiny">${d.map(x=>esc(x.by)).join(', ')}</div></div>`:''}
       ${revDetalhe(l,m)}
-      <div style="height:18px"></div>
-      <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">${bi('arrows')} Corrigir escalação e trocas</button>
-      <div class="k" style="margin:18px 0 8px">Corrigir resultado</div>
-      <div style="display:grid;gap:7px;margin-bottom:14px">
-        ${[[0,esc(m.names[0])+' venceu'],['draw','Empate'],[1,esc(m.names[1])+' venceu']]
-          .map(x=>`<button class="btn wide ${String(m.result)===String(x[0])?'pri':'ghost'}" data-a="fixResult" data-id="${m.id}" data-r="${x[0]}">${x[1]}</button>`).join('')}
+      <div style="height:12px"></div>
+      <button class="btn wide ghost sm" data-a="editEsc" data-id="${m.id}">${bi('arrows')} Corrigir escalação e trocas</button>
+      <div class="k" style="margin:14px 0 6px">Resultado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+        ${[[0,esc(m.names[0])],['draw','Empate'],[1,esc(m.names[1])]]
+          .map(x=>`<button class="btn sm ${String(m.result)===String(x[0])?'pri':'ghost'}" data-a="fixResult" data-id="${m.id}" data-r="${x[0]}" style="min-width:0;padding:0 6px">${x[1]}</button>`).join('')}
       </div>
       <div class="row" style="gap:6px">
         <button class="btn sm" data-a="clearDisputes" data-id="${m.id}">Manter</button>

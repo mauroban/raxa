@@ -53,6 +53,7 @@ TELAS = {
     13: 'ficha com opinioes',
     14: 'fim de racha',
     15: 'marcando',
+    16: 'revisar',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -95,10 +96,11 @@ DRIVER = r"""
       const g=L().live.cur.events.find(e=>e.type==='goal');
       A.setGoalScorer({dataset:{t:String(g.t),id:L().live.cur.lineups[0][0]}});closeSheet();}
     if(step>=4&&step!==15){A.goal({dataset:{s:'0'}});A.endMatch();closeSheet();}
-    if(step>=5&&step!==15){          /* assume um perfil: e o que marca "VOCE" no historico */
+    if(step>=5&&step!==15&&step!==16){          /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
     if(step===11||step===12||step===13)S.ui.tab='ranking';
+    if(step===16){const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';}
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';
@@ -121,6 +123,12 @@ DRIVER = r"""
       if(k===5)A.goal({dataset:{s:s==='0'?'1':'0'}});
       A.endMatch();closeSheet();}
     A.endRacha();
+  }
+  if(step===16){                   /* revisar partida: a partida inteira numa folha */
+    const l=L(),eu=l.players[1];eu.role='admin';
+    A.startMatch();const c=l.live.cur;const y=c.lineups[1][1],f=filaDe(l.live)[0];
+    A.doSub({dataset:{s:'1',out:y,id:f}});A.goal({dataset:{s:'1'}});A.endMatch();closeSheet();
+    A.review({dataset:{id:l.matches[l.matches.length-1].id}});
   }
   if(step===15){                   /* partida ao vivo com um nome marcado: quem pode ser o par fica verde, o resto apaga (D-129) */
     const c=L().live.cur,y=c.lineups[1].find(id=>id!==c.gks[1]);
