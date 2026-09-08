@@ -1963,6 +1963,7 @@ function aprDe(v,e,n){return n?Math.round((3*v+(e||0))/(3*n)*100):0}
    — é o interruptor "Sem goleiros" dos rankings (D-51).                    */
 function statsLiga(liga,periodo,papel){
   const so=papel===true?'L':(papel==='L'||papel==='G')?papel:null;
+  const semGk=papel===true;   // só o interruptor tira o goleiro das parcerias e duelos DOS OUTROS
   const J={},DU={},PA={};
   /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
      best: maior sequência do período · ultimos: últimos 5 resultados, do mais
@@ -1984,8 +1985,8 @@ function statsLiga(liga,periodo,papel){
         /* "sem goleiros": o trecho no gol não conta pelo time (jogos, V/E/D,
            tempo, duelos, parcerias) — só alimenta os números de goleiro.
            Justo para o rodízio, que troca de lado sem escolher o time.       */
-        const meuL=so==='L'?meu.filter(q=>part[q].role!=='G'):meu;
-        const delesL=so==='L'?deles.filter(q=>part[q].role!=='G'):deles;
+        const meuL=semGk?meu.filter(q=>part[q].role!=='G'):meu;
+        const delesL=semGk?deles.filter(q=>part[q].role!=='G'):deles;
         meu.forEach(pid=>{
           const x=j(pid),ehG=part[pid].role==='G';
           if(ehG){x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
@@ -2043,7 +2044,7 @@ function inseparaveis(liga,st){
 /* ---------- listas de ranking de um período ----------
    Já ordenadas do melhor para o pior; quem corta em 3/10 e quem inverte a
    ordem é a tela. A mesma função serve os rankings da aba Racha e a "posição
-   nos rankings" da aba Jogador — que lê a função escolhida lá (D-134).
+   nos rankings" da aba Jogador — que lê a função escolhida lá (D-135).
    `minL` é o tempo NA FUNÇÃO que está sendo lida: quem chama decide.      */
 const MIN_RITMO=60*60000;                 // ritmo só com 1 h em quadra: menos que isso é sorte
 function listasRk(J,PA,minL){
@@ -2133,7 +2134,7 @@ function destaques(liga,dias){
     partidas,gols,comDono,nR,piso,desde};
 }
 /* Todos os encontros entre duas pessoas: lado a lado ou uma contra a outra. */
-function encontros(liga,a,b,periodo,mesmoLado){
+function encontros(liga,a,b,periodo,mesmoLado,papel){
   const out=[];
   (liga.matches||[]).forEach(m=>{
     if(m.voided||!noPeriodo(m,periodo))return;
@@ -2141,6 +2142,7 @@ function encontros(liga,a,b,periodo,mesmoLado){
       if(!st.counted)return;
       const part=stintPart(st),x=part[a],y=part[b];
       if(!x||!y)return;
+      if(papel&&x.role!==papel)return;   // a folha lê a mesma função que a ficha (D-135)
       if(mesmoLado?x.side!==y.side:x.side===y.side)return;
       const tam=[(st.lineups&&st.lineups[0]||[]).length,(st.lineups&&st.lineups[1]||[]).length];
       out.push({ts:m.ts,m,st,i,side:x.side,
@@ -2152,8 +2154,25 @@ function encontros(liga,a,b,periodo,mesmoLado){
   });
   return out.sort((p,q)=>q.ts-p.ts);
 }
+/* A pessoa pegou no gol no período? Pela função do trecho, não por minutos:
+   partida antiga sem cronômetro tem trecho de duração zero e ainda assim
+   foi no gol.                                                              */
+function pegouNoGol(liga,per,pid){
+  return !!pid&&(liga.matches||[]).some(m=>!m.voided&&noPeriodo(m,per)
+    &&matchStints(liga,m).some(st=>st.counted&&(stintPart(st)[pid]||{}).role==='G'));
+}
+/* Que função a ficha da pessoa está lendo (D-135): a que ela escolheu (a
+   escolha é DELA — guardada com o id, não vale para o próximo); senão, a
+   função em que mais jogou no período. Quem nunca pegou no gol: linha.    */
+function papelJogador(liga,per,pid,JL){
+  if(!pegouNoGol(liga,per,pid))return 'L';
+  const e=S.ui.statsPapel;
+  if(e&&e.who===pid&&(e.p==='G'||e.p==='L'))return e.p;
+  const x=(JL||statsLiga(liga,per,'L').J)[pid]||{min:0,minGk:0};
+  return x.minGk>x.min?'G':'L';
+}
 /* Ano a ano, só para uma pessoa — é o "na vida" quebrado por temporada.
-   `papel` ('L'/'G') lê só o que ela fez naquela função (D-134).           */
+   `papel` ('L'/'G') lê só o que ela fez naquela função (D-135).           */
 function statsAnos(liga,pid,papel){
   const so=papel==='L'||papel==='G'?papel:null;
   const porAno={};
@@ -3506,19 +3525,18 @@ function viewStats(liga){
   const tab=S.ui.statsTab==='racha'?'racha':'jogador';
   const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
   /* "Sem goleiros" é dos RANKINGS (D-51) — na aba Jogador ele não faz sentido:
-     lá a pessoa escolhe qual função está lendo, linha ou gol (D-134).      */
+     lá a pessoa escolhe qual função está lendo, linha ou gol (D-135).      */
   const semGk=tab==='racha'&&!!S.ui.statsSemGk;
   const {J,DU,PA}=statsLiga(liga,per,semGk);
   const who=statsWhoId(liga,J);
   /* A pessoa é lida por FUNÇÃO: o que ela fez de linha e o que fez no gol são
      duas histórias, e misturá-las não descreve nenhuma das duas. Quem nunca
-     pegou no gol no período tem só a de linha, e nem vê o seletor.         */
-  const stL=statsLiga(liga,per,'L');
-  const jogouNoGol=!!(who&&stL.J[who]&&stL.J[who].minGk>0);
-  /* abre na função em que a pessoa mais jogou no período: o goleiro fixo não
-     pode abrir a própria ficha zerada porque a linha vem primeiro no alfabeto */
-  const padraoPapel=jogouNoGol&&stL.J[who].minGk>stL.J[who].min?'G':'L';
-  const papel=!jogouNoGol?'L':(S.ui.statsPapel==='G'||S.ui.statsPapel==='L'?S.ui.statsPapel:padraoPapel);
+     pegou no gol no período tem só a de linha, e nem vê o seletor. Tudo
+     isso é da aba Jogador: na aba Racha não se faz a passada.             */
+  const vazio={J:{},DU:{},PA:{}},naFicha=tab==='jogador'&&!!who;
+  const stL=naFicha?statsLiga(liga,per,'L'):vazio;
+  const jogouNoGol=naFicha&&pegouNoGol(liga,per,who);
+  const papel=naFicha?papelJogador(liga,per,who,stL.J):'L';
   const stP=papel==='G'?statsLiga(liga,per,'G'):stL;
   const JP=stP.J,DUP=stP.DU,PAP=stP.PA;
   const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
@@ -3570,7 +3588,7 @@ function viewStats(liga){
   const dupla=[...comMin(parcerias)].filter(x=>x.v-x.d>=3).sort((a,b)=>aprDe(b.v,b.e,b.n)-aprDe(a.v,a.e,a.n)||b.n-a.n)[0];
   const parceiro=parcerias[0];
 
-  /* --- as listas de ranking do período (D-134): as da aba Racha saem do
+  /* --- as listas de ranking do período (D-135): as da aba Racha saem do
      interruptor; a "posição nos rankings" da pessoa sai da função que ela
      está lendo — 3º entre goleiros não é 3º entre todo mundo.
      gols por tempo só contam o tempo DE LINHA: quem revezou no gol não marca
@@ -3582,7 +3600,7 @@ function viewStats(liga){
   const todos=R.todos,todosP=RP.todos;
   const rkRachas=R.rachas,rkPm=R.pm,rkVit=R.vit,rkPct=R.pct,rkGols=R.gols,rkGolsGk=R.golsGk,
     rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkGk=R.gk,duplas=R.duplas;
-  const anos=who?statsAnos(liga,who,papel):[];
+  const anos=naFicha?statsAnos(liga,who,papel):[];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
   /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
@@ -3615,13 +3633,16 @@ function viewStats(liga){
   /* --- partida a partida: a historia da pessoa no periodo, uma linha por
      jogo — resultado, placar pelo lado dela, chance no apito e gols (D-76) */
   const verCh=vePat(liga);
-  const pps=(()=>{const out=[];
+  const pps=(()=>{const out=[];if(!naFicha)return out;
     [...liga.matches].sort((a,b)=>b.ts-a.ts).forEach(m=>{
       if(m.voided||!noPeriodo(m,per))return;
-      const sd=ladoNaPartida(liga,m,who);if(sd===null)return;
-      /* a leitura é por função (D-134): entra a partida em que a pessoa jogou
-         NAQUELA função, e o ⚽ é o gol que ela fez de lá                    */
-      if(!matchStints(liga,m).some(st=>st.counted&&(stintPart(st)[who]||{}).role===papel))return;
+      /* a leitura é por função (D-135), com a MESMA régua do tile de partidas
+         (statsLiga): entra a partida em que a pessoa jogou naquela função pelo
+         tempo que conta, pelo lado em que terminou nela; o ⚽ é o gol de lá  */
+      let sd=null,dur=0,tot=0;
+      matchStints(liga,m).forEach(st=>{if(!st.counted)return;tot+=st.dur||0;
+        const x=stintPart(st)[who];if(!x||x.role!==papel)return;sd=x.side;dur+=st.dur||0});
+      if(sd===null||!contaPartida(liga,m,dur,tot))return;
       const c2=chanceHist(liga,m);
       out.push({m,sd,ch:c2?c2[sd]:null,
         gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own&&roleNoGol(liga,m,g)===papel).length,
@@ -3656,7 +3677,7 @@ function viewStats(liga){
   const ligaSof=todosP.reduce((a,x)=>a+x.sofridos,0),ligaMinGk=todosP.reduce((a,x)=>a+x.minGk,0);
   const cmp=(meu,liga,maiorMelhor)=>meu===null||liga===null||meu===liga?'':((meu>liga)===maiorMelhor?'up':'dn');
   const dec2=v=>v.toFixed(2).replace('.',',');
-  /* Linha e gol são leituras estanques (D-109/D-134): o cartão é o da função
+  /* Linha e gol são leituras estanques (D-109/D-135): o cartão é o da função
      que a pessoa está lendo, comparado só com a liga na mesma função. Piso de
      20 min (o mesmo do "Menos vazado" do racha): 3 min no gol não viram cartão. */
   const PISO_FUNCAO=20*60000;
@@ -6174,9 +6195,9 @@ const A={
   statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
-  /* linha ou gol na aba Jogador (D-134): a página volta ao começo do
-     partida-a-partida, que é outra lista                                  */
-  statsPapel(el){S.ui.statsPapel=el.dataset.v==='G'?'G':'L';S.ui.ppPage=0;save();render()},
+  /* linha ou gol na aba Jogador (D-135): a escolha é da pessoa aberta, não
+     do aparelho; a página volta ao começo do partida-a-partida, outra lista */
+  statsPapel(el){S.ui.statsPapel={who:statsWhoId(L()),p:el.dataset.v==='G'?'G':'L'};S.ui.ppPage=0;save();render()},
   /* Times do racha (aba Números): toque no time mostra quem eram os jogadores */
   rachaTime(el){
     const l=L(),sid=el.dataset.sid,nome=el.dataset.n;
@@ -6247,15 +6268,13 @@ const A={
     openSheet(`<h2>Ver os números de quem?</h2>
       <div class="chips">${ps.map(p=>`<button class="tp big" data-a="setStatsWho" data-id="${p.id}">${dot(p)}<span class="nm">${esc(p.name)}</span></button>`).join('')}</div>`);
   },
-  /* trocar de pessoa devolve a escolha de função ao padrão dela (D-134):
-     o goleiro do outro abre no gol, o de linha abre na linha              */
-  setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;S.ui.statsPapel=null;closeSheet();save();render()},
+  setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;closeSheet();save();render()},
   /* Histórico de um confronto (ou de uma parceria) entre duas pessoas. */
   duelo(el){
     const l=L(),rival=el.dataset.id,mesmo=el.dataset.m==='1';
     const who=statsWhoId(l);if(!who||!rival)return;
     const per=statsPeriodo(L());
-    const lista=encontros(l,who,rival,per,mesmo);
+    const lista=encontros(l,who,rival,per,mesmo,papelJogador(l,per,who));   // a mesma função da ficha (D-135)
     const a={n:0,v:0,e:0,d:0};
     lista.forEach(x=>{a.n++;a[x.res==='V'?'v':x.res==='D'?'d':'e']++});
     openSheet(`<h2>${esc(nameOf(l,who))} ${mesmo?'&':'×'} ${esc(nameOf(l,rival))}</h2>

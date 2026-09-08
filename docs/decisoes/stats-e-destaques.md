@@ -278,33 +278,47 @@ goleiros" dentro do seletor de período (não é período).
 uso — daí o nome) · [Stats §2](../produto/stats.md).
 
 <a id="d-134"></a>
-### D-134 · Na aba Jogador, linha e gol são duas leituras — e derrota não é ranking
+### D-134 · Derrota não é ranking
+**08/09/2026.** Sai o **Mais derrotas** dos rankings de temporada — o último herdeiro do D-54. O
+"quem mais perdeu" do último racha já tinha saído no D-72; agora vai o irmão, e a lista de
+rankings perde uma seção em todos os filtros.
+**Por quê:** quem quer ler derrota inverte o "Mais vitórias" na folha (D-112) — a informação já
+está lá. Um pódio de pior é número que ninguém pediu e que ocupa rolagem no celular.
+**Descartado:** manter só no filtro "Sempre" (a mesma seção aparecendo e sumindo conforme o
+filtro é pior que não existir).
+**Onde:** `rkDer`, `SECS.der` e `ordem` em `viewStats` · `smoke.py` ("rankings do último racha
+abrem ate 10, sem quem-mais-perdeu") · [Stats §2](../produto/stats.md).
+
+<a id="d-135"></a>
+### D-135 · Na aba Jogador, linha e gol são duas leituras — não um interruptor
 **08/09/2026.** O **"Sem goleiros" saiu da aba Jogador**: lá ele não fazia sentido — um
 interruptor que zerava a ficha do goleiro fixo (12 partidas viravam 0) e que, no meio do caminho,
 somava as duas funções de quem reveza. No lugar entra um seletor **Linha | Gol**, que aparece só
-para quem pegou no gol no período. Ele troca a leitura inteira: partidas, V/E/D, aproveitamento,
-sequência, minutos, ano a ano, partida a partida, cartões de ritmo e a posição nos rankings — que
-passa a ser calculada **dentro da função** (3º entre goleiros, não 3º entre todo mundo). Na
-leitura do gol os tiles viram "gols do gol" e "min no gol", e duelo e parceria somem: o goleiro do
-rodízio troca de lado sem escolher com quem joga. A ficha abre na função em que a pessoa mais
-jogou no período, e trocar de jogador devolve a escolha ao padrão do próximo. O interruptor "Sem
-goleiros" continua, intacto, na aba Racha — lá ele é dos rankings (D-51).
-`statsLiga(liga, per, papel)` passou a receber `'L'`/`'G'` (e `true` segue valendo por `'L'`),
-`statsAnos` também, e as listas de ranking saíram de dentro do `viewStats` para
-`listasRk(J, PA, minL)` — a mesma função serve os rankings da aba Racha e a posição da pessoa na
-função dela.
+para quem pegou no gol no período (pela função do trecho, não por minutos — partida antiga sem
+cronômetro tem trecho de duração zero). Ele troca a leitura inteira: partidas, V/E/D,
+aproveitamento, sequência, minutos, ano a ano, partida a partida (mesma régua e mesmo lado que o
+tile de partidas), cartões de ritmo, a posição nos rankings — calculada **dentro da função** (3º
+entre goleiros, não 3º entre todo mundo) — e a folha de cada duelo/parceria, que lê a mesma
+função da ficha. Na leitura do gol os tiles viram "gols do gol" e "min no gol", e duelo e parceria
+somem: o goleiro do rodízio troca de lado sem escolher com quem joga. Na leitura de linha, o
+goleiro dos outros **continua** nas parcerias e nos duelos da pessoa — o filtro é da função
+DELA; tirar o goleiro dos outros é coisa do interruptor da aba Racha. A ficha abre na função em
+que a pessoa mais jogou no período; a escolha é guardada **com o id da pessoa**, então não vaza
+para o próximo perfil, para outra liga nem para o fallback de "quem sou eu". O interruptor "Sem
+goleiros" continua, intacto, na aba Racha — lá ele é dos rankings (D-51) — e a passada extra
+por função só roda na aba Jogador.
+`statsLiga(liga, per, papel)` passou a receber `'L'`/`'G'` (e `true` segue valendo por `'L'` +
+goleiro fora das parcerias dos outros), `statsAnos` e `encontros` também; `pegouNoGol` e
+`papelJogador` decidem a função; as listas de ranking saíram de dentro do `viewStats` para
+`listasRk(J, PA, minL)` — a mesma função serve os rankings da aba Racha e a posição da pessoa.
 **Por quê:** o que a pessoa faz de linha e o que faz no gol são duas histórias; somadas, não
 descrevem nenhuma das duas, e um interruptor global escondia isso atrás de um estado que se
 esquece ligado.
 **Descartado:** manter o interruptor nas duas abas (o goleiro fixo lia a própria ficha zerada);
-uma terceira opção "Tudo" (é a soma que não descreve ninguém).
-No mesmo dia saiu o ranking **Mais derrotas** da temporada, o último herdeiro do D-54 — o "quem
-mais perdeu" da noite já tinha saído no D-72. Quem quer ler derrota inverte o "Mais vitórias" na
-folha (D-112): a informação já está lá, e um pódio de pior é número que ninguém pediu e que ocupa
-rolagem no celular. (Descartado: manter só no filtro "Sempre" — seção que aparece e some conforme
-o filtro é pior que não existir.)
-**Onde:** `statsLiga`/`statsAnos` (parâmetro `papel`), `listasRk`, `viewStats` (seletor
-`.seg.fn`, `papel`, `stP`, `RP`, tiles, cartões, posições, partida a partida), `A.statsPapel`,
-`A.setStatsWho`, `rkDer`/`SECS.der`/`ordem` · `smoke.py` ("aba Jogador: quem ja pegou no gol
-escolhe entre Linha e Gol (D-134)", "numeros sem goleiros… so na aba Racha", "rankings da noite
-abrem ate 10, sem quem-mais-perdeu") · [Stats §2](../produto/stats.md).
+uma terceira opção "Tudo" (é a soma que não descreve ninguém); decidir "pegou no gol" por minutos
+(zerava quem só tem partida antiga no gol).
+**Onde:** `statsLiga`/`statsAnos`/`encontros` (parâmetro `papel`), `pegouNoGol`, `papelJogador`,
+`listasRk`, `viewStats` (seletor `.seg.fn`, `naFicha`, `stP`, `RP`, tiles, cartões, posições,
+partida a partida), `A.statsPapel`, `A.duelo` · `smoke.py` ("aba Jogador: quem ja pegou no gol
+escolhe entre Linha e Gol (D-135)", "numeros sem goleiros… so na aba Racha") ·
+[Stats §2](../produto/stats.md).

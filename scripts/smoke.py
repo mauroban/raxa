@@ -832,7 +832,7 @@ step('numeros: abas jogador/racha e listas compactas',()=>{
   if(/Duelos —/.test(h))throw new Error('duelos nao deveriam estar na aba racha');
   A.rkSheet({dataset:{k:'pres'}});closeSheet();
   A.statsTab({dataset:{v:'jogador'}});
-  /* a ficha abre na funcao que a pessoa mais jogou (D-134): num jogador de
+  /* a ficha abre na funcao que a pessoa mais jogou (D-135): num jogador de
      linha, duelos e minutos; num goleiro, a leitura do gol                */
   const l0=L(),JL0=statsLiga(l0,'sempre','L').J;
   const soLinha=l0.players.find(p=>JL0[p.id]&&JL0[p.id].jogos&&!JL0[p.id].minGk);
@@ -1027,7 +1027,7 @@ step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-7
   if(h.indexOf('Melhor +/−')<0)throw new Error('o +/- da noite tem que aparecer tambem no racha curto (depois das vitorias)');
   if(h.indexOf('Ver ')>=0){A.rkSheet({dataset:{k:'rvenc'}});closeSheet()}
   A.statsPer({dataset:{v:'sempre'}});
-  /* D-134: derrota nao e ranking em lugar nenhum — nem na noite, nem na temporada */
+  /* D-134: derrota nao e ranking em lugar nenhum — nem no ultimo racha, nem na temporada */
   if(els['#app'].innerHTML.indexOf('Mais derrotas')>=0)throw new Error('Mais derrotas saiu no D-134');
 });
 step('historico mostra a chance de cada lado no apito',()=>{
@@ -1049,7 +1049,7 @@ step('partida a partida na tela do jogador, com paginacao',()=>{
     if(S.ui.ppPage)throw new Error('paginacao nao voltou');
   }
 });
-step('numeros sem goleiros: liga, redesenha e desliga (so na aba Racha, D-134)',()=>{
+step('numeros sem goleiros: liga, redesenha e desliga (so na aba Racha, D-135)',()=>{
   A.statsTab({dataset:{v:'jogador'}});
   if(/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('o interruptor de goleiros nao e da aba Jogador');
   A.statsTab({dataset:{v:'racha'}});
@@ -1060,7 +1060,7 @@ step('numeros sem goleiros: liga, redesenha e desliga (so na aba Racha, D-134)',
   A.statsSemGk();
   if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
 });
-step('aba Jogador: quem ja pegou no gol escolhe entre Linha e Gol (D-134)',()=>{
+step('aba Jogador: quem ja pegou no gol escolhe entre Linha e Gol (D-135)',()=>{
   const l=L();A.statsTab({dataset:{v:'jogador'}});A.statsPer({dataset:{v:'sempre'}});
   const JL=statsLiga(l,'sempre','L').J,JG=statsLiga(l,'sempre','G').J;
   const gk=l.players.find(p=>JL[p.id]&&JL[p.id].minGk>0&&JG[p.id]&&JG[p.id].jogos);
