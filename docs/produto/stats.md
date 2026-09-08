@@ -25,13 +25,9 @@ Duas consequências que importam:
 | **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque. No ranking "Melhor dupla" da aba Racha, o % vem com a quantidade de partidas da dupla em letra pequena ao lado |
 | **O racha no período** | tiles da liga e o gráfico **Gols por racha** (coluna por racha, último em verde, média tracejada); rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — top 3 cada, com "Ver os 10 ›" abrindo a folha (D-112) e a linha do dono do perfil destacada (D-109); títulos com ícone SVG, sem emoji (só o ⚽ fica); **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
 
-**Presença** ("Mais presenças", "X rachas" na ficha e nos membros) conta os rachas em que a pessoa
-**esteve**, não os que jogou (D-49/D-134): quem apareceu e não entrou em quadra, quem só ficou no
-gol de um trecho que não conta, quem foi embora no meio — todos contam o racha. A fonte é a
-presença gravada na sessão; quem jogou entra também, para o racha antigo, sem sessão. O total de
-rachas do período (tiles, "X rachas · Y partidas") segue a mesma conta.
-
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga (cada nome com o mini-badge de patente, igual ao da presença) — dá para conferir o carrasco do outro também.
+
+**Presença** ("Mais presenças", "X rachas") conta os rachas em que a pessoa **jogou** — e o trecho no gol é jogar (D-134): o goleiro fixo, que passa o racha inteiro no gol, aparece no ranking de presenças com todos os rachas dele, inclusive com o "Sem goleiros" ligado.
 
 **Sem goleiros** (interruptor abaixo do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
 
