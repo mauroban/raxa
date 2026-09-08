@@ -389,6 +389,10 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .col.team .pl{margin-top:3px;padding:0 7px;font-size:13.5px}
 .esc2 .pl.n2 .nm,.tp.n2 .nm{font-size:12.5px}
 .esc2 .pl.n3 .nm,.tp.n3 .nm{font-size:11.5px;letter-spacing:-.01em}
+/* e se mesmo assim não couber, o nome quebra em duas linhas em vez de cortar: nome inteiro, sempre */
+.esc2 .pl .nm,.filagrid .tp .nm{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;overflow:hidden;text-align:left}
+.filagrid .tp.big{padding-left:24px}
+.filagrid>div.out .tp{padding-right:22px}
 .esc2 .col.team .pl.gk{margin-top:0}
 .esc2 .col .res{margin-top:8px}
 .esc2 .col .res .k{margin-bottom:4px;font-size:10px}
