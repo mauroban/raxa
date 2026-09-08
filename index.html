@@ -2630,8 +2630,7 @@ function viewTimes(liga,lv){
     ${unica?`<div class="row"><div class="k">Fora / esperando</div>
       <div class="sp num" style="font-family:var(--disp);font-size:18px">${bench.length}</div></div>`:''}
     ${bench.length?(unica?`<div class="chips" style="margin-top:8px">${bench.map(id=>tpChip(liga,lv,id,true)).join('')}</div>`
-      :(()=>{const ordem=filaDe(lv);let pos=0;return `<div class="filagrid">${ordem.map(id=>{const g=ehGkHoje(lv,id);if(!g)pos++;
-        return `<div><span class="filapos">${g?'':pos}</span>${tpChip(liga,lv,id,true)}</div>`}).join('')}</div>`})())
+      :filaGrid(liga,lv,filaDe(lv),id=>tpChip(liga,lv,id,true)))
       :'<div class="tiny muted">Todo mundo em quadra.</div>'}
   </div>`;
 }
