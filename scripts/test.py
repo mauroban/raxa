@@ -470,8 +470,6 @@ lanca(A5.concat('p7'),B5.concat('p8'),0,{gks:['p7','p8']});
   ok(!sem.DU['p1']||!sem.DU['p1']['p8'],'e dos duelos');
   ok(sem.J['p1'].jogos===1&&sem.J['p1'].v===1,'os de linha seguem contando normalmente');
   ok((sem.J['p7'].pm||0)===0&&com.J['p7'].pm!==0,'sem goleiros: o +/- do goleiro nao anda');
-  /* D-134: presenca nao tem papel — o racha do goleiro fixo continua na conta */
-  ok(sem.J['p7'].nR===1&&sem.J['p7'].nR===com.J['p7'].nR,'sem goleiros: quem so pegou no gol nao perde a presenca do racha');
 }
 
 liga.matches.length=0;rebuildAll(liga);

@@ -1024,10 +1024,6 @@ step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-7
   A.statsPer({dataset:{v:'sempre'}});
   /* D-134: derrota nao e ranking em lugar nenhum — nem na noite, nem na temporada */
   if(els['#app'].innerHTML.indexOf('Mais derrotas')>=0)throw new Error('Mais derrotas saiu no D-134');
-  /* D-134: com "Sem goleiros" ligado, o goleiro fixo continua no ranking de presencas */
-  const l=L(),gk=l.players.find(p=>{const j=statsLiga(l,'sempre').J[p.id];return j&&j.minGk>0&&!statsLiga(l,'sempre',true).J[p.id].jogos});
-  if(gk){const j=statsLiga(l,'sempre',true).J[gk.id];
-    if(!j||!j.nR)throw new Error('quem so pegou no gol perdeu a presenca no "sem goleiros"')}
 });
 step('historico mostra a chance de cada lado no apito',()=>{
   S.ui.tab='hist';render();

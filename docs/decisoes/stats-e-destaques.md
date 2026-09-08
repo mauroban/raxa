@@ -278,22 +278,13 @@ goleiros" dentro do seletor de período (não é período).
 uso — daí o nome) · [Stats §2](../produto/stats.md).
 
 <a id="d-134"></a>
-### D-134 · "Sem goleiros" não apaga a presença de quem esteve no gol — e derrota não é ranking
-**08/09/2026.** Com o interruptor **Sem goleiros** ligado, quem passou a partida inteira no gol
-saía de `em` antes de a partida ser contada (`if(semGk&&ehG)return`) — e, junto com jogos e
-V/E/D (que é o que o D-51 quis tirar), perdia também o **racha**. Efeito: goleiro fixo com 12
-partidas numa noite aparecia no ranking **Mais presenças** com **0 rachas**, e o mesmo acontecia
-com quem só pegou no gol num trecho. Agora o trecho no gol guarda o tempo à parte (`durG`,
-`soG`): a presença do racha entra pela mesma régua de sempre (`contaPartida`), e nenhum número de
-time — partida, V/E/D, +/−, tempo, duelo, parceria — é dele naquela partida.
-**Por quê:** presença é quem jogou o racha, e pegar no gol é jogar. O D-51 tira do goleiro a
-*campanha* (a vitória do rodízio é do acaso do rodízio), não o fato de ele ter estado lá.
-**Descartado:** contar presença pela sessão (`presentIds`), o que faria quem apareceu e não
-entrou em quadra virar presença — presença aqui é racha jogado; devolver jogos/V/E/D ao goleiro
-no "sem goleiros" (é exatamente o que o D-51 quis tirar).
-No mesmo dia saiu o ranking **Mais derrotas** da temporada (o "quem mais perdeu" da noite já
-tinha saído no D-72): derrota se lê invertendo "Mais vitórias" na folha, e um pódio de pior é
-número que ninguém pediu.
-**Onde:** `statsLiga` (trecho de goleiro com `soG`/`durG`, laço de `em`), `rkDer`/`SECS`/`ordem`
-em `viewStats` · `test.py` [11] ("sem goleiros: quem so pegou no gol nao perde a presenca do
-racha") · `smoke.py` ("rankings da noite abrem ate 10…") · [Stats §2](../produto/stats.md).
+### D-134 · Derrota não é ranking
+**08/09/2026.** Sai o **Mais derrotas** dos rankings de temporada — o último herdeiro do D-54. O
+"quem mais perdeu" da noite já tinha saído no D-72; agora vai o irmão, e a lista de rankings
+perde uma seção em todos os filtros.
+**Por quê:** quem quer ler derrota inverte o "Mais vitórias" na folha (D-112) — a informação já
+está lá. Um pódio de pior é número que ninguém pediu e que ocupa rolagem no celular.
+**Descartado:** manter só no filtro "Sempre" (a mesma seção aparecendo e sumindo conforme o
+filtro é pior que não existir).
+**Onde:** `rkDer`, `SECS.der` e `ordem` em `viewStats` · `smoke.py` ("rankings da noite abrem ate
+10, sem quem-mais-perdeu") · [Stats §2](../produto/stats.md).

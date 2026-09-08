@@ -27,8 +27,6 @@ Duas consequências que importam:
 
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga (cada nome com o mini-badge de patente, igual ao da presença) — dá para conferir o carrasco do outro também.
 
-**Presença** ("Mais presenças", "X rachas") conta os rachas em que a pessoa **jogou** — e o trecho no gol é jogar (D-134): o goleiro fixo, que passa o racha inteiro no gol, aparece no ranking de presenças com todos os rachas dele, inclusive com o "Sem goleiros" ligado.
-
 **Sem goleiros** (interruptor abaixo do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
 
 **No período "Último" (um racha):**
