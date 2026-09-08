@@ -1340,7 +1340,7 @@ step('quem entrou no meio da partida e perdeu volta para a fila sem perder a vez
   }finally{S=salvo;render()}
 });
 step('nome inteiro no chip, com a fonte um degrau menor nos nomes longos (D-129)',()=>{
-  if(tamNome('Igor')!==''||tamNome('Guilherme Alves')!=='n2'||tamNome('Guilherme Almeida Jr')!=='n3')throw new Error('degraus de fonte errados');
+  if(tamNome('Igor')!==''||tamNome('Guilherme Alves')!==''||tamNome('Guilherme Almeida')!=='n3')throw new Error('a fonte so desce a partir de 16 letras');
 });
 step('sem ninguem na fila, os dois lados entram menores e iguais',()=>{
   const lv=L().live;
@@ -1692,7 +1692,7 @@ step('a fila e numerada e diz quem entra no proximo; quem chega vai para o fim; 
   const f=filaDe(lv);if(f[f.length-1]!==novo.id)throw new Error('quem chegou vai para o fim da fila');
   const h=viewProxima(l,lv);
   if(!/entram no próximo/.test(h)||!/class="corte">depois</.test(h))throw new Error('a fila devia mostrar o corte de quem entra no proximo e quem espera mais um');
-  if(!/filapos">1</.test(h)||!/filapos">8</.test(h))throw new Error('a fila devia estar numerada');
+  if(/filapos/.test(h))throw new Error('a fila nao leva numero: o que importa e o corte (D-129)');
   const pair=parPre_(lv,l),e=escalPre(l,lv,pair),lin=e.escal[0].find(id=>id!==e.gks[0]),f0=f.find(id=>!ehGkHoje(lv,id));
   onDrop(lin,{dataset:{dropZone:'bench'}});
   if(lv.teams[pair[0]].ids.includes(lin)||!lv.teams[pair[0]].ids.includes(f0))throw new Error('devia sair para a fila e entrar o primeiro');
