@@ -145,6 +145,8 @@ label.f .k{display:block;margin-bottom:6px}
 /* filtros da Stats (D-114): seletores empilhados + interruptor, sem card */
 .sfilt{display:flex;flex-direction:column;gap:6px;margin:2px 0 12px}
 .sfilt .seg.per button{padding:8px 2px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sfilt .seg.fn{align-self:flex-end;width:auto}
+.sfilt .seg.fn button{padding:8px 22px}
 .gksw{align-self:flex-end;display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:4px 2px;min-height:32px;cursor:pointer}
 .gksw i{display:block;width:30px;height:18px;border-radius:9px;background:var(--panel2);border:1px solid var(--line2);position:relative;transition:background .15s}
 .gksw i::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--mute);transition:left .15s,background .15s}
@@ -1956,7 +1958,11 @@ function pctDe(v,n){return n?Math.round(v/n*100):0}
    pura tratava empate como derrota, e racha empata muito.                   */
 function aprDe(v,e,n){return n?Math.round((3*v+(e||0))/(3*n)*100):0}
 
-function statsLiga(liga,periodo,semGk){
+/* `papel` diz QUAL leitura sai: `null` tudo junto, `'L'` só o que a pessoa
+   fez de linha, `'G'` só o que fez no gol. `true` continua valendo por `'L'`
+   — é o interruptor "Sem goleiros" dos rankings (D-51).                    */
+function statsLiga(liga,periodo,papel){
+  const so=papel===true?'L':(papel==='L'||papel==='G')?papel:null;
   const J={},DU={},PA={};
   /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
      best: maior sequência do período · ultimos: últimos 5 resultados, do mais
@@ -1978,18 +1984,20 @@ function statsLiga(liga,periodo,semGk){
         /* "sem goleiros": o trecho no gol não conta pelo time (jogos, V/E/D,
            tempo, duelos, parcerias) — só alimenta os números de goleiro.
            Justo para o rodízio, que troca de lado sem escolher o time.       */
-        const meuL=semGk?meu.filter(q=>part[q].role!=='G'):meu;
-        const delesL=semGk?deles.filter(q=>part[q].role!=='G'):deles;
+        const meuL=so==='L'?meu.filter(q=>part[q].role!=='G'):meu;
+        const delesL=so==='L'?deles.filter(q=>part[q].role!=='G'):deles;
         meu.forEach(pid=>{
           const x=j(pid),ehG=part[pid].role==='G';
           if(ehG){x.sofridos+=((st.score||[0,0])[s===0?1:0])||0;x.minGk+=st.dur||0}
-          if(semGk&&ehG)return;
+          if(so&&(ehG?so!=='G':so!=='L'))return;
           const e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{},dur:0});
           e.side=s;e.dur+=st.dur||0;
           x.min+=st.dur||0;                                        // tempo de jogo (ms), pausas já descontadas
           if(ehG)e.gk=true;
-          meuL.forEach(o=>{if(o!==pid)e.com[o]=1});
-          delesL.forEach(o=>{e.contra[o]=1});
+          /* duelo e parceria são de time: no gol não existem (o goleiro do
+             rodízio troca de lado sem escolher com quem joga)              */
+          if(so!=='G'){meuL.forEach(o=>{if(o!==pid)e.com[o]=1});
+            delesL.forEach(o=>{e.contra[o]=1})}
         });
       });
     });
@@ -2005,7 +2013,7 @@ function statsLiga(liga,periodo,semGk){
       for(const o in e.com){const y=par(PA,pid,o);y.n++;y[res]++}
       for(const o in e.contra){const y=par(DU,pid,o);y.n++;y[res]++}
     }
-    plusMinus(liga,m,(pid,d,role)=>{if(semGk&&role==='G')return;j(pid).pm+=d});
+    plusMinus(liga,m,(pid,d,role)=>{if(so&&(role==='G'?so!=='G':so!=='L'))return;j(pid).pm+=d});
     /* gols: de linha e de goleiro em contas separadas (D-110) — fazer gol do
        gol é outra façanha, e misturar inflava a artilharia de quem reveza  */
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else j(g.pid).gols++}});
@@ -2030,6 +2038,32 @@ function inseparaveis(liga,st){
     if(pct>=JUNTOS_PCT)out.push({a,b,n,pct,de:Math.min(ja,jb)});
   }));
   return out.sort((x,y)=>y.pct-x.pct||y.n-x.n);
+}
+
+/* ---------- listas de ranking de um período ----------
+   Já ordenadas do melhor para o pior; quem corta em 3/10 e quem inverte a
+   ordem é a tela. A mesma função serve os rankings da aba Racha e a "posição
+   nos rankings" da aba Jogador — que lê a função escolhida lá (D-134).
+   `minL` é o tempo NA FUNÇÃO que está sendo lida: quem chama decide.      */
+const MIN_RITMO=60*60000;                 // ritmo só com 1 h em quadra: menos que isso é sorte
+function listasRk(J,PA,minL){
+  const todos=Object.keys(J).map(id=>J[id]);
+  const duplas=[],vistos={};
+  Object.keys(PA||{}).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
+    const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,e:y.e,pct:aprDe(y.v,y.e,y.n)})}));
+  duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
+  return {todos,
+    rachas:[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos),
+    pm:todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v),
+    vit:[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos),
+    pct:todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos),
+    gols:[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols),
+    golsGk:[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk||a.minGk-b.minGk),   // gol feito do gol (D-110)
+    min:todos.filter(x=>x.min>0).sort((a,b)=>b.min-a.min),
+    ritmo:todos.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a)),
+    seq:[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v),
+    gk:todos.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk),
+    duplas};
 }
 
 /* ---------- destaques de um periodo (o "melhores do mes") ----------
@@ -2118,8 +2152,10 @@ function encontros(liga,a,b,periodo,mesmoLado){
   });
   return out.sort((p,q)=>q.ts-p.ts);
 }
-/* Ano a ano, só para uma pessoa — é o "na vida" quebrado por temporada. */
-function statsAnos(liga,pid){
+/* Ano a ano, só para uma pessoa — é o "na vida" quebrado por temporada.
+   `papel` ('L'/'G') lê só o que ela fez naquela função (D-134).           */
+function statsAnos(liga,pid,papel){
+  const so=papel==='L'||papel==='G'?papel:null;
   const porAno={};
   (liga.matches||[]).forEach(m=>{
     if(m.voided)return;
@@ -2128,6 +2164,7 @@ function statsAnos(liga,pid){
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;tot+=st.dur||0;
       const me=stintPart(st)[pid];if(!me)return;
+      if(so&&me.role!==so)return;
       side=me.side;min+=st.dur||0;
     });
     if(side!==null&&contaPartida(liga,m,min,tot)){
@@ -2136,7 +2173,8 @@ function statsAnos(liga,pid){
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
     }
     plusMinus(liga,m,(q,d)=>{if(q===pid&&porAno[y])porAno[y].pm+=d});
-    (m.goals||[]).forEach(g=>{if(g.pid===pid&&!g.own&&porAno[ANO(m.ts)])porAno[ANO(m.ts)].gols++});
+    (m.goals||[]).forEach(g=>{if(g.pid!==pid||g.own)return;const a=porAno[ANO(m.ts)];
+      if(a&&(!so||roleNoGol(liga,m,g)===so))a.gols++});
   });
   return Object.keys(porAno).map(k=>porAno[k]).sort((x,y)=>y.ano-x.ano);
 }
@@ -3467,8 +3505,22 @@ function viewStats(liga){
   const per=statsPeriodo(liga);
   const tab=S.ui.statsTab==='racha'?'racha':'jogador';
   const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
-  const {J,DU,PA}=statsLiga(liga,per,!!S.ui.statsSemGk);
+  /* "Sem goleiros" é dos RANKINGS (D-51) — na aba Jogador ele não faz sentido:
+     lá a pessoa escolhe qual função está lendo, linha ou gol (D-134).      */
+  const semGk=tab==='racha'&&!!S.ui.statsSemGk;
+  const {J,DU,PA}=statsLiga(liga,per,semGk);
   const who=statsWhoId(liga,J);
+  /* A pessoa é lida por FUNÇÃO: o que ela fez de linha e o que fez no gol são
+     duas histórias, e misturá-las não descreve nenhuma das duas. Quem nunca
+     pegou no gol no período tem só a de linha, e nem vê o seletor.         */
+  const stL=statsLiga(liga,per,'L');
+  const jogouNoGol=!!(who&&stL.J[who]&&stL.J[who].minGk>0);
+  /* abre na função em que a pessoa mais jogou no período: o goleiro fixo não
+     pode abrir a própria ficha zerada porque a linha vem primeiro no alfabeto */
+  const padraoPapel=jogouNoGol&&stL.J[who].minGk>stL.J[who].min?'G':'L';
+  const papel=!jogouNoGol?'L':(S.ui.statsPapel==='G'||S.ui.statsPapel==='L'?S.ui.statsPapel:padraoPapel);
+  const stP=papel==='G'?statsLiga(liga,per,'G'):stL;
+  const JP=stP.J,DUP=stP.DU,PAP=stP.PA;
   const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
   const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?'no último racha':'em '+anoSel;
   /* filtro de período: os anos que existem no histórico + desde sempre */
@@ -3488,12 +3540,16 @@ function viewStats(liga){
       ${anosLiga.map(y=>`<button class="${anoSel===y?'on':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
       <button class="${per==='sempre'?'on':''}" data-a="statsPer" data-v="sempre">Sempre</button>
     </div>
-    <button class="gksw ${S.ui.statsSemGk?'on':''}" role="switch" aria-checked="${S.ui.statsSemGk?'true':'false'}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua"><span>Sem goleiros</span><i></i></button>
+    ${tab==='jogador'?(jogouNoGol?`<div class="seg fn">
+      <button class="${papel==='L'?'on':''}" data-a="statsPapel" data-v="L">Linha</button>
+      <button class="${papel==='G'?'on':''}" data-a="statsPapel" data-v="G">Gol</button>
+    </div>`:'')
+    :`<button class="gksw ${S.ui.statsSemGk?'on':''}" role="switch" aria-checked="${S.ui.statsSemGk?'true':'false'}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua"><span>Sem goleiros</span><i></i></button>`}
   </div>`;
   if(!liga.matches.length)return `${seg}<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
-  const me=who&&J[who]?J[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0};
+  const me=who&&JP[who]?JP[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0,min:0,minGk:0,pm:0};
   const av=pid=>`<span class="av">${esc(iniciais(nameOf(liga,pid)))}</span>`;
 
   /* --- a liga no período --- */
@@ -3504,8 +3560,8 @@ function viewStats(liga){
   const empates=ms.filter(m=>m.result==='draw').length;
 
   /* --- duelos e parcerias da pessoa --- */
-  const duelos=Object.keys(DU[who]||{}).map(id=>Object.assign({pid:id},DU[who][id])).sort((a,b)=>b.n-a.n||b.d-a.d);
-  const parcerias=Object.keys(PA[who]||{}).map(id=>Object.assign({pid:id},PA[who][id])).sort((a,b)=>b.n-a.n);
+  const duelos=Object.keys(DUP[who]||{}).map(id=>Object.assign({pid:id},DUP[who][id])).sort((a,b)=>b.n-a.n||b.d-a.d);
+  const parcerias=Object.keys(PAP[who]||{}).map(id=>Object.assign({pid:id},PAP[who][id])).sort((a,b)=>b.n-a.n);
   const comMin=arr=>arr.filter(x=>x.n>=Math.min(MIN_JOGOS,Math.max(3,Math.round(me.jogos/10))));
   /* freguesia de verdade: além do mínimo de confrontos, saldo de 3+ (D-89).
      Sem isso, 2V×1D já coroava "freguês" — ruído virando manchete.          */
@@ -3514,30 +3570,19 @@ function viewStats(liga){
   const dupla=[...comMin(parcerias)].filter(x=>x.v-x.d>=3).sort((a,b)=>aprDe(b.v,b.e,b.n)-aprDe(a.v,a.e,a.n)||b.n-a.n)[0];
   const parceiro=parcerias[0];
 
-  /* --- top 5 --- */
-  const todos=Object.keys(J).map(id=>J[id]);
-  /* listas inteiras, ja ordenadas do melhor para o pior; o rkBars corta em
-     3/10 e, com a setinha invertida, le a MESMA lista do fim (o outro top). */
-  const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos);
-  const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
-  const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos);
-  const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos);
-  const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
-  const rkGolsGk=[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk||a.minGk-b.minGk);   // gol feito do gol (D-110)
-  const rkMin=[...todos].filter(x=>x.min>0).sort((a,b)=>b.min-a.min);
-  const MIN_RITMO=60*60000;                          // ritmo só com 1 h em quadra: menos que isso é sorte
-  /* gols por tempo só contam o tempo DE LINHA: quem revezou no gol não marca
+  /* --- as listas de ranking do período (D-134): as da aba Racha saem do
+     interruptor; a "posição nos rankings" da pessoa sai da função que ela
+     está lendo — 3º entre goleiros não é 3º entre todo mundo.
+     gols por tempo só contam o tempo DE LINHA: quem revezou no gol não marca
      de lá, e a média da liga com minutos de goleiro dentro ficava baixa
-     demais para comparar (D-109). Com "sem goleiros" o min já vem sem o gol. */
-  const minL=x=>S.ui.statsSemGk?x.min:Math.max(0,x.min-x.minGk);
-  const rkRitmo=todos.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a));
-  const rkSeq=[...todos].filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v);
-  const rkGk=todos.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk);
-  const duplas=[];const vistos={};
-  Object.keys(PA).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
-    const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,e:y.e,pct:aprDe(y.v,y.e,y.n)})}));
-  duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
-  const anos=who?statsAnos(liga,who):[];
+     demais para comparar (D-109).                                          */
+  const minL=x=>semGk?x.min:Math.max(0,x.min-x.minGk);
+  const minLP=x=>papel==='G'?x.minGk:x.min;          // tempo na função que a pessoa está lendo
+  const R=listasRk(J,PA,minL),RP=listasRk(JP,PAP,minLP);
+  const todos=R.todos,todosP=RP.todos;
+  const rkRachas=R.rachas,rkPm=R.pm,rkVit=R.vit,rkPct=R.pct,rkGols=R.gols,rkGolsGk=R.golsGk,
+    rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkGk=R.gk,duplas=R.duplas;
+  const anos=who?statsAnos(liga,who,papel):[];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
   /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
@@ -3574,9 +3619,12 @@ function viewStats(liga){
     [...liga.matches].sort((a,b)=>b.ts-a.ts).forEach(m=>{
       if(m.voided||!noPeriodo(m,per))return;
       const sd=ladoNaPartida(liga,m,who);if(sd===null)return;
+      /* a leitura é por função (D-134): entra a partida em que a pessoa jogou
+         NAQUELA função, e o ⚽ é o gol que ela fez de lá                    */
+      if(!matchStints(liga,m).some(st=>st.counted&&(stintPart(st)[who]||{}).role===papel))return;
       const c2=chanceHist(liga,m);
       out.push({m,sd,ch:c2?c2[sd]:null,
-        gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own).length,
+        gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own&&roleNoGol(liga,m,g)===papel).length,
         gc:(m.goals||[]).filter(g=>g.pid===who&&g.own).length,
         res:m.result==='draw'?'E':(m.result===sd?'V':'D')});
     });return out})();
@@ -3604,34 +3652,36 @@ function viewStats(liga){
   /* --- ritmo com a média da liga ao lado (D-108): o número sozinho não diz
      se 0,39 é muito ou pouco; a liga inteira no mesmo período diz          */
   const r10=(n,ms)=>ms>0?n/(ms/600000):null;
-  const ligaGols=todos.reduce((a,x)=>a+x.gols,0),ligaMin=todos.reduce((a,x)=>a+minL(x),0);
-  const ligaSof=todos.reduce((a,x)=>a+x.sofridos,0),ligaMinGk=todos.reduce((a,x)=>a+x.minGk,0);
+  const ligaGols=todosP.reduce((a,x)=>a+x.gols,0),ligaMin=todosP.reduce((a,x)=>a+minLP(x),0);
+  const ligaSof=todosP.reduce((a,x)=>a+x.sofridos,0),ligaMinGk=todosP.reduce((a,x)=>a+x.minGk,0);
   const cmp=(meu,liga,maiorMelhor)=>meu===null||liga===null||meu===liga?'':((meu>liga)===maiorMelhor?'up':'dn');
   const dec2=v=>v.toFixed(2).replace('.',',');
-  /* Linha e gol são leituras estanques (D-109): o que a pessoa fez no gol não
-     entra no cartão de linha, nem o contrário — e cada um se compara só com
-     a liga na mesma função. Piso de 20 min em cada função (o mesmo do "Menos
-     vazado" do racha): 3 min no gol de um jogador de linha não viram cartão. */
+  /* Linha e gol são leituras estanques (D-109/D-134): o cartão é o da função
+     que a pessoa está lendo, comparado só com a liga na mesma função. Piso de
+     20 min (o mesmo do "Menos vazado" do racha): 3 min no gol não viram cartão. */
   const PISO_FUNCAO=20*60000;
-  const jogosL=x=>Math.max(0,x.jogos-(S.ui.statsSemGk?0:x.gk));   // partidas em que não esteve no gol
-  const ligaJogosL=todos.reduce((a,x)=>a+jogosL(x),0);
-  const naLinha=minL(me)>=PISO_FUNCAO,noGol=me.minGk>=PISO_FUNCAO;
+  const ligaJogos=todosP.reduce((a,x)=>a+x.jogos,0);
+  const naLinha=papel==='L'&&minLP(me)>=PISO_FUNCAO,noGol=papel==='G'&&me.minGk>=PISO_FUNCAO;
   const cartoes=[
-    naLinha?`<div class="rate"><b class="num">${por10(me.gols,minL(me))}</b><span>gols / 10 min</span>
-        <small class="${cmp(r10(me.gols,minL(me)),r10(ligaGols,ligaMin),true)}">média da liga: ${por10(ligaGols,ligaMin)}</small></div>`:null,
+    naLinha?`<div class="rate"><b class="num">${por10(me.gols,minLP(me))}</b><span>gols / 10 min</span>
+        <small class="${cmp(r10(me.gols,minLP(me)),r10(ligaGols,ligaMin),true)}">média da liga: ${por10(ligaGols,ligaMin)}</small></div>`:null,
     noGol?`<div class="rate"><b class="num">${por10(me.sofridos,me.minGk)}</b><span>sofridos / 10 min</span>
         <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">média da liga: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small>
         ${me.golsGk?`<small style="color:var(--gold)">${pl(me.golsGk,'gol')} feito${me.golsGk===1?'':'s'} do gol</small>`:''}</div>`:null,
-    naLinha&&jogosL(me)?`<div class="rate"><b class="num">${dec2(me.gols/jogosL(me))}</b><span>gols por partida</span>
-        <small class="${cmp(me.gols/jogosL(me),ligaGols/Math.max(1,ligaJogosL),true)}">média da liga: ${dec2(ligaGols/Math.max(1,ligaJogosL))}</small></div>`:null
+    naLinha&&me.jogos?`<div class="rate"><b class="num">${dec2(me.gols/me.jogos)}</b><span>gols por partida</span>
+        <small class="${cmp(me.gols/me.jogos,ligaGols/Math.max(1,ligaJogos),true)}">média da liga: ${dec2(ligaGols/Math.max(1,ligaJogos))}</small></div>`:null
   ].filter(Boolean).slice(0,2);
   const ratesHtml=cartoes.length?`<div class="rates${cartoes.length===1?'" style="grid-template-columns:1fr':''}">${cartoes.join('')}</div>`:'';
   /* --- a posição da pessoa em cada ranking do período (D-108): responde
      "onde eu estou" sem rolar até a aba Racha; pódio em dourado          */
   const posDe=(lista,num)=>{const i=lista.findIndex(x=>x.pid===who);return i<0?null:posEmpate(lista,num)[i]};
-  const posicoes=[longa?['pm',rkPm,x=>x.pm,'+/−']:null,['pct',rkPct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],['vit',rkVit,x=>x.v,'vitórias'],
-      ['gols',rkGols,x=>x.gols,'gols'],['pres',rkRachas,x=>x.nR,'presenças'],['ritmo',rkRitmo,x=>x.gols/minL(x),'ritmo'],
-      ['min',rkMin,x=>x.min,'tempo'],['seq',rkSeq,x=>x.best,'sequência'],['gk',rkGk,x=>1/(1+x.sofridos/x.minGk),'no gol'],['golsgk',rkGolsGk,x=>x.golsGk,'gols do gol']]
+  const posicoes=(!me.jogos?[]:papel==='G'
+      ? [['gk',RP.gk,x=>1/(1+x.sofridos/x.minGk),'menos vazado'],['golsgk',RP.golsGk,x=>x.golsGk,'gols do gol'],
+         ['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],['vit',RP.vit,x=>x.v,'vitórias'],
+         ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol']]
+      : [longa?['pm',RP.pm,x=>x.pm,'+/−']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],['vit',RP.vit,x=>x.v,'vitórias'],
+         ['gols',RP.gols,x=>x.gols,'gols'],['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
+         ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${rot}</span></div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
@@ -3642,7 +3692,7 @@ function viewStats(liga){
   const cardsJogador=`
   <div class="card">
     <div class="hero">
-      <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,'L')?divCls(p.L.rank):''}" style="${vePat(liga)&&p&&temPatente(liga,p,'L')?patVars(p.L.rank):'--pc:var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
+      <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,papel)?divCls(p[papel].rank):''}" style="${vePat(liga)&&p&&temPatente(liga,p,papel)?patVars(p[papel].rank):'--pc:var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
         <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
         <h2>${esc(p?p.name:'—')}</h2>
@@ -3670,19 +3720,22 @@ function viewStats(liga){
       ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${me.jogos}</b><span>partidas</span></div>
-      <div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>${me.golsGk?'gols de linha':'gols'}</span></div>
-      <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>
+      ${papel==='G'
+        ?`<div class="tile" style="--tc:var(--gold)"><b class="num">${me.golsGk}</b><span>gols do gol</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>min no gol</span></div>`
+        :`<div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>`}
     </div>
     ${ratesHtml}
     ${posHtml}
-    ${anos.length>1||per==='sempre'?`<div class="hr"></div>
+    ${anos.length&&(anos.length>1||per==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">Ano a ano</div>
       ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
         <span class="tiny muted">${pl(a.nR,'racha')} · ${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
-${cardPP}  <div class="card">
+${cardPP}${papel==='G'?'':`  <div class="card">
     <div class="k" style="margin-bottom:8px">Duelos — quem ${esc(quem)} enfrenta</div>
     ${carrasco||fregues?`<div class="duo">
       ${carrasco?`<div class="hl bad"><div class="t">${ic('swords')}Maior carrasco</div>
@@ -3707,7 +3760,7 @@ ${cardPP}  <div class="card">
     </div>`:''}
     ${parcerias.length?duelList(parcerias,1,'parc','Parcerias — quem joga do lado de '+esc(quem)):'<div class="tiny muted">Ainda não jogou com ninguém neste período.</div>'}
   </div>
-
+`}
 `;
   const juntos=inseparaveis(liga,{J,PA});
   const cardJuntos=juntos.length?`
@@ -6121,6 +6174,9 @@ const A={
   statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
+  /* linha ou gol na aba Jogador (D-134): a página volta ao começo do
+     partida-a-partida, que é outra lista                                  */
+  statsPapel(el){S.ui.statsPapel=el.dataset.v==='G'?'G':'L';S.ui.ppPage=0;save();render()},
   /* Times do racha (aba Números): toque no time mostra quem eram os jogadores */
   rachaTime(el){
     const l=L(),sid=el.dataset.sid,nome=el.dataset.n;
@@ -6191,7 +6247,9 @@ const A={
     openSheet(`<h2>Ver os números de quem?</h2>
       <div class="chips">${ps.map(p=>`<button class="tp big" data-a="setStatsWho" data-id="${p.id}">${dot(p)}<span class="nm">${esc(p.name)}</span></button>`).join('')}</div>`);
   },
-  setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;closeSheet();save();render()},
+  /* trocar de pessoa devolve a escolha de função ao padrão dela (D-134):
+     o goleiro do outro abre no gol, o de linha abre na linha              */
+  setStatsWho(el){S.ui.statsWho=el.dataset.id;S.ui.ppPage=0;S.ui.statsPapel=null;closeSheet();save();render()},
   /* Histórico de um confronto (ou de uma parceria) entre duas pessoas. */
   duelo(el){
     const l=L(),rival=el.dataset.id,mesmo=el.dataset.m==='1';

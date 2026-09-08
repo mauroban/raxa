@@ -124,7 +124,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-109](stats-e-destaques.md#d-109) · Gols por tempo só sobre minutos de linha; destaque nos rankings é o dono do perfil
 - [D-112](stats-e-destaques.md#d-112) · Rankings: top 3 limpo na página, lista inteira e ordem numa folha
 - [D-114](stats-e-destaques.md#d-114) · Filtros da Stats: uma família só, sem card
-- [D-134](stats-e-destaques.md#d-134) · Derrota não é ranking
+- [D-134](stats-e-destaques.md#d-134) · Na aba Jogador, linha e gol são duas leituras — e derrota não é ranking
 
 ### [Interface](interface.md)
 

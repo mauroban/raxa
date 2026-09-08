@@ -27,7 +27,9 @@ Duas consequências que importam:
 
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga (cada nome com o mini-badge de patente, igual ao da presença) — dá para conferir o carrasco do outro também.
 
-**Sem goleiros** (interruptor abaixo do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
+**Linha e Gol** (seletor abaixo do período, só na aba **Jogador**): quem já pegou no gol no período tem duas leituras, e a ficha abre na função em que ele mais jogou (D-134). **Linha** conta só o que ele fez de linha; **Gol**, só o que ele fez no gol — partidas, V/E/D, aproveitamento, sequência, minutos, ano a ano, partida a partida, os cartões de ritmo e a posição nos rankings (no gol, a posição é *entre goleiros*). Na leitura do gol os tiles viram **gols do gol** e **min no gol**, e não há duelo nem parceria: o goleiro do rodízio troca de lado sem escolher com quem joga. Quem nunca pegou no gol não vê o seletor.
+
+**Sem goleiros** (interruptor abaixo do período, só na aba **Racha**): tira o tempo no gol das contas de time nos rankings — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
 
 **No período "Último" (um racha):**
 - **Presentes** conta quem esteve no racha **desde o começo** — quem foi embora antes do fim continua contando (a sessão guarda a união de quem passou por lá, e rachas antigos são completados por quem aparece nas partidas).

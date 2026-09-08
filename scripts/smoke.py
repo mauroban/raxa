@@ -63,7 +63,7 @@ step('toda acao tem classificacao de papel',()=>{
      as que (a) so olham/preferencia, (b) tem checagem interna de papel
      (fixResult, voidMatch, escSalvar, pdSave, acc*...), ou (c) sao de conta.
      Acao nova cai aqui ate alguem classifica-la de proposito. */
-  const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk',
+  const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk','statsPapel',
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
@@ -832,6 +832,11 @@ step('numeros: abas jogador/racha e listas compactas',()=>{
   if(/Duelos —/.test(h))throw new Error('duelos nao deveriam estar na aba racha');
   A.rkSheet({dataset:{k:'pres'}});closeSheet();
   A.statsTab({dataset:{v:'jogador'}});
+  /* a ficha abre na funcao que a pessoa mais jogou (D-134): num jogador de
+     linha, duelos e minutos; num goleiro, a leitura do gol                */
+  const l0=L(),JL0=statsLiga(l0,'sempre','L').J;
+  const soLinha=l0.players.find(p=>JL0[p.id]&&JL0[p.id].jogos&&!JL0[p.id].minGk);
+  if(soLinha)A.setStatsWho({dataset:{id:soLinha.id}});
   const h2=els['#app'].innerHTML;
   if(!/Duelos —/.test(h2)||!/minutos/.test(h2))throw new Error('aba jogador sem duelos/minutos');
 });
@@ -1044,13 +1049,38 @@ step('partida a partida na tela do jogador, com paginacao',()=>{
     if(S.ui.ppPage)throw new Error('paginacao nao voltou');
   }
 });
-step('numeros sem goleiros: liga, redesenha e desliga',()=>{
+step('numeros sem goleiros: liga, redesenha e desliga (so na aba Racha, D-134)',()=>{
+  A.statsTab({dataset:{v:'jogador'}});
+  if(/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('o interruptor de goleiros nao e da aba Jogador');
+  A.statsTab({dataset:{v:'racha'}});
   A.statsSemGk();
   if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');
   if(!/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('chip do toggle sumiu');
   A.statsPer({dataset:{v:'sempre'}});
   A.statsSemGk();
   if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
+});
+step('aba Jogador: quem ja pegou no gol escolhe entre Linha e Gol (D-134)',()=>{
+  const l=L();A.statsTab({dataset:{v:'jogador'}});A.statsPer({dataset:{v:'sempre'}});
+  const JL=statsLiga(l,'sempre','L').J,JG=statsLiga(l,'sempre','G').J;
+  const gk=l.players.find(p=>JL[p.id]&&JL[p.id].minGk>0&&JG[p.id]&&JG[p.id].jogos);
+  if(!gk)throw new Error('o smoke precisa de alguem que pegou no gol');
+  const linha=l.players.find(p=>JL[p.id]&&JL[p.id].jogos&&!(JL[p.id].minGk>0));
+  A.setStatsWho({dataset:{id:linha.id}});
+  if(els['#app'].innerHTML.indexOf('data-a="statsPapel"')>=0)throw new Error('quem nunca pegou no gol nao tem o que escolher');
+  A.setStatsWho({dataset:{id:gk.id}});
+  if(els['#app'].innerHTML.indexOf('data-a="statsPapel"')<0)throw new Error('faltou o seletor Linha/Gol para quem pegou no gol');
+  A.statsPapel({dataset:{v:'G'}});
+  const h=els['#app'].innerHTML;
+  if(h.indexOf('min no gol')<0)throw new Error('na leitura do gol os minutos sao os do gol');
+  if(h.indexOf('Duelos')>=0||h.indexOf('Parcerias')>=0)throw new Error('duelo e parceria nao existem no gol: o goleiro do rodizio troca de lado');
+  if(!new RegExp('<b class="num">'+JG[gk.id].jogos+'</b><span>partidas</span>').test(h))
+    throw new Error('as partidas da leitura do gol sao so as que ele pegou no gol');
+  A.statsPapel({dataset:{v:'L'}});
+  const h2=els['#app'].innerHTML;
+  if(!new RegExp('<b class="num">'+(JL[gk.id].jogos||0)+'</b><span>partidas</span>').test(h2))
+    throw new Error('a leitura de linha conta so as partidas de linha');
+  if(h2.indexOf('Duelos')<0)throw new Error('na linha os duelos voltam');
 });
 step('corrigir escalacao e trocas: rascunho ate o Salvar',()=>{
   const l=L(),ps=l.players.map(p=>p.id);
