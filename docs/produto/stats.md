@@ -25,6 +25,12 @@ Duas consequências que importam:
 | **Parcerias** | **Mais jogou junto** e **Melhor dupla**, e a lista de quem mais joga do seu lado — também com histórico ao toque. No ranking "Melhor dupla" da aba Racha, o % vem com a quantidade de partidas da dupla em letra pequena ao lado |
 | **O racha no período** | tiles da liga e o gráfico **Gols por racha** (coluna por racha, último em verde, média tracejada); rankings de presença, campanha, artilharia, ritmo, goleiro, sequência e dupla — top 3 cada, com "Ver os 10 ›" abrindo a folha (D-112) e a linha do dono do perfil destacada (D-109); títulos com ícone SVG, sem emoji (só o ⚽ fica); **a ordem segue o filtro** (30 dias = forma; ano = temporada; sempre = carreira) |
 
+**Presença** ("Mais presenças", "X rachas" na ficha e nos membros) conta os rachas em que a pessoa
+**esteve**, não os que jogou (D-49/D-134): quem apareceu e não entrou em quadra, quem só ficou no
+gol de um trecho que não conta, quem foi embora no meio — todos contam o racha. A fonte é a
+presença gravada na sessão; quem jogou entra também, para o racha antigo, sem sessão. O total de
+rachas do período (tiles, "X rachas · Y partidas") segue a mesma conta.
+
 **"Trocar jogador"** abre os mesmos números de qualquer pessoa da liga (cada nome com o mini-badge de patente, igual ao da presença) — dá para conferir o carrasco do outro também.
 
 **Sem goleiros** (interruptor abaixo do período): tira o tempo no gol das contas de time — jogos, V/E/D, +/−, tempo em quadra, duelos e parcerias. É a leitura justa para o rodízio, que troca de lado sem escolher o time: vitória de goleiro não diz o mesmo que vitória de linha. Os números *de goleiro* (menos vazado, gols sofridos, tempo no gol) continuam contando normalmente, e gol de goleiro segue valendo na artilharia.
@@ -33,7 +39,7 @@ Duas consequências que importam:
 - **Presentes** conta quem esteve no racha **desde o começo** — quem foi embora antes do fim continua contando (a sessão guarda a união de quem passou por lá, e rachas antigos são completados por quem aparece nas partidas).
 - **Times do racha**: cada time aparece pelos **primeiros nomes dos jogadores originais** (até 5v5; **goleiro de rodízio não entra** — ele roda entre os times, então não é de time nenhum, nem no rótulo nem na conta da maioria abaixo; goleiro **fixo** de um time continua, porque aí ele é do time. Racha antigo, sem a lista do rodízio gravada, é resolvido pela evidência: quem pegou no gol por mais de um time na mesma noite estava rodando) — "Vinashow, Maike, João, Halisson" identifica melhor que "Time A"; o nome do time fica na linha de baixo, junto com os gols no formato **8/3 G** (feitos em verde, sofridos em vermelho). Tocar num time abre **a escalação original da montagem** (com o rodízio de goleiros à parte). Racha gravado antes dessa versão mostra a escalação da primeira partida, que era o que ficou registrado.
 - **A vitória é do time que jogou, não do nome no placar.** Um lado da partida só conta como aquele time se **mais da metade dos jogadores originais** dele esteve em quadra em algum trecho. Time inteiro trocado não leva a vitória; se a formação que entrou é a maioria de **outro** time da noite, a partida conta para esse outro (empate de maioria: leva quem passou mais tempo em quadra). Formação que não é maioria de nenhum time não conta para time nenhum — o card avisa quantas foram. Isso vale no card da noite e no "Hoje: ..." da pré-partida; para o jogador, nada muda: V/E/D e nível continuam sendo de quem estava em quadra.
-- **Cada ranking da noite** (melhor +/−, quem mais ganhou, artilheiro, rendeu acima, tempo em quadra, menos vazado) mostra 3 e abre **até 10** com o "▾ ver até N" — o mesmo padrão da temporada. E há o ranking de **😵 quem mais perdeu**, com o irmão **Mais derrotas** nos rankings de temporada.
+- **Cada ranking da noite** (melhor +/−, quem mais ganhou, artilheiro, rendeu acima, tempo em quadra, menos vazado) mostra 3 e abre **até 10** com o "▾ ver até N" — o mesmo padrão da temporada. Não há ranking de derrotas em lugar nenhum (D-134).
 
 ## 3. Destaques do mês — e por que não é aproveitamento
 

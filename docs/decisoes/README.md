@@ -117,13 +117,14 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-54](stats-e-destaques.md#d-54) · Rankings da noite abrem até 10, e existe "quem mais perdeu"
 - [D-69](stats-e-destaques.md#d-69) · Aproveitamento vira pontos (V=3, E=1) — e cada filtro de Stats responde à própria pergunta
 - [D-70](stats-e-destaques.md#d-70) · Cada ranking tem uma setinha — e vira o próprio ranking do fim
-- [D-72](stats-e-destaques.md#d-72) · "Quem mais perdeu" sai do card da noite — a setinha já conta essa história
+- [D-72](stats-e-destaques.md#d-72) · "Quem mais perdeu" sai do card da noite — a setinha já conta essa história *(o "Mais derrotas" da temporada também saiu, no D-134)*
 - [D-76](stats-e-destaques.md#d-76) · Partida a partida na tela do jogador — com a chance da época e uma bolinha por gol
 - [D-97](stats-e-destaques.md#d-97) · No card do último racha, o realizado conta empate como meio — a mesma base da chance
 - [D-108](stats-e-destaques.md#d-108) · Stats com cara de painel: gráficos, posição nos rankings, barras e ícones SVG
 - [D-109](stats-e-destaques.md#d-109) · Gols por tempo só sobre minutos de linha; destaque nos rankings é o dono do perfil
 - [D-112](stats-e-destaques.md#d-112) · Rankings: top 3 limpo na página, lista inteira e ordem numa folha
 - [D-114](stats-e-destaques.md#d-114) · Filtros da Stats: uma família só, sem card
+- [D-134](stats-e-destaques.md#d-134) · Presença é quem esteve no racha, não quem jogou — e derrota não é ranking
 
 ### [Interface](interface.md)
 

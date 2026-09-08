@@ -276,3 +276,25 @@ um perfil" fica logo abaixo, em texto pequeno. Ganho: ~40 px de altura e um só 
 goleiros" dentro do seletor de período (não é período).
 **Onde:** `seg` em `viewStats`, CSS `.sfilt`/`.gksw` em `index.html` (`.sw` já existia, com outro
 uso — daí o nome) · [Stats §2](../produto/stats.md).
+
+<a id="d-134"></a>
+### D-134 · Presença é quem esteve no racha, não quem jogou — e derrota não é ranking
+**08/09/2026.** O ranking "Mais presenças" contava, por pessoa, os rachas em que ela **jogou**
+uma partida que conta: quem apareceu e não entrou em quadra ficava com zero, e um racha cujas
+partidas foram apagadas sumia da presença de todo mundo. Na liga de teste, gente presente em 20+
+rachas aparecia com 0 ou 1. Agora a conta sai da **sessão** (`presentIds`, que já guardava a
+presença desde o começo — D-49), unida a quem jogou (racha antigo, gravado antes das sessões).
+Vale em todo lugar que diz "rachas": ranking de presenças, tile da ficha, ano a ano, "mais
+presente" dos destaques, `p.sessions` na lista de membros e o total de rachas da liga e do
+período. `tr.sessions` (calibração da partida única) **continua** contando racha JOGADO — lá o
+que calibra é ter jogado. Quem só apareceu entra nos números com 0 partida, então os rankings de
+campanha passaram a exigir `jogos`. No mesmo dia saiu o ranking **Mais derrotas**: derrota já se
+lê invertendo "Mais vitórias" na folha, e um pódio de pior é o tipo de número que ninguém pediu.
+**Por quê:** presença é quem apareceu — é isso que o grupo cobra. Contar por partida jogada
+punia quem veio e ficou de fora da fila, e amarrava um fato (esteve) a um cálculo (jogou o
+bastante).
+**Descartado:** contar sessão só quando ela não tem partida (mistura duas réguas no mesmo
+número); contar presença por partida com peso (ninguém lê "esteve 0,4 racha").
+**Onde:** `rachasDoPeriodo`, `sessNoPeriodo`, `presencas`, `statsLiga`, `destaques`, `statsAnos`,
+`nRachas`, `rkVit`/`SECS` em `index.html` · `smoke.py` ("presenca conta quem ESTEVE, nao quem
+jogou (D-134)", "rankings da noite abrem ate 10") · [Stats §2](../produto/stats.md).

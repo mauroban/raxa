@@ -1571,7 +1571,6 @@ function applyMatch(liga,m){
     if(res==='V')tr.w++;else if(res==='D')tr.l++;else tr.d++;
     tr.form.unshift(res);tr.form=tr.form.slice(0,10);
     if(m.sessionId&&tr.lastSession!==m.sessionId){tr.sessions=(tr.sessions||0)+1;tr.lastSession=m.sessionId}
-    if(m.sessionId&&p.lastSession!==m.sessionId){p.sessions=(p.sessions||0)+1;p.lastSession=m.sessionId}
   }
   plusMinus(liga,m,(pid,d)=>{const p=P(liga,pid);if(p)p.pm=(p.pm||0)+d});
   /* mudança de nível só existe para quem TEM nível: quem ainda calibra sem
@@ -1627,6 +1626,21 @@ function rebuildAll(liga){
     if(m.voided){m.deltas={};m.moves=[];return}
     m.pre={};applyMatch(liga,m);
   });
+  presencas(liga);
+}
+/* Quantos rachas cada um ESTEVE (D-49/D-134). A sessão é a fonte — ela grava
+   quem apareceu, inclusive quem não entrou em quadra e quem foi embora no
+   meio; quem jogou entra também, para o racha antigo, sem sessão gravada.
+   `p.sessions` é presença; `tr.sessions` (calibração da partida única) é
+   racha JOGADO, e continua saindo das partidas.                            */
+function presencas(liga){
+  const pres={},marca=(pid,sid)=>{(pres[pid]||(pres[pid]={}))[sid]=1};
+  (liga.matches||[]).forEach(m=>{
+    if(m.voided)return;const sid=m.sessionId||m.id;
+    matchStints(liga,m).forEach(st=>{if(st.counted)for(const pid in stintPart(st))marca(pid,sid)});
+  });
+  (liga.sessions||[]).forEach(s=>(s.presentIds||[]).forEach(pid=>marca(pid,s.id)));
+  liga.players.forEach(p=>{p.sessions=Object.keys(pres[p.id]||{}).length});
 }
 
 /* Prévia da correção de nível (D-86): dado um nível de ENTRADA para a
@@ -1949,6 +1963,17 @@ function noPeriodo(m,p){
   if(typeof p==='string'&&p.indexOf('racha:')===0)return (m.sessionId||m.id)===p.slice(6);
   return ANO(m.ts)===(p==='ano'?ANO_ATUAL():+p);
 }
+/* A sessão é o racha: o filtro de período lê o `ts` dela do mesmo jeito que
+   lê o da partida (e "Último" compara o id).                               */
+const sessNoPeriodo=(s,p)=>noPeriodo({ts:s.ts||0,sessionId:s.id},p);
+/* Rachas do período: a sessão manda (ela guarda a presença, D-49); racha
+   gravado antes das sessões entra pelas partidas.                          */
+function rachasDoPeriodo(liga,periodo){
+  const r={};
+  (liga.matches||[]).forEach(m=>{if(!m.voided&&noPeriodo(m,periodo))r[m.sessionId||m.id]=1});
+  (liga.sessions||[]).forEach(s=>{if(sessNoPeriodo(s,periodo))r[s.id]=1});
+  return r;
+}
 const MIN_JOGOS=10;          // piso para entrar em ranking de aproveitamento
 function pctDe(v,n){return n?Math.round(v/n*100):0}
 /* Aproveitamento como o futebol conta: pontos ganhos sobre pontos disputados
@@ -2010,6 +2035,16 @@ function statsLiga(liga,periodo,semGk){
        gol é outra façanha, e misturar inflava a artilharia de quem reveza  */
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else j(g.pid).gols++}});
   });
+  /* presença conta quem ESTEVE (D-49/D-134): a sessão grava quem apareceu,
+     inclusive quem não entrou em quadra e quem foi embora no meio. As
+     partidas acima já marcaram o racha de quem jogou — aqui entra o resto. */
+  (liga.sessions||[]).forEach(s=>{
+    if(!sessNoPeriodo(s,periodo))return;
+    (s.presentIds||[]).forEach(pid=>{
+      if(!P(liga,pid))return;
+      const x=j(pid);if(!x.rachas[s.id]){x.rachas[s.id]=1;x.nR++}
+    });
+  });
   return{J,DU,PA};
 }
 /* ---------- duplas inseparáveis ----------
@@ -2043,12 +2078,17 @@ function destaques(liga,dias){
   const desde=Date.now()-(dias||30)*86400000;
   const G={},add=pid=>G[pid]||(G[pid]={pid,over:0,jogos:0,v:0,e:0,d:0,gols:0,
     jogosG:0,sofridos:0,rachas:{},nR:0});
-  let partidas=0,gols=0,comDono=0,nR=0;const rachas={};
+  let partidas=0,gols=0,comDono=0;const rachas={};
+  /* presença à parte de G (D-134): quem só apareceu não vira candidato a
+     "rendeu acima" — mas conta no "mais presente" e no total de rachas.   */
+  const pres={},marcaP=(pid,sid)=>{const q=pres[pid]||(pres[pid]={n:0,r:{}});if(!q.r[sid]){q.r[sid]=1;q.n++}};
+  (liga.sessions||[]).forEach(s=>{if((s.ts||0)<desde)return;rachas[s.id]=1;
+    (s.presentIds||[]).forEach(pid=>{if(P(liga,pid))marcaP(pid,s.id)})});
   (liga.matches||[]).forEach(m=>{
     if(m.voided||m.ts<desde)return;
     partidas++;
     const sid=m.sessionId||m.id;
-    if(!rachas[sid]){rachas[sid]=1;nR++}
+    rachas[sid]=1;
     const em={};
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;
@@ -2066,6 +2106,7 @@ function destaques(liga,dias){
       x.jogos++;x[m.result==='draw'?'e':(m.result===e.side?'v':'d')]++;
       if(e.gk)x.jogosG++;
       if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
+      marcaP(pid,sid);
     }
     for(const pid in (m.over||{}))add(pid).over+=m.over[pid];
     (m.goals||[]).forEach(g=>{gols++;if(g.pid){comDono++;if(!g.own&&roleNoGol(liga,m,g)!=='G')add(g.pid).gols++}});   // artilheiro: gols de linha (D-110)
@@ -2086,7 +2127,8 @@ function destaques(liga,dias){
   /* menos vazado: sofridos por tempo no gol, e só com pelo menos 1 h — menos que isso é sorte */
   const goleiro=gente.filter(x=>(x.minGk||0)>=60*60000)
     .sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk)[0]||null;
-  const presenca=gente.slice().sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos)[0];
+  const presenca=Object.keys(pres).map(pid=>({pid,nR:pres[pid].n,
+    jogos:(G[pid]||{jogos:0}).jogos})).sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos)[0];
   /* Os melhores da escada, só entre quem apareceu no período. A ordem é a mesma
      do ranking — degrau, depois aproveitamento, depois nome — para a posição
      não denunciar o rating de ninguém dentro da mesma divisão.                */
@@ -2096,7 +2138,7 @@ function destaques(liga,dias){
         ||aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)
         ||nameOf(liga,a.pid).localeCompare(nameOf(liga,b.pid))}).slice(0,3);
   return{gente,melhores,top,artilheiro:artilheiro&&artilheiro.gols?artilheiro:null,goleiro,presenca,
-    partidas,gols,comDono,nR,piso,desde};
+    partidas,gols,comDono,nR:Object.keys(rachas).length,piso,desde};
 }
 /* Todos os encontros entre duas pessoas: lado a lado ou uma contra a outra. */
 function encontros(liga,a,b,periodo,mesmoLado){
@@ -2137,6 +2179,12 @@ function statsAnos(liga,pid){
     }
     plusMinus(liga,m,(q,d)=>{if(q===pid&&porAno[y])porAno[y].pm+=d});
     (m.goals||[]).forEach(g=>{if(g.pid===pid&&!g.own&&porAno[ANO(m.ts)])porAno[ANO(m.ts)].gols++});
+  });
+  /* presença do ano conta quem ESTEVE (D-134), mesmo no ano em que só apareceu */
+  (liga.sessions||[]).forEach(s=>{
+    if(!(s.presentIds||[]).includes(pid))return;
+    const y=ANO(s.ts||0),a=porAno[y]||(porAno[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
+    if(!a.rachas[s.id]){a.rachas[s.id]=1;a.nR++}
   });
   return Object.keys(porAno).map(k=>porAno[k]).sort((x,y)=>y.ano-x.ano);
 }
@@ -2475,13 +2523,11 @@ function linhaDestaque(liga,x,i,badge){
     ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
   </div>`;
 }
-/* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
-   nao de um contador: racha cancelado ou em andamento nao mente na conta.   */
+/* Quantos rachas a liga ja teve. Sai do historico (sessões gravadas mais o
+   sessionId das partidas), e nao de um contador: racha cancelado ou em
+   andamento nao mente na conta.                                            */
 function nRachas(liga){
-  const vistos={};let n=0;
-  (liga.matches||[]).forEach(m=>{if(m.voided)return;
-    const k=m.sessionId||m.id;if(!vistos[k]){vistos[k]=1;n++}});
-  return n;
+  return Object.keys(rachasDoPeriodo(liga,'sempre')).length;
 }
 /* A aba Racha serve para INICIAR racha; os destaques são curiosidade — vêm
    recolhidos num card de uma linha e abrem num toque (D-89). Sem partidas no
@@ -3498,8 +3544,7 @@ function viewStats(liga){
 
   /* --- a liga no período --- */
   const ms=liga.matches.filter(m=>!m.voided&&noPeriodo(m,per));
-  const rachas={};ms.forEach(m=>rachas[m.sessionId||m.id]=1);
-  const nRachasPer=Object.keys(rachas).length;   // nome proprio: nRachas() e a funcao global
+  const nRachasPer=Object.keys(rachasDoPeriodo(liga,per)).length;   // nome proprio: nRachas() e a funcao global
   const golsTot=ms.reduce((a,m)=>a+(m.score||[0,0])[0]+(m.score||[0,0])[1],0);
   const empates=ms.filter(m=>m.result==='draw').length;
 
@@ -3520,8 +3565,7 @@ function viewStats(liga){
      3/10 e, com a setinha invertida, le a MESMA lista do fim (o outro top). */
   const rkRachas=[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos);
   const rkPm=todos.filter(x=>x.jogos).sort((a,b)=>b.pm-a.pm||b.v-a.v);
-  const rkVit=[...todos].sort((a,b)=>b.v-a.v||b.jogos-a.jogos);
-  const rkDer=[...todos].filter(x=>x.d).sort((a,b)=>b.d-a.d||a.v-b.v||b.jogos-a.jogos);
+  const rkVit=todos.filter(x=>x.jogos).sort((a,b)=>b.v-a.v||b.jogos-a.jogos);
   const rkPct=todos.filter(x=>x.jogos>=MIN_JOGOS).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos);
   const rkGols=[...todos].filter(x=>x.gols).sort((a,b)=>b.gols-a.gols);
   const rkGolsGk=[...todos].filter(x=>x.golsGk).sort((a,b)=>b.golsGk-a.golsGk||a.minGk-b.minGk);   // gol feito do gol (D-110)
@@ -3853,7 +3897,6 @@ ${cardJuntos}  <div class="card">
         pres:rkSec('pres','cal','var(--lime)','Mais presenças','',rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida')),
         min:rkSec('min','clock','var(--coral)','Mais tempo em quadra','',rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha'),
         vit:rkSec('vit','trophy','var(--gold)','Mais vitórias','',rkVit,x=>x.v,x=>x.v+'V',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida')),
-        der:rkSec('der','down','var(--bad)','Mais derrotas','',rkDer,x=>x.d,x=>x.d+'D',x=>'aproveitamento '+aprDe(x.v,x.e,x.jogos)+'% em '+pl(x.jogos,'partida')),
         pct:rkSec('pct','up','var(--ok)','Maior aproveitamento',`pontos (V=3, E=1) · mín. ${MIN_JOGOS} partidas`,rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),'Ninguém bateu ainda as '+MIN_JOGOS+' partidas do período.'),
         gols:rkSec('gols','⚽',null,'Artilharia','',rkGols,x=>x.gols,x=>pl(x.gols,'gol'),x=>(x.gols/Math.max(1,x.jogos)).toFixed(2).replace('.',',')+' por partida','Nenhum gol com autor marcado.'),
         ritmo:rkSec('ritmo','zap','var(--white)','Gols a cada 10 min','de linha · mín. 1 h',rkRitmo,x=>x.gols/minL(x),x=>por10(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha','Ninguém com 1 h de linha e gol marcado ainda.'),
@@ -3862,9 +3905,9 @@ ${cardJuntos}  <div class="card">
         seq:rkSec('seq','flame','var(--coral)','Maior sequência','3 ou mais',rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.'),
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
-      const ordem=per==='mes'?['pct','vit','seq','gols','pm','der','pres','min','ritmo','gk','golsgk','duplas']
-        :per==='sempre'?['pres','min','vit','gols','pct','seq','der','pm','ritmo','gk','golsgk','duplas']
-        :['pres','pct','vit','gols','seq','der','min','pm','ritmo','gk','golsgk','duplas'];
+      const ordem=per==='mes'?['pct','vit','seq','gols','pm','pres','min','ritmo','gk','golsgk','duplas']
+        :per==='sempre'?['pres','min','vit','gols','pct','seq','pm','ritmo','gk','golsgk','duplas']
+        :['pres','pct','vit','gols','seq','min','pm','ritmo','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`;

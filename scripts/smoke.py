@@ -968,6 +968,25 @@ step('numeros: presentes do ultimo racha contam quem saiu no meio',()=>{
   if(!new RegExp('<b class="num">'+esperado+'</b><span>presentes</span>').test(els['#app'].innerHTML))
     throw new Error('tile de presentes nao mostra '+esperado);
 });
+step('presenca conta quem ESTEVE, nao quem jogou (D-134)',()=>{
+  const l=L(),sess=l.sessions[l.sessions.length-1];
+  /* alguem que apareceu no racha e nao entrou em quadra nenhuma vez */
+  const jogou=new Set();
+  (l.matches||[]).forEach(m=>{if(m.sessionId!==sess.id||m.voided)return;
+    matchStints(l,m).forEach(st=>{if(st.counted)Object.keys(stintPart(st)).forEach(x=>jogou.add(x))})});
+  const alguem=l.players.find(p=>!sess.presentIds.includes(p.id)&&!jogou.has(p.id));
+  if(!alguem)throw new Error('o smoke precisa de alguem de fora para simular quem so apareceu');
+  const so=alguem.id;
+  sess.presentIds.push(so);rebuildAll(l);           // veio, marcou presenca e nao entrou em quadra
+  const J=statsLiga(l,'racha:'+sess.id).J;
+  if(!J[so]||J[so].nR!==1)throw new Error('quem esteve no racha e nao jogou tem que contar presenca no ranking');
+  if(J[so].jogos)throw new Error('presenca nao pode virar partida jogada');
+  const p=P(l,so);
+  if((p.sessions||0)<1)throw new Error('p.sessions tem que contar o racha em que a pessoa so apareceu');
+  S.ui.tab='stats';A.statsTab({dataset:{v:'racha'}});A.statsPer({dataset:{v:'sempre'}});
+  if(els['#app'].innerHTML.indexOf('Mais presenças')<0)throw new Error('ranking de presencas sumiu');
+  sess.presentIds.pop();rebuildAll(l);render();     // devolve o cenario para os proximos passos
+});
 step('times do racha: toque abre a escalacao original',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],t=sess.teams[0];
   A.rachaTime({dataset:{sid:sess.id,n:t.name}});
@@ -1022,7 +1041,8 @@ step('rankings da noite abrem ate 10, sem quem-mais-perdeu (a setinha cobre, D-7
   if(h.indexOf('Melhor +/−')<0)throw new Error('o +/- da noite tem que aparecer tambem no racha curto (depois das vitorias)');
   if(h.indexOf('Ver ')>=0){A.rkSheet({dataset:{k:'rvenc'}});closeSheet()}
   A.statsPer({dataset:{v:'sempre'}});
-  if(els['#app'].innerHTML.indexOf('Mais derrotas')<0)throw new Error('faltou Mais derrotas nos rankings de temporada');
+  /* D-134: derrota nao e ranking em lugar nenhum — nem na noite, nem na temporada */
+  if(els['#app'].innerHTML.indexOf('Mais derrotas')>=0)throw new Error('Mais derrotas saiu no D-134');
 });
 step('historico mostra a chance de cada lado no apito',()=>{
   S.ui.tab='hist';render();
