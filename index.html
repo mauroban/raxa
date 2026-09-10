@@ -128,6 +128,10 @@ input,textarea,select{font-family:var(--body);font-size:16px;background:var(--fi
   border-radius:11px;padding:12px 13px;width:100%;outline:none;min-height:48px}
 input:focus,textarea:focus{border-color:var(--chalk);box-shadow:0 0 0 1px var(--chalk) inset}
 label.f{display:block;margin-bottom:12px}
+/* ajustes: campo de um dígito ou de uma palavra não precisa de 48px de altura —
+   a fonte fica em 16px (abaixo disso o iPhone dá zoom ao focar), a caixa encolhe */
+.cfgc input{min-height:40px;padding:8px 12px}
+.cfgc label.f{margin-bottom:8px}
 label.f .k{display:block;margin-bottom:6px}
 /* campos lado a lado: cada um na sua coluna, rótulo numa linha só, alinhados pela base */
 .row.fields{align-items:flex-end}
@@ -485,11 +489,11 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .secthd .nm{font-family:var(--disp);font-weight:800;font-size:20px;color:var(--pc);letter-spacing:.03em;text-transform:uppercase}
 .secthd .ln{flex:1;height:2px;background:var(--pc);opacity:.35;border-radius:1px}
 .secthd .ct{font-family:var(--disp);font-weight:800;font-size:14px;color:var(--mute);letter-spacing:.06em}
-.rank{display:flex;align-items:center;gap:11px;padding:12px 12px;border-bottom:1px solid var(--line);cursor:pointer;min-height:56px}
+.rank{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;min-height:52px}
 .rank:last-child{border-bottom:0}
 .rank:active{background:var(--panel2)}
-.rank .nm{font-weight:600;font-size:16px}
-.rank .meta{font-size:12px;color:var(--mute);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rank .nm{font-weight:600;font-size:15px}
+.rank .meta{font-size:12px;color:var(--mute);margin-top:2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .form{display:flex;gap:3px}
 .form i{width:7px;height:7px;border-radius:2px;background:var(--mute2);display:block}
 .form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
@@ -1052,7 +1056,7 @@ const patBadge=(liga,s,cls)=>`<span class="pat ${cls||''} ${divCls(s)}" style="$
 const patBadgePat=(liga,s,cls)=>`<span class="pat ${cls||''} d2" style="${patVars(s)}" title="${esc(patName(liga,s))}">${esc(patName(liga,s))}</span>`;
 const patBadgeShort=(liga,s)=>`<span class="pat ${divCls(s)}" style="${patVars(s)}" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${PATSHORT[patOf(s)]}${divMarks(s)}</span>`;
 /* só os riscos, sem nome — a escada já agrupa por nível no cabeçalho */
-const patDivOnly=(liga,s)=>`<span class="pat ${divCls(s)}" style="${patVars(s)};min-width:40px;justify-content:center;font-size:14px" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${divMarks(s)}</span>`;
+const patDivOnly=(liga,s)=>`<span class="pat ${divCls(s)}" style="${patVars(s)};min-width:32px;justify-content:center;font-size:12px" title="${esc(rankLabel(liga,s))}" aria-label="${esc(rankLabel(liga,s))}">${divMarks(s)}</span>`;
 
 /* ---------- estado ---------- */
 function defCfg(){return{
@@ -4398,23 +4402,23 @@ function viewCfgBody(liga){
   if(!souAdmin(liga))return `
   <div class="card">
     <div class="k" style="margin-bottom:6px">Formato</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${fmt}</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase">${fmt}</div>
     <div class="tiny muted" style="margin-top:4px">Alvo ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}</div>
   </div>
   ${cardArquivados(liga)}
   <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
   ${DONO[liga.id]?'':`<div class="card"><div class="row"><div class="tiny muted">Os ajustes da liga são do admin.</div><button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button></div></div>`}`;
-  return `
+  return `<div class="cfgc">
   <div class="card">
     <div class="k" style="margin-bottom:6px">Liga</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase">${fmt}</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase">${fmt}</div>
     <div class="k" style="margin:14px 0 6px">Quem vê os níveis</div>
     <div class="row" style="gap:6px">
       <button class="btn sm ${c.rankVisibility!=='admin'?'pri':'ghost'}" data-a="setVis" data-v="todos" style="flex:1">Todo mundo</button>
       <button class="btn sm ${c.rankVisibility==='admin'?'pri':'ghost'}" data-a="setVis" data-v="admin" style="flex:1">Só o admin</button>
     </div>
     <div class="k" style="margin:14px 0 6px">Nomes dos níveis · da pior para a melhor</div>
-    ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:6px">
+    ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:4px">
       <span class="swatch" style="--pc:${PATFILL[i]}"></span>
       <input value="${esc(n)}" data-pat="${i}" style="flex:1"></div>`).join('')}
   </div>
@@ -4433,7 +4437,7 @@ function viewCfgBody(liga){
     <div class="row fields" style="gap:8px">
       <label class="f" title="quantas contestações marcam a partida como disputada"><span class="k">Contestações</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
       <div class="f"><div class="k" style="margin-bottom:6px">Ao atingir</div>
-        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%;min-height:48px">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
+        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%;min-height:40px">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
     </div>
   </div>
   <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
@@ -4444,7 +4448,7 @@ function viewCfgBody(liga){
       <button class="btn sm" data-a="import">Importar</button>
       ${DONO[liga.id]?'<button class="btn sm danger sp" data-a="delLiga">Apagar liga</button>':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}
     </div>
-  </div>`;
+  </div></div>`;
 }
 
 /* ---------- resumo do fim do racha (D-99) ----------
@@ -6378,7 +6382,8 @@ function golSheet(l,lv,c,g,contra){
   const nome=lv.teams[ti].name;
   /* placar NO MOMENTO do gol (corrigir um gol antigo mostra o placar de então),
      com o número que subiu entre colchetes                                  */
-  const pl0=[0,1].map(sd=>c.events.filter(e=>e.type==='goal'&&e.side===sd&&e.t<=g.t).length);
+  const ate=c.events.slice(0,c.events.indexOf(g)+1);   // pela ordem do log, não pelo relógio: dois gols no mesmo ms não se misturam
+  const pl0=[0,1].map(sd=>ate.filter(e=>e.type==='goal'&&e.side===sd).length);
   openSheet(`<div class="golhdr ${TEAMCLASS[ti]}">
       <div class="gol">GOL!</div>
       <div class="nm">${esc(nome)} · ${mmss(gameTime(c,t))}</div>
@@ -7678,7 +7683,7 @@ function viewCfg(liga){
     <div class="card" style="display:flex;align-items:center;gap:10px">
       <div style="min-width:0;flex:1">
         <div class="k">Código de convite</div>
-        <div style="font-family:var(--disp);font-size:26px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>
+        <div style="font-family:var(--disp);font-size:20px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>
       </div>
       <button class="btn ghost sm" data-a="copyCode" title="link que já entra na liga">${typeof navigator!=='undefined'&&navigator.share?'Enviar link':'Copiar link'}</button>
       ${souAdmin(liga)&&CODE[liga.id]?`<button class="btn ghost sm" data-a="newCode" title="trocar o código: o antigo deixa de valer">Novo</button>`:''}

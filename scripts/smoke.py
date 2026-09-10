@@ -292,7 +292,7 @@ step('gol abre a folha GOL! com os nomes do lado, gol contra, sem autor e "nao f
   const g=c.events.filter(e=>e.type==='goal').pop();
   let h=els['#sheet'].innerHTML;          // o DOM falso nao guarda classes: a folha se confere pelo conteudo
   if(!/GOL!/.test(h)||!/golhdr/.test(h))throw new Error('a folha devia gritar GOL! com a cor do time');
-  const pl0=[0,1].map(sd=>c.events.filter(e=>e.type==='goal'&&e.side===sd&&e.t<=g.t).length);
+  const ate=c.events.slice(0,c.events.indexOf(g)+1),pl0=[0,1].map(sd=>ate.filter(e=>e.type==='goal'&&e.side===sd).length);
   if(h.indexOf(`[${pl0[0]}] - ${pl0[1]}`)<0)throw new Error('o placar no momento do gol, com o gol que subiu entre colchetes: esperava ['+pl0[0]+'] - '+pl0[1]);
   const re=id=>new RegExp('data-a="setGoalScorer" data-t="'+g.t+'" data-id="'+id+'"');
   if(!c.lineups[0].every(id=>re(id).test(h)))throw new Error('todo nome do lado que marcou devia estar na folha');

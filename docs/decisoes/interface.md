@@ -327,3 +327,22 @@ aviso tem que continuar lá).
 **Onde:** `golFlash`, `golSheet`, `viewJogo` (`placar(s)`), `A.goal`, `A.scorerSide`, `A.goalScorer`,
 `A.delGoal`, CSS `.golflash`/`.golhdr` em `index.html` · [Fluxo §3](../produto/fluxo-do-racha.md) ·
 `scripts/smoke.py` (passo "D-138") · `scripts/visual.py` (tela 17 "gol": a folha aberta).
+
+<a id="d-139"></a>
+### D-139 · Ajustes e Jogadores com menos tamanho: campo do tamanho do conteúdo
+**Quando:** 2026-09-10.
+**O quê:** em **Ajustes**, o formato ("5v5 · Várias curtas") deixa de ser título de 22 px e vira linha de
+16 px (é informação fixa, não ação); o código de convite cai de 26 para 20 px; todos os campos do admin
+(`.cfgc input`) ficam com 40 px de altura em vez de 48 — nomes dos níveis, gols, minutos, trecho,
+contestações — e o botão "Ao atingir" acompanha. A fonte dos campos continua em 16 px, porque abaixo
+disso o iPhone dá zoom ao focar. Em **Jogadores**, a linha da pessoa cai de 66 para ~57 px (nome 15 px,
+respiro 9 px, meta mais colada) e o badge só de divisão encolhe (32 px, fonte 12) para pesar menos que o
+nome: 15 nomes por tela em vez de 13.
+**Por quê:** "a fonte na tela de ajustes não está desproporcionalmente grande?" e "e na tela de
+jogadores?". O que desproporcionava era a caixa, não a letra: cinco campos de 48 px de largura total para
+"Ferro", "Bronze"…, e um título display para o formato.
+**Descartado:** fonte dos campos abaixo de 16 px (zoom no iOS); dois nomes de nível por linha (o campo
+fica curto para "Diamante" com o ponto de cor); linhas de 48 px em Jogadores (o meta de duas informações
+começa a apertar).
+**Onde:** CSS `.cfgc`, `.rank`, `.rank .nm`, `.rank .meta`, `patDivOnly`, `viewCfg`, `viewCfgBody` em
+`index.html` · `scripts/visual.py` (telas 5 e 7).
