@@ -284,34 +284,31 @@ step('toque em quem esta fora marca o nome',()=>{
   A.subPick({dataset:{id:b[0].id}});
 });
 
-step('autor do gol se escolhe na coluna do time que marcou (D-138)',()=>{
+step('gol abre a folha GOL! com os nomes do lado, gol contra, sem autor e "nao foi gol" (D-138)',()=>{
   const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
   l.cfg.askScorer=true;
+  const antes=c.score[0];
   A.goal({dataset:{s:'0'}});
   const g=c.events.filter(e=>e.type==='goal').pop();
-  if(!GOLP||GOLP.t!==g.t||GOLP.side!==0)throw new Error('o gol devia abrir o "quem fez?" na coluna');
-  let h=els['#app'].innerHTML;
-  if(!/gol! toque em quem fez/.test(h))throw new Error('o placar do lado devia pedir o autor');
-  if(!/＋ gol/.test(h))throw new Error('o outro lado devia continuar dizendo "＋ gol"');
-  const re=id=>new RegExp('data-a="scorer" data-id="'+id+'"');
-  if(!c.lineups[0].every(id=>re(id).test(h)))throw new Error('todo nome do lado que marcou devia ser a escolha');
-  if(c.lineups[1].some(id=>re(id).test(h)))throw new Error('o outro lado nao entra na escolha do gol normal');
-  if(/id="scorer"|scorerbar/.test(h))throw new Error('a tirinha antiga la embaixo nao existe mais');
-  A.scorerSide({dataset:{own:'1'}});h=els['#app'].innerHTML;
-  if(!GOLP.contra||!c.lineups[1].every(id=>re(id).test(h)))throw new Error('gol contra: a escolha passa para o outro lado');
-  A.scorerSide({dataset:{own:'0'}});
-  A.scorer({dataset:{id:c.lineups[0][2],own:'0'}});
+  let h=els['#sheet'].innerHTML;          // o DOM falso nao guarda classes: a folha se confere pelo conteudo
+  if(!/GOL!/.test(h)||!/golhdr/.test(h))throw new Error('a folha devia gritar GOL! com a cor do time');
+  const re=id=>new RegExp('data-a="setGoalScorer" data-t="'+g.t+'" data-id="'+id+'"');
+  if(!c.lineups[0].every(id=>re(id).test(h)))throw new Error('todo nome do lado que marcou devia estar na folha');
+  if(c.lineups[1].some(id=>re(id).test(h)))throw new Error('o outro lado nao entra no gol normal');
+  if(!/data-a="delGoal"/.test(h))throw new Error('faltou o "Nao foi gol"');
+  if(/gol! toque em quem fez|golpacts/.test(els['#app'].innerHTML))throw new Error('a coluna nao vira mais a escolha');
+  if(!/＋ gol/.test(els['#app'].innerHTML))throw new Error('o placar diz "＋ gol"');
+  A.scorerSide({dataset:{for:'goalScorer',t:String(g.t),own:'1'}});h=els['#sheet'].innerHTML;
+  if(!c.lineups[1].every(id=>re(id).test(h))||!/Gol contra/.test(h))throw new Error('gol contra: a escolha passa para o outro lado');
+  A.scorerSide({dataset:{for:'goalScorer',t:String(g.t),own:'0'}});
+  A.setGoalScorer({dataset:{t:String(g.t),id:c.lineups[0][2],own:'0'}});
   if(g.pid!==c.lineups[0][2]||g.own)throw new Error('o toque no nome devia gravar o autor');
-  if(GOLP)throw new Error('depois de escolher, a coluna volta ao normal');
-  h=els['#app'].innerHTML;
-  if(/gol! toque em quem fez/.test(h)||!c.lineups[0].every(id=>new RegExp('data-a="subPick" data-s="0" data-id="'+id+'"').test(h)))throw new Error('os nomes voltam a ser substituicao');
-  /* corrigir pelo card Gols abre a mesma escolha na coluna, sem folha */
-  A.goalScorer({dataset:{t:String(g.t)}});
-  if(!GOLP||GOLP.t!==g.t)throw new Error('corrigir pelo card Gols devia abrir a escolha na coluna');
-  if(els['#sheet'].classList.contains('on'))throw new Error('sem folha: a escolha e na coluna');
-  A.scorer({dataset:{id:''}});
-  if(g.pid!==null||GOLP)throw new Error('"sem autor" limpa o autor e fecha a escolha');
-  A.undo();
+  /* corrigir pelo card Gols abre a mesma folha; "nao foi gol" tira o gol */
+  els['#sheet'].innerHTML='';A.goalScorer({dataset:{t:String(g.t)}});
+  if(!/GOL!/.test(els['#sheet'].innerHTML))throw new Error('corrigir pelo card Gols devia abrir a folha do gol');
+  A.delGoal({dataset:{t:String(g.t)}});
+  if(c.score[0]!==antes||c.events.some(e=>e.t===g.t))throw new Error('"nao foi gol" devia tirar o gol');
+  closeSheet();
 });
 step('corrigir autor do gol pela lista',()=>{
   const c=L().live.cur,g=c.events.find(e=>e.type==='goal');
@@ -502,7 +499,7 @@ step('o racha de hoje aparece como ao vivo na aba Jogos',()=>{
   S.ui.tab='racha';render();
 });
 step('gol sem autor avisa na tela ate alguem marcar',()=>{
-  fechaGolp();
+  closeSheet();
   const l=L(),lv=l.live;if(!lv||!lv.cur)return;
   A.goal({dataset:{s:'1'}});render();
   if(!/noauthor/.test(els['#app'].innerHTML))throw new Error('gol sem autor devia avisar');

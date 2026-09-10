@@ -302,23 +302,27 @@ aba).
 1. O bloco do placar diz sempre **"＋ gol"** na linha de baixo; a chance de vitória foi para a linha do
    nome ("Time A · 52%"). Antes a linha de baixo mostrava a chance, e só "toque = gol" quando não havia
    chance — o bloco não parecia um botão.
-2. Depois do toque, **a coluna do time vira a escolha do autor** (`GOLP`, estado só de tela): o bloco
-   ganha a moldura e diz "gol! toque em quem fez"; os nomes do lado (goleiro incluído) viram alvos com a
-   mesma gramática verde/apagado da substituição (`picking` + `data-alvo`), e o outro lado apaga.
-   Logo abaixo do bloco, **gol contra** (os alvos passam para o outro lado; o bloco diz "contra — toque
-   em quem fez") e **sem autor**. Um toque grava e fecha; sem toque, fecha sozinho em 12 s (15 s no
-   contra). Enquanto está aberta, o delta do realtime espera (`ocupado()`), como esperava a tirinha.
-3. O aviso "N gols sem autor — toque para marcar" e o toque no nome do card **Gols** abrem a mesma
-   escolha na coluna e rolam até ela; a folha "Quem fez esse gol?" ficou só como caminho alternativo
-   (`data-sheet`). A tirinha `#scorer`/`showScorer` abaixo das colunas deixou de existir.
+2. Depois do toque, **um clarão na cor do time cobre a tela por um instante** (`#golflash`, 0,85 s),
+   o celular vibra três vezes e **a folha "GOL!" sobe por cima de tudo** (`golSheet`): cabeçalho na cor
+   do time com "GOL!", nome, minuto e placar (animação de pop); os nomes do lado (goleiro incluído)
+   como chips grandes; o seletor **do time / contra** (a lista passa para o outro lado); **sem autor**;
+   e **↶ Não foi gol** (`delGoal`), que tira o gol — o caminho do toque sem querer. A página rola para
+   o topo. Fechar a folha pelo fundo deixa o gol sem autor. Enquanto está aberta, o delta do realtime
+   espera, como qualquer folha (`ocupado()`).
+3. O aviso "N gols sem autor — toque para marcar" e o toque no nome do card **Gols** abrem a mesma folha.
+   A tirinha `#scorer`/`showScorer` abaixo das colunas deixou de existir.
+*Ajuste no mesmo dia:* a primeira versão fazia a **própria coluna do time** virar a escolha do autor
+(nomes verdes, outro lado apagado). Foi descartada: "fica meio confuso, porque é o mesmo lugar e a
+mesma ação de trocar o jogador" — e o gol precisava de um efeito mais impactante, para ninguém marcar
+sem perceber. Daí a folha por cima, o clarão e o "Não foi gol".
 **Por quê:** "não está muito intuitivo marcar um gol e seu autor: dá a sensação que tem que clicar no
 nome de alguém para marcar gol, e o autor do gol está aparecendo muito longe, lá embaixo". A tirinha
 ficava abaixo das duas colunas inteiras — com 5 nomes por lado, longe do dedo que acabou de tocar o
 placar. Os nomes que a tirinha repetia já estavam na tela, na coluna certa.
-**Descartado:** folha modal de autor a cada gol (bloqueia; D-101 já tinha descartado); tirinha
-flutuante sobre a coluna (tampa nomes); esconder o aviso de gol sem autor enquanto a escolha está
-aberta (a escolha some sozinha e o aviso tem que continuar lá).
-**Onde:** `GOLP`/`abreGolp`/`fechaGolp`, `viewJogo` (`placar(s)`, `golpAttr`, `.golpacts`), `A.goal`,
-`A.scorer`, `A.scorerSide`, `A.goalScorer`, `ocupado()`, CSS `.side.golp`/`.golpacts` em `index.html` ·
-[Fluxo §3](../produto/fluxo-do-racha.md) · `scripts/smoke.py` (passo "D-138") · `scripts/visual.py`
-(telas 3 e 15 já batem o gol e mostram a coluna em escolha).
+**Descartado:** escolha do autor na própria coluna do time (confunde com a substituição, ver acima);
+tirinha flutuante sobre a coluna (tampa nomes); folha que não fecha sem escolher (bloqueia — D-101);
+esconder o aviso de gol sem autor enquanto a folha está aberta (ela pode ser fechada sem escolher e o
+aviso tem que continuar lá).
+**Onde:** `golFlash`, `golSheet`, `viewJogo` (`placar(s)`), `A.goal`, `A.scorerSide`, `A.goalScorer`,
+`A.delGoal`, CSS `.golflash`/`.golhdr` em `index.html` · [Fluxo §3](../produto/fluxo-do-racha.md) ·
+`scripts/smoke.py` (passo "D-138") · `scripts/visual.py` (tela 17 "gol": a folha aberta).

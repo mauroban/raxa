@@ -457,12 +457,17 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .lineup{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .lineup span{font-size:12px;color:var(--mute);background:var(--panel2);padding:3px 7px;border-radius:7px}
 /* a tirinha "quem fez?" entra logo abaixo do placar, onde o olho já está (D-101) */
-.side.golp{outline:3px solid var(--chalk);outline-offset:-3px}
-.side.golp .hint{opacity:1;animation:opin .18s ease-out}
-.golpacts{display:flex;gap:4px;margin-bottom:4px}
-.golpacts button{flex:1;min-height:40px;font:inherit;font-size:12.5px;font-weight:600;padding:6px 4px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--chalk);cursor:pointer}
-.picking .esc2 .col.team .pl[data-alvo]{opacity:1}
-.esc2 .pl.gk[data-alvo]{background:color-mix(in srgb,var(--ok) 13%,var(--fill));border-color:color-mix(in srgb,var(--ok) 55%,transparent)}   /* o goleiro também é escolha: mesma cor dos outros alvos */
+/* gol: um clarão na cor do time cobre a tela por um instante (ninguém marca
+   sem perceber) e a folha "GOL!" sobe com o placar e os nomes (D-138)      */
+.golflash{position:fixed;inset:0;z-index:99;pointer-events:none;background:var(--fc,var(--bibA));opacity:0}
+.golflash.on{animation:golflash .85s ease-out}
+@keyframes golflash{0%{opacity:.95}35%{opacity:.75}100%{opacity:0}}
+.golhdr{border-radius:16px;padding:16px 14px 14px;text-align:center;color:#fff;animation:golpop .35s cubic-bezier(.2,1.4,.4,1)}
+.golhdr.a{background:var(--bibA)} .golhdr.b{background:var(--bibB)} .golhdr.c{background:var(--bibC)} .golhdr.d{background:var(--bibD);color:#0F1F16}
+.golhdr .gol{font-family:var(--disp);font-weight:900;font-size:44px;line-height:1;letter-spacing:.04em}
+.golhdr .nm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:14px;opacity:.9;margin-top:6px}
+.golhdr .sc{font-family:var(--disp);font-weight:900;font-size:34px;line-height:1;margin-top:6px}
+@keyframes golpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 .scorerbar{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 4px 14px rgba(0,0,0,.12);animation:opin .18s ease-out}
 .noauthor{display:block;width:100%;margin-top:8px;border:1px dashed color-mix(in srgb,var(--gold) 60%,var(--line));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--chalk);border-radius:11px;padding:9px 12px;font:inherit;font-size:13px;text-align:left;cursor:pointer}
 .scorerbar .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
@@ -854,6 +859,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 <div class="bar" id="bar"></div>
 <nav class="nav" id="nav" aria-label="Seções"></nav>
 <div class="scrim" id="scrim" data-a="closeSheet"></div>
+<div class="golflash" id="golflash"></div>
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 
@@ -3341,13 +3347,8 @@ function viewJogo(liga,lv){
      (D-117): a marca pode ser um nome (de linha, no gol ou fora), o gol vazio
      ou uma vaga de linha. O par elegível ganha o tracejado do arraste; a dica
      abaixo da escalação diz o próximo passo.                                 */
-  const golp=GOLP&&c.events.some(e=>e.type==='goal'&&e.t===GOLP.t)?GOLP:null;
-  if(!golp)GOLP=null;
-  const sel=golp?null:pecaAoVivo(liga,lv,lv.sel);
+  const sel=pecaAoVivo(liga,lv,lv.sel);
   const alvoDe=key=>sel&&parAoVivo(sel,pecaAoVivo(liga,lv,key))?' data-alvo="1"':'';
-  /* lado cujos nomes são a escolha do autor: o que marcou, ou o outro no gol contra */
-  const ladoGolp=golp?(golp.contra?1-golp.side:golp.side):-1;
-  const golpAttr=(s,id)=>s===ladoGolp?`data-a="scorer" data-id="${id}" data-own="${golp.contra?1:0}" data-alvo="1"`:null;
   const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''} ${tamNome(nameOf(liga,o.id))}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
   const dicaSub=!sel?''
@@ -3380,17 +3381,13 @@ function viewJogo(liga,lv){
        moldura na cor do time                                               */
     /* a chance vai junto do nome; a linha de baixo diz sempre "＋ gol", para
        ninguém achar que gol se marca tocando num nome (D-138)              */
-    const placar=s=>{const ti=s===0?c.a:c.b,eh=golp&&golp.side===s;return `
-      <div class="side ${TEAMCLASS[ti]} ${eh?'golp':''}" data-a="goal" data-s="${s}">
+    const placar=s=>{const ti=s===0?c.a:c.b;return `
+      <div class="side ${TEAMCLASS[ti]}" data-a="goal" data-s="${s}">
         <div class="nm">${esc(t[s].name)}${ex?` · ${pct(ex[s])}`:''}</div>
         <div class="sc num">${c.score[s]}</div>
-        <div class="hint">${eh?(golp.contra?'contra — toque em quem fez':'gol! toque em quem fez'):'＋ gol'}</div>
-        ${c.score[s]&&!eh?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
-      </div>
-      ${eh?`<div class="golpacts">
-        <button data-a="scorerSide" data-own="${golp.contra?0:1}">${golp.contra?'do time':'gol contra'}</button>
-        <button data-a="scorer" data-id="">sem autor</button>
-      </div>`:''}`};
+        <div class="hint">＋ gol</div>
+        ${c.score[s]?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
+      </div>`};
     /* mesma tela da pré-partida (D-129): escalação e fila num cartão só, as
        colunas da fila embaixo das colunas dos lados; ▲ em quem entrou nesta
        partida, ▼ em quem saiu                                              */
@@ -3400,12 +3397,12 @@ function viewJogo(liga,lv){
     const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
     const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
     const res=[0,1].map(s=>reservasDe(s));
-    return `<div class="card lados ${sel||golp?'picking':''}" style="margin-top:8px">
+    return `<div class="card lados ${sel?'picking':''}" style="margin-top:8px">
     <div class="esc2" style="margin-top:0">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,((c.startLineups||c.lineups)[s]).concat([(c.startGks||c.gks)[s]].filter(Boolean)),
-      {gk:g=>g?(golpAttr(s,g)||`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`)
+      {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
              :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
-       pl:id=>golpAttr(s,id)||`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
+       pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
        empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
       {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga',tag:tagIn,head:placar(s),cls:'team t'+TEAMCLASS[s===0?c.a:c.b].toUpperCase()})).join('')}
     </div>
@@ -4805,25 +4802,14 @@ const A={
     const i=c.events.findIndex(e=>e.type==='goal'&&e.t===t);
     if(i<0)return;
     c.score[c.events[i].side]--;c.events.splice(i,1);
-    save();render();toast('Gol removido');
+    closeSheet();save();render();toast('Gol removido');
   },
-  /* corrigir o autor de um gol (card Gols, "gols sem autor"): a mesma escolha
-     na coluna do time (D-138), rolando até ela; a folha fica só para quem
-     pedir (data-sheet)                                                      */
+  /* corrigir o autor de um gol (card Gols, "gols sem autor"): a mesma folha do gol */
   goalScorer(el){
     const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
     const t=+el.dataset.t,own=el.dataset.own!==undefined?el.dataset.own==='1':false;
     const g=c.events.find(e=>e.type==='goal'&&e.t===t);if(!g)return;
-    const contra=el.dataset.own!==undefined?own:!!g.own,lado=contra?1-g.side:g.side;
-    if(!el.dataset.sheet){abreGolp(g,contra);closeSheet();render();
-      const alvo=typeof document!=='undefined'&&document.querySelector?document.querySelector('.side.golp'):null;
-      if(alvo&&alvo.scrollIntoView)try{alvo.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}
-      return}
-    openSheet(`<h2>Quem fez esse gol?</h2>
-      <div class="row" style="margin-bottom:10px"><div class="tiny muted">${esc(lv.teams[g.side===0?c.a:c.b].name)} · ${mmss(gameTime(c,g.t))}</div>
-        ${scorerTabs('goalScorer',t,contra)}</div>
-      <div class="chips">${c.lineups[lado].map(id=>`<button class="tp big ${g.pid===id&&!!g.own===contra?'sel':''}" data-a="setGoalScorer" data-t="${t}" data-id="${id}" data-own="${contra?1:0}">${esc(nameOf(l,id))}</button>`).join('')}
-        <button class="tp big" data-a="setGoalScorer" data-t="${t}" data-id="">sem autor</button></div>`);
+    golSheet(l,lv,c,g,el.dataset.own!==undefined?own:!!g.own);
   },
   setGoalScorer(el){
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
@@ -5279,8 +5265,10 @@ const A={
     const s=+el.dataset.s,g={t:Date.now(),type:'goal',side:s,pid:null};
     c.score[s]++;c.events.push(g);
     lv.sel=null;
-    if(l.cfg.askScorer)abreGolp(g,false);else fechaGolp();
-    buzz(18);save();render();
+    buzz([40,30,40]);save();render();
+    golFlash(s===0?c.a:c.b);
+    try{if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo({top:0,behavior:'smooth'})}catch(e){}
+    if(l.cfg.askScorer)golSheet(l,lv,c,g,false);
   },
   ungoal(el){
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
@@ -5288,17 +5276,15 @@ const A={
     if(!c.score[s])return;
     c.score[s]--;
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'&&c.events[i].side===s){c.events.splice(i,1);break}
-    fechaGolp();
     save();render();
   },
-  /* grava o autor do gol que está em escolha (GOLP) — ou do último, se a
-     escolha veio de fora da tela (teste, atalho)                            */
+  /* grava o autor do último gol (atalho; a folha usa setGoalScorer) */
   scorer(el){
     const l=L(),c=l.live&&l.live.cur;if(!c)return;
     const pid=el.dataset.id,own=!!(pid&&el.dataset.own==='1');
-    const g=GOLP&&c.events.find(e=>e.type==='goal'&&e.t===GOLP.t)||c.events.slice().reverse().find(e=>e.type==='goal');
+    const g=c.events.slice().reverse().find(e=>e.type==='goal');
     if(g){g.pid=pid||null;g.own=own}
-    fechaGolp();
+    closeSheet();
     save();render();                       // o card Gols precisa mostrar o autor na hora
     if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);
     if(pid)toast((own?'Gol contra de ':'Gol de ')+nameOf(l,pid));
@@ -5308,8 +5294,8 @@ const A={
     if(el.dataset.for==='goalScorerM'){const [id,i]=el.dataset.t.split('|');return A.goalScorerM({dataset:{id,i,own:el.dataset.own}})}
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
-    const g=GOLP&&c.events.find(e=>e.type==='goal'&&e.t===GOLP.t)||c.events.slice().reverse().find(e=>e.type==='goal');
-    if(g){abreGolp(g,el.dataset.own==='1');render()}
+    const g=c.events.slice().reverse().find(e=>e.type==='goal');
+    if(g)golSheet(L(),lv,c,g,el.dataset.own==='1');
   },
   /* Alguém do time vai para o gol (quem estava no gol volta para a linha), o
      goleiro vai para a vaga da linha (gol fica vazio), ou os dois goleiros
@@ -6376,18 +6362,31 @@ const A={
 };
 
 /* Abinha discreta: "do time" (padrão) | "contra" — troca os nomes para os do outro time. */
-/* "Quem fez?" mora na coluna do time (D-138): depois do gol, os nomes do lado
-   que marcou viram a escolha — um toque num nome grava o autor. GOLP é só de
-   tela (não vai para o banco nem para o outro aparelho): {t, side, contra}.
-   Some sozinho depois de um tempo, como a tirinha antiga.                  */
-let GOLP=null;
-function abreGolp(g,contra){
-  GOLP={t:g.t,side:g.side,contra:!!contra};
-  clearTimeout(abreGolp._t);
-  abreGolp._t=setTimeout(()=>{if(GOLP){GOLP=null;render()}
-    if(typeof refetchPendentes==='function')refetchPendentes()},contra?15000:12000);
+/* Gol (D-138): a folha "GOL!" abre na hora, por cima da tela, com a cor do
+   time, o placar, os nomes do lado para marcar o autor, "gol contra", "sem
+   autor" e "não foi gol" (o toque sem querer). A tela rola para o topo, para
+   o placar estar à vista quando a folha fechar. Nunca bloqueia: fechar a
+   folha deixa o gol sem autor, e o aviso embaixo continua lá.              */
+function golFlash(ti){
+  const f=$('#golflash');if(!f||!f.classList||!f.style||!f.style.setProperty)return;
+  f.style.setProperty('--fc',['var(--bibA)','var(--bibB)','var(--bibC)','var(--bibD)'][ti]||'var(--bibA)');
+  f.classList.remove('on');void(f.offsetWidth);f.classList.add('on');
+  clearTimeout(golFlash._t);golFlash._t=setTimeout(()=>f.classList.remove('on'),900);
 }
-function fechaGolp(){GOLP=null;clearTimeout(abreGolp._t)}
+function golSheet(l,lv,c,g,contra){
+  const t=g.t,ti=g.side===0?c.a:c.b,lado=contra?1-g.side:g.side;
+  const nome=lv.teams[ti].name;
+  openSheet(`<div class="golhdr ${TEAMCLASS[ti]}">
+      <div class="gol">GOL!</div>
+      <div class="nm">${esc(nome)} · ${mmss(gameTime(c,t))}</div>
+      <div class="sc num">${c.score[0]} - ${c.score[1]}</div>
+    </div>
+    <div class="row" style="margin:12px 0 8px"><div class="k">${contra?'Gol contra — quem fez?':'Quem fez?'}</div>${scorerTabs('goalScorer',t,contra)}</div>
+    <div class="chips">${c.lineups[lado].map(id=>`<button class="tp big ${g.pid===id&&!!g.own===contra?'sel':''}" data-a="setGoalScorer" data-t="${t}" data-id="${id}" data-own="${contra?1:0}">${ehGkHoje(lv,id)?'🧤 ':''}${esc(nameOf(l,id))}</button>`).join('')}
+      <button class="tp big" data-a="setGoalScorer" data-t="${t}" data-id="" style="opacity:.6">sem autor</button></div>
+    <div style="height:12px"></div>
+    <button class="btn wide ghost" data-a="delGoal" data-t="${t}">${bi('undo')} Não foi gol</button>`);
+}
 function scorerTabs(alvo,t,contra){
   return `<span class="sp tiny" style="display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px">
     <button data-a="scorerSide" data-for="${alvo}" data-t="${t}" data-own="0" style="border:0;border-radius:6px;padding:3px 8px;font:inherit;cursor:pointer;background:${contra?'transparent':'var(--line2)'};color:${contra?'var(--mute)':'var(--chalk)'}">do time</button>
@@ -7161,8 +7160,7 @@ function ocupado(){
   if(typeof drag!=='undefined'&&drag&&drag.active)return true;
   const sh=$('#sheet');
   if(sh&&sh.classList.contains('on'))return true;
-  const lv=L()&&L().live;                    // "quem fez?" aberto na coluna: um delta o apagaria
-  return !!(GOLP&&lv&&lv.cur&&lv.cur.events.some(e=>e.type==='goal'&&e.t===GOLP.t));
+  return false;
 }
 
 /* Aviso que chegou enquanto a pessoa digitava ou tinha uma folha aberta não se
