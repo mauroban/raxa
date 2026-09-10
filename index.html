@@ -466,7 +466,9 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .golflash{position:fixed;inset:0;z-index:99;pointer-events:none;background:var(--fc,var(--bibA));opacity:0}
 .golflash.on{animation:golflash .85s ease-out}
 @keyframes golflash{0%{opacity:.95}35%{opacity:.75}100%{opacity:0}}
-.golhdr{border-radius:16px;padding:16px 14px 14px;text-align:center;color:#fff;animation:golpop .35s cubic-bezier(.2,1.4,.4,1)}
+.golhdr{border-radius:16px;padding:16px 14px 14px;text-align:center;color:#fff;animation:golpop .35s cubic-bezier(.2,1.4,.4,1);position:relative;overflow:hidden}
+.golhdr .tempo{position:absolute;left:0;top:0;height:4px;width:100%;background:rgba(255,255,255,.55);transform-origin:left;animation:golvai linear forwards}
+@keyframes golvai{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .golhdr.a{background:var(--bibA)} .golhdr.b{background:var(--bibB)} .golhdr.c{background:var(--bibC)} .golhdr.d{background:var(--bibD);color:#0F1F16}
 .golhdr .gol{font-family:var(--disp);font-weight:900;font-size:44px;line-height:1;letter-spacing:.04em}
 .golhdr .nm{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:14px;opacity:.9;margin-top:6px}
@@ -6384,7 +6386,11 @@ function golSheet(l,lv,c,g,contra){
      com o número que subiu entre colchetes                                  */
   const ate=c.events.slice(0,c.events.indexOf(g)+1);   // pela ordem do log, não pelo relógio: dois gols no mesmo ms não se misturam
   const pl0=[0,1].map(sd=>ate.filter(e=>e.type==='goal'&&e.side===sd).length);
-  openSheet(`<div class="golhdr ${TEAMCLASS[ti]}">
+  /* a folha não é etapa: some sozinha (8 s; 12 s no contra) e deixa o gol
+     sem autor — o aviso embaixo das colunas continua lá. A barra no topo do
+     cabeçalho esvazia no mesmo ritmo, para ninguém ser pego de surpresa.   */
+  const dur=contra?12000:8000;
+  openSheet(`<div class="golhdr ${TEAMCLASS[ti]}" data-gol="${t}"><i class="tempo" style="animation-duration:${dur}ms"></i>
       <div class="gol">GOL!</div>
       <div class="nm">${esc(nome)} · ${mmss(gameTime(c,t))}</div>
       <div class="sc num">${[0,1].map(sd=>sd===g.side?`[${pl0[sd]}]`:pl0[sd]).join(' - ')}</div>
@@ -6394,6 +6400,11 @@ function golSheet(l,lv,c,g,contra){
       <button class="tp big" data-a="setGoalScorer" data-t="${t}" data-id="" style="opacity:.6">sem autor</button></div>
     <div style="height:12px"></div>
     <button class="btn wide ghost" data-a="delGoal" data-t="${t}">${bi('undo')} Não foi gol</button>`);
+  clearTimeout(golSheet._t);
+  golSheet._t=setTimeout(()=>{
+    const h=$('#sheet');const hd=h&&h.querySelector?h.querySelector('.golhdr'):null;
+    if(hd&&hd.dataset&&String(hd.dataset.gol)===String(t))closeSheet();   // ainda é a folha deste gol
+  },dur);
 }
 function scorerTabs(alvo,t,contra){
   return `<span class="sp tiny" style="display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px">

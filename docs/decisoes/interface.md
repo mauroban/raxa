@@ -308,7 +308,9 @@ aba).
    que subiu **entre colchetes** — "[2] - 1" — para exaltar o gol mesmo numa correção retroativa (pop); os nomes do lado (goleiro incluído)
    como chips grandes; o seletor **do time / contra** (a lista passa para o outro lado); **sem autor**;
    e **↶ Não foi gol** (`delGoal`), que tira o gol — o caminho do toque sem querer. A página rola para
-   o topo. Fechar a folha pelo fundo deixa o gol sem autor. Enquanto está aberta, o delta do realtime
+   o topo. Fechar a folha pelo fundo deixa o gol sem autor. **A folha some sozinha** em 8 s (12 s no
+   contra), com uma barra que esvazia no topo do cabeçalho (`.golhdr .tempo`): o usuário apontou que,
+   sem isso, marcar o autor "se torna obrigatório" — e o D-101 já dizia que nunca bloqueia. Enquanto está aberta, o delta do realtime
    espera, como qualquer folha (`ocupado()`).
 3. O aviso "N gols sem autor — toque para marcar" e o toque no nome do card **Gols** abrem a mesma folha.
    A tirinha `#scorer`/`showScorer` abaixo das colunas deixou de existir.
