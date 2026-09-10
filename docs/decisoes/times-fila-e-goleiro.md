@@ -365,3 +365,27 @@ tela ("toque num nome e depois no outro…") — o usuário pediu para não expl
 [Regras do racha §2–3](../produto/regras-do-racha.md) · [Fluxo §2–3](../produto/fluxo-do-racha.md) ·
 RF-04.4, RF-05.2/3d/3g–3k/5/6/6b/7 · `scripts/test.py` (plano) · `scripts/smoke.py` (blocos "de próximo",
 D-122, D-123 reescritos para a roda) · mockup navegável que fechou a tela antes do código: artifact "Roda do Racha".
+
+<a id="d-136"></a>
+## D-136 · Empate: os dois rodam quando a fila tem mais que um lado, e dá para trocar quem fica
+**Data:** 2026-09-10
+**O quê:**
+1. No empate do racha curto, a fila com **mais que um lado inteiro** de linha esperando faz **os dois lados
+   rodarem, o máximo que der**: o lado que está há mais tempo em quadra sai inteiro, e o outro roda o que
+   sobrou da fila (`rodaFila` ganhou um teto `max`, para quem acabou de sair não voltar no mesmo giro).
+   Antes só os dois saíam quando a fila repunha os dois inteiros; com fila de 6 no 5v5 ficava um lado
+   inteiro parado e 2 esperando mais uma.
+2. Quando só um lado rodou no empate, o cartão do placar registrado traz **`trocar: fica o Time A`**
+   (`A.trocaFica`): refaz a roda com o outro lado saindo, a partir do instantâneo que já servia ao
+   ↩ Voltar a partida (`lv.lastEnd`) — a partida registrada não muda, e o Voltar continua valendo. O
+   botão fica enquanto o cartão fica. O giro depois do Fim saiu de `A.finish` para `giraPosFim(l,lv,c,m,
+   result,opc)`, que aceita o lado forçado.
+**Por quê:** na primeira partida do dia os dois lados estão há uma partida em quadra — a régua "fica quem
+está há menos tempo" empata e o app tirava o Time A por acaso, sem como trocar. E com dois times inteiros
+de fora o combinado de quadra em empate é "saem os dois", não "um fica olhando".
+**Descartado:** sortear o lado no empate da régua (mais aleatório, igualmente sem volta); perguntar quem fica
+num modal ao encerrar (o Fim é um toque só, D-129); só oferecer a troca na primeira partida (a régua pode
+errar depois também, e o botão não custa nada quando não é usado).
+**Onde:** `giraPosFim`, `podeTrocarFica`, `rodaFila(max)`, `A.trocaFica`, `viewProxima` (cartão `.done`) em
+`index.html` · [Regras do racha §2.2](../produto/regras-do-racha.md) · [Fluxo §3](../produto/fluxo-do-racha.md)
+· `scripts/smoke.py` (dois passos "D-136" no bloco "de próximo").

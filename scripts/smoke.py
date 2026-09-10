@@ -1331,6 +1331,52 @@ step('quem entra na vaga e escolha sua: foi embora com fila = a frente entra; de
   if(!L().live.cur.lineups[1].includes(novos[1].id))throw new Error('quem foi escolhido nao entrou');
   A.finish({dataset:{r:'draw'}});
 });
+step('empate com fila maior que um lado: os dois rodam, o maximo que der (D-136)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,14).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  A.toTimes();A.startJogo();
+  try{
+    if(filaDe(lv).length!==6)throw new Error('cenario pede fila de 6, veio '+filaDe(lv).length);
+    const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),F0=filaDe(lv).slice();
+    A.startMatch();A.finish({dataset:{r:'draw'}});                           // empate: a fila tem mais que um lado -> A sai inteiro, B roda 2
+    const lin=ids=>ids.filter(id=>!ehGkHoje(lv,id));
+    if(lin(A0).some(id=>lv.teams[0].ids.includes(id)))throw new Error('A devia sair inteiro: '+lv.teams[0].ids);
+    if(lin(B0).filter(id=>lv.teams[1].ids.includes(id)).length!==2)throw new Error('B devia rodar 2 (o que sobrou da fila): '+lv.teams[1].ids);
+    if(!F0.slice(0,6).every(id=>lv.teams[0].ids.includes(id)||lv.teams[1].ids.includes(id)))throw new Error('a fila inteira devia entrar');
+    if(!(lv.ult&&lv.ult.rodou.length===2))throw new Error('o resumo devia dizer que os dois rodaram');
+    if(podeTrocarFica(lv))throw new Error('com os dois rodando nao ha "trocar quem fica"');
+  }finally{S=salvo;render()}
+});
+step('primeira partida empatada: da para trocar qual lado fica (D-136)',()=>{
+  const salvo=S;S=defState();A.demo();A.startRacha();
+  const l=L(),lv=l.live;
+  lv.presentIds=l.players.filter(p=>!p.gk).slice(0,12).map(p=>p.id).concat(l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id));
+  lv.gkToday=l.players.filter(p=>p.gk).slice(0,2).map(p=>p.id);
+  A.toTimes();A.startJogo();
+  try{
+    const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),F0=filaDe(lv).slice();
+    A.startMatch();A.finish({dataset:{r:'draw'}});                           // empate na primeira: a regua empata, o app tira o A
+    if(lv.teams[1].ids.join()!==B0.join())throw new Error('na primeira, o app deixa o B');
+    if(!podeTrocarFica(lv))throw new Error('devia oferecer a troca');
+    render();const h=els['#app'].innerHTML;
+    if(!/data-a="trocaFica"/.test(h)||!/trocar: fica o Time A/.test(h))throw new Error('faltou o botao "trocar: fica o Time A"');
+    A.trocaFica();
+    if(lv.teams[0].ids.join()!==A0.join())throw new Error('depois da troca, A devia estar como antes: '+lv.teams[0].ids);
+    const lin=ids=>ids.filter(id=>!ehGkHoje(lv,id));
+    if(lin(B0).some(id=>lv.teams[1].ids.includes(id)))throw new Error('depois da troca, B devia ter rodado: '+lv.teams[1].ids);
+    if(!F0.slice(0,4).every(id=>lv.teams[1].ids.includes(id)))throw new Error('a fila devia ter entrado no B');
+    if(filaDe(lv).slice().sort().join()!==lin(B0).slice().sort().join())throw new Error('a fila agora e a linha do B');
+    if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===0))throw new Error('lastStay devia ser A');
+    render();if(!/trocar: fica o Time B/.test(els['#app'].innerHTML))throw new Error('a troca devia continuar disponivel, agora para o B');
+    A.trocaFica();
+    if(lv.teams[1].ids.join()!==B0.join()||lin(A0).some(id=>lv.teams[0].ids.includes(id)))throw new Error('trocar de novo volta ao primeiro giro');
+    if(!L().matches.length)throw new Error('a partida registrada nao pode sumir na troca');
+    A.voltarPartida();
+    if(lv.teams[0].ids.join()!==A0.join()||lv.teams[1].ids.join()!==B0.join()||!lv.cur)throw new Error('o Voltar a partida ainda funciona depois da troca');
+  }finally{S=salvo;render()}
+});
 step('empate com fila curta: fica o lado que esta ha menos tempo em quadra, o outro roda o que a fila repoe',()=>{
   const salvo=S;S=defState();A.demo();A.startRacha();
   const l=L(),lv=l.live;

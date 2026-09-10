@@ -2393,7 +2393,7 @@ const opinaoVale=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel','prePick',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','endRacha','delPlayer','arquivar','reativar']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2738,14 +2738,14 @@ function seguidasHoje(liga,lv){
 /* A roda (D-129): do lado que perdeu sai quem está há mais tempo em quadra
    (desempate: quem mais jogou hoje), tantos quantos a fila puder repor; entra
    quem está há mais tempo fora. O goleiro fixo só roda se há goleiro esperando. */
-function rodaFila(liga,lv,saiu){
+function rodaFila(liga,lv,saiu,max){
   const t=lv.teams[saiu];if(!t)return null;
   const fila=filaDe(lv);
   const fixo=comRodizio(lv)?null:t.ids.find(id=>ehGkHoje(lv,id))||null;
   const rodam=t.ids.filter(id=>id!==fixo);
   const filaL=fila.filter(id=>!ehGkHoje(lv,id)),filaG=fixo?fila.filter(id=>ehGkHoje(lv,id)):[];
   const seg=seguidasHoje(liga,lv),cnt=jogosHoje(liga,lv);
-  const k=Math.min(filaL.length,rodam.length);
+  const k=Math.min(filaL.length,rodam.length,max>=0?max:Infinity);   // max: o que sobrou da fila depois do outro lado rodar (D-136)
   const saem=rodam.slice().sort((a,b)=>((seg[b]||0)-(seg[a]||0))||((cnt[b]||0)-(cnt[a]||0))).slice(0,k);
   const entram=filaL.slice(0,k);
   const gkSai=fixo&&filaG.length?fixo:null,gkEntra=gkSai?filaG[0]:null;
@@ -2759,6 +2759,66 @@ function rodaFila(liga,lv,saiu){
   sairam.filter(id=>!(pref[id]>=0)).forEach(id=>nova.push(id));
   lv.fila=nova;
   return {entram:entraram,saem:sairam,ficam:(fixo&&!gkSai?[fixo]:[]).concat(ficam)};
+}
+/* O giro depois do Fim (D-129): decide quem sai, roda a fila, completa os
+   lados e monta o resumo (lv.ult). Separado do Fim para o "trocar quem fica"
+   do empate poder refazer o giro com o outro lado (D-136): opc.sai é o lado
+   que deve rodar, no lugar do que a régua de tempo escolheria.             */
+function giraPosFim(l,lv,c,m,result,opc){
+  const saiu=[],lim={};   // lim[ti]: quantos da fila sobram para esse lado (quem acabou de sair não volta)
+  /* lastStay: quem FICA em quadra — é com esse time que o goleiro fica */
+  if(lv.teams.length>2){
+    if(!l.cfg.winnerStays||(result==='draw'&&lv.teams.length>3)){   // 4 times e empate: os dois saem
+      lv.lastWinner=null;lv.lastSide=null;lv.lastStay=[];lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
+    }else if(result==='draw'){
+      /* 3 times e empate: um fica — o que entrou por último (o outro já estava, e sai) */
+      const fica=(lv.lastWinner===c.a)?c.b:(lv.lastWinner===c.b)?c.a:c.b,sai=fica===c.a?c.b:c.a;
+      lv.lastWinner=fica;lv.lastSide=fica===c.a?0:1;lv.lastStay=[fica];lv.queue.push(sai);saiu.push(sai);
+    }else{
+      const winner=result===0?c.a:c.b,perdedor=winner===c.a?c.b:c.a;
+      lv.lastWinner=winner;lv.lastSide=result===0?0:1;lv.lastStay=[winner];lv.queue.push(perdedor);saiu.push(perdedor);
+    }
+  }else{
+    lv.lastWinner=result==='draw'?null:(result===0?c.a:c.b);lv.lastSide=result==='draw'?null:result;
+    lv.lastStay=result==='draw'?[c.a,c.b]:[lv.lastWinner];
+    /* a roda (D-129): quem ganhou fica; do lado que perdeu sai quem está há
+       mais tempo em quadra e entra a frente da fila. Empate: a fila repõe os
+       dois lados inteiros → os dois rodam; senão fica o lado que está há
+       menos tempo em quadra e o outro roda (tanto quanto a fila repuser).
+       Com mais que um lado na fila, os dois rodam, o máximo que der (D-136). */
+    if((lv.mode||l.cfg.matchMode)!=='unica'&&l.cfg.winnerStays){
+      if(result!=='draw')saiu.push(result===0?c.b:c.a);
+      else{
+        const rod=comRodizio(lv),filaL=filaDe(lv).filter(id=>!ehGkHoje(lv,id)).length;
+        const linha=ti=>lv.teams[ti].ids.filter(id=>rod||!ehGkHoje(lv,id)).length;
+        const seg=seguidasHoje(l,lv),tempo=ti=>lv.teams[ti].ids.reduce((a,id)=>a+(seg[id]||0),0);
+        const mais=opc&&opc.sai!=null?opc.sai:tempo(c.a)>=tempo(c.b)?c.a:c.b,menos=mais===c.a?c.b:c.a;
+        /* a fila tem mais que um lado inteiro: os dois rodam — o que está há
+           mais tempo sai inteiro e o outro roda o que sobrar (D-136)        */
+        if(filaL>linha(mais)){saiu.push(mais,menos);lim[menos]=filaL-linha(mais)}
+        else if(filaL){saiu.push(mais);lv.lastStay=[menos];lv.lastSide=menos===c.a?0:1}
+      }
+    }
+  }
+  /* "de próximo": quem estava esperando entra no lugar de quem saiu */
+  const giros=saiu.map(i=>({i,r:rodaFila(l,lv,i,lim[i])})).filter(x=>x.r&&x.r.entram.length);
+  lv.pref={};                                                    // quem entrou e ficou é do lado: a preferência acaba aqui
+  lv.cur=null;lv.nextPair=suggestPair(l,lv);resetFill(lv);
+  const compl=completaLados(l,lv,planGks(l,lv,lv.nextPair).gks);
+  const placar=result==='draw'?`Empate ${m.score[0]}-${m.score[1]}`
+    :`${m.names[result]} ${Math.max(...m.score)}-${Math.min(...m.score)}`;
+  /* o resumo da roda fica na tela da próxima partida até ela começar */
+  const rodou=giros.map(g=>g.i);
+  lv.ult={placar,res:result,n:lv.matchIds.length,venceu:result==='draw'?null:(result===0?c.a:c.b),
+    fica:[c.a,c.b].filter(i=>!rodou.includes(i)),rodou,
+    mov:giros.map(g=>({ti:g.i,saem:g.r.saem,entram:g.r.entram})),compl:compl.map(x=>x.id)};
+}
+/* O "trocar quem fica" só existe no empate em que um lado ficou e o outro
+   rodou, enquanto a partida ainda pode voltar (mesmo instantâneo do ↩).     */
+function podeTrocarFica(lv){
+  const le=lv&&lv.lastEnd,u=lv&&lv.ult;
+  return !!(le&&u&&!lv.cur&&u.res==='draw'&&Array.isArray(u.rodou)&&u.rodou.length===1&&u.fica.length===1
+    &&le.mid===lv.matchIds[lv.matchIds.length-1]&&lv.teams[u.rodou[0]]);
 }
 /* Lado com gente a menos (alguém foi embora, alguém saiu para a fila) é
    completado na hora pela frente da fila — sem empréstimo: quem entra, entra.
@@ -3216,7 +3276,7 @@ function viewProxima(liga,lv){
     <div class="placar">${esc(u.placar)}<small>registrado · ${pl(u.n,'partida hoje','partidas hoje')}</small></div>
     ${lv.lastEnd&&lv.lastEnd.mid===lv.matchIds[lv.matchIds.length-1]?`<button class="btn ok" data-a="voltarPartida">${bi('ret')} Voltar a partida</button>`:'<span></span>'}
     <div class="mov">${(u.mov||[]).length?u.mov.map(m=>`<span class="out">${m.saem.length?`Saem ${nomes(m.saem)} → fim da fila`:''}</span>${m.saem.length?' · ':''}<span class="in">Entram ${nomes(m.entram)}</span>`).join('<br>')
-      :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}</div>
+      :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}${podeTrocarFica(lv)?`<br><button class="lnk" data-a="trocaFica">${bi('arrows')}trocar: fica o ${esc(lv.teams[u.rodou[0]].name)}</button>`:''}</div>
   </div>`:''}
   <div class="card lados ${sel?'picking':''}">
     <div class="row" style="padding:0 4px"><div class="k">Próxima partida</div>
@@ -4696,6 +4756,22 @@ const A={
     lv.cur=c;lv.lastEnd=null;
     save();render();toast('Partida de volta ao relógio');
   },
+  /* Empate em que só um lado rodou: a régua (quem está há mais tempo) pode
+     errar — na primeira partida os dois empatam nela. Refaz o giro com o
+     outro lado saindo, a partir do estado guardado antes do giro (D-136). */
+  trocaFica(){
+    const l=L(),lv=l.live,le=lv&&lv.lastEnd,u=lv&&lv.ult;
+    if(!podeTrocarFica(lv))return;
+    const m=l.matches.find(x=>x.id===le.mid);if(!m)return;
+    le.teams.forEach((ids,k)=>{if(lv.teams[k])lv.teams[k].ids=[...ids]});
+    lv.queue=[...le.queue];
+    if(le.fila)lv.fila=[...le.fila];
+    lv.pref=Object.assign({},le.pref||{});
+    const fica=u.rodou[0]===le.cur.a?le.cur.b:le.cur.a;   // o que tinha ficado agora roda
+    giraPosFim(l,lv,le.cur,m,'draw',{sai:fica});
+    lv.preHist=[];
+    save();render();
+  },
   /* Pausar e cancelar: o racha para o tempo todo (bola na rua, discussão, chuva). */
   pauseMatch(){
     const l=L(),c=l.live&&l.live.cur;if(!c)return;
@@ -5361,49 +5437,7 @@ const A={
       lastGks:lv.lastGks?Object.assign({},lv.lastGks):null,
       nextPair:Array.isArray(lv.nextPair)?[...lv.nextPair]:null};
     lv.lastGks={};lv.lastGks[c.a]=c.gks[0]||null;lv.lastGks[c.b]=c.gks[1]||null;   // para o goleiro do vencedor ficar
-    const saiu=[];
-    /* lastStay: quem FICA em quadra — é com esse time que o goleiro fica */
-    if(lv.teams.length>2){
-      if(!l.cfg.winnerStays||(result==='draw'&&lv.teams.length>3)){   // 4 times e empate: os dois saem
-        lv.lastWinner=null;lv.lastSide=null;lv.lastStay=[];lv.queue.push(c.a,c.b);saiu.push(c.a,c.b);
-      }else if(result==='draw'){
-        /* 3 times e empate: um fica — o que entrou por último (o outro já estava, e sai) */
-        const fica=(lv.lastWinner===c.a)?c.b:(lv.lastWinner===c.b)?c.a:c.b,sai=fica===c.a?c.b:c.a;
-        lv.lastWinner=fica;lv.lastSide=fica===c.a?0:1;lv.lastStay=[fica];lv.queue.push(sai);saiu.push(sai);
-      }else{
-        const winner=result===0?c.a:c.b,perdedor=winner===c.a?c.b:c.a;
-        lv.lastWinner=winner;lv.lastSide=result===0?0:1;lv.lastStay=[winner];lv.queue.push(perdedor);saiu.push(perdedor);
-      }
-    }else{
-      lv.lastWinner=result==='draw'?null:(result===0?c.a:c.b);lv.lastSide=result==='draw'?null:result;
-      lv.lastStay=result==='draw'?[c.a,c.b]:[lv.lastWinner];
-      /* a roda (D-129): quem ganhou fica; do lado que perdeu sai quem está há
-         mais tempo em quadra e entra a frente da fila. Empate: a fila repõe os
-         dois lados inteiros → os dois rodam; senão fica o lado que está há
-         menos tempo em quadra e o outro roda (tanto quanto a fila repuser). */
-      if((lv.mode||l.cfg.matchMode)!=='unica'&&l.cfg.winnerStays){
-        if(result!=='draw')saiu.push(result===0?c.b:c.a);
-        else{
-          const rod=comRodizio(lv),filaL=filaDe(lv).filter(id=>!ehGkHoje(lv,id)).length;
-          const linha=ti=>lv.teams[ti].ids.filter(id=>rod||!ehGkHoje(lv,id)).length;
-          const seg=seguidasHoje(l,lv),tempo=ti=>lv.teams[ti].ids.reduce((a,id)=>a+(seg[id]||0),0);
-          if(filaL>=linha(c.a)+linha(c.b))saiu.push(c.a,c.b);
-          else if(filaL){const mais=tempo(c.a)>=tempo(c.b)?c.a:c.b;saiu.push(mais);lv.lastStay=[mais===c.a?c.b:c.a];lv.lastSide=mais===c.a?1:0}
-        }
-      }
-    }
-    /* "de próximo": quem estava esperando entra no lugar de quem saiu */
-    const giros=saiu.map(i=>({i,r:rodaFila(l,lv,i)})).filter(x=>x.r&&x.r.entram.length);
-    lv.pref={};                                                    // quem entrou e ficou é do lado: a preferência acaba aqui
-    lv.cur=null;lv.nextPair=suggestPair(l,lv);resetFill(lv);
-    const compl=completaLados(l,lv,planGks(l,lv,lv.nextPair).gks);
-    const placar=result==='draw'?`Empate ${m.score[0]}-${m.score[1]}`
-      :`${m.names[result]} ${Math.max(...m.score)}-${Math.min(...m.score)}`;
-    /* o resumo da roda fica na tela da próxima partida até ela começar */
-    const rodou=giros.map(g=>g.i);
-    lv.ult={placar,res:result,n:lv.matchIds.length,venceu:result==='draw'?null:(result===0?c.a:c.b),
-      fica:[c.a,c.b].filter(i=>!rodou.includes(i)),rodou,
-      mov:giros.map(g=>({ti:g.i,saem:g.r.saem,entram:g.r.entram})),compl:compl.map(x=>x.id)};
+    giraPosFim(l,lv,c,m,result);
     lv.preHist=[];
     closeSheet();save();render();
     /* sem modal e sem falar de nível aqui: o que mudou aparece no fim do racha */

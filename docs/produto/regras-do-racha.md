@@ -79,10 +79,16 @@ Lado B: saem 3 (os que estão há mais tempo em quadra)  →  fim da fila
 Lado A 5  x  5 Lado B (novo)   fila: os 3 que saíram
 ```
 
-**Empate:** se a fila tem gente para repor os dois lados inteiros, **os dois saem** e entram os próximos.
-Senão, **fica o lado que está há menos tempo em quadra** e o outro roda, tanto quanto a fila repuser (com
-fila de 2, saem 2 dele). Com 3 times de sempre isso é "fica o que entrou por último"; com 4, "os dois
-saem". Sem ninguém na fila, jogam de novo.
+**Empate:** se a fila tem **mais que um lado inteiro** esperando, **os dois rodam, o máximo que der**: o
+lado que está há mais tempo em quadra sai inteiro e o outro roda o que sobrou da fila (fila de 6 no 5v5:
+saem 4 de um lado e 2 do outro; fila de 8: os dois lados inteiros). Se a fila dá um lado ou menos, **fica o
+lado que está há menos tempo em quadra** e o outro roda, tanto quanto a fila repuser (com fila de 2, saem 2
+dele). Com 3 times de sempre isso é "fica o que entrou por último"; com 4, "os dois saem". Sem ninguém na
+fila, jogam de novo (D-136).
+
+**Se o app escolheu o lado errado, troca num toque.** Quando só um lado rodou no empate, o cartão do placar
+traz `trocar: fica o Time A` — refaz a roda com o outro lado saindo, sem apagar a partida. Na primeira
+partida do dia os dois lados empatam também no tempo em quadra, então essa escolha é sempre da quadra.
 
 **Depois do Fim, a tela diz o que a roda fez.** O placar registrado fica num cartão fixo no topo, com o
 **↩ Voltar a partida** ao lado, até a próxima começar; embaixo, "Saem X, Y → fim da fila · Entram Z, W".
