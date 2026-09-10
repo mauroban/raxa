@@ -284,6 +284,35 @@ step('toque em quem esta fora marca o nome',()=>{
   A.subPick({dataset:{id:b[0].id}});
 });
 
+step('autor do gol se escolhe na coluna do time que marcou (D-138)',()=>{
+  const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+  l.cfg.askScorer=true;
+  A.goal({dataset:{s:'0'}});
+  const g=c.events.filter(e=>e.type==='goal').pop();
+  if(!GOLP||GOLP.t!==g.t||GOLP.side!==0)throw new Error('o gol devia abrir o "quem fez?" na coluna');
+  let h=els['#app'].innerHTML;
+  if(!/gol! toque em quem fez/.test(h))throw new Error('o placar do lado devia pedir o autor');
+  if(!/＋ gol/.test(h))throw new Error('o outro lado devia continuar dizendo "＋ gol"');
+  const re=id=>new RegExp('data-a="scorer" data-id="'+id+'"');
+  if(!c.lineups[0].every(id=>re(id).test(h)))throw new Error('todo nome do lado que marcou devia ser a escolha');
+  if(c.lineups[1].some(id=>re(id).test(h)))throw new Error('o outro lado nao entra na escolha do gol normal');
+  if(/id="scorer"|scorerbar/.test(h))throw new Error('a tirinha antiga la embaixo nao existe mais');
+  A.scorerSide({dataset:{own:'1'}});h=els['#app'].innerHTML;
+  if(!GOLP.contra||!c.lineups[1].every(id=>re(id).test(h)))throw new Error('gol contra: a escolha passa para o outro lado');
+  A.scorerSide({dataset:{own:'0'}});
+  A.scorer({dataset:{id:c.lineups[0][2],own:'0'}});
+  if(g.pid!==c.lineups[0][2]||g.own)throw new Error('o toque no nome devia gravar o autor');
+  if(GOLP)throw new Error('depois de escolher, a coluna volta ao normal');
+  h=els['#app'].innerHTML;
+  if(/gol! toque em quem fez/.test(h)||!c.lineups[0].every(id=>new RegExp('data-a="subPick" data-s="0" data-id="'+id+'"').test(h)))throw new Error('os nomes voltam a ser substituicao');
+  /* corrigir pelo card Gols abre a mesma escolha na coluna, sem folha */
+  A.goalScorer({dataset:{t:String(g.t)}});
+  if(!GOLP||GOLP.t!==g.t)throw new Error('corrigir pelo card Gols devia abrir a escolha na coluna');
+  if(els['#sheet'].classList.contains('on'))throw new Error('sem folha: a escolha e na coluna');
+  A.scorer({dataset:{id:''}});
+  if(g.pid!==null||GOLP)throw new Error('"sem autor" limpa o autor e fecha a escolha');
+  A.undo();
+});
 step('corrigir autor do gol pela lista',()=>{
   const c=L().live.cur,g=c.events.find(e=>e.type==='goal');
   A.goalScorer({dataset:{t:String(g.t)}});
@@ -473,6 +502,7 @@ step('o racha de hoje aparece como ao vivo na aba Jogos',()=>{
   S.ui.tab='racha';render();
 });
 step('gol sem autor avisa na tela ate alguem marcar',()=>{
+  fechaGolp();
   const l=L(),lv=l.live;if(!lv||!lv.cur)return;
   A.goal({dataset:{s:'1'}});render();
   if(!/noauthor/.test(els['#app'].innerHTML))throw new Error('gol sem autor devia avisar');
@@ -1252,6 +1282,14 @@ step('12 na linha + 2 goleiros: dois lados e fila de 4 (o terceiro time); empate
     if(!B0.filter(id=>!ehGkHoje(lv,id)).every(id=>A2.includes(id)))throw new Error('quem esperava (a linha de B) devia entrar no lugar de A');
     if(!(lv.lastStay&&lv.lastStay.length===1&&lv.lastStay[0]===1))throw new Error('o lado que entrou por ultimo fica');
   }finally{S=salvo;render()}
+});
+step('sem cabecalho de liga nas telas; a liga mora em Ajustes (D-137)',()=>{
+  render();
+  if(/class="hdr"/.test(els['#app'].innerHTML))throw new Error('o cabecalho com o nome da liga nao devia existir');
+  const tab=S.ui.tab;S.ui.tab='cfg';render();
+  const h=els['#app'].innerHTML;
+  if(!/ligahdr/.test(h)||!/Trocar de liga/.test(h)||h.indexOf(esc(L().name))<0)throw new Error('Ajustes devia trazer a liga e o "Trocar de liga"');
+  S.ui.tab=tab;render();
 });
 step('sem botao de girar: a troca na mao e toque/arraste entre fila e time',()=>{
   const lv=L().live;render();

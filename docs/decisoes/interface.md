@@ -277,3 +277,48 @@ time ficava estranho) — só a borda e o cabeçalho levam a cor; e o cartão do
 respiro (`.card.lados`, 8px) para as colunas ficarem mais largas no celular.
 **Onde:** `escCol` (`extra.cls`), `viewJogo` (`placar(s)` como `head`), `viewProxima` em `index.html` ·
 `scripts/visual.py` (telas 3, 4 e 15).
+
+<a id="d-137"></a>
+### D-137 · Sem cabeçalho de liga nas telas; a liga mora em Ajustes
+**Quando:** 2026-09-10.
+**O quê:** some o cabeçalho fixo de 56 px (marca, nome da liga, "N jogadores · N rachas · N partidas" e
+a seta para a lista de ligas) que ficava no topo de todas as abas. Cada aba começa pelo próprio
+conteúdo — na partida ao vivo, pelo relógio. O que o cabeçalho trazia foi para o **primeiro cartão de
+Ajustes** (`.ligahdr`): inicial da liga, nome, os mesmos números e o botão **Trocar de liga** (mesma
+ação `home`). `--toph` virou 0 (a barra de seleção da presença gruda no topo de verdade).
+**Por quê:** "o cabeçalho com o nome da liga em cima está ocupando muito espaço inútil em todas as
+telas". Trocar de liga é raro; o nome da liga a pessoa sabe. Uma tela inteira de celular na quadra vale
+mais que 56 px de identidade.
+**Descartado:** encolher o cabeçalho (continua sendo uma faixa parada); mostrar só na aba Racha (a
+inconsistência confunde mais que ajuda); pôr o "Trocar de liga" no rodapé de navegação (é ajuste, não
+aba).
+**Onde:** `drawApp`, `viewCfg`, CSS `.ligahdr`/`--toph` em `index.html` · [Fluxo §3](../produto/fluxo-do-racha.md)
+· [Contas e permissões](../produto/contas-e-permissoes.md) · `scripts/smoke.py` (passo "D-137").
+
+<a id="d-138"></a>
+### D-138 · O autor do gol se escolhe na coluna do time que marcou
+**Quando:** 2026-09-10.
+**O quê:**
+1. O bloco do placar diz sempre **"＋ gol"** na linha de baixo; a chance de vitória foi para a linha do
+   nome ("Time A · 52%"). Antes a linha de baixo mostrava a chance, e só "toque = gol" quando não havia
+   chance — o bloco não parecia um botão.
+2. Depois do toque, **a coluna do time vira a escolha do autor** (`GOLP`, estado só de tela): o bloco
+   ganha a moldura e diz "gol! toque em quem fez"; os nomes do lado (goleiro incluído) viram alvos com a
+   mesma gramática verde/apagado da substituição (`picking` + `data-alvo`), e o outro lado apaga.
+   Logo abaixo do bloco, **gol contra** (os alvos passam para o outro lado; o bloco diz "contra — toque
+   em quem fez") e **sem autor**. Um toque grava e fecha; sem toque, fecha sozinho em 12 s (15 s no
+   contra). Enquanto está aberta, o delta do realtime espera (`ocupado()`), como esperava a tirinha.
+3. O aviso "N gols sem autor — toque para marcar" e o toque no nome do card **Gols** abrem a mesma
+   escolha na coluna e rolam até ela; a folha "Quem fez esse gol?" ficou só como caminho alternativo
+   (`data-sheet`). A tirinha `#scorer`/`showScorer` abaixo das colunas deixou de existir.
+**Por quê:** "não está muito intuitivo marcar um gol e seu autor: dá a sensação que tem que clicar no
+nome de alguém para marcar gol, e o autor do gol está aparecendo muito longe, lá embaixo". A tirinha
+ficava abaixo das duas colunas inteiras — com 5 nomes por lado, longe do dedo que acabou de tocar o
+placar. Os nomes que a tirinha repetia já estavam na tela, na coluna certa.
+**Descartado:** folha modal de autor a cada gol (bloqueia; D-101 já tinha descartado); tirinha
+flutuante sobre a coluna (tampa nomes); esconder o aviso de gol sem autor enquanto a escolha está
+aberta (a escolha some sozinha e o aviso tem que continuar lá).
+**Onde:** `GOLP`/`abreGolp`/`fechaGolp`, `viewJogo` (`placar(s)`, `golpAttr`, `.golpacts`), `A.goal`,
+`A.scorer`, `A.scorerSide`, `A.goalScorer`, `ocupado()`, CSS `.side.golp`/`.golpacts` em `index.html` ·
+[Fluxo §3](../produto/fluxo-do-racha.md) · `scripts/smoke.py` (passo "D-138") · `scripts/visual.py`
+(telas 3 e 15 já batem o gol e mostram a coluna em escolha).

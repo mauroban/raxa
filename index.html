@@ -34,7 +34,7 @@
   --ok:#1C7A3A; --bad:#C62828;
   --glow:none;
   --r:14px;
-  --toph:56px; --navh:calc(60px + env(safe-area-inset-bottom));
+  --toph:0px; --navh:calc(60px + env(safe-area-inset-bottom));
   --disp:'Big Shoulders Display','Impact','Arial Narrow',sans-serif;
   --cond:'Big Shoulders Display','Impact','Arial Narrow',sans-serif;
   --body:'Archivo','Segoe UI',system-ui,-apple-system,sans-serif;
@@ -78,6 +78,7 @@ button{font-family:inherit;color:inherit}
 .hdr .sub{font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brandmark{width:32px;height:32px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
   background:var(--chalk);color:var(--onink);font-family:var(--disp);font-weight:900;font-size:20px;line-height:1}
+.ligahdr{display:flex;align-items:center;gap:10px}
 .iconbtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--chalk);
   width:40px;height:40px;border-radius:11px;font-size:17px;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
 .iconbtn:active{transform:scale(.94)}
@@ -456,6 +457,12 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .lineup{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .lineup span{font-size:12px;color:var(--mute);background:var(--panel2);padding:3px 7px;border-radius:7px}
 /* a tirinha "quem fez?" entra logo abaixo do placar, onde o olho já está (D-101) */
+.side.golp{outline:3px solid var(--chalk);outline-offset:-3px}
+.side.golp .hint{opacity:1;animation:opin .18s ease-out}
+.golpacts{display:flex;gap:4px;margin-bottom:4px}
+.golpacts button{flex:1;min-height:40px;font:inherit;font-size:12.5px;font-weight:600;padding:6px 4px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--chalk);cursor:pointer}
+.picking .esc2 .col.team .pl[data-alvo]{opacity:1}
+.esc2 .pl.gk[data-alvo]{background:color-mix(in srgb,var(--ok) 13%,var(--fill));border-color:color-mix(in srgb,var(--ok) 55%,transparent)}   /* o goleiro também é escolha: mesma cor dos outros alvos */
 .scorerbar{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 4px 14px rgba(0,0,0,.12);animation:opin .18s ease-out}
 .noauthor{display:block;width:100%;margin-top:8px;border:1px dashed color-mix(in srgb,var(--gold) 60%,var(--line));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--chalk);border-radius:11px;padding:9px 12px;font:inherit;font-size:13px;text-align:left;cursor:pointer}
 .scorerbar .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
@@ -2304,15 +2311,9 @@ function drawApp(){
   const tab=S.ui.tab;
   const body=tab==='racha'?viewRacha(liga):tab==='ranking'?viewRanking(liga)
     :tab==='stats'?viewStats(liga):tab==='hist'?viewHist(liga):viewCfg(liga);
-  $('#app').innerHTML=`
-    <div class="hdr">
-      <div class="brandmark">R</div>
-      <div style="min-width:0">
-        <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h1>
-        <div class="sub">${liga.players.length} jogadores · ${nRachas(liga)} racha${nRachas(liga)===1?'':'s'} · ${liga.matches.length} partida${liga.matches.length===1?'':'s'}</div>
-      </div>
-      <button class="iconbtn" data-a="home" aria-label="Voltar para a lista de ligas" title="Ligas">${ICO.back}</button>
-    </div>${body}`;
+  /* sem cabeçalho com o nome da liga: era 56 px parados em toda tela (D-137).
+     A liga — nome, números e trocar — mora no topo de Ajustes.              */
+  $('#app').innerHTML=body;
   $('#bar').innerHTML=barFor(liga);
   const pend=opPendentes(liga)>=OP_MUITOS;        // a aba que leva a avaliar pisca para quem deve muita opinião
   setNav(NAV_TABS.map(([v,l])=>`<button class="${tab===v?'on':''}" data-a="tab" data-v="${v}" aria-current="${tab===v?'page':'false'}">${NAV_ICON[v]}${l}${v==='ranking'&&pend?'<i class="navdot" title="opiniões pendentes"></i>':''}${v==='racha'&&tab!=='racha'&&aoVivo(liga)?'<i class="navdot live" title="racha ao vivo"></i>':''}</button>`).join(''));
@@ -3340,8 +3341,13 @@ function viewJogo(liga,lv){
      (D-117): a marca pode ser um nome (de linha, no gol ou fora), o gol vazio
      ou uma vaga de linha. O par elegível ganha o tracejado do arraste; a dica
      abaixo da escalação diz o próximo passo.                                 */
-  const sel=pecaAoVivo(liga,lv,lv.sel);
+  const golp=GOLP&&c.events.some(e=>e.type==='goal'&&e.t===GOLP.t)?GOLP:null;
+  if(!golp)GOLP=null;
+  const sel=golp?null:pecaAoVivo(liga,lv,lv.sel);
   const alvoDe=key=>sel&&parAoVivo(sel,pecaAoVivo(liga,lv,key))?' data-alvo="1"':'';
+  /* lado cujos nomes são a escolha do autor: o que marcou, ou o outro no gol contra */
+  const ladoGolp=golp?(golp.contra?1-golp.side:golp.side):-1;
+  const golpAttr=(s,id)=>s===ladoGolp?`data-a="scorer" data-id="${id}" data-own="${golp.contra?1:0}" data-alvo="1"`:null;
   const chipFora=o=>`<button class="tp big ${lv.sel===o.id?'sel':''} ${tamNome(nameOf(liga,o.id))}" data-a="subPick" data-id="${o.id}" data-drag="1" data-drop-player="${o.id}"${alvoDe(o.id)}>${dotF(o.id)}<span class="nm">${esc(nameOf(liga,o.id))}${ehGkHoje(lv,o.id)?' 🧤':''}</span></button>`;
   const nomeSel=sel&&sel.id?esc(nameOf(liga,sel.id)):'';
   const dicaSub=!sel?''
@@ -3372,13 +3378,19 @@ function viewJogo(liga,lv){
     /* o placar de cada lado é o CABEÇALHO da coluna do time (D-133): tocar
        nele é gol, e os jogadores embaixo são desse lado, dentro da mesma
        moldura na cor do time                                               */
-    const placar=s=>{const ti=s===0?c.a:c.b;return `
-      <div class="side ${TEAMCLASS[ti]}" data-a="goal" data-s="${s}">
-        <div class="nm">${esc(t[s].name)}</div>
+    /* a chance vai junto do nome; a linha de baixo diz sempre "＋ gol", para
+       ninguém achar que gol se marca tocando num nome (D-138)              */
+    const placar=s=>{const ti=s===0?c.a:c.b,eh=golp&&golp.side===s;return `
+      <div class="side ${TEAMCLASS[ti]} ${eh?'golp':''}" data-a="goal" data-s="${s}">
+        <div class="nm">${esc(t[s].name)}${ex?` · ${pct(ex[s])}`:''}</div>
         <div class="sc num">${c.score[s]}</div>
-        <div class="hint">${ex?pct(ex[s])+' de chance':'toque = gol'}</div>
-        ${c.score[s]?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
-      </div>`};
+        <div class="hint">${eh?(golp.contra?'contra — toque em quem fez':'gol! toque em quem fez'):'＋ gol'}</div>
+        ${c.score[s]&&!eh?`<span class="minuszone" data-a="nada"><button class="minus" data-a="ungoal" data-s="${s}" title="tirar um gol deste time">−</button></span>`:''}
+      </div>
+      ${eh?`<div class="golpacts">
+        <button data-a="scorerSide" data-own="${golp.contra?0:1}">${golp.contra?'do time':'gol contra'}</button>
+        <button data-a="scorer" data-id="">sem autor</button>
+      </div>`:''}`};
     /* mesma tela da pré-partida (D-129): escalação e fila num cartão só, as
        colunas da fila embaixo das colunas dos lados; ▲ em quem entrou nesta
        partida, ▼ em quem saiu                                              */
@@ -3388,16 +3400,15 @@ function viewJogo(liga,lv){
     const ordem=filaDe(lv),ix=id=>{const i=ordem.indexOf(id);return i<0?999:i};
     const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
     const res=[0,1].map(s=>reservasDe(s));
-    return `<div class="card lados ${sel?'picking':''}" style="margin-top:8px">
+    return `<div class="card lados ${sel||golp?'picking':''}" style="margin-top:8px">
     <div class="esc2" style="margin-top:0">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,((c.startLineups||c.lineups)[s]).concat([(c.startGks||c.gks)[s]].filter(Boolean)),
-      {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
+      {gk:g=>g?(golpAttr(s,g)||`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`)
              :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
-       pl:id=>`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
+       pl:id=>golpAttr(s,id)||`data-a="subPick" data-s="${s}" data-id="${id}" data-drag="1" data-drop-player="${id}"${alvoDe(id)}`,
        empty:`data-a="subPick" data-s="${s}" data-slot="vaga" data-drop-slot="vaga:${s}"${alvoDe('vaga:'+s)}`},
       {selGk:lv.sel==='gk:'+s,selVaga:lv.sel==='vaga:'+s,vaga:'＋ vaga',tag:tagIn,head:placar(s),cls:'team t'+TEAMCLASS[s===0?c.a:c.b].toUpperCase()})).join('')}
     </div>
-    <div id="scorer"></div>
     ${(()=>{const sem=c.events.filter(e=>e.type==='goal'&&!e.pid);if(!sem.length)return '';
       return `<button class="noauthor" data-a="goalScorer" data-t="${sem[sem.length-1].t}">${bi('warn')} ${pl(sem.length,'gol sem autor','gols sem autor')} — toque para marcar</button>`})()}
     ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
@@ -4796,11 +4807,18 @@ const A={
     c.score[c.events[i].side]--;c.events.splice(i,1);
     save();render();toast('Gol removido');
   },
+  /* corrigir o autor de um gol (card Gols, "gols sem autor"): a mesma escolha
+     na coluna do time (D-138), rolando até ela; a folha fica só para quem
+     pedir (data-sheet)                                                      */
   goalScorer(el){
     const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
     const t=+el.dataset.t,own=el.dataset.own!==undefined?el.dataset.own==='1':false;
     const g=c.events.find(e=>e.type==='goal'&&e.t===t);if(!g)return;
     const contra=el.dataset.own!==undefined?own:!!g.own,lado=contra?1-g.side:g.side;
+    if(!el.dataset.sheet){abreGolp(g,contra);closeSheet();render();
+      const alvo=typeof document!=='undefined'&&document.querySelector?document.querySelector('.side.golp'):null;
+      if(alvo&&alvo.scrollIntoView)try{alvo.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}
+      return}
     openSheet(`<h2>Quem fez esse gol?</h2>
       <div class="row" style="margin-bottom:10px"><div class="tiny muted">${esc(lv.teams[g.side===0?c.a:c.b].name)} · ${mmss(gameTime(c,g.t))}</div>
         ${scorerTabs('goalScorer',t,contra)}</div>
@@ -5257,11 +5275,12 @@ const A={
     save();render();
   },
   goal(el){
-    const l=L(),c=l.live&&l.live.cur;if(!c)return;
-    const s=+el.dataset.s;
-    c.score[s]++;c.events.push({t:Date.now(),type:'goal',side:s,pid:null});
+    const l=L(),lv=l.live,c=lv&&lv.cur;if(!c)return;
+    const s=+el.dataset.s,g={t:Date.now(),type:'goal',side:s,pid:null};
+    c.score[s]++;c.events.push(g);
+    lv.sel=null;
+    if(l.cfg.askScorer)abreGolp(g,false);else fechaGolp();
     buzz(18);save();render();
-    if(l.cfg.askScorer)showScorer(s);
   },
   ungoal(el){
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
@@ -5269,13 +5288,17 @@ const A={
     if(!c.score[s])return;
     c.score[s]--;
     for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'&&c.events[i].side===s){c.events.splice(i,1);break}
+    fechaGolp();
     save();render();
   },
+  /* grava o autor do gol que está em escolha (GOLP) — ou do último, se a
+     escolha veio de fora da tela (teste, atalho)                            */
   scorer(el){
     const l=L(),c=l.live&&l.live.cur;if(!c)return;
     const pid=el.dataset.id,own=!!(pid&&el.dataset.own==='1');
-    for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){c.events[i].pid=pid||null;c.events[i].own=own;break}
-    clearTimeout(showScorer._t);
+    const g=GOLP&&c.events.find(e=>e.type==='goal'&&e.t===GOLP.t)||c.events.slice().reverse().find(e=>e.type==='goal');
+    if(g){g.pid=pid||null;g.own=own}
+    fechaGolp();
     save();render();                       // o card Gols precisa mostrar o autor na hora
     if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);
     if(pid)toast((own?'Gol contra de ':'Gol de ')+nameOf(l,pid));
@@ -5285,7 +5308,8 @@ const A={
     if(el.dataset.for==='goalScorerM'){const [id,i]=el.dataset.t.split('|');return A.goalScorerM({dataset:{id,i,own:el.dataset.own}})}
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
-    for(let i=c.events.length-1;i>=0;i--)if(c.events[i].type==='goal'){showScorer(c.events[i].side,el.dataset.own==='1');break}
+    const g=GOLP&&c.events.find(e=>e.type==='goal'&&e.t===GOLP.t)||c.events.slice().reverse().find(e=>e.type==='goal');
+    if(g){abreGolp(g,el.dataset.own==='1');render()}
   },
   /* Alguém do time vai para o gol (quem estava no gol volta para a linha), o
      goleiro vai para a vaga da linha (gol fica vazio), ou os dois goleiros
@@ -6352,22 +6376,22 @@ const A={
 };
 
 /* Abinha discreta: "do time" (padrão) | "contra" — troca os nomes para os do outro time. */
+/* "Quem fez?" mora na coluna do time (D-138): depois do gol, os nomes do lado
+   que marcou viram a escolha — um toque num nome grava o autor. GOLP é só de
+   tela (não vai para o banco nem para o outro aparelho): {t, side, contra}.
+   Some sozinho depois de um tempo, como a tirinha antiga.                  */
+let GOLP=null;
+function abreGolp(g,contra){
+  GOLP={t:g.t,side:g.side,contra:!!contra};
+  clearTimeout(abreGolp._t);
+  abreGolp._t=setTimeout(()=>{if(GOLP){GOLP=null;render()}
+    if(typeof refetchPendentes==='function')refetchPendentes()},contra?15000:12000);
+}
+function fechaGolp(){GOLP=null;clearTimeout(abreGolp._t)}
 function scorerTabs(alvo,t,contra){
   return `<span class="sp tiny" style="display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px">
     <button data-a="scorerSide" data-for="${alvo}" data-t="${t}" data-own="0" style="border:0;border-radius:6px;padding:3px 8px;font:inherit;cursor:pointer;background:${contra?'transparent':'var(--line2)'};color:${contra?'var(--mute)':'var(--chalk)'}">do time</button>
     <button data-a="scorerSide" data-for="${alvo}" data-t="${t}" data-own="1" style="border:0;border-radius:6px;padding:3px 8px;font:inherit;cursor:pointer;background:${contra?'var(--line2)':'transparent'};color:${contra?'var(--chalk)':'var(--mute)'}">contra</button></span>`;
-}
-function showScorer(side,contra){
-  const l=L(),c=l.live&&l.live.cur,box=$('#scorer');
-  if(!box||!c)return;
-  const lado=contra?1-side:side;
-  box.innerHTML=`<div class="scorerbar">
-    <div class="row"><div class="k">Quem fez? (opcional)</div>${scorerTabs('scorer','',!!contra)}</div>
-    <div class="ch">${c.lineups[lado].map(id=>`<button class="tp big" data-a="scorer" data-id="${id}" data-own="${contra?1:0}">${esc(nameOf(l,id))}</button>`).join('')}
-      <button class="tp big" data-a="scorer" data-id="" style="opacity:.6">pular</button></div></div>`;
-  clearTimeout(showScorer._t);
-  showScorer._t=setTimeout(()=>{const s=$('#scorer');if(s)s.innerHTML='';
-    if(typeof refetchPendentes==='function')refetchPendentes()},contra?15000:10000);
 }
 /* ==========================================================================
    PINTAR PRESENÇA — segurar num nome e arrastar marca (ou desmarca) todo
@@ -7137,8 +7161,8 @@ function ocupado(){
   if(typeof drag!=='undefined'&&drag&&drag.active)return true;
   const sh=$('#sheet');
   if(sh&&sh.classList.contains('on'))return true;
-  const sc=$('#scorer');                     // tirinha "quem fez?" aberta: um delta a apagaria
-  return !!(sc&&String(sc.innerHTML||'').trim());
+  const lv=L()&&L().live;                    // "quem fez?" aberto na coluna: um delta o apagaria
+  return !!(GOLP&&lv&&lv.cur&&lv.cur.events.some(e=>e.type==='goal'&&e.t===GOLP.t));
 }
 
 /* Aviso que chegou enquanto a pessoa digitava ou tinha uma folha aberta não se
@@ -7642,7 +7666,15 @@ Object.assign(A,{
    declaração de função sobe, então drawApp o encontra normalmente.         */
 function viewCfg(liga){
   const c=CODE[liga.id]||'——————';
-  return `<div class="card" style="display:flex;align-items:center;gap:10px">
+  return `<div class="card ligahdr">
+      <div class="brandmark">${esc(liga.name.slice(0,1).toUpperCase())}</div>
+      <div style="min-width:0;flex:1">
+        <h2 style="font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h2>
+        <div class="tiny muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${liga.players.length} jogadores · ${nRachas(liga)} racha${nRachas(liga)===1?'':'s'} · ${liga.matches.length} partida${liga.matches.length===1?'':'s'}</div>
+      </div>
+      <button class="btn ghost sm" data-a="home">Trocar de liga</button>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:10px">
       <div style="min-width:0;flex:1">
         <div class="k">Código de convite</div>
         <div style="font-family:var(--disp);font-size:26px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>

@@ -146,6 +146,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-120](interface.md#d-120) · O cartão de opinião cabe na tela do celular
 - [D-131](interface.md#d-131) · Ajustes enxutos: só o que se mexe, cartões agrupados, sem texto explicando o óbvio
 - [D-133](interface.md#d-133) · O placar é o cabeçalho da coluna do time: cada lado é uma coluna na cor do time, a fila fica fora
+- [D-137](interface.md#d-137) · Sem cabeçalho de liga nas telas; nome, números e "Trocar de liga" no primeiro cartão de Ajustes
+- [D-138](interface.md#d-138) · O autor do gol se escolhe na própria coluna do time que marcou; o placar diz sempre "＋ gol"
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 

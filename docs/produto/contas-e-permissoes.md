@@ -37,6 +37,7 @@ Controle total, sem meio-termo, porque um racha tem dono:
 - **remover um membro** — o jogador e todo o histórico dele **ficam**; só o acesso sai;
 - cadastrar jogador sem conta nenhuma (o caso normal);
 - passar o admin adiante — uma Liga nunca fica sem admin;
+- **trocar de liga** — o primeiro cartão de Ajustes mostra a liga aberta (nome, jogadores, rachas, partidas) e o botão **Trocar de liga**, que leva à lista de ligas; não existe mais cabeçalho com o nome da liga nas outras telas (D-137).
 - **apagar a Liga** — só o **dono** (quem criou), só quando **não há nenhum outro membro**, e digitando o nome da Liga; a regra vale também no banco (D-105). Quem não é dono tem "Sair da liga" no mesmo lugar.
 
 Toda ação de membro fica registrada: quem fez, em quem, quando.
