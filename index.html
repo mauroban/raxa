@@ -466,8 +466,9 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .golflash{position:fixed;inset:0;z-index:99;pointer-events:none;background:var(--fc,var(--bibA));opacity:0}
 .golflash.on{animation:golflash .85s ease-out}
 @keyframes golflash{0%{opacity:.95}35%{opacity:.75}100%{opacity:0}}
-.golhdr{border-radius:16px;padding:16px 14px 14px;text-align:center;color:#fff;animation:golpop .35s cubic-bezier(.2,1.4,.4,1);position:relative;overflow:hidden}
-.golhdr .tempo{position:absolute;left:0;top:0;height:4px;width:100%;background:rgba(255,255,255,.55);transform-origin:left;animation:golvai linear forwards}
+.golhdr{border-radius:16px;padding:20px 14px 14px;text-align:center;color:#fff;animation:golpop .35s cubic-bezier(.2,1.4,.4,1);position:relative;overflow:hidden}
+.golhdr .tempo{position:absolute;left:0;top:0;height:8px;width:100%;background:rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.25);transform-origin:left;animation:golvai linear forwards}
+.golhdr.d .tempo{background:rgba(15,31,22,.75)}   /* time D é claro: barra escura */
 @keyframes golvai{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .golhdr.a{background:var(--bibA)} .golhdr.b{background:var(--bibB)} .golhdr.c{background:var(--bibC)} .golhdr.d{background:var(--bibD);color:#0F1F16}
 .golhdr .gol{font-family:var(--disp);font-weight:900;font-size:44px;line-height:1;letter-spacing:.04em}
