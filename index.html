@@ -6376,10 +6376,13 @@ function golFlash(ti){
 function golSheet(l,lv,c,g,contra){
   const t=g.t,ti=g.side===0?c.a:c.b,lado=contra?1-g.side:g.side;
   const nome=lv.teams[ti].name;
+  /* placar NO MOMENTO do gol (corrigir um gol antigo mostra o placar de então),
+     com o número que subiu entre colchetes                                  */
+  const pl0=[0,1].map(sd=>c.events.filter(e=>e.type==='goal'&&e.side===sd&&e.t<=g.t).length);
   openSheet(`<div class="golhdr ${TEAMCLASS[ti]}">
       <div class="gol">GOL!</div>
       <div class="nm">${esc(nome)} · ${mmss(gameTime(c,t))}</div>
-      <div class="sc num">${c.score[0]} - ${c.score[1]}</div>
+      <div class="sc num">${[0,1].map(sd=>sd===g.side?`[${pl0[sd]}]`:pl0[sd]).join(' - ')}</div>
     </div>
     <div class="row" style="margin:12px 0 8px"><div class="k">${contra?'Gol contra — quem fez?':'Quem fez?'}</div>${scorerTabs('goalScorer',t,contra)}</div>
     <div class="chips">${c.lineups[lado].map(id=>`<button class="tp big ${g.pid===id&&!!g.own===contra?'sel':''}" data-a="setGoalScorer" data-t="${t}" data-id="${id}" data-own="${contra?1:0}">${ehGkHoje(lv,id)?'🧤 ':''}${esc(nameOf(l,id))}</button>`).join('')}

@@ -292,6 +292,8 @@ step('gol abre a folha GOL! com os nomes do lado, gol contra, sem autor e "nao f
   const g=c.events.filter(e=>e.type==='goal').pop();
   let h=els['#sheet'].innerHTML;          // o DOM falso nao guarda classes: a folha se confere pelo conteudo
   if(!/GOL!/.test(h)||!/golhdr/.test(h))throw new Error('a folha devia gritar GOL! com a cor do time');
+  const pl0=[0,1].map(sd=>c.events.filter(e=>e.type==='goal'&&e.side===sd&&e.t<=g.t).length);
+  if(h.indexOf(`[${pl0[0]}] - ${pl0[1]}`)<0)throw new Error('o placar no momento do gol, com o gol que subiu entre colchetes: esperava ['+pl0[0]+'] - '+pl0[1]);
   const re=id=>new RegExp('data-a="setGoalScorer" data-t="'+g.t+'" data-id="'+id+'"');
   if(!c.lineups[0].every(id=>re(id).test(h)))throw new Error('todo nome do lado que marcou devia estar na folha');
   if(c.lineups[1].some(id=>re(id).test(h)))throw new Error('o outro lado nao entra no gol normal');
@@ -304,8 +306,11 @@ step('gol abre a folha GOL! com os nomes do lado, gol contra, sem autor e "nao f
   A.setGoalScorer({dataset:{t:String(g.t),id:c.lineups[0][2],own:'0'}});
   if(g.pid!==c.lineups[0][2]||g.own)throw new Error('o toque no nome devia gravar o autor');
   /* corrigir pelo card Gols abre a mesma folha; "nao foi gol" tira o gol */
+  A.goal({dataset:{s:'1'}});closeSheet();                                    // mais um gol depois: o antigo continua mostrando o placar de entao
   els['#sheet'].innerHTML='';A.goalScorer({dataset:{t:String(g.t)}});
   if(!/GOL!/.test(els['#sheet'].innerHTML))throw new Error('corrigir pelo card Gols devia abrir a folha do gol');
+  if(els['#sheet'].innerHTML.indexOf(`[${pl0[0]}] - ${pl0[1]}`)<0)throw new Error('retroativo: o placar e o do momento do gol');
+  A.ungoal({dataset:{s:'1'}});
   A.delGoal({dataset:{t:String(g.t)}});
   if(c.score[0]!==antes||c.events.some(e=>e.t===g.t))throw new Error('"nao foi gol" devia tirar o gol');
   closeSheet();

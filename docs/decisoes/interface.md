@@ -304,7 +304,8 @@ aba).
    chance — o bloco não parecia um botão.
 2. Depois do toque, **um clarão na cor do time cobre a tela por um instante** (`#golflash`, 0,85 s),
    o celular vibra três vezes e **a folha "GOL!" sobe por cima de tudo** (`golSheet`): cabeçalho na cor
-   do time com "GOL!", nome, minuto e placar (animação de pop); os nomes do lado (goleiro incluído)
+   do time com "GOL!", nome, minuto e **o placar no momento do gol** (só os gols até ele), com o número
+   que subiu **entre colchetes** — "[2] - 1" — para exaltar o gol mesmo numa correção retroativa (pop); os nomes do lado (goleiro incluído)
    como chips grandes; o seletor **do time / contra** (a lista passa para o outro lado); **sem autor**;
    e **↶ Não foi gol** (`delGoal`), que tira o gol — o caminho do toque sem querer. A página rola para
    o topo. Fechar a folha pelo fundo deixa o gol sem autor. Enquanto está aberta, o delta do realtime
