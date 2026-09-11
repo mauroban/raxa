@@ -1191,16 +1191,12 @@ function normalize(st){
       if(!Array.isArray(lv.fila))lv.fila=[];
       /* D-129: no racha curto a quadra tem dois lados e o resto é fila. Racha
          gravado antes com 3–4 times: os times que esperavam viram a fila, na
-         ordem; goleiros a mais no rodízio vão para os lados                */
+         ordem                                                              */
       if((lv.mode||l.cfg.matchMode)!=='unica'&&lv.stage==='jogo'&&lv.teams.length>2){
         const ordem=(lv.queue||[]).filter(i=>i>=2).concat(lv.teams.map((_,i)=>i).filter(i=>i>=2&&!(lv.queue||[]).includes(i)));
         lv.fila=lv.fila.concat(ordem.flatMap(i=>lv.teams[i].ids)).filter((id,i,a)=>a.indexOf(id)===i);
         lv.teams=lv.teams.slice(0,2);lv.queue=[];
         if(lv.cur&&(lv.cur.a>1||lv.cur.b>1))lv.cur=null;
-      }
-      if((lv.mode||l.cfg.matchMode)!=='unica'&&lv.gkPool.length>=2&&lv.teams.length===2){
-        lv.gkPool.forEach((g,i)=>{if(i<2)lv.teams[i].ids.unshift(g);else lv.fila.push(g)});
-        lv.gkPool=[];lv.rot=false;lv.per=l.cfg.format;
       }
       if(!Array.isArray(lv.fill)||lv.fill.length!==2)lv.fill=[[],[]];
       lv.fillMan=!!lv.fillMan;lv.fillOff=!!lv.fillOff;
@@ -1804,6 +1800,8 @@ function perTeamSize(liga,rotating){return Math.max(2,liga.cfg.format-(rotating?
 /* O racha foi montado com rodízio de goleiros? Aí o goleiro entra ALÉM dos
    `per` de linha (D-117) — mesmo que o rodízio esvazie ou alguém improvise. */
 const comRodizio=lv=>typeof lv.rot==='boolean'?lv.rot:(lv.gkPool||[]).length>0;
+/* Na partida única o rodízio é escolha (botão); no curto, a conta decide (D-140). */
+const rotForce=(liga,lv)=>(lv.mode||liga.cfg.matchMode)==='unica'?(lv.gkPool||[]).length>0:undefined;
 /* Tamanho de cada time.
    - Racha curto: **time é sempre cheio**, do tamanho do formato. Ninguém joga
      4 contra 5, e não existe time de 3 esperando: quem não completa um time
@@ -1839,17 +1837,20 @@ function planTeams(liga,presentIds,force,mode,gkToday){
     }
     return{per,ids,total,n:clamp(n,2,4)};
   };
-  /* Racha curto: a quadra tem DOIS lados e o resto é uma fila só (D-129). O
-     goleiro só reveza quando há um só — com dois ou mais, cada lado tem o seu
-     e o terceiro espera na fila com o 🧤, entrando no gol de quem perder.   */
+  /* Racha curto: a quadra tem DOIS lados e o resto é uma fila só (D-129).
+     Goleiro é do time só quando a conta fecha — um goleiro para cada grupo
+     da montagem (3 e 3, 4 e 4): aí ele sai e entra com o time. Fora disso é
+     rodízio (D-140): os goleiros ficam num grupo à parte, cada um fixo no seu
+     gol, e o que sobra espera e entra no gol de quem perder; com um só, ele
+     reveza de lado. Os grupos são contados pela linha (N−1 quando há goleiro). */
   if(mode!=='unica'){
-    const rot=gks.length===1,r=calc(rot);
-    /* grupos da montagem: contados pela linha (o goleiro é um por lado) — é
-       o que faz a fila ser feita de grupos parelhos do tamanho de um time  */
-    const nLinha=r.ids.filter(id=>!isGk(id)).length,perLinha=r.per-(rot||!gks.length?0:1);
+    const nLinha=presentIds.filter(id=>!isGk(id)).length,perLinha=perTeamSize(liga,gks.length>0);
     const cabem=Math.max(2,Math.floor(nLinha/perLinha));
+    const grupos=clamp(force.n?Math.min(force.n,cabem):cabem,2,4);
+    const rot=gks.length>0&&(force.rotating!==undefined?!!force.rotating:gks.length!==grupos);
+    const r=calc(rot);
     return{rotating:rot,gkPool:rot?gks.slice():[],per:r.per,n:2,ids:r.ids,gkIds:gkAll,
-      caps:planCaps(r.total,2,r.per,mode),grupos:clamp(force.n?Math.min(force.n,cabem):cabem,2,4),cabem};
+      caps:planCaps(r.total,2,r.per,mode),grupos,cabem};
   }
   let rot=force.rotating!==undefined?force.rotating:gks.length>0;
   let r=calc(rot);
@@ -2684,15 +2685,15 @@ function viewTimes(liga,lv){
     <div class="tiny muted" style="margin-top:6px">Falta${faltando.length>1?'m':''} ${faltando.reduce((a,b)=>a+b,0)} jogador(es) para todos os times ficarem com ${per}. Dá para jogar assim mesmo — ou reduzir o formato.</div>
   </div>`:''}
   ${temGk?`<div class="card gkcard" data-a="toPool" data-drop-zone="pool" style="margin-top:10px">
-    <div class="row"><div class="k" style="color:var(--cyan)">🧤 Goleiros ${rod?'no rodízio':unica?'fixos nos times':lv.teams.every(t=>t.ids.some(id=>ehGkHoje(lv,id)))?'um por time':'um em cada lado'}</div>
-      ${unica?`<button class="btn sm sp ${rod?'pri':'ghost'}" data-a="gkMode">${rod?'Rodízio ✓':'Voltar ao rodízio'}</button>`:''}</div>
+    <div class="row"><div class="k" style="color:var(--cyan)">🧤 Goleiros ${rod?(unica||pool.length===1?'no rodízio':'um em cada gol'):unica?'fixos nos times':lv.teams.every(t=>t.ids.some(id=>ehGkHoje(lv,id)))?'um por time':'um em cada lado'}</div>
+      <button class="btn sm sp ${rod?'pri':'ghost'}" data-a="gkMode">${rod?'Rodízio ✓':'Voltar ao rodízio'}</button></div>
     <div class="chips" style="margin-top:8px">
       ${rod?pool.map(id=>`<button class="tp big ${lv.sel===id?'sel':''}" data-a="sel" data-id="${id}">🧤 ${esc(nameOf(liga,id))}</button>`).join('')
         :unica?'<span class="tiny muted">Cada goleiro está escalado dentro de um time.</span>'
         :lv.teams.every(t=>t.ids.some(id=>ehGkHoje(lv,id)))?'<span class="tiny muted">Cada goleiro sai e entra com o seu time.</span>'
         :'<span class="tiny muted">Time sem goleiro entra com o goleiro do lado, ou com o que espera na fila.</span>'}
     </div>
-    ${rod?`<div class="tiny muted" style="margin-top:8px">${unica?'Trocam de lado a cada partida.':'Fica com quem vence; no resto, troca de lado.'}</div>`:''}
+    ${rod?`<div class="tiny muted" style="margin-top:8px">${unica?'Trocam de lado a cada partida.':pool.length===1?'Fica com quem vence; no resto, troca de lado.':'Não são de time nenhum: cada um fica no seu gol'+(pool.length>2?'; quem espera entra no gol de quem perder.':'.')}</div>`:''}
   </div>`:''}
   <div class="teamwrap cols2" style="margin-top:10px">
     ${lv.teams.map((t,i)=>timeCard(liga,lv,i,per)).join('')}
@@ -4909,9 +4910,8 @@ const A={
   teamsBack(){const l=L();
     if(l.live.cur&&l.live.cur.events.length&&!confirm('A partida atual será descartada. Continuar?'))return;
     l.live.stage='times';l.live.cur=null;l.live.sel=null;save();render()},
-  gkMode(){   // liga/desliga o rodízio de goleiros a qualquer momento (partida única)
+  gkMode(){   // liga/desliga o rodízio de goleiros na montagem (D-140: o padrão é pela conta)
     const l=L(),lv=l.live;
-    if((lv.mode||l.cfg.matchMode)!=='unica')return toast('No racha curto cada lado tem o seu goleiro; o goleiro que espera entra no gol de quem perder');
     if(!lv.presentIds.some(id=>ehGkHoje(lv,id)))return toast('Ninguém marcado como goleiro hoje');
     applyPlan(l,lv,{rotating:!(lv.gkPool||[]).length,n:lv.teams.length});
     save();render();
@@ -4920,11 +4920,12 @@ const A={
   toPool(el){                       // manda o jogador selecionado para o rodízio
     const l=L(),lv=l.live;if(!lv.sel)return;
     const id=lv.sel;
-    if((lv.mode||l.cfg.matchMode)!=='unica'&&!comRodizio(lv)){
-      /* racha curto com goleiros fixos: vira goleiro do dia e espera na fila — entra no gol de quem perder (D-129) */
-      lv.teams.forEach(t=>{const k=t.ids.indexOf(id);if(k>=0)t.ids.splice(k,1)});
-      marcaGkHoje(lv,id);lv.fila=filaDe(lv).filter(x=>x!==id).concat([id]);
-      lv.sel=null;save();render();return toast(nameOf(l,id)+' com o 🧤: entra no gol de quem perder');
+    if((lv.mode||l.cfg.matchMode)!=='unica'){
+      /* racha curto: vira goleiro do dia e a conta decide de novo — um goleiro
+         por grupo é fixo no time; senão, rodízio (D-140). Os times são refeitos. */
+      marcaGkHoje(lv,id);
+      applyPlan(l,lv,{n:lv.teams.length});
+      lv.sel=null;save();render();return toast(nameOf(l,id)+' com o 🧤: times refeitos');
     }
     lv.teams.forEach(t=>{const k=t.ids.indexOf(id);if(k>=0)t.ids.splice(k,1)});
     lv.gkPool=lv.gkPool||[];if(!lv.gkPool.includes(id))lv.gkPool.push(id);
@@ -4934,17 +4935,17 @@ const A={
   nteams(el){
     const l=L(),lv=l.live;
     if((lv.mode||l.cfg.matchMode)==='unica')return toast('Partida única é sempre 2 times');
-    applyPlan(l,lv,{n:+el.dataset.v,rotating:(lv.gkPool||[]).length>0});
+    applyPlan(l,lv,{n:+el.dataset.v,rotating:rotForce(l,lv)});
     save();render();
   },
   balance(){
     const l=L(),lv=l.live;
-    applyPlan(l,lv,{n:(lv.mode||l.cfg.matchMode)==='unica'?2:lv.teams.length,rotating:(lv.gkPool||[]).length>0});
+    applyPlan(l,lv,{n:(lv.mode||l.cfg.matchMode)==='unica'?2:lv.teams.length,rotating:rotForce(l,lv)});
     save();render();toast('Times equilibrados');
   },
   shuffle(){
     const l=L(),lv=l.live;
-    applyPlan(l,lv,{n:(lv.mode||l.cfg.matchMode)==='unica'?2:lv.teams.length,rotating:(lv.gkPool||[]).length>0},'shuffle');
+    applyPlan(l,lv,{n:(lv.mode||l.cfg.matchMode)==='unica'?2:lv.teams.length,rotating:rotForce(l,lv)},'shuffle');
     save();render();toast('Sorteio aleatório');
   },
   sel(el){

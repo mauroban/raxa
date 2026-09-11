@@ -127,12 +127,14 @@ troca de lugar em dois toques, antes do apito.
 
 - **Goleiro é papel do dia, não atributo da pessoa.** Quem veio para o gol se marca na presença (🧤), e isso
   muda de racha para racha — e no meio do racha.
-- **Um goleiro por time** (3 goleiros e 3 times, 4 e 4) → **o goleiro sai e entra com o time.** Não é
-  rodízio: o time da fila entra inteiro, goleiro junto, e o de quem perdeu vai para a fila inteiro.
-- **Menos goleiros que times, mas dois ou mais** → um em cada lado, e ele fica com o lado; o time sem
-  goleiro (o C, o D) é N−1 de linha e entra com o goleiro do lado. Se em algum momento há um goleiro
-  esperando na fila, ele entra no gol de quem perder, e o de quem perdeu vai para a fila. É a mesma roda
-  dos dois casos acima: o goleiro roda quando há goleiro para entrar.
+- **Goleiro é do time só quando a conta fecha** — um goleiro para cada time da montagem (3 e 3, 4 e 4,
+  2 e 2): aí **o goleiro sai e entra com o time.** Não é rodízio: o time da fila entra inteiro, goleiro
+  junto, e o de quem perdeu vai para a fila inteiro (D-140).
+- **Fora disso é rodízio: os goleiros não são de time nenhum.** Todo time é N−1 de linha e os goleiros
+  ficam num grupo à parte na montagem. **Com dois ou mais, cada um fica no seu gol**, seja quem for o
+  time que está na frente dele; o time da fila entra e joga com o goleiro que já está naquele gol. Se há
+  um terceiro esperando, ele entra no gol de quem perder, e o de quem perdeu vai esperar. O botão do card
+  de goleiros ainda deixa forçar fixo/rodízio na mão; "Equilibrar" e "2/3/4 times" voltam à conta.
 - **Um goleiro só** → ele reveza: fica com o lado que venceu; no resto, troca de lado. Do outro lado
   alguém da linha improvisa (a tela mostra o gol vazio para você escolher).
 - Racha em que todo mundo reveza no gol: não marque ninguém, e escolha o goleiro na tela da partida.

@@ -147,9 +147,11 @@ function monta(nLinha,nGk,modo){
 }
 let r3=monta(12,2);
 console.log('  5v5, 12 de linha + 2 goleiros: '+r3.pl.n+' times de '+r3.tam.join('/')+' (linha por time = '+r3.pl.per+')');
-ok(!r3.pl.rotating&&r3.pl.gkPool.length===0,'2 goleiros: nao ha rodizio, cada lado tem o seu (D-129)');
-ok(r3.pl.per===5,'no 5v5 com goleiro fixo, o lado e 4 de linha + goleiro');
-ok(r3.pl.n===2&&r3.pl.grupos===3&&r3.tam.every(x=>x===5),'2 lados cheios; a fila e o terceiro grupo (4 de linha)');
+ok(r3.pl.rotating&&r3.pl.gkPool.length===2,'2 goleiros para 3 grupos: a conta nao fecha, e rodizio — um em cada gol, sem time (D-140)');
+ok(r3.pl.per===4,'no 5v5 com rodizio, cada grupo e 4 de linha');
+ok(r3.pl.n===2&&r3.pl.grupos===3&&r3.tam.every(x=>x===4),'3 grupos de 4 de linha; os dois primeiros sao os lados');
+ok(!planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{n:2}).rotating,'forcando 2 grupos com 2 goleiros a conta fecha: fixos');
+ok(planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{rotating:false}).per===5&&!planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{rotating:false}).rotating,'o botao de rodizio ainda deixa fixar na mao');
 
 r3=monta(11,2);
 console.log('  5v5, 11 de linha + 2 goleiros: times de '+r3.tam.join('/')+' e '+r3.fora+' de fora');

@@ -389,3 +389,28 @@ errar depois também, e o botão não custa nada quando não é usado).
 **Onde:** `giraPosFim`, `podeTrocarFica`, `rodaFila(max)`, `A.trocaFica`, `viewProxima` (cartão `.done`) em
 `index.html` · [Regras do racha §2.2](../produto/regras-do-racha.md) · [Fluxo §3](../produto/fluxo-do-racha.md)
 · `scripts/smoke.py` (dois passos "D-136" no bloco "de próximo").
+
+<a id="d-140"></a>
+### D-140 · Goleiro é do time só quando a conta fecha; senão, rodízio (um em cada gol) — a montagem antiga volta
+**11/09/2026.**
+**O quê:** no racha curto, `planTeams` só deixa o goleiro **dentro do time** quando há **um goleiro para cada
+grupo da montagem** (3 e 3, 4 e 4, 2 e 2). Em qualquer outra conta os goleiros vão para o **rodízio**
+(`gkPool`), todo grupo é N−1 de linha e o card "🧤 Goleiros" os mostra à parte: com dois ou mais, **"um em
+cada gol"** — cada um fica no seu gol e não sai com time nenhum; o terceiro espera e entra no gol de quem
+perder (`planGks`, como já era); com um só, reveza de lado. O botão **Rodízio ✓ / Voltar ao rodízio** volta
+ao racha curto (`A.gkMode`), para forçar na mão; "2/3/4 times", "Equilibrar" e o sorteio voltam à conta
+(`rotForce`). Mandar alguém para o card de goleiros na montagem marca o 🧤 e **refaz os times** pela conta
+nova. A conversão que punha goleiros do rodízio dentro dos lados ao carregar (D-129) saiu. O racha ao vivo
+(dois lados e uma fila, D-129) não muda.
+**Por quê:** a versão D-129 ("com dois ou mais goleiros cada lado tem o seu") colocava os dois goleiros
+dentro do Time A e do Time B — e na quadra eles não são de time nenhum: ficam cada um num gol enquanto os
+times passam. A montagem mostrava o C "com um a menos" e somava o goleiro só na média dos dois primeiros.
+O modelo antigo da montagem era mais fiel ao combinado de quadra.
+**Descartado:** goleiro do lado como conceito próprio (um terceiro estado além de fixo e rodízio) — o
+rodízio com dois já produz "um em cada gol, fixo no lado", não precisa de mais nada; decidir pelo número de
+lados (sempre 2) em vez de grupos — com 2 goleiros e 3 grupos daria fixo, que é exatamente o que se quer
+evitar.
+**Onde:** `planTeams` (ramo curto), `rotForce`, `A.gkMode`, `A.toPool`, card de goleiros em `viewTimes`,
+em `index.html` · [Regras do racha §3](../produto/regras-do-racha.md) · [Fluxo §2](../produto/fluxo-do-racha.md)
+· `scripts/test.py` [3] · `scripts/smoke.py` ("19 presentes", "botao de rodizio", "16 na linha + 3 goleiros",
+"12 na linha + 2 goleiros").

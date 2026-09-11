@@ -149,6 +149,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-137](interface.md#d-137) · Sem cabeçalho de liga nas telas; nome, números e "Trocar de liga" no primeiro cartão de Ajustes
 - [D-138](interface.md#d-138) · Gol: clarão na cor do time e folha "GOL!" por cima da tela com os nomes do lado, gol contra, sem autor e "Não foi gol"; o placar diz sempre "＋ gol"
 - [D-139](interface.md#d-139) · Ajustes e Jogadores com menos tamanho: campos de 40 px, formato em linha, 15 nomes por tela
+- [D-140](times-fila-e-goleiro.md#d-140) · Goleiro é do time só quando a conta fecha (um por time); senão rodízio, um em cada gol — a montagem antiga volta
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 
