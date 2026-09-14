@@ -1372,6 +1372,11 @@ step('12 na linha + 2 goleiros: 3 grupos de 4 e os goleiros a parte, um em cada 
     if(lv.gkPool.length!==2||lv.teams.some(t=>t.ids.length!==4||t.ids.some(id=>ehGkHoje(lv,id))))throw new Error('3 grupos de 4 de linha e 2 goleiros no rodizio: '+lv.teams.map(t=>t.ids.length)+' / '+lv.gkPool.length);
     const h=viewTimes(l,lv);
     if(!/um em cada gol/.test(h)||!/cada um fica no seu gol\./.test(h))throw new Error('o card devia dizer "um em cada gol" e "cada um fica no seu gol"');
+    if(!/goleiros à parte/.test(h)||/goleiro reveza/.test(h))throw new Error('com 2 goleiros o cabecalho diz "(goleiros à parte)", nao "reveza" (D-162)');
+    /* "2 times" escolhido na mao com 12 de linha: a linha enche 3, entao os 2 goleiros continuam a parte (D-163) */
+    A.nteams({dataset:{v:'2'}});
+    if(lv.gkPool.length!==2||lv.teams.some(t=>t.ids.some(id=>ehGkHoje(lv,id))))throw new Error('com "2 times" forcado os goleiros nao podem virar de time: '+lv.gkPool.length);
+    A.nteams({dataset:{v:'3'}});
     A.startJogo();
     if(lv.teams.length!==2||filaDe(lv).length!==4)throw new Error('esperava 2 lados e fila de 4, veio '+lv.teams.length+' / '+filaDe(lv).length);
     const A0=lv.teams[0].ids.slice(),B0=lv.teams[1].ids.slice(),C0=filaDe(lv).slice();

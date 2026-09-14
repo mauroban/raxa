@@ -426,3 +426,15 @@ O card dos goleiros já dizia o certo ("um em cada gol"). `patentes.md` ainda fa
 **Onde:** `viewTimes` em `index.html` · `visual.py` (telas 20 e 21: 12 de linha + 2 goleiros) ·
 [Patentes](../produto/patentes.md) · [Regras do racha](../produto/regras-do-racha.md).
 
+<a id="d-163"></a>
+### D-163 · Goleiro é do time pela conta da linha, não pelo "2 times" escolhido
+**Quando:** 2026-09-14.
+**O quê:** em `planTeams`, "a conta fecha" (D-140) compara os goleiros com os grupos que a
+**linha enche** (`clamp(cabem,2,4)`), não com o número de times forçado pelo seletor. Com 12 de
+linha e 2 goleiros no 5v5, escolher "2 times" mantém os goleiros à parte, um em cada gol.
+**Por quê:** com "2 times" forçado a conta fechava (2 goleiros, 2 grupos) e cada goleiro ia para
+um time; mas sobrava uma fila de 4 sem goleiro — quando ela entrava, o goleiro do time que saiu
+ficava no gol para o time que entrou, e a tela dizia que os goleiros iam "trocar de lado".
+**Onde:** `planTeams` em `index.html` · `smoke.py` (passo "12 na linha + 2 goleiros") ·
+[Regras do racha](../produto/regras-do-racha.md).
+

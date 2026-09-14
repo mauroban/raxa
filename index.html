@@ -1884,7 +1884,11 @@ function planTeams(liga,presentIds,force,mode,gkToday){
     const nLinha=presentIds.filter(id=>!isGk(id)).length,perLinha=perTeamSize(liga,gks.length>0);
     const cabem=Math.max(2,Math.floor(nLinha/perLinha));
     const grupos=clamp(force.n?Math.min(force.n,cabem):cabem,2,4);
-    const rot=gks.length>0&&(force.rotating!==undefined?!!force.rotating:gks.length!==grupos);
+    /* a conta fecha pelos grupos que a LINHA enche, não pelo "2 times" que
+       alguém escolheu (D-163): 12 de linha enchem 3; com 2 goleiros, ficam à
+       parte mesmo montando em 2 — senão a fila de 4 entra sem goleiro e o
+       goleiro do time que saiu fica no gol para o time que entrou.       */
+    const rot=gks.length>0&&(force.rotating!==undefined?!!force.rotating:gks.length!==clamp(cabem,2,4));
     const r=calc(rot);
     return{rotating:rot,gkPool:rot?gks.slice():[],per:r.per,n:2,ids:r.ids,gkIds:gkAll,
       caps:planCaps(r.total,2,r.per,mode),grupos,cabem};

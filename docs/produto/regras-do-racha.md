@@ -131,7 +131,7 @@ troca de lugar em dois toques, antes do apito.
   2 e 2): aí **o goleiro sai e entra com o time.** Não é rodízio: o time da fila entra inteiro, goleiro
   junto, e o de quem perdeu vai para a fila inteiro (D-140).
 - **Fora disso é rodízio: os goleiros não são de time nenhum.** Todo time é N−1 de linha e os goleiros
-  ficam num grupo à parte na montagem. **Com dois ou mais, cada um fica no seu gol**, seja quem for o
+  ficam num grupo à parte na montagem. A conta é pelos grupos que a **linha enche** (12 de linha no 5v5 enchem 3), não pelo número de times escolhido na mão: com 2 goleiros e "2 times" forçado, eles continuam à parte (D-163). **Com dois ou mais, cada um fica no seu gol**, seja quem for o
   time que está na frente dele; o time da fila entra e joga com o goleiro que já está naquele gol. Se há
   um terceiro esperando, ele entra no gol de quem perder, e o de quem perdeu vai esperar. O botão do card
   de goleiros ainda deixa forçar fixo/rodízio na mão; "Equilibrar" e "2/3/4 times" voltam à conta.

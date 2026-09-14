@@ -150,7 +150,7 @@ console.log('  5v5, 12 de linha + 2 goleiros: '+r3.pl.n+' times de '+r3.tam.join
 ok(r3.pl.rotating&&r3.pl.gkPool.length===2,'2 goleiros para 3 grupos: a conta nao fecha, e rodizio — um em cada gol, sem time (D-140)');
 ok(r3.pl.per===4,'no 5v5 com rodizio, cada grupo e 4 de linha');
 ok(r3.pl.n===2&&r3.pl.grupos===3&&r3.tam.every(x=>x===4),'3 grupos de 4 de linha; os dois primeiros sao os lados');
-ok(!planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{n:2}).rotating,'forcando 2 grupos com 2 goleiros a conta fecha: fixos');
+ok(planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{n:2}).rotating,'forcando 2 grupos com 2 goleiros: a linha enche 3, os goleiros seguem a parte (D-163)');
 ok(planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{rotating:false}).per===5&&!planTeams(liga,[...linha.slice(0,12),...gk2.slice(0,2)],{rotating:false}).rotating,'o botao de rodizio ainda deixa fixar na mao');
 
 r3=monta(11,2);
