@@ -1038,8 +1038,12 @@ step('numeros: as setas andam para o racha anterior e "Ultimo" volta ao mais nov
   /* da aba Jogos: o botao Destaques leva ao mesmo lugar */
   S.ui.tab='hist';A.histRacha({dataset:{id:ids[1]}});
   if(els['#app'].innerHTML.indexOf('Destaques do racha')<0)throw new Error('botao Destaques nao apareceu no racha aberto');
-  A.statsRacha({dataset:{id:ids[1]}});
-  if(S.ui.tab!=='stats'||statsPeriodo(l)!=='racha:'+ids[1])throw new Error('botao Destaques nao levou aos numeros do racha');
+  A.statsRacha({dataset:{id:ids[1],tab:'racha'}});
+  if(S.ui.tab!=='stats'||S.ui.statsTab!=='racha'||statsPeriodo(l)!=='racha:'+ids[1])throw new Error('botao Destaques nao levou aos numeros do racha');
+  /* na aba Jogador, a seta troca o racha e a pessoa continua na aba Jogador (D-161) */
+  A.statsTab({dataset:{v:'jogador'}});A.statsRacha({dataset:{id:ids[0]}});
+  if(S.ui.statsTab!=='jogador'||statsPeriodo(l)!=='racha:'+ids[0])throw new Error('a seta do racha tirou a pessoa da aba Jogador');
+  A.statsTab({dataset:{v:'racha'}});
   A.statsPer({dataset:{v:'racha'}});
   }finally{limpa()}
   if(statsPeriodo(l)!=='racha:'+idsRachas(l)[0])throw new Error('depois de limpar, o periodo devia ser o ultimo racha');

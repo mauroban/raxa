@@ -4602,7 +4602,7 @@ function viewHist(liga){
         <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
       <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
-      ${aberto.avulso?'':`<button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" style="margin-top:10px">Destaques do racha ›</button>`}
+      ${aberto.avulso?'':`<button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" data-tab="racha" style="margin-top:10px">Destaques do racha ›</button>`}
     </div>
     <div class="card" style="padding:0">${ms.map(m=>mrow(liga,m,false,eu)).join('')}</div>`;
   }
@@ -6501,7 +6501,9 @@ const A={
   statsAno(el){const y=el.dataset.v;if(!/^\d{4}$/.test(y||''))return;S.ui.statsAno=+y;S.ui.statsPer='ano';S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   /* abrir os destaques de UM racha (setas ‹ › do card, ou "Destaques" na aba Jogos, D-142) */
-  statsRacha(el){const id=el.dataset.id||null;if(!id)return;S.ui.statsRacha=id;S.ui.statsPer='racha';S.ui.statsTab='racha';S.ui.tab='stats';S.ui.ppPage=0;save();render()},
+  /* as setas ficam na sub-aba em que a pessoa está (Jogador ou Racha); só o botão
+     "Destaques do racha" da aba Jogos (data-tab) força a sub-aba Racha (D-161) */
+  statsRacha(el){const id=el.dataset.id||null;if(!id)return;S.ui.statsRacha=id;S.ui.statsPer='racha';if(el.dataset.tab)S.ui.statsTab=el.dataset.tab;S.ui.tab='stats';S.ui.ppPage=0;save();render()},
   /* linha ou gol na aba Jogador (D-135): a escolha é da pessoa aberta, não
      do aparelho; a página volta ao começo do partida-a-partida, outra lista */
   statsPapel(el){S.ui.statsPapel={who:statsWhoId(L()),p:el.dataset.v==='G'?'G':'L'};S.ui.ppPage=0;save();render()},

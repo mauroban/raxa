@@ -576,3 +576,12 @@ quadra) ou tirá-lo; tirar é mais simples e esses dois já contam o goleiro de 
 **Onde:** `viewStats` (seletor), `A.statsSemGk` (removido), CSS `.gksw` (removido) em
 `index.html` · `smoke.py` · [Stats §2](../produto/stats.md).
 
+<a id="d-161"></a>
+### D-161 · A seta do racha não troca de sub-aba
+**Quando:** 2026-09-14.
+**O quê:** `A.statsRacha` só muda a sub-aba (Jogador/Racha) quando o botão traz `data-tab` — o
+"Destaques do racha ›" da aba Jogos. As setas ‹ › ficam onde a pessoa está.
+**Por quê:** na ficha do jogador, trocar o racha jogava a pessoa para o painel da liga.
+**Onde:** `A.statsRacha`, botão em `viewHist` em `index.html` · `smoke.py` (D-142) ·
+[Stats §2](../produto/stats.md).
+

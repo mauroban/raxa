@@ -146,6 +146,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-158](stats-e-destaques.md#d-158) · Sem os gráficos de colunas por mês e por ano no painel da liga (o mês a mês / ano a ano já conta isso)
 - [D-159](stats-e-destaques.md#d-159) · Empate: primeiro o de maior patente; no chip do mês a mês, o nome e um "+N"
 - [D-160](stats-e-destaques.md#d-160) · Sem o interruptor "Sem goleiros": o goleiro conta em tudo; rankings de goleiro nunca filtrados
+- [D-161](stats-e-destaques.md#d-161) · A seta do racha não troca de sub-aba (Jogador fica em Jogador)
 
 ### [Interface](interface.md)
 
