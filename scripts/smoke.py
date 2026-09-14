@@ -1990,7 +1990,7 @@ step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha
   const l=L(),ch=proximaChamada(l);
   A.chamadaAlguem();let h=els['#sheet'].innerHTML;
   if(!/Confirmar alguém/.test(h)||!/data-a="chamadaAdd"/.test(h))throw new Error('folha de confirmar alguem');
-  const gk=l.players.find(p=>p.gk&&!l.rsvps.some(r=>r.pid===p.id));
+  const gk=l.players.find(p=>p.gk&&p.id!==euId(l)&&!l.rsvps.some(r=>r.pid===p.id));
   A.chamadaAdd({dataset:{id:gk.id,p:'G'}});
   if(!l.rsvps.some(r=>r.pid===gk.id&&r.papel==='G'&&r.by==='tester'))throw new Error('nao confirmou no gol por outro');
   if(!/Confirmar alguém/.test(els['#sheet'].innerHTML))throw new Error('a folha devia continuar aberta (acao repetida)');
@@ -2000,7 +2000,10 @@ step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha
   if(!/^Racha /.test(txt)||!txt.includes('Linha ('+X.L.dentro.length+'/12)')||!/Gol \(1\/2\)/.test(txt)||!/1\. /.test(txt)||!/Confirme no app: https:\/\/x\/raxa\//.test(txt))throw new Error('texto: '+txt);
   A.chamadaShare();                                            // sem navigator.share nem clipboard: so avisa
   render();h=els['#app'].innerHTML;
-  if(!/por tester/.test(h))throw new Error('quem foi confirmado por outro leva "por"');
+  if(/por tester/.test(h))throw new Error('o chip nao carrega quem confirmou (D-168)');
+  A.chamadaChip({dataset:{id:gk.id}});if(!/confirmado por tester/.test(els['#sheet'].innerHTML))throw new Error('a folha do nome diz quem confirmou');closeSheet();
+  const comPat=l.players.find(p=>!p.gk&&temPatente(l,p,'L')&&l.rsvps.some(r=>r.pid===p.id&&r.papel==='L'));
+  if(comPat){const i=h.indexOf('data-id="'+comPat.id+'"');if(!/class="pdot/.test(h.slice(i,i+400)))throw new Error('chip da chamada sem o badge da patente')}
   A.chamadaCancelar({dataset:{d:ch.dia}});
   const ch2=proximaChamada(l);
   if(!l.cfg.chamada.pula.includes(ch.dia)||ch2.dia===ch.dia)throw new Error('cancelar nao pulou a data');

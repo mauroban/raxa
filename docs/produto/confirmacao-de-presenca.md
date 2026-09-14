@@ -27,8 +27,10 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
   confirma; nada de rascunho, nada de "tem certeza".
 - **Confirmado:** "Você vai na linha · 5º" (verde) ou "Você é o 2º da espera da linha" (dourado),
   com **ir para o gol** / **ir para a linha** e **Não vou**.
-- **As duas listas**, Linha e Gol, com os nomes numerados na ordem de chegada. O corte é visual:
-  quem está dentro tem o chip aceso; abaixo, em cinza, **Espera**.
+- **As duas listas**, Linha e Gol, com os nomes numerados na ordem de chegada, em chips baixos de
+  duas colunas (14 nomes cabem numa tela, D-168) e o **badge da patente** do papel da lista à direita
+  (cor + riscos, como na presença; some com os níveis fechados). O corte é visual: quem está dentro
+  tem o chip aceso; abaixo, em cinza, **Espera**.
 - **Compartilhar** gera o texto pronto para o grupo (data, Linha 12/14 com os nomes numerados,
   espera, Gol, e o endereço do app). O grupo vira espelho do app, não o contrário.
 
@@ -54,7 +56,7 @@ perfil não existe "Vou".
 Nem todo mundo vai abrir o app — e a lista do grupo não pode continuar em paralelo. Então **lançador,
 moderador e admin** têm **+ Confirmar alguém**: uma folha com a busca e, em cada nome, **Linha** e
 **Gol**. Um toque confirma e a folha continua aberta, porque é ação repetida ("o Bruninho e o Igor
-mandaram no grupo"). O chip mostra discretamente **por mauro** quando foi outra pessoa que confirmou.
+mandaram no grupo"). A folha do nome diz **confirmado por mauro** quando foi outra pessoa que confirmou.
 
 Tocar num nome da lista (o próprio, ou qualquer um para quem lança) abre a folha da pessoa:
 **Passar para o gol / a linha** e **Tirar da lista**.

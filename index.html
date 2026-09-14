@@ -268,6 +268,12 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .pchip .pat .dv i{height:9px}
 .pchip .tiny{font-size:10px}
 .pchip.on{background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-color:var(--ok)}
+/* lista da chamada (D-168): chip baixo, número à esquerda, badge da patente à direita */
+.grid.cham{gap:4px}
+.pchip.cham{min-height:32px;padding:0 7px 0 6px;border-radius:9px;gap:5px}
+.pchip.cham .nm{font-size:12.5px}
+.pchip.cham .n{font-size:10px;color:var(--mute);min-width:14px;text-align:right;flex:0 0 auto}
+.pchip.cham .pb{display:inline-flex;flex:0 0 auto}
 .gktog{flex:0 0 auto;width:38px;min-height:42px;border-radius:11px;border:1px solid transparent;background:var(--fill);
   color:var(--mute2);font-size:16px;cursor:pointer;filter:grayscale(1) opacity(.5)}
 .gktog.on{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,var(--panel));filter:none}
@@ -2804,13 +2810,17 @@ function chamadaCard(liga){
       <button class="btn sm ghost" data-a="chamadaTroca" data-id="${eu}" data-p="${minha.papel==='G'?'L':'G'}">${minha.papel==='G'?'ir para a linha':'ir para o gol'}</button>
       <button class="btn sm ghost" data-a="naoVou">Não vou</button></div>`;
   }
-  const chip=(r,i,dentro)=>{const p=P(liga,r.pid);return `<div class="pcw"><button class="pchip ${dentro?'on':''}" data-a="chamadaChip" data-id="${r.pid}">
-      <span class="tiny muted num" style="min-width:18px">${i+1}.</span><span class="nm">${esc(p?p.name:'—')}</span>${r.by&&p&&r.by!==p.owner?`<span class="tiny muted">por ${esc(r.by)}</span>`:''}</button></div>`};
-  const lista=(tit,x)=>`<div class="k2">${tit} · <span class="num">${x.dentro.length}/${x.max}</span></div>
-    ${x.dentro.length?`<div class="grid">${x.dentro.map((r,i)=>chip(r,i,true)).join('')}</div>`:'<div class="tiny muted">Ninguém ainda.</div>'}
-    ${x.espera.length?`<div class="tiny muted" style="margin:8px 0 4px">Espera</div><div class="grid">${x.espera.map((r,i)=>chip(r,i,false)).join('')}</div>`:''}`;
+  /* chips baixos (32 px) em duas colunas, com o badge compacto da patente do
+     papel da lista (cor + riscos, D-88) — 14 nomes cabem numa tela (D-168).
+     Quem confirmou por quem fica na folha do nome, não no chip.            */
+  const chip=(r,i,dentro,papel)=>{const p=P(liga,r.pid);const b=p&&temPatente(liga,p,papel)?patDot(liga,rt(p,papel).rank):'';
+    return `<div class="pcw"><button class="pchip cham ${dentro?'on':''}" data-a="chamadaChip" data-id="${r.pid}">
+      <span class="n num">${i+1}</span><span class="nm">${esc(p?p.name:'—')}</span>${b?`<span class="pb">${b}</span>`:''}</button></div>`};
+  const lista=(tit,x,papel)=>`<div class="k2" style="margin-top:12px">${tit} · <span class="num">${x.dentro.length}/${x.max}</span></div>
+    ${x.dentro.length?`<div class="grid cham">${x.dentro.map((r,i)=>chip(r,i,true,papel)).join('')}</div>`:'<div class="tiny muted">Ninguém ainda.</div>'}
+    ${x.espera.length?`<div class="tiny muted" style="margin:6px 0 3px">Espera</div><div class="grid cham">${x.espera.map((r,i)=>chip(r,i,false,papel)).join('')}</div>`:''}`;
   return `<div class="card">${cancHtml}${head}${cont}${meu}
-    ${lista('Linha',L.L)}${lista('Gol',L.G)}
+    ${lista('Linha',L.L,'L')}${lista('Gol',L.G,'G')}
     ${lanc?`<div style="height:12px"></div><button class="btn wide ghost" data-a="chamadaAlguem">+ Confirmar alguém</button>`:''}
     ${souAdmin(liga)?`<div style="text-align:center;margin-top:8px"><button class="btn sm ghost" data-a="chamadaCancelar" data-d="${ch.dia}">Cancelar este racha</button></div>`:''}
   </div>`;
@@ -5273,7 +5283,7 @@ const A={
     if(!podeLancar(l)&&p.id!==euId(l))return;
     const m=minhaChamada(l,ch.dia,p.id);if(!m)return;
     openSheet(`<h2>${esc(p.name)}</h2>
-      <div class="tiny muted" style="margin-bottom:12px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
+      <div class="tiny muted" style="margin-bottom:12px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}${(()=>{const r=(l.rsvps||[]).find(x=>x.dia===ch.dia&&x.pid===p.id);return r&&r.by&&r.by!==p.owner?' · confirmado por '+esc(r.by):''})()}</div>
       <button class="btn wide ghost" data-a="chamadaTroca" data-id="${p.id}" data-p="${m.papel==='G'?'L':'G'}" style="margin-bottom:8px">${m.papel==='G'?'Passar para a linha':'Passar para o gol'}</button>
       <button class="btn wide danger" data-a="chamadaTirar" data-id="${p.id}">Tirar da lista</button>
       <div class="tiny muted" style="margin-top:6px">Quem troca de lista vai para o fim dela.</div>`);

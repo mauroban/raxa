@@ -361,3 +361,18 @@ os destaques viravam um terceiro assunto numa tela que é sobre o próximo racha
 **Descartado:** manter os destaques recolhidos abaixo da chamada (ninguém abria; a linha só ocupava).
 **Onde:** `viewRacha` em `index.html` · `scripts/visual.py` (tela 10 removida) ·
 [Confirmação de presença §2](../produto/confirmacao-de-presenca.md) · [Stats §3](../produto/stats.md).
+
+<a id="d-168"></a>
+### D-168 · Lista da chamada mais densa: chips de 32 px, número à esquerda, badge da patente à direita
+**Quando:** 2026-09-14.
+**O quê:** os nomes das listas Linha e Gol passam a chips baixos (`.pchip.cham`, 32 px, folga de 4 px,
+nome em 12,5 px) em duas colunas, com o número da vez à esquerda e, à direita, o **badge compacto da
+patente** do papel daquela lista (cor + riscos, o mesmo da presença, D-88; some com os níveis
+fechados). O "por mauro" saiu do chip e foi para a folha do nome ("confirmado por mauro").
+**Por quê:** 14 nomes mais os goleiros e a espera não cabiam numa tela com chips de 42 px; e o nível
+é a informação que a galera olha na lista ("quem vem hoje?"). O nome de quem confirmou é assunto de
+quem lança, e a folha é dele.
+**Descartado:** três colunas (não cabe nome + badge em 360 px); escrever o nome da patente (D-88).
+**Onde:** `chamadaCard` (chip/lista) e `A.chamadaChip` em `index.html`; CSS `.grid.cham`, `.pchip.cham` ·
+`scripts/smoke.py` (badge no chip, "confirmado por" na folha) · `scripts/visual.py` tela 22 ·
+[Confirmação de presença §2](../produto/confirmacao-de-presenca.md).
