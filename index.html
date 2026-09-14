@@ -2354,7 +2354,11 @@ const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sor
    última em verde, média tracejada. Menos de 2 itens não é gráfico.        */
 function grafBarras(titulo,arr,val,fmt,lab,opts){
   opts=opts||{};if(arr.length<2)return '';
-  const vs=arr.map(val),max=Math.max(1e-9,...vs),media=vs.reduce((a,b)=>a+b,0)/vs.length;
+  /* a média ignora os itens vazios (`opts.vazio(r)` verdadeiro): o mês sem
+     racha aparece no gráfico como buraco, mas não puxa a média para baixo (D-157) */
+  const vs=arr.map(val),max=Math.max(1e-9,...vs);
+  const cheios=opts.vazio?vs.filter((v,i)=>!opts.vazio(arr[i])):vs;
+  const media=cheios.length?cheios.reduce((a,b)=>a+b,0)/cheios.length:0;
   /* a média vai no título, não na linha: o rótulo em cima da linha colidia com o valor da última coluna (D-154) */
   const notaTxt=[opts.nota,opts.media===false?'':'média '+fmt(media)].filter(Boolean).join(' · ');
   const nota=notaTxt?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${notaTxt}</span>`:'';
@@ -4220,9 +4224,10 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       if(tipo==='ano'){const fim=anoSel===ANO_ATUAL()?new Date().getMonth():11;
         for(let i=0;i<=fim;i++){const k=anoSel+'-'+String(i+1).padStart(2,'0');if(!G[k])G[k]={k,ts:new Date(anoSel,i,1).getTime(),rachas:{},nR:0,partidas:0,gols:0}}}
       const arr=Object.values(G).sort((a,b)=>a.k.localeCompare(b.k)),lab=g=>tipo==='ano'?MESES_CURTOS[+g.k.slice(5)-1]:g.k,por=tipo==='ano'?'por mês':'por ano';
-      return grafBarras('Rachas',arr,g=>g.nR,v=>String(Math.round(v*10)/10).replace('.',','),lab,{nota:por})
-        +grafBarras('Partidas',arr,g=>g.partidas,v=>String(Math.round(v)),lab,{nota:por})
-        +grafBarras('Gols por racha',arr,g=>g.nR?g.gols/g.nR:0,v=>v.toFixed(1).replace('.',','),lab,{nota:por})})()
+      const vazio=g=>!g.nR;   // mês sem racha: fica no gráfico, sai da média (D-157)
+      return grafBarras('Rachas',arr,g=>g.nR,v=>String(Math.round(v*10)/10).replace('.',','),lab,{nota:por,vazio})
+        +grafBarras('Partidas',arr,g=>g.partidas,v=>String(Math.round(v)),lab,{nota:por,vazio})
+        +grafBarras('Gols por racha',arr,g=>g.nR?g.gols/g.nR:0,v=>v.toFixed(1).replace('.',','),lab,{nota:por,vazio})})()
     :(()=>{ /* gols por racha (D-108): coluna por racha, o último em verde, média tracejada */
       const M={},ord=[];[...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>{const sid=m.sessionId||m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:m.ts,gols:0,n:0};ord.push(r)}
         r.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];r.n++});

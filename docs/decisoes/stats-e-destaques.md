@@ -525,3 +525,14 @@ período (tempo no gol × tempo de linha); se não tem patente nessa função, v
 porque os dois goleiros fixos só têm a de goleiro.
 **Onde:** `cardNiveis` em `index.html` · [Stats §2](../produto/stats.md).
 
+<a id="d-157"></a>
+### D-157 · A média dos gráficos por mês ignora os meses sem racha
+**Quando:** 2026-09-14.
+**O quê:** `grafBarras` aceita `opts.vazio(item)`; os itens vazios continuam no gráfico (o
+buraco é informação) mas não entram na média. Os três gráficos por mês do Ano marcam como vazio
+o mês sem racha.
+**Por quê:** "média 1,5 rachas por mês" com quatro meses sem racha não descreve o racha — a
+média é de quando houve racha.
+**Onde:** `grafBarras`, gráficos por mês em `viewStats` em `index.html` ·
+[Stats §2](../produto/stats.md).
+
