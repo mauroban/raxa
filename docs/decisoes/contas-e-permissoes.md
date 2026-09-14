@@ -229,28 +229,3 @@ ruído — e rotula gente ("ele é lançador, ele é só jogador") sem o grupo t
 qualquer membro precisa saber para o "Sou eu").
 **Onde:** `papelMarca(liga,p)` e `A.pSheet` em `index.html` ·
 [Contas e permissões §5](../produto/contas-e-permissoes.md).
-
-<a id="d-164"></a>
-### D-164 · Senha esquecida: o dono da liga redefine, a pessoa cria a nova ao entrar
-**Quando:** 2026-09-14.
-**O quê:** função `reset_member_password(liga, conta)` (security definer): só o **dono** da liga
-(`leagues.owner_id`), só para membro da liga, nunca para si mesmo. Gera 8 letras sem caracteres
-ambíguos, grava em `auth.users.encrypted_password` com bcrypt (`crypt`/`gen_salt('bf',10)`, o
-mesmo do Auth), marca `profiles.must_change_password` e apaga as sessões da conta. O app mostra a
-temporária numa folha (Enviar = compartilhar/copiar). No `afterLogin`, perfil marcado → tela
-"Crie sua senha" antes de qualquer liga; salvar = `auth.updateUser({password})` + desmarcar o
-perfil (RLS: só o próprio). "trocar senha" na lista de ligas usa a mesma folha, sem obrigação.
-**Por quê:** o e-mail da conta é fictício (`@raxa.app`), então o fluxo de recuperação do Supabase
-não tem para onde mandar link — quem esquecia a senha perdia a conta e o vínculo com o histórico.
-O racha é entre conhecidos: o dono redefinir e passar a temporária é o caminho mais curto e não
-exige SMTP nem coletar e-mail. Obrigar a senha nova evita que a temporária, que passou por
-WhatsApp, fique sendo a senha.
-**Descartado:** e-mail real de recuperação (exige SMTP próprio — o do Supabase manda 2/hora e só
-para membros do projeto — e mudar o modelo de conta; pode entrar depois como segunda via);
-admin por papel redefinir (enquanto ninguém vinculou conta, todo membro é admin — senha é mais
-sensível do que tirar alguém da liga); Edge Function com service role (mais uma peça para
-publicar; a função SQL faz o mesmo dentro do banco).
-**Onde:** `reset_member_password` e `profiles.must_change_password` em `supabase/schema.sql` ·
-`renderNovaSenha`, `salvaSenha`, `redefineSenha`, ações `doNovaSenha`/`senhaSheet`/`doTrocaSenha`/
-`accResetPw`/`pdResetPw` em `index.html` · `sync.py` (passo "senha esquecida") ·
-[Contas e permissões](../produto/contas-e-permissoes.md) · [Deploy](../tecnico/deploy.md).

@@ -127,15 +127,6 @@ function fakeClient(){
       return{data:null,error:null};
     },
     reject_request({p_id,p_user}){DB.requests=DB.requests.filter(r=>!(r.league_id===p_id&&r.user_id===p_user));return{data:null,error:null}},
-    reset_member_password({p_id,p_user}){
-      const l=DB.leagues.find(x=>x.id===p_id);
-      if(!l||l.owner_id!==uidNow())return{data:null,error:{message:'so o dono da liga redefine senha'}};
-      if(p_user===uidNow())return{data:null,error:{message:'a propria senha se troca em Trocar senha'}};
-      if(!DB.members.some(m=>m.league_id===p_id&&m.user_id===p_user))return{data:null,error:{message:'essa conta nao e desta liga'}};
-      const u=DB.users.find(x=>x.id===p_user);u.password='tmp'+(++CODEN)+'xyz';
-      DB.profiles.find(x=>x.id===p_user).must_change_password=true;
-      return{data:u.password,error:null};
-    },
     remove_member({p_id,p_user}){
       const row={league_id:p_id,user_id:p_user};
       DB.members=DB.members.filter(m=>!(m.league_id===p_id&&m.user_id===p_user));emitM('DELETE',row);
@@ -170,7 +161,6 @@ function fakeClient(){
     abortSignal(){return this}
     select(){this.op='select';return this}
     delete(){this.op='delete';return this}
-    update(v){this.op='update';this.v=v;return this}
     eq(k,v){this.f[k]=v;return this}
     order(){return this}
     maybeSingle(){this.single=true;return this.run()}
@@ -180,11 +170,6 @@ function fakeClient(){
       let rows=DB[this.t==='leagues'?'leagues':this.t==='profiles'?'profiles':'members'];
       rows=rows.filter(r=>Object.keys(this.f).every(k=>r[k]===this.f[k]));
       if(this.t==='leagues')rows=rows.filter(r=>isMember(r.id));            // RLS
-      if(this.op==='update'){
-        if(this.t!=='profiles')return{data:null,error:{message:'sem policy de update'}};
-        rows.filter(r=>r.id===uidNow()).forEach(r=>Object.assign(r,this.v));   // RLS: so o proprio
-        return{data:null,error:null};
-      }
       if(this.op==='delete'){
         const alvo=rows.filter(r=>r.owner_id===uidNow()&&!DB.members.some(m=>m.league_id===r.id&&m.user_id!==uidNow()));   // so o dono, e so sem outros membros
         alvo.forEach(r=>{DB.leagues=DB.leagues.filter(x=>x.id!==r.id);emit('DELETE',r)});
@@ -213,14 +198,7 @@ function fakeClient(){
         session={user:{id:u.id,email:u.email}};
         return{data:{session},error:null};
       },
-      async signOut(){session=null;return{error:null}},
-      async updateUser({password}){
-        if(!session)return{data:null,error:{message:'nao autenticado'}};
-        const u=DB.users.find(x=>x.id===session.user.id);
-        if(String(password).length<6)return{data:null,error:{message:'Password should be at least 6 characters.'}};
-        if(u.password===password)return{data:null,error:{message:'New password should be different from the old password.'}};
-        u.password=password;return{data:{user:session.user},error:null};
-      }
+      async signOut(){session=null;return{error:null}}
     },
     from:t=>new Q(t),
     async rpc(name,args){
@@ -677,51 +655,6 @@ await step('o dono nao apaga enquanto ha outro membro',async()=>{
   /* o banco tambem recusa, mesmo pulando o app */
   await sb.from('leagues').delete().eq('id',ligaId);
   ok('o DELETE direto no banco tambem nao apaga',!!srv(ligaId));
-});
-
-await step('senha esquecida: o dono redefine e o membro cria uma nova ao entrar (D-164)',async()=>{
-  await A.logout();
-  val('#au','mauro');val('#ap','segredo1');authMode='entrar';
-  await A.doLogin();
-  S.active=ligaId;
-  const luisId=DB.users.find(u=>u.email==='luis@raxa.app').id;
-  await loadAccounts(ligaId);
-  confirm=()=>true;
-  await A.accResetPw({dataset:{u:luisId}});
-  const tmp=DB.users.find(u=>u.id===luisId).password;
-  ok('a senha do luis mudou para uma temporaria',/^tmp/.test(tmp));
-  ok('a folha mostra a senha temporaria',els['#sheet'].innerHTML.indexOf(tmp)>=0);
-  ok('o perfil do luis ficou marcado',DB.profiles.find(p=>p.id===luisId).must_change_password===true);
-  const rSelf=await sb.rpc('reset_member_password',{p_id:ligaId,p_user:ME.id});
-  ok('o dono nao redefine a propria por aqui',!!rSelf.error);
-  closeSheet();
-  await A.logout();
-  val('#au','luis');val('#ap',tmp);authMode='entrar';
-  await A.doLogin();
-  ok('luis entra e cai na tela de senha nova, sem ver liga',/Crie sua senha/.test(els['#app'].innerHTML)&&S.ligas.length===0);
-  val('#ns','curta');
-  await A.doNovaSenha();
-  ok('senha curta e recusada na tela nova',/6 caracteres/.test(els['#app'].innerHTML)&&/Crie sua senha/.test(els['#app'].innerHTML));
-  val('#ns','novasenha9');
-  await A.doNovaSenha();
-  ok('a senha nova valeu',DB.users.find(u=>u.id===luisId).password==='novasenha9');
-  ok('a marca saiu do perfil',DB.profiles.find(p=>p.id===luisId).must_change_password===false);
-  ok('e o app seguiu para as ligas',S.ligas.length===1&&!/Crie sua senha/.test(els['#app'].innerHTML));
-  await A.logout();
-  val('#au','luis');val('#ap',tmp);
-  await A.doLogin();
-  ok('a temporaria nao entra mais',/Usuário ou senha errados/.test(els['#app'].innerHTML));
-  val('#au','luis');val('#ap','novasenha9');
-  await A.doLogin();
-  ok('luis entra com a nova',ME&&ME.username==='luis');
-  const rLuis=await sb.rpc('reset_member_password',{p_id:ligaId,p_user:DB.users[0].id});
-  ok('quem nao e dono nao redefine a de ninguem',!!rLuis.error);
-  /* trocar a propria senha pela lista de ligas */
-  A.senhaSheet();
-  ok('a folha de trocar senha abre',/Trocar senha/.test(els['#sheet'].innerHTML));
-  val('#ts','segredo2');
-  await A.doTrocaSenha();
-  ok('trocou por vontade propria',DB.users.find(u=>u.id===luisId).password==='segredo2');
 });
 
 await step('quem nao e dono so sai',async()=>{

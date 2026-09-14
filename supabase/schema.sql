@@ -567,38 +567,3 @@ grant execute on function public.migrate_league(uuid)               to authentic
 grant execute on function public.league_delta(uuid, bigint)         to authenticated;
 grant execute on function public.save_parts(uuid, bigint, jsonb)    to authenticated;
 grant execute on function public.league_size(uuid)                  to authenticated;
-
--- ============================================================================
--- Senha esquecida (D-164). O e-mail da conta é fictício, então o "esqueci a
--- senha" do Auth não tem para onde mandar link. Quem resolve é o DONO da liga:
--- redefine a senha de um membro, recebe uma senha temporária para passar ao
--- amigo, e o membro é obrigado a criar uma senha nova assim que entrar.
--- Só o dono (não o admin por papel): enquanto ninguém vinculou conta, todo
--- membro é admin — e senha é mais sensível do que tirar alguém da liga.
--- ============================================================================
-alter table public.profiles add column if not exists must_change_password boolean not null default false;
-
-create or replace function public.reset_member_password(p_id uuid, p_user uuid)
-returns text language plpgsql security definer set search_path = public, extensions as $fn$
-declare l public.leagues; alfa text := 'abcdefghjkmnpqrstuvwxyz23456789'; b bytea; tmp text := ''; i int;
-begin
-  if auth.uid() is null then raise exception 'nao autenticado'; end if;
-  select * into l from public.leagues where id = p_id;
-  if not found or l.owner_id <> auth.uid() then raise exception 'so o dono da liga redefine senha'; end if;
-  if p_user = auth.uid() then raise exception 'a propria senha se troca em Trocar senha'; end if;
-  if not exists (select 1 from public.league_members where league_id = p_id and user_id = p_user) then
-    raise exception 'essa conta nao e desta liga';
-  end if;
-  b := extensions.gen_random_bytes(8);                      -- 8 letras sem 0/O/1/l/i
-  for i in 0..7 loop
-    tmp := tmp || substr(alfa, 1 + (get_byte(b, i) % length(alfa)), 1);
-  end loop;
-  update auth.users
-     set encrypted_password = extensions.crypt(tmp, extensions.gen_salt('bf', 10)), updated_at = now()
-   where id = p_user;
-  update public.profiles set must_change_password = true where id = p_user;
-  delete from auth.sessions where user_id = p_user;        -- quem estava logado com a senha antiga sai
-  return tmp;
-end $fn$;
-
-grant execute on function public.reset_member_password(uuid, uuid) to authenticated;

@@ -35,7 +35,6 @@ Controle total, sem meio-termo, porque um racha tem dono:
 - **vincular e desvincular** um perfil de uma conta;
 - trocar o papel de qualquer membro;
 - **remover um membro** — o jogador e todo o histórico dele **ficam**; só o acesso sai;
-- **redefinir a senha** de um membro que esqueceu — só o **dono** da liga (D-164); a pessoa cria uma senha nova ao entrar;
 - cadastrar jogador sem conta nenhuma (o caso normal);
 - passar o admin adiante — uma Liga nunca fica sem admin;
 - **trocar de liga** — o primeiro cartão de Ajustes mostra a liga aberta (nome, jogadores, rachas, partidas) e o botão **Trocar de liga**, que leva à lista de ligas; não existe mais cabeçalho com o nome da liga nas outras telas (D-137).
@@ -57,8 +56,6 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a quem conduz o racha (quem está com o celular na mão). Conta ainda sem perfil vinculado também é tratada como Jogador.
 
 **Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).
-
-**Senha (D-164).** A conta é usuário e senha, sem e-mail de verdade — então não existe "esqueci a senha" por link. Quem esqueceu pede ao **dono da liga** (quem criou; não vale para admin por papel, porque enquanto ninguém vinculou conta todo membro é admin): na ficha do jogador, linha **Conta**, ou na folha da conta em Pendências, o dono toca em **Redefinir senha**, confirma, e vê uma senha temporária de 8 letras para mandar à pessoa (botão **Enviar** abre o compartilhar do celular, ou copia). A senha antiga deixa de valer na hora e quem estava logado com ela sai. A pessoa entra com a temporária e **não vê nada antes de criar a própria senha** — a tela "Crie sua senha" aparece no lugar da lista de ligas e só sai dali quando salva (ou sai da conta). Quem só quer trocar a senha usa **trocar senha**, ao lado de "sair da conta" na lista de ligas. Um campo só, com "mostrar"; mínimo 6 caracteres.
 
 **Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Pendências** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
 

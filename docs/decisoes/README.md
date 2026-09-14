@@ -172,7 +172,6 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-140](times-fila-e-goleiro.md#d-140) · Goleiro é do time só quando a conta fecha (um por time); senão rodízio, um em cada gol — a montagem antiga volta
 - [D-162](times-fila-e-goleiro.md#d-162) · Cabeçalho da montagem: "(goleiro reveza)" só com um goleiro; com dois ou mais, "(goleiros à parte)"
 - [D-163](times-fila-e-goleiro.md#d-163) · Goleiro é do time pela conta da linha, não pelo "2 times" escolhido na mão
-- [D-164](contas-e-permissoes.md#d-164) · Senha esquecida: o dono da liga redefine (senha temporária), a pessoa é obrigada a criar a nova ao entrar; "trocar senha" na lista de ligas
 
 ### [Contas, perfis e permissões](contas-e-permissoes.md)
 
