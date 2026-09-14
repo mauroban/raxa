@@ -4175,8 +4175,13 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
      mais subiu e mais caiu de nível nas partidas do período.               */
   const cardNiveis=(()=>{
     if(!verPat||!ms.length)return '';
-    const gente=Object.keys(J).map(id=>P(liga,id)).filter(p=>p&&!p.arq&&temPatente(liga,p,'L'));
-    const porPat=[0,0,0,0,0];gente.forEach(p=>porPat[patOf(p.L.rank)]++);
+    /* cada pessoa conta pela patente da função em que mais jogou no período
+       (goleiro fixo só tem a de goleiro, D-156); sem patente nela, vale a outra */
+    const gente=Object.keys(J).map(id=>{const p=P(liga,id);if(!p||p.arq)return null;
+      const x=J[id],pref=x.minGk>x.min-x.minGk?'G':'L',outra=pref==='G'?'L':'G';
+      const role=temPatente(liga,p,pref)?pref:temPatente(liga,p,outra)?outra:null;
+      return role?{p,role,rank:rt(p,role).rank}:null}).filter(Boolean);
+    const porPat=[0,0,0,0,0];gente.forEach(g=>porPat[patOf(g.rank)]++);
     const movs=movimentos(liga,ms);   // início e fim do período, não o nível de hoje (D-155)
     const subiu=movs.filter(x=>x.n>0).sort((a,b)=>b.n-a.n||a.para-b.para),caiu=movs.filter(x=>x.n<0).sort((a,b)=>a.n-b.n||b.para-a.para);
     const quem={};movs.forEach(x=>quem[x.pid]=1);

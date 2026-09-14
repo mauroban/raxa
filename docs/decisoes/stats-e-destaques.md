@@ -516,3 +516,12 @@ escuro) depois de D-153.
 **Onde:** `grafBarras`, gráfico "Gols por racha" do mês, `cardNiveis`, CSS `.patbar i` em
 `index.html` · `smoke.py` (D-149) · [Stats §2](../produto/stats.md).
 
+<a id="d-156"></a>
+### D-156 · A faixa de níveis conta o goleiro pela patente de goleiro
+**Quando:** 2026-09-14.
+**O quê:** no card Níveis (D-153), cada pessoa entra pela patente da função em que mais jogou no
+período (tempo no gol × tempo de linha); se não tem patente nessa função, vale a outra.
+**Por quê:** contava só a patente de linha — 14 presentes com nível viravam "12 com nível",
+porque os dois goleiros fixos só têm a de goleiro.
+**Onde:** `cardNiveis` em `index.html` · [Stats §2](../produto/stats.md).
+
