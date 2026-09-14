@@ -357,3 +357,13 @@ pessoa em quadra).
 **Onde:** `statsLiga`, `listasRk`, `viewStats` (`SECS.over`, `ordem`, `posicoes`) em `index.html` ·
 `smoke.py` · [Stats §2](../produto/stats.md).
 
+<a id="d-144"></a>
+### D-144 · A linha de "Quem mais rendeu" mostra o saldo que a ordena
+**Quando:** 2026-09-14.
+**O quê:** em Destaques (aba Racha, 30 dias), cada linha de "Quem mais rendeu além do esperado"
+ganha à direita o saldo acima do esperado (+1,5; com as patentes fechadas, as vitórias).
+`linhaDestaque` recebe um `val` opcional.
+**Por quê:** a lista já era ordenada pelo saldo, mas a linha só dizia rachas, partidas e
+aproveitamento — e o aproveitamento não acompanha o saldo, então a ordem parecia errada.
+**Onde:** `linhaDestaque`, `statsBlock` em `index.html` · [Stats §3](../produto/stats.md).
+

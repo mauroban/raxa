@@ -2546,7 +2546,9 @@ const por10=(n,ms)=>ms>0?(n/((ms||0)/600000)).toFixed(2).replace('.',','):'—';
 const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 /* Uma linha do pódio: quem é, o nível (quando tem) e, em baixo, o que cada
    número significa escrito por extenso — rachas, partidas e vitórias.      */
-function linhaDestaque(liga,x,i,badge){
+/* `val`: o número que ordena a lista, à direita (D-144) — sem ele a ordem
+   parecia errada, porque a linha só dizia o aproveitamento.                 */
+function linhaDestaque(liga,x,i,badge,val){
   const p=P(liga,x.pid);
   return `<div class="dest">
     <span class="pos">${MEDALHA[i]}</span>
@@ -2554,7 +2556,7 @@ function linhaDestaque(liga,x,i,badge){
       <div class="nm">${esc(nameOf(liga,x.pid))}${x.val==='G'?' 🧤':''}</div>
       <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</div>
     </div>
-    ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}
+    ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}${val?`<span class="val num" style="font-weight:700;color:var(--ok)">${val}</span>`:''}
   </div>`;
 }
 /* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
@@ -2590,7 +2592,7 @@ function statsBlock(liga){
 
     <div class="k2">Quem mais rendeu além do esperado</div>
     <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas ou ${d.piso.jogos} partidas.</div>
-    ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false)).join('')
+    ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false,ver?(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','):x.v+'V')).join('')
       :`<div class="tiny muted">Ainda sem gente suficiente no período.</div>`}
     <div class="hr"></div>
     <div class="duo">
