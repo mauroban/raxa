@@ -706,6 +706,18 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .chart .col.cur em{color:var(--chalk)}
 .chart .avg{position:absolute;left:0;right:0;border-top:1.5px dashed var(--chalk);opacity:.75;pointer-events:none;z-index:1}
 .chart .avg b{position:absolute;right:0;bottom:2px;font-family:var(--body);font-weight:600;font-size:10px;color:var(--chalk);background:var(--panel);padding:0 4px;border-radius:4px;line-height:1.4}
+/* momento (D-150): barras de gol em cada coluna, linha da % acima/abaixo do
+   esperado por cima, zero tracejado no meio; sem gap, para o centro da
+   coluna i ser exatamente (i+½)/n e a linha do SVG cair em cima do ponto  */
+.chart.momento{gap:0;height:120px;margin-top:22px}
+.chart.momento .col i.g{width:62%;margin:0 auto}
+.chart.momento .col em{font-size:11px;font-weight:700}
+.chart.momento .col em.ok{color:var(--ok)}.chart.momento .col em.bad{color:var(--bad)}
+.chart.momento .avg.zero{border-top-style:solid;opacity:.45}
+.chart.momento .dot{position:absolute;left:50%;width:8px;height:8px;border-radius:50%;background:var(--ok);border:2px solid var(--panel);transform:translate(-50%,50%);z-index:3}
+.chart.momento .dot.bad{background:var(--bad)}
+.chart.momento svg.ln{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
+.chart.momento svg.ln polyline{fill:none;stroke:var(--ok);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
 .chartx{display:flex;gap:5px;margin-top:5px}
 .chartx span{flex:1 1 0;min-width:0;text-align:center;font-size:9.5px;color:var(--mute2);font-family:var(--body);overflow:hidden;white-space:nowrap}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--mute)}
@@ -2260,16 +2272,34 @@ function statsGrupos(liga,pid,papel,per,grupo){
       side=me.side;min+=st.dur||0;
     });
     if(side!==null&&contaPartida(liga,m,min,tot)){
-      const a=G[k]||(G[k]={k,ano:ANO(m.ts),ts:m.ts,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
+      const a=G[k]||(G[k]={k,ano:ANO(m.ts),ts:m.ts,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0,over:0});
       a.ts=Math.min(a.ts,m.ts);
       a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
+      if(m.over&&typeof m.over[pid]==='number')a.over+=m.over[pid];   // saldo acima do esperado (D-150)
     }
     plusMinus(liga,m,(q,d)=>{if(q===pid&&G[k])G[k].pm+=d});
     (m.goals||[]).forEach(g=>{if(g.pid!==pid||g.own)return;const a=G[k];
       if(a&&(!so||roleNoGol(liga,m,g)===so))a.gols++});
   });
   return Object.keys(G).map(k=>G[k]).sort((x,y)=>x.ts-y.ts);
+}
+/* Momento (D-150): barras = gols no grupo; linha = % de vitória real − esperada
+   por partida, com o zero (jogou o que o nível dizia) tracejado no meio. A
+   escala da linha é simétrica, para cima e para baixo terem o mesmo peso.  */
+function grafMomento(arr,gols,pct,lab,opts){
+  opts=opts||{};if(arr.length<2)return '';
+  const gs=arr.map(gols),ps=arr.map(pct),maxG=Math.max(1,...gs),maxP=Math.max(10,...ps.map(Math.abs));
+  const y=p=>50+p/maxP*44;                       // % de baixo para cima; 50 = zero
+  const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
+  const fmtP=p=>(p>0?'+':p<0?'−':'')+Math.abs(Math.round(p))+'%';
+  return `<div class="k2" style="margin:16px 0 0">Momento${nota}</div>
+  <div class="chart momento">
+    <div class="avg zero" style="bottom:50%"><b>esperado</b></div>
+    <svg class="ln" viewBox="0 0 ${arr.length} 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${ps.map((p,i)=>(i+.5)+','+(100-y(p)).toFixed(2)).join(' ')}"/></svg>
+    ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em class="${ps[i]>0?'ok':ps[i]<0?'bad':''}">${fmtP(ps[i])}</em><i class="g" style="height:${(gs[i]/maxG*100).toFixed(1)}%"></i><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span></div>`).join('')}</div>
+  <div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?lab(r):''}</span>`).join('')}</div>
+  <div class="legend"><span><i style="background:color-mix(in srgb,var(--lime) 42%,var(--fill))"></i>gols</span><span><i style="background:var(--ok);border-radius:50%"></i>% acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span></div>`;
 }
 /* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
 const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
@@ -3921,8 +3951,8 @@ function viewStats(liga){
     ${posHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
-      ${grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
-      ${grupoDe==='racha'?'':grafBarras('Partidas',grupos,g=>g.jogos,v=>String(Math.round(v)),labG,{nota:grupoDe==='mes'?'por mês':'por ano'})}
+      ${vePat(liga)?grafMomento(grupos,g=>g.gols,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
+        :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
       ${[...grupos].reverse().map(a=>`<div class="rk"><span class="nm num">${labG(a)}</span>
         <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}

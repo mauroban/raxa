@@ -135,6 +135,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-147](stats-e-destaques.md#d-147) · "Quem mais rendeu" nos Destaques também é % por partida
 - [D-148](stats-e-destaques.md#d-148) · Tempo em quadra é volume, como presença: total, sem piso
 - [D-149](stats-e-destaques.md#d-149) · Período por mês e por ano com setas ‹ ›; gráficos por racha/mês/ano nas duas abas
+- [D-150](stats-e-destaques.md#d-150) · Momento na aba Jogador: gols em barra, % acima do esperado em linha, ao longo do tempo
 
 ### [Interface](interface.md)
 

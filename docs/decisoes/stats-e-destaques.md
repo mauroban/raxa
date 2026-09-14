@@ -439,3 +439,22 @@ há seletor, e o começo do mês ficaria vazio.
 `labAno`, gráficos da liga, `grupos`), `A.statsPer`/`statsMes`/`statsAno`, `A.duelo` em
 `index.html` · `smoke.py` ("periodo por mes e por ano…") · [Stats §2](../produto/stats.md).
 
+<a id="d-150"></a>
+### D-150 · Momento: gols em barra, % acima do esperado em linha, ao longo do tempo
+**Quando:** 2026-09-14.
+**O quê:** na aba Jogador, o bloco racha a racha / mês a mês / ano a ano (D-149) ganha o gráfico
+**Momento** (`grafMomento`): uma coluna por grupo com a barra dos **gols** e, por cima, a **linha
+da % de vitória real − esperada por partida** (`overPct`, D-145), com o zero tracejado no meio
+("jogou o que o nível dizia") e escala simétrica (o pior e o melhor mês têm o mesmo tamanho). O
+valor da linha fica em cima de cada coluna, verde ou vermelho. `statsGrupos` passa a somar
+`m.over` da pessoa no grupo. Substitui os dois gráficos de barras de D-149 (aproveitamento e
+partidas): a linha por grupo já traz o aproveitamento. Com as patentes fechadas não há esperado,
+e fica o gráfico de aproveitamento. No "Último" não há gráfico.
+**Por quê:** "estou em fase?" é uma pergunta sobre tendência, não sobre um número; gols dizem o que
+a pessoa produziu e a linha diz se rendeu acima do nível — juntos, numa tela, contam o mês.
+**Descartado:** linha do aproveitamento (não desconta o time que a pessoa pegou); duas escalas
+com eixos numéricos (não cabe no celular — os valores vão em cima das colunas).
+**Onde:** `grafMomento`, `statsGrupos` (`over`), CSS `.chart.momento`, `viewStats` (bloco dos
+grupos) em `index.html` · `smoke.py` (D-149) · `visual.py` (tela 18 "momento") ·
+[Stats §2](../produto/stats.md).
+

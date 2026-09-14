@@ -55,6 +55,7 @@ TELAS = {
     15: 'marcando',
     16: 'revisar',
     17: 'gol',
+    18: 'momento',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -131,6 +132,15 @@ DRIVER = r"""
     A.startMatch();const c=l.live.cur;const y=c.lineups[1][1],f=filaDe(l.live)[0];
     A.doSub({dataset:{s:'1',out:y,id:f}});A.goal({dataset:{s:'1'}});A.endMatch();closeSheet();
     A.review({dataset:{id:l.matches[l.matches.length-1].id}});
+  }
+  if(step===18){                   /* momento (D-150): a ficha em "Ano", mes a mes, com gols em barra e % acima do esperado em linha */
+    const l=L(),ult=l.matches[l.matches.length-1];
+    for(let i=1;i<=6;i++){const c=JSON.parse(JSON.stringify(ult));c.id='mom'+i;c.sessionId='smom'+i;
+      const d=new Date();d.setMonth(d.getMonth()-i);c.ts=d.getTime();if(c.startedAt)c.startedAt=c.ts;if(c.endedAt)c.endedAt=c.ts+600000;
+      if(i%2)c.result=1-c.result;delete c.deltas;delete c.moves;delete c.over;l.matches.push(c)}
+    rebuildAll(l);const p=l.players.find(x=>ult.lineups[0].includes(x.id));p.owner='Mauro';S.me.name='Mauro';l.cfg.rankVisibility='todos';
+    S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();
+    const alvo=document.querySelector('.chart.momento');if(alvo)window.scrollTo(0,alvo.getBoundingClientRect().top+window.scrollY-160);
   }
   if(step===17){                   /* a folha GOL! aberta na hora do gol (D-138) */
     A.goal({dataset:{s:'1'}});

@@ -1079,6 +1079,13 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* ficha: ano a ano com grafico */
     A.statsTab({dataset:{v:'jogador'}});
     if(!/Ano a ano/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o ano a ano');
+    /* D-150: o gráfico de momento (gols em barra, % acima do esperado em linha) */
+    if(vePat(l)){if(!/class="chart momento"/.test(els['#app'].innerHTML)||!/<polyline points="/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o grafico de momento')}
+    else if(!/Aproveitamento <span/.test(els['#app'].innerHTML))throw new Error('com as patentes fechadas a ficha devia ter o grafico de aproveitamento');
+    /* com as patentes abertas o momento tem que sair — liga e desliga só para o teste */
+    const vis0=l.cfg.rankVisibility;l.cfg.rankVisibility='todos';render();
+    if(!/class="chart momento"/.test(els['#app'].innerHTML))throw new Error('patentes abertas e sem o grafico de momento');
+    l.cfg.rankVisibility=vis0;render();
     A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'racha'}});
   }finally{l.matches=l.matches.filter(x=>x.id!=='m-velho');S.ui.statsMes=null;S.ui.statsAno=null;rebuildAll(l)}
 });
