@@ -590,11 +590,6 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .patleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mute)}
 .patbar:active{opacity:.8}
 .patleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.dest{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
-.dest:last-of-type{border-bottom:0}
-.dest .pos{font-size:18px;line-height:1;flex:0 0 auto}
-.dest .who{flex:1;min-width:0}
-.dest .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
 @media(max-width:380px){.duo{grid-template-columns:1fr}}
 .hl{background:var(--fill);border:1px solid transparent;border-radius:12px;padding:10px 11px}
@@ -2758,12 +2753,8 @@ const recTxt=r=>r.n?r.pct+'% · '+r.w+'V'+(r.d?' '+r.d+'E':'')+' '+r.l+'D':'aind
 /* ---------- aba racha ---------- */
 function viewRacha(liga){
   const lv=liga.live;
-  if(!lv)return quemSouCard(liga)+chamadaCard(liga)+`
-    <div class="card">
-      <div class="k">Próximo passo</div>
-      <h2 style="font-size:26px;margin:6px 0 4px">Começar um racha</h2>
-      <div class="muted tiny" style="line-height:1.55">Marque quem chegou, o app monta os times equilibrados e cada partida se lança com um toque.</div>
-    </div>${liga.matches.length?statsBlock(liga):''}`;
+  /* fora do dia: quem é você (sem perfil) e o próximo racha; "Iniciar racha" mora na barra (D-167) */
+    if(!lv)return quemSouCard(liga)+chamadaCard(liga);
   if(lv.stage==='presenca')return viewPresenca(liga,lv);
   if(lv.stage==='times')return viewTimes(liga,lv);
   return viewJogo(liga,lv);
@@ -2840,28 +2831,12 @@ function cfgChamadaCard(liga){
   </div>`;
 }
 const chamadaResumo=liga=>{const c=chamadaCfg(liga);return c?` · confirmação ${DOW_ABR[c.dow]} ${String(c.hora).replace(/:00$/,'h')} · ${c.linha} na linha + ${c.gol} no gol`:''};
-const MEDALHA=['🥇','🥈','🥉'];
 /* minutos: guardados em ms de tempo de jogo; ritmo sempre "a cada 10 min" —
    por minuto dá 0,07 e ninguém lê isso                                        */
 const MINS=ms=>Math.round((ms||0)/60000);
 const fmtMin=ms=>{const m=MINS(ms);return m>=90?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min'};
 const por10=(n,ms)=>ms>0?(n/((ms||0)/600000)).toFixed(2).replace('.',','):'—';
 const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-/* Uma linha do pódio: quem é, o nível (quando tem) e, em baixo, o que cada
-   número significa escrito por extenso — rachas, partidas e vitórias.      */
-/* `val`: o número que ordena a lista, à direita (D-144) — sem ele a ordem
-   parecia errada, porque a linha só dizia o aproveitamento.                 */
-function linhaDestaque(liga,x,i,badge,val){
-  const p=P(liga,x.pid);
-  return `<div class="dest">
-    <span class="pos">${MEDALHA[i]}</span>
-    <div class="who">
-      <div class="nm">${esc(nameOf(liga,x.pid))}${x.val==='G'?' 🧤':''}</div>
-      <div class="tiny muted">${x.nR} racha${x.nR===1?'':'s'} · ${x.jogos} partida${x.jogos===1?'':'s'} · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento</div>
-    </div>
-    ${badge&&p&&temPatente(liga,p,x.val)?patBadge(liga,rt(p,x.val).rank):''}${val?`<span class="val num" style="font-weight:700;color:var(--ok)">${val}</span>`:''}
-  </div>`;
-}
 /* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
    nao de um contador: racha cancelado ou em andamento nao mente na conta.   */
 function nRachas(liga){
@@ -2869,47 +2844,6 @@ function nRachas(liga){
   (liga.matches||[]).forEach(m=>{if(m.voided)return;
     const k=m.sessionId||m.id;if(!vistos[k]){vistos[k]=1;n++}});
   return n;
-}
-/* A aba Racha serve para INICIAR racha; os destaques são curiosidade — vêm
-   recolhidos num card de uma linha e abrem num toque (D-89). Sem partidas no
-   período, nada aparece (o histórico mora na aba Jogos).                    */
-function statsBlock(liga){
-  const d=destaques(liga,30);
-  if(!d.partidas)return '';
-  const open=!!S.ui.destAberto;
-  const head=`<div class="row" data-a="toggleDestaques" style="cursor:pointer"><div class="k">Destaques · últimos 30 dias</div>
-      <div class="sp tiny muted num">${pl(d.nR,'racha')} · ${pl(d.partidas,'partida')} <span style="margin-left:4px">${open?'▴':'▾'}</span></div></div>`;
-  if(!open)return `<div class="card">${head}</div>`;
-  const nome=pid=>esc(nameOf(liga,pid));
-  const ver=vePat(liga);
-  /* Com os níveis fechados, a escada some daqui também, e "acima do esperado"
-     junto — ele nasce do nível de quem estava em quadra. Sobra contagem pura. */
-  const rendeu=ver?d.top:d.gente.filter(x=>x.nR>=d.piso.rachas||x.jogos>=d.piso.jogos)
-    .sort((a,b)=>b.v-a.v||b.jogos-a.jogos).slice(0,3);
-  return `<div class="card">
-    ${head}<div style="height:10px"></div>
-
-    ${ver?`<div class="k2" style="margin-top:0">Os melhores do racha</div>
-    ${d.melhores.length?d.melhores.map((x,i)=>linhaDestaque(liga,x,i,true)).join('')
-      :'<div class="tiny muted">Ninguém com nível no período ainda.</div>'}`:''}
-
-    <div class="k2">Quem mais rendeu além do esperado</div>
-    <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas ou ${d.piso.jogos} partidas.</div>
-    ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false,ver?(overPct(x)>0?'+':overPct(x)<0?'−':'')+Math.abs(Math.round(overPct(x)))+'%':x.v+'V')).join('')
-      :`<div class="tiny muted">Ainda sem gente suficiente no período.</div>`}
-    <div class="hr"></div>
-    <div class="duo">
-      <div class="hl ok"><div class="t">⚽ Artilheiro</div>
-        <div class="n">${d.artilheiro?nome(d.artilheiro.pid):'—'}</div>
-        <div class="s">${d.artilheiro?d.artilheiro.gols+' gol'+(d.artilheiro.gols===1?'':'s')
-          :(d.gols?'gols sem autor demais ('+(d.gols-d.comDono)+' de '+d.gols+')':'nenhum gol com autor')}</div></div>
-      <div class="hl"><div class="t">🧤 Menos vazado</div>
-        <div class="n">${d.goleiro?nome(d.goleiro.pid):'—'}</div>
-        <div class="s">${d.goleiro?por10(d.goleiro.sofridos,d.goleiro.minGk)+' sofridos a cada 10 min · '+fmtMin(d.goleiro.minGk)+' no gol'
-          :'ninguém com 1 h no gol'}</div></div>
-    </div>
-    ${d.presenca?`<div class="tiny muted" style="margin-top:8px">📅 Mais presente: <b>${nome(d.presenca.pid)}</b> — ${d.presenca.nR} racha${d.presenca.nR===1?'':'s'}</div>`:''}
-  </div>`;
 }
 /* Badge do chip de presença (D-81):
    - já marcado: o nível do papel em que a pessoa vai jogar HOJE — 🧤 aceso
@@ -6848,7 +6782,6 @@ const A={
   },
   rkInv(el){A.rkSheet(el)},
   ppPage(el){S.ui.ppPage=Math.max(0,(S.ui.ppPage||0)+(+el.dataset.d));render()},   // pagina do partida-a-partida
-  toggleDestaques(){S.ui.destAberto=!S.ui.destAberto;save();render()},
   histMine(el){S.ui.histMine=el.dataset.v==='1';S.ui.histRacha=null;save();render()},
   histRacha(el){S.ui.histRacha=el.dataset.id||null;save();render()},
   statsWho(){

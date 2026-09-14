@@ -20,7 +20,7 @@ linha e um goleiro em cada gol); 6v6, 15 + 2; 7v7, 18 + 2; 11v11, 20 + 2.
 
 ## 2. O que cada um vê na aba Racha
 
-O cartão **Próximo racha** fica no topo da aba Racha enquanto não há racha em andamento.
+O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento (D-167): sem "Próximo passo" nem destaques — **Iniciar racha** mora na barra de baixo, para quem lança.
 
 - **Lista fechada:** só a data e quando abre ("A lista abre seg 14/09").
 - **Lista aberta, sem confirmar:** dois botões, **Vou** (grande) e **Vou no gol**. Um toque

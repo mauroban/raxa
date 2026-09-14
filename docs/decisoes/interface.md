@@ -348,3 +348,16 @@ fica curto para "Diamante" com o ponto de cor); linhas de 48 px em Jogadores (o 
 começa a apertar).
 **Onde:** CSS `.cfgc`, `.rank`, `.rank .nm`, `.rank .meta`, `patDivOnly`, `viewCfg`, `viewCfgBody` em
 `index.html` · `scripts/visual.py` (telas 5 e 7).
+
+<a id="d-167"></a>
+### D-167 · A aba Racha fora do dia é só a chamada: saem "Próximo passo" e "Destaques · últimos 30 dias"
+**Quando:** 2026-09-14.
+**O quê:** fora do racha, a aba Racha mostra apenas **Quem é você nesta liga?** (quando falta perfil)
+e **Próximo racha** (D-165). O cartão "Próximo passo · Começar um racha" e o cartão recolhido
+"Destaques · últimos 30 dias" (D-89) saíram, com o CSS do pódio (`.dest`). O motor `destaques()`
+fica (testado; alimenta o que voltar a precisar dele).
+**Por quê:** "Iniciar racha" já mora na barra — o cartão explicava o óbvio; e com a chamada no topo,
+os destaques viravam um terceiro assunto numa tela que é sobre o próximo racha. Números moram em Stats.
+**Descartado:** manter os destaques recolhidos abaixo da chamada (ninguém abria; a linha só ocupava).
+**Onde:** `viewRacha` em `index.html` · `scripts/visual.py` (tela 10 removida) ·
+[Confirmação de presença §2](../produto/confirmacao-de-presenca.md) · [Stats §3](../produto/stats.md).

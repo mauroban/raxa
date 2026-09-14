@@ -44,7 +44,6 @@
 - A roda: dois lados e uma fila só de pessoas; vencedor fica, sai quem está há mais tempo em quadra, entra quem está há mais tempo fora; tela de próxima partida com placar registrado + voltar fixos, quem saiu/entrou, escalação editável e chance esperada de cada lado
 - Contestação, revisão, correção, anulação e recálculo integral
 - Ranking agrupado por patente, com escadas separadas de linha e de goleiro, histórico, resumo de fim de racha
-- **Destaques dos últimos 30 dias** na tela do racha: top 3 por saldo acima do esperado, artilheiro (quando os gols têm dono), goleiro menos vazado e presença
 - **Painel de números**: duelos e parcerias por pessoa (com histórico encontro a encontro), destaques (carrasco, freguês, melhor dupla), quebra ano a ano e rankings do racha no período
 - Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
 - Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)

@@ -45,8 +45,13 @@ Duas consequências que importam:
 
 ## 3. Destaques do mês — e por que não é aproveitamento
 
-A primeira tela do racha mostra os **destaques dos últimos 30 dias** — a foto do mês, não o histórico
-inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. São duas listas e dois cards:
+> **Saiu da tela em 2026-09-14 (D-167):** o cartão "Destaques · últimos 30 dias" não existe mais na
+> aba Racha, que fora do dia é só a chamada. O critério abaixo continua valendo — é o mesmo "rendeu
+> acima do esperado" dos rankings de Stats — e o motor (`destaques()`) fica, testado, para o que
+> voltar a usá-lo.
+
+O cartão mostrava os **destaques dos últimos 30 dias** — a foto do mês, não o histórico
+inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. Eram duas listas e dois cards:
 
 1. **Os melhores do racha** — a maior patente **entre quem apareceu no período**, por divisão e, dentro dela, por Elo (D-146). É a escada, filtrada por
    presença: quem some do racha some do pódio. Cada um entra pela **valência que mais jogou no mês** — quem

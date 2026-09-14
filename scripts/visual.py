@@ -47,7 +47,6 @@ TELAS = {
     7: 'ajustes',
     8: 'numeros',
     9: 'completar',
-    10: 'destaques',
     11: 'ficha admin',
     12: 'minhas opinioes',
     13: 'ficha com opinioes',
@@ -80,15 +79,7 @@ DRIVER = r"""
   window.confirm=()=>true;         /* encerrar racha etc. perguntam (D-92); um dialogo travaria o headless */
   S=defState();
   const tema=q.get('t');if(tema)S.ui.theme=tema;   /* escuro (padrao) ou claro */
-  if(step===10){                   /* destaques do mes, na tela do racha */
-    A.demo();A.startRacha();
-    L().live.presentIds=L().players.map(p=>p.id);
-    A.toTimes();A.startMatch();
-    A.goal({dataset:{s:'0'}});
-    const g=L().live.cur.events.find(e=>e.type==='goal');
-    A.setGoalScorer({dataset:{t:String(g.t),id:L().live.cur.lineups[0][0]}});closeSheet();
-    A.goal({dataset:{s:'0'}});A.endMatch();closeSheet();A.endRacha();closeSheet();
-  }else if(step===9){                    /* time menor entrando: quem completa? */
+  if(step===9){                    /* time menor entrando: quem completa? */
     A.demo();A.startRacha();
     const l=L(),lv=l.live;
     lv.presentIds=l.players.filter(p=>!p.gk).slice(0,13).map(p=>p.id);lv.gkToday=[];
@@ -229,7 +220,7 @@ io.open(alvo, 'w', encoding='utf-8').write(fonte.replace('</body>', DRIVER + '</
 url = 'file:///' + alvo.replace('\\', '/')
 
 # (largura, tema, telas): o claro roda nas telas onde a cor decide leitura
-PASSES = [(l, 'claro', sorted(TELAS)) for l in LARGURAS] + [(500, 'escuro', [1, 2, 3, 5, 9, 10])]
+PASSES = [(l, 'claro', sorted(TELAS)) for l in LARGURAS] + [(500, 'escuro', [1, 2, 3, 5, 9])]
 
 falhas = 0
 for larg, tema, steps in PASSES:
