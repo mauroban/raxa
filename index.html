@@ -3530,7 +3530,7 @@ function viewEscada(liga){
   const blocoSem=semNivel.length?`<div class="secthd" style="--pc:var(--mute)"><div class="nm">Sem nível ainda</div><div class="ln"></div><div class="ct">${semNivel.length}</div></div>
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:34px;justify-content:center"><b>⏳</b></span>
-      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(p)}</div>
+      <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(liga,p)}</div>
         <div class="meta"><span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span><span class="prov">calibrando · ${calTxt(liga,tr)}</span>${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}</div></div>
       </div>`}).join('')}</div>
     <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
@@ -3547,7 +3547,7 @@ function viewEscada(liga){
     html+=`<div class="rank" data-a="pSheet" data-id="${p.id}">
       ${patDivOnly(liga,tr.rank)}
       <div style="min-width:0;flex:1">
-        <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(p)}</div>
+        <div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(liga,p)}</div>
         <div class="meta">
           <span class="num">${tr.w}V ${tr.d}E ${tr.l}D</span>
           ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
@@ -4378,9 +4378,10 @@ function viewHist(liga){
    admin muda o papel.                                                        */
 const PAPEL={admin:'Admin',moderador:'Moderador',lancador:'Lançador',jogador:'Jogador'};
 const PAPEL_ORD={admin:0,moderador:1,lancador:2,jogador:3};
-/* Na linha da escada (D-85): quem tem conta com papel acima de jogador leva o
-   badge do papel; quem tem conta e é só jogador, o pontinho. Sem conta, nada. */
-const papelMarca=p=>!p.owner?'':(p.role&&p.role!=='jogador'
+/* Na linha da escada (D-85): quem tem conta leva o pontinho; o badge do papel
+   (Admin/Moderador/Lançador) só aparece para moderador ou acima (D-141) — quem
+   é jogador não vê quem manda no quê. Sem conta, nada. */
+const papelMarca=(liga,p)=>!p.owner?'':(p.role&&p.role!=='jogador'&&souModerador(liga)
   ?` <span class="pat" style="--pc:${p.role==='admin'?'var(--gold)':'var(--cyan)'};font-size:9.5px;padding:1px 5px;margin-left:4px;vertical-align:middle">${PAPEL[p.role]}</span>`
   :' <span style="color:var(--cyan)" title="tem conta">•</span>');
 /* ---------- ajustes ---------- */
@@ -5848,7 +5849,7 @@ const A={
           ${nomeia?`<input value="${esc(PD.name)}" oninput="PD.name=this.value;pdNome()" placeholder="Nome" aria-label="nome do jogador"
               style="font-family:var(--disp);font-size:20px;padding:6px 10px;width:100%">`
             :`<h2><span>${esc(p.name)}</span></h2>`}
-          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'} · ${PAPEL[p.role]||'Jogador'} · ${p.sessions||0} racha${p.sessions===1?'':'s'}${arq?' · <b style="color:var(--gold)">arquivado</b>':''}</div>
+          <div class="sub">${p.owner?'@'+esc(p.owner):'sem conta'}${souModerador(l)?' · '+(PAPEL[p.role]||'Jogador'):''} · ${p.sessions||0} racha${p.sessions===1?'':'s'}${arq?' · <b style="color:var(--gold)">arquivado</b>':''}</div>
         </div>
       </div>
       ${/* descrição discreta: apelido, "amigo do Matheus", como chegou (D-128) */''}

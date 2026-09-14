@@ -215,3 +215,17 @@ permanente (a URL é limpa para o recarregar não repetir o pedido).
 **Onde:** `leConvite`, `guardaConvite`, `usaConvite`, `entrarComCodigo`, `linkConvite`, `A.copyCode`,
 `renderAuth`, `boot`, `afterLogin` em `index.html` · teste em `scripts/sync.py` ·
 [Contas e permissões](../produto/contas-e-permissoes.md) · [Deploy §3](../tecnico/deploy.md).
+
+<a id="d-141"></a>
+### D-141 · O papel de cada membro só aparece para moderador ou acima
+**Quando:** 2026-09-14.
+**O quê:** o badge Admin/Moderador/Lançador na linha da escada (`papelMarca`) e o papel no
+cabeçalho da ficha do jogador só saem para quem é **moderador ou admin**. Os outros veem o
+pontinho de "tem conta" e o @ da conta, como antes. Opiniões dadas, folha de conta e log já eram
+só do admin e não mudam.
+**Por quê:** quem tem qual permissão é assunto de quem administra a liga; para o jogador comum é
+ruído — e rotula gente ("ele é lançador, ele é só jogador") sem o grupo ter pedido isso.
+**Descartado:** esconder também o pontinho de conta (ele diz se o perfil já tem dono, o que
+qualquer membro precisa saber para o "Sou eu").
+**Onde:** `papelMarca(liga,p)` e `A.pSheet` em `index.html` ·
+[Contas e permissões §5](../produto/contas-e-permissoes.md).

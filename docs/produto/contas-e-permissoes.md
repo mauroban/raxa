@@ -51,6 +51,8 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 | **Lançador** | Conduzir o racha: presença, times, partidas, gols, cadastrar jogador, **editar nome, descrição e hábito de gol** de qualquer jogador (D-128) — e **opinar sobre o nível** de entrada de qualquer um (como moderador e admin) |
 | **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar; pode dar opinião sobre nível, mas ela **só passa a valer** quando for Lançador ou acima (D-121). Não lança nada |
 
+**Quem vê o papel de quem** (D-141): o badge Admin/Moderador/Lançador na linha da escada e o papel no cabeçalho da ficha só aparecem para **moderador ou acima**. Jogador e lançador veem apenas o pontinho de "tem conta" e o @ da conta — não veem quem manda no quê.
+
 O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a quem conduz o racha (quem está com o celular na mão). Conta ainda sem perfil vinculado também é tratada como Jogador.
 
 **Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).

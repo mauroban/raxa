@@ -165,6 +165,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-128](contas-e-permissoes.md#d-128) · Arquivar em vez de remover jogador; ficha por blocos (olhar → cadastro → admin → arquivar); ajustes e permissão só para o admin; "Sou eu" só sem perfil
 - [D-130](contas-e-permissoes.md#d-130) · Trocar o código de convite: botão Novo, o antigo deixa de valer na hora
 - [D-132](contas-e-permissoes.md#d-132) · Link de convite (?c=CODIGO): quem abre entra ou cria a conta e o pedido vai sozinho
+- [D-141](contas-e-permissoes.md#d-141) · O papel de cada membro (Admin/Moderador/Lançador) só aparece para moderador ou acima
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 
