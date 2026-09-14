@@ -367,3 +367,31 @@ ganha à direita o saldo acima do esperado (+1,5; com as patentes fechadas, as v
 aproveitamento — e o aproveitamento não acompanha o saldo, então a ordem parecia errada.
 **Onde:** `linhaDestaque`, `statsBlock` em `index.html` · [Stats §3](../produto/stats.md).
 
+<a id="d-145"></a>
+### D-145 · Rankings de temporada são taxas, com piso de metade dos rachas
+**Quando:** 2026-09-14.
+**O quê:** na aba Racha (30 dias, ano, Sempre) todo ranking vira estatística de longo prazo:
+aproveitamento, rendeu acima do esperado **por partida** (pontos % de vitória real − esperada),
+**+/− a cada 10 min**, gols a cada 10 min de linha, maior sequência, **tempo em quadra por racha**,
+menos vazado e **gols de goleiro a cada 10 min no gol**, melhor dupla. Saem **Artilharia** (total de
+gols) e **Mais vitórias**. A exceção é **Mais presenças**: presença é o próprio volume. Piso único:
+**ter jogado metade dos rachas do período** (`minR = ceil(rachas/2)`, escrito em cada título como
+"mín. N de M rachas"); as taxas por tempo pedem ainda 1 h na função (`MIN_RITMO`). `listasRk`
+recebe `minR`; `pm10` e `overPct` são as taxas; a posição da pessoa na ficha usa as mesmas.
+**Por quê:** total premia quem aparece mais, não quem joga melhor; num período longo a artilharia
+era só a lista de presença com outro nome. Taxa com piso de metade dos rachas compara gente que
+esteve lá de verdade.
+**Descartado:** piso fixo em partidas (10 partidas é muito em 30 dias e pouco em "Sempre");
+manter os totais ao lado das taxas (dois rankings da mesma coisa).
+**Onde:** `listasRk`, `pm10`, `overPct`, `viewStats` (`minR`, `minTxt`, `SECS`, `ordem`,
+`posicoes`) em `index.html` · `smoke.py` · [Stats §2 e §4](../produto/stats.md).
+
+<a id="d-146"></a>
+### D-146 · "Os melhores do racha" ordena por divisão e, dentro dela, por Elo
+**Quando:** 2026-09-14.
+**O quê:** a lista dos destaques dos 30 dias passa a ordenar por divisão e depois por Elo (antes,
+por aproveitamento dentro da divisão, para não denunciar o rating).
+**Por quê:** quem vê os Elos — o admin — via a ordem "errada". A divisão já é o que aparece no
+badge; a ordem por Elo dentro dela só ordena, não mostra o número.
+**Onde:** `destaques` (`melhores`) em `index.html` · [Stats §3](../produto/stats.md).
+

@@ -130,6 +130,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-142](stats-e-destaques.md#d-142) · Os destaques de um racha (setas ‹ › em "Último", botão na aba Jogos) existem para qualquer racha, não só o último
 - [D-143](stats-e-destaques.md#d-143) · "Rendeu acima do esperado" é ranking de todo período (30 dias, ano, Sempre) e posição na ficha, não só do racha
 - [D-144](stats-e-destaques.md#d-144) · A linha de "Quem mais rendeu" mostra o saldo que a ordena
+- [D-145](stats-e-destaques.md#d-145) · Rankings de temporada são taxas (por partida, por racha, a cada 10 min), presença é a exceção, piso de metade dos rachas do período
+- [D-146](stats-e-destaques.md#d-146) · "Os melhores do racha" ordena por divisão e, dentro dela, por Elo
 
 ### [Interface](interface.md)
 

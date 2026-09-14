@@ -823,12 +823,12 @@ step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.stat
 step('abrir a folha de um ranking e inverter a ordem (D-112)',()=>{
   S.ui.statsTab='racha';A.statsPer({dataset:{v:'sempre'}});
   if(document.querySelector('#app').innerHTML.indexOf('Ver ')<0)throw new Error('faltou o "Ver os 10" nos rankings');
-  A.rkSheet({dataset:{k:'vit'}});
+  A.rkSheet({dataset:{k:'pct'}});
   if(!/Do 1º ao último/.test($('#sheet').innerHTML))throw new Error('folha do ranking nao abriu com a ordem');
-  A.rkInv({dataset:{k:'vit',v:'1'}});
-  if(!/class="on" data-a="rkInv" data-k="vit" data-v="1"/.test($('#sheet').innerHTML))throw new Error('inverter nao marcou o seletor');
-  closeSheet();A.rkSheet({dataset:{k:'vit'}});
-  if(!/class="on" data-a="rkInv" data-k="vit" data-v="0"/.test($('#sheet').innerHTML))throw new Error('reabrir tem que voltar para "do 1º ao último"');
+  A.rkInv({dataset:{k:'pct',v:'1'}});
+  if(!/class="on" data-a="rkInv" data-k="pct" data-v="1"/.test($('#sheet').innerHTML))throw new Error('inverter nao marcou o seletor');
+  closeSheet();A.rkSheet({dataset:{k:'pct'}});
+  if(!/class="on" data-a="rkInv" data-k="pct" data-v="0"/.test($('#sheet').innerHTML))throw new Error('reabrir tem que voltar para "do 1º ao último"');
   closeSheet();
 });
 step('numeros: ultimo racha e ultimo mes',()=>{
@@ -868,7 +868,10 @@ step('revisao: corrigir autor de gol de partida encerrada',()=>{
 step('numeros: abas jogador/racha e listas compactas',()=>{
   A.statsTab({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
-  if(!/Rankings/.test(h)||!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
+  if(!/Rankings/.test(h)||!/Tempo em quadra por racha/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
+  /* D-145: taxa, nao total — sem Artilharia nem Mais vitorias na temporada; piso "min. N de M rachas" escrito */
+  if(/>Artilharia</.test(h)||/Mais vitórias/.test(h))throw new Error('ranking de total (gols, vitorias) nao cabe na temporada (D-145)');
+  if(!/mín\. \d+ de \d+ rachas?/.test(h))throw new Error('faltou o piso "min. N de M rachas" nos rankings');
   if(/Duelos —/.test(h))throw new Error('duelos nao deveriam estar na aba racha');
   A.rkSheet({dataset:{k:'pres'}});closeSheet();
   A.statsTab({dataset:{v:'jogador'}});
