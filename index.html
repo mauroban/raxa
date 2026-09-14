@@ -710,7 +710,6 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
    esperado por cima, zero tracejado no meio; sem gap, para o centro da
    coluna i ser exatamente (i+½)/n e a linha do SVG cair em cima do ponto  */
 .chart.momento{gap:0;height:120px;margin-top:22px}
-.chart.momento .col i.g{width:62%;margin:0 auto}
 .chart.momento .col em{font-size:11px;font-weight:700}
 .chart.momento .col em.ok{color:var(--ok)}.chart.momento .col em.bad{color:var(--bad)}
 .chart.momento .avg.zero{border-top-style:solid;opacity:.45}
@@ -2284,12 +2283,13 @@ function statsGrupos(liga,pid,papel,per,grupo){
   });
   return Object.keys(G).map(k=>G[k]).sort((x,y)=>x.ts-y.ts);
 }
-/* Momento (D-150): barras = gols no grupo; linha = % de vitória real − esperada
-   por partida, com o zero (jogou o que o nível dizia) tracejado no meio. A
-   escala da linha é simétrica, para cima e para baixo terem o mesmo peso.  */
-function grafMomento(arr,gols,pct,lab,opts){
+/* Momento (D-150/D-151): só a linha da % de vitória real − esperada por
+   partida, com o zero (jogou o que o nível dizia) tracejado no meio. A escala
+   é simétrica, para cima e para baixo terem o mesmo peso. As barras de gol
+   saíram: confundiam a leitura (D-151).                                    */
+function grafMomento(arr,pct,lab,opts){
   opts=opts||{};if(arr.length<2)return '';
-  const gs=arr.map(gols),ps=arr.map(pct),maxG=Math.max(1,...gs),maxP=Math.max(10,...ps.map(Math.abs));
+  const ps=arr.map(pct),maxP=Math.max(10,...ps.map(Math.abs));
   const y=p=>50+p/maxP*44;                       // % de baixo para cima; 50 = zero
   const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
   const fmtP=p=>(p>0?'+':p<0?'−':'')+Math.abs(Math.round(p))+'%';
@@ -2297,9 +2297,9 @@ function grafMomento(arr,gols,pct,lab,opts){
   <div class="chart momento">
     <div class="avg zero" style="bottom:50%"><b>esperado</b></div>
     <svg class="ln" viewBox="0 0 ${arr.length} 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${ps.map((p,i)=>(i+.5)+','+(100-y(p)).toFixed(2)).join(' ')}"/></svg>
-    ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em class="${ps[i]>0?'ok':ps[i]<0?'bad':''}">${fmtP(ps[i])}</em><i class="g" style="height:${(gs[i]/maxG*100).toFixed(1)}%"></i><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span></div>`).join('')}</div>
+    ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em class="${ps[i]>0?'ok':ps[i]<0?'bad':''}">${fmtP(ps[i])}</em><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span></div>`).join('')}</div>
   <div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?lab(r):''}</span>`).join('')}</div>
-  <div class="legend"><span><i style="background:color-mix(in srgb,var(--lime) 42%,var(--fill))"></i>gols</span><span><i style="background:var(--ok);border-radius:50%"></i>% acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span></div>`;
+  <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span></div>`;
 }
 /* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
 const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
@@ -3951,7 +3951,7 @@ function viewStats(liga){
     ${posHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
-      ${vePat(liga)?grafMomento(grupos,g=>g.gols,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
+      ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
         :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
       ${[...grupos].reverse().map(a=>`<div class="rk"><span class="nm num">${labG(a)}</span>
         <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>

@@ -458,3 +458,12 @@ com eixos numéricos (não cabe no celular — os valores vão em cima das colun
 grupos) em `index.html` · `smoke.py` (D-149) · `visual.py` (tela 18 "momento") ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-151"></a>
+### D-151 · Momento sem as barras de gol: só a linha
+**Quando:** 2026-09-14.
+**O quê:** o gráfico Momento (D-150) perde as barras de gols; fica a linha da % de vitória real −
+esperada sobre o zero tracejado, com o valor em cima de cada coluna. Os gols continuam na linha
+de cada grupo, logo abaixo.
+**Por quê:** duas medidas numa coluna só (altura da barra e ponto da linha) confundiam a leitura.
+**Onde:** `grafMomento`, CSS `.chart.momento` em `index.html` · [Stats §2](../produto/stats.md).
+
