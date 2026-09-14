@@ -404,3 +404,13 @@ partida** (`overPct`), como o ranking de temporada (D-145), em vez do saldo soma
 30 partidas no mês. Uma leitura só em todas as telas.
 **Onde:** `destaques` (`top`), `statsBlock` em `index.html` · [Stats §3](../produto/stats.md).
 
+<a id="d-148"></a>
+### D-148 · Tempo em quadra é volume, como presença: total, sem piso
+**Quando:** 2026-09-14.
+**O quê:** "Tempo em quadra por racha" (D-145) volta a ser **Mais tempo em quadra**, total, sem o
+piso de metade dos rachas — a mesma exceção da presença. A linha continua dizendo "N min por racha".
+**Por quê:** tempo em quadra mede o mesmo que presença (quanto a pessoa esteve lá); dividir por
+racha só premiava quem veio pouco e ficou o tempo todo.
+**Onde:** `listasRk` (`min`), `viewStats` (`SECS.min`, `posicoes`) em `index.html` ·
+[Stats §2](../produto/stats.md).
+

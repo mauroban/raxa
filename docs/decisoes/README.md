@@ -133,6 +133,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-145](stats-e-destaques.md#d-145) · Rankings de temporada são taxas (por partida, por racha, a cada 10 min), presença é a exceção, piso de metade dos rachas do período
 - [D-146](stats-e-destaques.md#d-146) · "Os melhores do racha" ordena por divisão e, dentro dela, por Elo
 - [D-147](stats-e-destaques.md#d-147) · "Quem mais rendeu" nos Destaques também é % por partida
+- [D-148](stats-e-destaques.md#d-148) · Tempo em quadra é volume, como presença: total, sem piso
 
 ### [Interface](interface.md)
 

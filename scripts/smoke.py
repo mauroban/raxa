@@ -868,7 +868,7 @@ step('revisao: corrigir autor de gol de partida encerrada',()=>{
 step('numeros: abas jogador/racha e listas compactas',()=>{
   A.statsTab({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
-  if(!/Rankings/.test(h)||!/Tempo em quadra por racha/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
+  if(!/Rankings/.test(h)||!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
   /* D-145: taxa, nao total — sem Artilharia nem Mais vitorias na temporada; piso "min. N de M rachas" escrito */
   if(/>Artilharia</.test(h)||/Mais vitórias/.test(h))throw new Error('ranking de total (gols, vitorias) nao cabe na temporada (D-145)');
   if(!/mín\. \d+ de \d+ rachas?/.test(h))throw new Error('faltou o piso "min. N de M rachas" nos rankings');
