@@ -127,6 +127,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-114](stats-e-destaques.md#d-114) · Filtros da Stats: uma família só, sem card
 - [D-134](stats-e-destaques.md#d-134) · Derrota não é ranking
 - [D-135](stats-e-destaques.md#d-135) · Na aba Jogador, linha e gol são duas leituras — não um interruptor
+- [D-142](stats-e-destaques.md#d-142) · Os destaques de um racha (setas ‹ › em "Último", botão na aba Jogos) existem para qualquer racha, não só o último
 
 ### [Interface](interface.md)
 

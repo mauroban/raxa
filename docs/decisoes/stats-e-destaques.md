@@ -322,3 +322,21 @@ uma terceira opção "Tudo" (é a soma que não descreve ninguém); decidir "peg
 partida a partida), `A.statsPapel`, `A.duelo` · `smoke.py` ("aba Jogador: quem ja pegou no gol
 escolhe entre Linha e Gol (D-135)", "numeros sem goleiros… so na aba Racha") ·
 [Stats §2](../produto/stats.md).
+
+<a id="d-142"></a>
+### D-142 · Os destaques de um racha existem para qualquer racha, não só o último
+**Quando:** 2026-09-14.
+**O quê:** o período "Último" da aba Stats ganha setas **‹ ›** no cabeçalho do card do racha, que
+andam entre os rachas da liga (do mais novo ao mais velho); o racha escolhido fica em
+`ui.statsRacha` e o botão do período mostra a data dele (tocar de novo volta ao mais novo). Na aba
+Jogos, o racha aberto ganha **Destaques do racha ›**, que leva a essa leitura. Nada de cálculo novo:
+`noPeriodo` já aceitava `racha:<id>` de qualquer racha; faltava um jeito de escolher.
+**Por quê:** "Rendeu acima do esperado" e os outros rankings da noite só saíam para o último
+racha; no domingo seguinte a leitura do sábado anterior sumia sem nunca ter sido vista por quem
+não abriu o app no dia.
+**Descartado:** lista de rachas dentro do seletor de período (não cabe na linha do celular);
+repetir os rankings dentro da aba Jogos (duas telas com a mesma conta).
+**Onde:** `idsRachas`, `statsPeriodo`, `viewStats` (botão do período, setas no card), `viewHist`
+(botão Destaques), `A.statsRacha`, `A.statsPer` em `index.html` · `smoke.py` ("numeros: as setas
+andam para o racha anterior…") · [Stats §2](../produto/stats.md).
+

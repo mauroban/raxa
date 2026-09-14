@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
-    'statsPer','statsTab','statsSemGk','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
+    'statsPer','statsTab','statsSemGk','statsRacha','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
@@ -1008,6 +1008,34 @@ step('numeros: presentes do ultimo racha contam quem saiu no meio',()=>{
   const esperado=new Set([...sess.presentIds,...Object.keys(J)]).size;
   if(!new RegExp('<b class="num">'+esperado+'</b><span>presentes</span>').test(els['#app'].innerHTML))
     throw new Error('tile de presentes nao mostra '+esperado);
+});
+step('numeros: as setas andam para o racha anterior e "Ultimo" volta ao mais novo (D-142)',()=>{
+  const l=L();
+  /* um racha ANTERIOR de mentira: copia da ultima partida, noutra sessao, uma semana antes */
+  const ult=l.matches[l.matches.length-1],velha=JSON.parse(JSON.stringify(ult));
+  velha.id='r-antigo-m';velha.sessionId='r-antigo';velha.ts=ult.ts-7*86400000;
+  if(velha.startedAt)velha.startedAt-=7*86400000;if(velha.endedAt)velha.endedAt-=7*86400000;
+  (velha.events||[]).forEach(e=>{if(e.t)e.t-=7*86400000});(velha.goals||[]).forEach(g=>{if(g.t)g.t-=7*86400000});
+  delete velha.deltas;delete velha.moves;delete velha.over;
+  l.matches.push(velha);rebuildAll(l);
+  const ids=idsRachas(l);
+  if(ids.length<2||ids[1]!=='r-antigo')throw new Error('o racha antigo devia vir logo depois do mais novo: '+ids.join(','));
+  const limpa=()=>{l.matches=l.matches.filter(x=>x.id!=='r-antigo-m');S.ui.statsRacha=null;rebuildAll(l)};
+  try{
+  A.statsRacha({dataset:{id:ids[1]}});
+  if(statsPeriodo(l)!=='racha:'+ids[1])throw new Error('periodo nao virou o racha anterior');
+  if(!/data-a="statsRacha" data-id="[^"]+"/.test(els['#app'].innerHTML))throw new Error('setas de racha nao renderizaram');
+  if(!/Rendeu acima do esperado|Quem mais ganhou/.test(els['#app'].innerHTML))throw new Error('destaques do racha anterior nao apareceram');
+  A.statsPer({dataset:{v:'racha'}});
+  if(statsPeriodo(l)!=='racha:'+ids[0])throw new Error('"Ultimo" nao voltou ao racha mais novo');
+  /* da aba Jogos: o botao Destaques leva ao mesmo lugar */
+  S.ui.tab='hist';A.histRacha({dataset:{id:ids[1]}});
+  if(els['#app'].innerHTML.indexOf('Destaques do racha')<0)throw new Error('botao Destaques nao apareceu no racha aberto');
+  A.statsRacha({dataset:{id:ids[1]}});
+  if(S.ui.tab!=='stats'||statsPeriodo(l)!=='racha:'+ids[1])throw new Error('botao Destaques nao levou aos numeros do racha');
+  A.statsPer({dataset:{v:'racha'}});
+  }finally{limpa()}
+  if(statsPeriodo(l)!=='racha:'+idsRachas(l)[0])throw new Error('depois de limpar, o periodo devia ser o ultimo racha');
 });
 step('times do racha: toque abre a escalacao original',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],t=sess.teams[0];

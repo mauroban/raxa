@@ -1962,9 +1962,15 @@ const ANO_ATUAL=()=>new Date().getFullYear();
 /* período das estatísticas: 'sempre', 'ano' (= ano atual) ou um ano específico */
 /* 'sempre' | 'ano' (atual) | 2024 | 'mes' (últimos 30 dias) | 'racha:<id>' (o último racha) */
 const ultimoRachaId=liga=>{const ms=(liga.matches||[]).filter(m=>!m.voided);if(!ms.length)return null;const m=ms.reduce((a,b)=>b.ts>a.ts?b:a);return m.sessionId||m.id};
+/* Os rachas da liga, do mais novo ao mais velho, pelo id que `noPeriodo` lê
+   (sessionId, ou id da partida avulsa). Serve às setas ‹ › do "Último" (D-142). */
+const idsRachas=liga=>{const fim={};(liga.matches||[]).filter(m=>!m.voided).forEach(m=>{const k=m.sessionId||m.id;fim[k]=Math.max(fim[k]||0,m.ts)});
+  return Object.keys(fim).sort((a,b)=>fim[b]-fim[a])};
 const statsPeriodo=liga=>{const v=S.ui.statsPer;
   if(v==='sempre'||v==='mes')return v;
-  if(v==='racha')return 'racha:'+(liga?ultimoRachaId(liga):'');
+  /* "Último" abre no racha mais novo, mas as setas andam para os anteriores:
+     o racha escolhido fica em ui.statsRacha (e só vale enquanto existir) */
+  if(v==='racha'){const sel=S.ui.statsRacha;return 'racha:'+(liga?(sel&&idsRachas(liga).includes(sel)?sel:ultimoRachaId(liga)):'')}
   return /^\d{4}$/.test(String(v))?+v:'ano'};
 function noPeriodo(m,p){
   if(!p||p==='sempre')return true;
@@ -3616,7 +3622,9 @@ function viewStats(liga){
   const stP=papel==='G'?statsLiga(liga,per,'G'):stL;
   const JP=stP.J,DUP=stP.DU,PAP=stP.PA;
   const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
-  const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?'no último racha':'em '+anoSel;
+  const ehUltimo=soRacha&&per.slice(6)===ultimoRachaId(liga);
+  const dataRacha=()=>{const m=liga.matches.find(x=>!x.voided&&(x.sessionId||x.id)===per.slice(6));return m?new Date(m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):''};
+  const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?(ehUltimo?'no último racha':'no racha de '+dataRacha()):'em '+anoSel;
   /* filtro de período: os anos que existem no histórico + desde sempre */
   const anosLiga=[...new Set(liga.matches.filter(m=>!m.voided).map(m=>ANO(m.ts)))].sort((a,b)=>b-a);
   if(!anosLiga.includes(ANO_ATUAL()))anosLiga.unshift(ANO_ATUAL());
@@ -3629,7 +3637,7 @@ function viewStats(liga){
       <button class="${tab==='racha'?'on':''}" data-a="statsTab" data-v="racha">Racha</button>
     </div>
     <div class="seg per">
-      <button class="${soRacha?'on':''}" data-a="statsPer" data-v="racha">Último</button>
+      <button class="${soRacha?'on':''}" data-a="statsPer" data-v="racha">${soRacha&&!ehUltimo?dataRacha():'Último'}</button>
       <button class="${per==='mes'?'on':''}" data-a="statsPer" data-v="mes">30 dias</button>
       ${anosLiga.map(y=>`<button class="${anoSel===y?'on':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
       <button class="${per==='sempre'?'on':''}" data-a="statsPer" data-v="sempre">Sempre</button>
@@ -3925,7 +3933,11 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const lin=(x,val,sub)=>`<div class="rk3" data-a="pSheet" data-id="${x.pid}"><span class="pos">·</span><div class="nm">${esc(nameOf(liga,x.pid))}${sub?`<small>${sub}</small>`:''}</div><span class="val">${val}</span></div>`;
     return `
   <div class="card">
-    <div class="k" style="margin-bottom:10px">Racha de ${DIA(ini)} · ${new Date(ini).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${new Date(fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    ${(()=>{ /* ‹ › andam entre os rachas da liga (D-142): o mais novo à direita */
+      const ids=idsRachas(liga),i=ids.indexOf(sid),ant=i>=0&&i<ids.length-1?ids[i+1]:null,prox=i>0?ids[i-1]:null;
+      const seta=(id,ch,tit)=>`<button class="btn sm ghost" data-a="statsRacha" data-id="${id||''}" title="${tit}" aria-label="${tit}" ${id?'':'disabled'} style="min-width:36px;padding:4px 10px">${ch}</button>`;
+      return `<div class="row" style="margin-bottom:10px;gap:6px"><div class="k" style="flex:1;min-width:0">Racha de ${DIA(ini)} · ${new Date(ini).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${new Date(fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        ${ids.length>1?seta(ant,'‹','racha anterior')+seta(prox,'›','racha seguinte'):''}</div>`})()}
     <div class="tiles four">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${presentes}</b><span>presentes</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
@@ -4351,6 +4363,7 @@ function viewHist(liga){
         <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
       <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
+      ${aberto.avulso?'':`<button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" style="margin-top:10px">Destaques do racha ›</button>`}
     </div>
     <div class="card" style="padding:0">${ms.map(m=>mrow(liga,m,false,eu)).join('')}</div>`;
   }
@@ -6245,8 +6258,10 @@ const A={
   toggleCfg(el){const l=L();l.cfg[el.dataset.k]=!l.cfg[el.dataset.k];save();render()},
   setVis(el){const l=L();l.cfg.rankVisibility=el.dataset.v==='admin'?'admin':'todos';save();render()},
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
-  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.ppPage=0;save();render()},
+  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.statsRacha=null;S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
+  /* abrir os destaques de UM racha (setas ‹ › do card, ou "Destaques" na aba Jogos, D-142) */
+  statsRacha(el){const id=el.dataset.id||null;if(!id)return;S.ui.statsRacha=id;S.ui.statsPer='racha';S.ui.statsTab='racha';S.ui.tab='stats';S.ui.ppPage=0;save();render()},
   statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
   /* linha ou gol na aba Jogador (D-135): a escolha é da pessoa aberta, não
      do aparelho; a página volta ao começo do partida-a-partida, outra lista */
