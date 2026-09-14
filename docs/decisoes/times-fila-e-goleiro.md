@@ -414,3 +414,15 @@ evitar.
 em `index.html` · [Regras do racha §3](../produto/regras-do-racha.md) · [Fluxo §2](../produto/fluxo-do-racha.md)
 · `scripts/test.py` [3] · `scripts/smoke.py` ("19 presentes", "botao de rodizio", "16 na linha + 3 goleiros",
 "12 na linha + 2 goleiros").
+
+<a id="d-162"></a>
+### D-162 · "(goleiro reveza)" só com um goleiro; com dois ou mais, "(goleiros à parte)"
+**Quando:** 2026-09-14.
+**O quê:** o cabeçalho da montagem dizia "Times · 5v5 (goleiro reveza)" sempre que havia
+rodízio. Com dois ou mais goleiros, cada um fica no seu gol (D-140) — "reveza" lia-se como
+"trocam de lado". Agora: um goleiro → "(goleiro reveza)"; dois ou mais → "(goleiros à parte)".
+O card dos goleiros já dizia o certo ("um em cada gol"). `patentes.md` ainda falava em
+"alternando os lados" — corrigido.
+**Onde:** `viewTimes` em `index.html` · `visual.py` (telas 20 e 21: 12 de linha + 2 goleiros) ·
+[Patentes](../produto/patentes.md) · [Regras do racha](../produto/regras-do-racha.md).
+

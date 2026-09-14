@@ -2817,7 +2817,7 @@ function viewTimes(liga,lv){
   const faltando=lv.teams.map(t=>alvoTime(liga,lv,t,per)-t.ids.length).filter(x=>x>0);
   return `
   <div class="card">
-    <div class="row"><div class="k">Times · ${liga.cfg.format}v${liga.cfg.format}${rod?' (goleiro reveza)':''}</div>
+    <div class="row"><div class="k">Times · ${liga.cfg.format}v${liga.cfg.format}${rod?(pool.length===1?' (goleiro reveza)':' (goleiros à parte)'):''}</div>
       <div class="sp tiny ${diff<18?'win':diff<55?'muted':'dn'}">${esc(verdict)}</div></div>
     <div class="balbar"><i style="width:${clamp(100-diff*1.6,4,100)}%"></i></div>
     <div style="height:12px"></div>

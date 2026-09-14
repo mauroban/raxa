@@ -57,6 +57,8 @@ TELAS = {
     17: 'gol',
     18: 'momento',
     19: 'painel da liga',
+    20: 'montagem 12+2',
+    21: 'pre-partida 12+2',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -142,6 +144,14 @@ DRIVER = r"""
     rebuildAll(l);const p=l.players.find(x=>ult.lineups[0].includes(x.id));p.owner='Mauro';S.me.name='Mauro';l.cfg.rankVisibility='todos';
     S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();
     const alvo=document.querySelector('.chart.momento');if(alvo)window.scrollTo(0,alvo.getBoundingClientRect().top+window.scrollY-160);
+  }
+  if(step===20||step===21){        /* 12 de linha + 2 goleiros no 5v5: 3 grupos, goleiros no rodízio, um em cada gol (D-140) */
+    const l=L();l.cfg.format=5;A.cancelRacha&&l.live&&(l.live=null);A.startRacha();
+    const lv=l.live,gks=l.players.filter(p=>p.gk).slice(0,2),lin=l.players.filter(p=>!p.gk).slice(0,12);
+    lv.presentIds=[...lin,...gks].map(p=>p.id);lv.gkToday=gks.map(p=>p.id);
+    A.toTimes();
+    if(step===21){A.startJogo();}
+    render();closeSheet();
   }
   if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
     const l=L(),ult=l.matches[l.matches.length-1];
