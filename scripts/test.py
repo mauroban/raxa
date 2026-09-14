@@ -619,6 +619,22 @@ console.log('\n[17] Elo de largada de todos os titulares e Δ por papel (D-118)'
   ok(!m.papel['p2'].G&&m.papel['p2'].L.d===m.deltas['p2'],'quem so jogou na linha tem um papel so');
 }
 
+console.log('\n[18] movimentos de nivel: inicio e fim do periodo, nao o nivel de hoje (D-155)');
+{
+  const liga={id:'y',name:'t',cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
+  const p=mk('Zé',1000,0);liga.players.push(p);p.L.def=true;p.L.games=5;p.L.rank=10;   // com patente
+  /* agosto: Ouro 1 (9) → Ouro 2 (10) · setembro: Ouro 2 (10) → Ouro 1 (9) → Ouro 2 (10) · hoje: Ouro 2 */
+  const ago=[{id:'a1',ts:Date.UTC(2026,7,1),moves:[{pid:p.id,role:'L',dir:1,from:9,rank:10}]}];
+  const set=[{id:'s1',ts:Date.UTC(2026,8,1),moves:[{pid:p.id,role:'L',dir:-1,from:10,rank:9}]},
+             {id:'s2',ts:Date.UTC(2026,8,8),moves:[{pid:p.id,role:'L',dir:1,from:9,rank:10}]}];
+  const mA=movimentos(liga,ago),mS=movimentos(liga,set),mT=movimentos(liga,ago.concat(set));
+  ok(mA.length===1&&mA[0].de===9&&mA[0].para===10&&mA[0].n===1,'agosto: saiu de Ouro 1 e chegou em Ouro 2');
+  ok(mS.length===0,'setembro: caiu e voltou — começou e terminou em Ouro 2, não é movimento');
+  ok(mT.length===1&&mT[0].de===9&&mT[0].para===10,'agosto+setembro: início de agosto → fim de setembro');
+  const velho=[{id:'v1',ts:1,moves:[{pid:p.id,role:'L',dir:1,rank:7}]}];   // partida antiga, sem `from`
+  ok(movimentos(liga,velho)[0].de===6,'movimento sem `from` (versão antiga) lê rank − dir');
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """

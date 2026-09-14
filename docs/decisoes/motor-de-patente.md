@@ -373,3 +373,22 @@ muda, então a comparação vale).
 Uma linha por decisão, nesta ordem: **o que foi decidido** (com a data), **por quê**, **o que foi
 descartado** e **onde ela vive** — documento, função e teste. Se não tem teste, diga que não tem.
 Decisão sem "por quê" volta a ser discutida em três meses; decisão sem "onde" vira lenda.
+
+<a id="d-155"></a>
+### D-155 · Mudança de nível num período: início e fim dele, não o nível de hoje
+**Quando:** 2026-09-14.
+**O quê:** cada movimento gravado na partida (`m.moves`) passa a guardar `from` (nível no apito)
+além de `rank` (nível no fim). `movimentos(liga, ms)` lê, por pessoa e função, o `from` da
+primeira mudança e o `rank` da última, na ordem do tempo — o "de onde → para onde" do período.
+Usam isso: o card Níveis e os chips ▲▼ do painel da liga (D-153), o "Nível" do último racha, o
+resumo ao encerrar o racha (D-99). Partida antiga sem `from` lê `rank − dir`.
+**Por quê:** as telas faziam "nível de hoje menos as setas do período". Quem foi de Ouro 1 a
+Ouro 2 em agosto e caiu para Ouro 1 em setembro aparecia em agosto saindo de Ouro 0, e em
+setembro "caindo de Ouro 3 para Ouro 2" — degraus em que nunca esteve. Além disso `dir` é só o
+sinal: duas divisões numa partida contavam uma.
+**Descartado:** reprocessar o histórico para achar o nível no início do período (o `from` da
+primeira mudança já é isso, sem custo).
+**Onde:** `applyMatch` (`from` em `m.moves`), `movimentos`, `cardNiveis`, `cardGrupos`,
+`cardsUmRacha`, `resumoRacha`, `A.endRacha` em `index.html` · `test.py` ([18]) ·
+[Stats §2](../produto/stats.md).
+

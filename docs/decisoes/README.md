@@ -34,6 +34,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-110](motor-de-patente.md#d-110) · Gol de goleiro é conta de goleiro; improviso no gol entra uma patente abaixo
 - [D-113](motor-de-patente.md#d-113) · Sem "sinal de confiança" na patente: o estudo que decidiu (scripts/confianca.py)
 - [D-115](motor-de-patente.md#d-115) · Diferença mantida no tempo vale ~1 divisão a mais que o retrato: o estudo (scripts/consistencia.py)
+- [D-155](motor-de-patente.md#d-155) · Mudança de nível num período: nível no início e no fim dele, não o de hoje (`from` em `m.moves`, `movimentos`)
 
 ### [Escada, calibração e palpite](escada-calibracao-e-palpite.md)
 

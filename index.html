@@ -1638,7 +1638,7 @@ function applyMatch(liga,m){
   /* mudança de nível só existe para quem TEM nível: quem ainda calibra sem
      nível manual anda por baixo, mas não aparece em subiu/caiu            */
   m.moves=Object.keys(seen).map(k=>seen[k]).filter(x=>x.rank!==x.from&&temPatente(liga,P(liga,x.pid),x.role))
-    .map(x=>({pid:x.pid,role:x.role,dir:x.rank>x.from?1:-1,rank:x.rank}));
+    .map(x=>({pid:x.pid,role:x.role,dir:x.rank>x.from?1:-1,from:x.from,rank:x.rank}));   // from/rank: início e fim na partida (D-155)
   for(const g of m.goals||[]){const p=P(liga,g.pid);if(!p)continue;if(g.own)p.gc=(p.gc||0)+1;else p.goals++}
 }
 /* Recalcula tudo do zero a partir do nível de entrada de cada jogador — é o
@@ -2335,6 +2335,18 @@ function grafMomento(arr,pct,lab,opts){
     ${arr.map((r,i)=>`<div class="col ${i===n-1?'cur':''}"><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span><b class="lbl ${ps[i]>0?'ok':ps[i]<0?'bad':''} ${ps[i]<0?'dn':'up'}" style="bottom:${y(ps[i]).toFixed(2)}%">${fmtP(ps[i])}</b></div>`).join('')}</div>
   <div class="chartx">${arr.map((r,i)=>`<span>${n<=8||i%2===(n-1)%2?lab(r)+(sub?`<small>${sub(r)}</small>`:''):''}</span>`).join('')}</div>
   <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span>${sub?'<span><i style="background:var(--mute2);width:14px;height:2px;border-radius:0;vertical-align:2px"></i>aproveitamento embaixo</span>':''}</div>`;
+}
+/* Movimentos de nível num conjunto de partidas (D-155): por pessoa e função,
+   o nível ANTES da primeira mudança e DEPOIS da última, na ordem do tempo —
+   início e fim do período. Nada de "nível de hoje menos as setas": quem
+   mudou depois do período aparecia saindo de um degrau em que nunca esteve. */
+function movimentos(liga,ms){
+  const M={};
+  [...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>(m.moves||[]).forEach(x=>{
+    const k=x.pid+'|'+(x.role||'L'),from=typeof x.from==='number'?x.from:x.rank-(x.dir||0);
+    const n=M[k]||(M[k]={pid:x.pid,role:x.role||'L',de:from});n.para=x.rank}));
+  return Object.values(M).map(x=>Object.assign(x,{n:x.para-x.de}))
+    .filter(x=>x.n&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role));
 }
 /* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
 const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
@@ -4081,9 +4093,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
     const rendeu=Object.keys(over).map(pid=>({pid,over:over[pid],j:(J[pid]||{}).jogos||0})).filter(x=>x.j>=3).sort((a,b)=>b.over-a.over);
     const gks=todos.filter(x=>x.minGk>=20*60000).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk);
-    const moves=[];ms.forEach(m=>(m.moves||[]).forEach(x=>moves.push(x)));
-    const net={};moves.forEach(x=>{const k=x.pid+'|'+(x.role||'L');net[k]=(net[k]||0)+x.dir});
-    const subiu=Object.entries(net).filter(x=>x[1]>0),caiu=Object.entries(net).filter(x=>x[1]<0);
+    const movsR=movimentos(liga,ms);   // de onde saiu → onde chegou NO RACHA (D-155)
     const gcN={};ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.own&&g.pid)gcN[g.pid]=(gcN[g.pid]||0)+1}));
     const gc=Object.keys(gcN).map(pid=>({pid,gc:gcN[pid]})).sort((a,b)=>b.gc-a.gc);   // um por pessoa, com a contagem (D-112)
     const lin=(x,val,sub)=>`<div class="rk3" data-a="pSheet" data-id="${x.pid}"><span class="pos">·</span><div class="nm">${esc(nameOf(liga,x.pid))}${sub?`<small>${sub}</small>`:''}</div><span class="val">${val}</span></div>`;
@@ -4115,13 +4125,12 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
          "de onde → para onde" escrito — quem andou mais vem primeiro     */
       if(!vePat(liga))return '';
-      const movRow=x=>{const [pid,role]=x[0].split('|'),n=x[1],p=P(liga,pid);if(!p)return '';
-        const tr=rt(p,role),de=clamp(tr.rank-n,0,TOP),up=n>0;
+      const movRow=x=>{const n=x.n,up=n>0;
         return `<div class="rk3">
           <span class="pos" style="color:${up?'var(--ok)':'var(--bad)'};font-size:12px;letter-spacing:1px;min-width:30px">${(up?'▲':'▼').repeat(Math.min(Math.abs(n),3))}</span>
-          <div class="nm">${esc(nameOf(liga,pid))}<small>${pl(Math.abs(n),'divisão','divisões')}${role==='G'?' · no gol':''}</small></div>
-          <span class="val" style="display:flex;align-items:center;gap:5px">${patBadgeShort(liga,de)}<span style="color:var(--mute)">→</span>${patBadge(liga,tr.rank)}</span></div>`};
-      const movs=[...subiu].sort((a,b)=>b[1]-a[1]).concat([...caiu].sort((a,b)=>a[1]-b[1]));
+          <div class="nm">${esc(nameOf(liga,x.pid))}<small>${pl(Math.abs(n),'divisão','divisões')}${x.role==='G'?' · no gol':''}</small></div>
+          <span class="val" style="display:flex;align-items:center;gap:5px">${patBadgeShort(liga,x.de)}<span style="color:var(--mute)">→</span>${patBadge(liga,x.para)}</span></div>`};
+      const movs=movsR.filter(x=>x.n>0).sort((a,b)=>b.n-a.n).concat(movsR.filter(x=>x.n<0).sort((a,b)=>a.n-b.n));
       return movs.length?`<div class="sec"><div class="k2">Nível</div>${movs.map(movRow).join('')}</div>`
         :'<div class="tiny muted" style="margin-top:8px">Ninguém mudou de nível.</div>';
     })()}
@@ -4150,8 +4159,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       const craque=verPat?[...eleg].sort((a,b)=>overPct(b)-overPct(a)||b.v-a.v)[0]
                       :[...eleg].sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.v-a.v)[0];
       const art=gente.filter(x=>x.gols+x.golsGk>0).sort((a,b)=>(b.gols+b.golsGk)-(a.gols+a.golsGk))[0];
-      const net={};g.ms.forEach(m=>(m.moves||[]).forEach(x=>{net[x.pid]=(net[x.pid]||0)+x.dir}));
-      const subiu=Object.values(net).filter(n=>n>0).length,caiu=Object.values(net).filter(n=>n<0).length;
+      const mv=movimentos(liga,g.ms),subiu=mv.filter(x=>x.n>0).length,caiu=mv.filter(x=>x.n<0).length;
       const cv=craque?(verPat?overPct(craque):aprDe(craque.v,craque.e,craque.jogos)):0;
       return `<button class="grow" data-a="${act}" data-id="${esc(g.k)}" data-v="${esc(g.k)}">
         <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(g.ms.length,'partida')} · ${pl(g.gols,'gol')}</span><span class="chev">›</span></div>
@@ -4169,9 +4177,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     if(!verPat||!ms.length)return '';
     const gente=Object.keys(J).map(id=>P(liga,id)).filter(p=>p&&!p.arq&&temPatente(liga,p,'L'));
     const porPat=[0,0,0,0,0];gente.forEach(p=>porPat[patOf(p.L.rank)]++);
-    const net={};ms.forEach(m=>(m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');const n=net[k]||(net[k]={pid:x.pid,role:x.role||'L',n:0});n.n+=x.dir}));
-    const movs=Object.values(net).filter(x=>x.n&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role))
-      .map(x=>{const tr=rt(P(liga,x.pid),x.role);return Object.assign(x,{para:tr.rank,de:clamp(tr.rank-x.n,0,TOP)})}).filter(x=>x.de!==x.para);
+    const movs=movimentos(liga,ms);   // início e fim do período, não o nível de hoje (D-155)
     const subiu=movs.filter(x=>x.n>0).sort((a,b)=>b.n-a.n||a.para-b.para),caiu=movs.filter(x=>x.n<0).sort((a,b)=>a.n-b.n||b.para-a.para);
     const quem={};movs.forEach(x=>quem[x.pid]=1);
     const setas=x=>`<span style="display:inline-flex;align-items:center;gap:5px">${patBadgeShort(liga,x.de)}<span style="color:var(--mute)">→</span>${patBadgeShort(liga,x.para)}</span>`;
@@ -4701,7 +4707,7 @@ function viewCfgBody(liga){
 function resumoRacha(liga,sess,ms){
   ms=ms||(sess.matchIds||[]).map(id=>liga.matches.find(m=>m.id===id)).filter(Boolean);
   const ver=vePat(liga);
-  const gols={},J={},net={};
+  const gols={},J={};
   let totGols=0,totMs=0;
   ms.forEach(m=>{
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1});
@@ -4709,7 +4715,6 @@ function resumoRacha(liga,sess,ms){
     const part={};matchStints(liga,m).forEach(st=>{totMs+=0;[0,1].forEach(sd=>(st.lineups[sd]||[]).forEach(id=>part[id]=sd))});
     totMs+=matchStints(liga,m).reduce((a,st)=>a+(st.dur||0),0);
     for(const id in part){const j=J[id]||(J[id]={v:0,e:0,d:0});if(m.result==='draw')j.e++;else if(m.result===part[id])j.v++;else j.d++}
-    (m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');const n=net[k]||(net[k]={pid:x.pid,role:x.role||'L',from:x.from});n.dir=(n.dir||0)+(x.dir||0)});
   });
   /* times da noite: pela composição original (D-59), como na aba Stats */
   const orig=timesDoRacha(liga,ms,sess);
@@ -4720,7 +4725,7 @@ function resumoRacha(liga,sess,ms){
   T.sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
   const art=Object.entries(gols).map(([pid,g])=>({pid,g})).sort((a,b)=>b.g-a.g).slice(0,3);
   const venc=Object.entries(J).map(([pid,j])=>Object.assign({pid,n:j.v+j.e+j.d},j)).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v||a.d-b.d||b.n-a.n).slice(0,3);
-  const mudou=ver?Object.values(net).filter(x=>x.dir&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role)).map(x=>{const tr=rt(P(liga,x.pid),x.role);return Object.assign({},x,{de:clamp(typeof x.from==='number'?x.from:tr.rank-x.dir,0,TOP),para:tr.rank})}).filter(x=>x.de!==x.para):[];
+  const mudou=ver?movimentos(liga,ms):[];   // início → fim do racha (D-155)
   const subiu=mudou.filter(x=>x.para>x.de).sort((a,b)=>(b.para-b.de)-(a.para-a.de)),caiu=mudou.filter(x=>x.para<x.de).sort((a,b)=>(a.para-a.de)-(b.para-b.de));
   const pres=(sess.presentIds||[]).length;
   const nome=pid=>esc(nameOf(liga,pid));
@@ -6025,11 +6030,9 @@ const A={
     if(!confirm(msg))return;
     const ms=lv.matchIds.map(id=>l.matches.find(m=>m.id===id)).filter(Boolean);
     if(!ms.length){l.live=null;save();render();return}
-    const gols={},net={};
-    ms.forEach(m=>{(m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1});
-      (m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');net[k]=(net[k]||0)+x.dir})});
+    const gols={};
+    ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1}));
     const top=Object.entries(gols).sort((a,b)=>b[1]-a[1])[0];
-    const ups=Object.entries(net).filter(x=>x[1]!==0);
     /* a presença da sessão é quem ESTEVE no racha (inclui quem foi embora antes
        do fim); os times ficam guardados como foram montados, para consulta */
     l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],
