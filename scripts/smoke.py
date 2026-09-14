@@ -70,7 +70,8 @@ step('toda acao tem classificacao de papel',()=>{
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
-    'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
+    'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
+    'verSenha','doNovaSenha','senhaSheet','doTrocaSenha','accResetPw','pdResetPw','copiaTmpPw']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
   if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));

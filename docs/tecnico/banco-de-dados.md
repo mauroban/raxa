@@ -63,7 +63,8 @@ create table profiles (
   handle      citext unique not null,          -- @rodrigo — é por aqui que o admin acha alguém
   nome        text   not null,
   avatar_url  text,
-  criado_em   timestamptz not null default now()
+  criado_em   timestamptz not null default now(),
+  must_change_password boolean not null default false   -- o dono redefiniu: cria senha nova ao entrar (D-164)
 );
 
 create table ligas (
@@ -307,6 +308,15 @@ o volume pedir). É a mesma decisão do protótipo, pelo mesmo motivo: contador 
 desencontra do histórico.
 
 ---
+
+## 6.1 Senha esquecida (D-164)
+
+O e-mail de `auth.users` é fictício (`<usuario>@raxa.app`), então a recuperação por link não
+existe. `reset_member_password(liga, conta)` — security definer, só o **dono** da liga, só
+para membro, nunca para si — gera 8 letras, grava em `auth.users.encrypted_password` com o
+mesmo bcrypt do Auth, marca `profiles.must_change_password` e apaga `auth.sessions` da conta.
+Devolve a temporária ao dono, que a passa adiante. No login, perfil marcado → o app exige senha
+nova (`auth.updateUser`) e desmarca o perfil (a policy de update de `profiles` já é só o próprio).
 
 ## 7. Segurança (RLS)
 

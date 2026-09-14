@@ -49,6 +49,7 @@
 - Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
 - Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)
 - Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências
+- **Senha esquecida**: o dono da liga redefine (senha temporária na ficha ou em Pendências) e a pessoa é obrigada a criar uma nova ao entrar; **trocar senha** na lista de ligas (D-164)
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
 - Editar nome, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar); **opiniões sobre o nível** de quem lança, um toque por pessoa, na ficha ou na tela "Minhas opiniões" (D-95)
 - **Juntar dois cadastros** da mesma pessoa (admin), reversível pela ficha ("Separar de novo")
@@ -61,7 +62,7 @@
 
 - Entrar por **link de convite** ou **convite direto com busca** (seção 7.3) — hoje só o código com aprovação
 - **Entrar** sem sinal com a sessão vencida (a cópia local exige estar logado; a sessão renova sozinha enquanto o app está aberto, então isso só acontece depois de dias fechado)
-- Recuperação de senha e e-mail de verdade
+- E-mail de verdade na conta (a recuperação de senha existe, mas passa pelo dono da liga — D-164)
 - Papel de escrita valendo no servidor para a gravação da liga (`save_parts` só exige ser membro — D-62)
 - Temporadas com reset parcial
 - Gráfico de evolução da patente ao longo do tempo

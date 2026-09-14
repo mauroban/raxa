@@ -29,6 +29,11 @@ Tempo total: ~10 minutos.
    `profiles` ao próprio perfil (username é metade da credencial), remove o
    `save_league` legado e faz `migrate_league` sair antes do lock quando a
    liga já migrou (senão toda leitura serializava os aparelhos do racha).
+   A rodada de **14/09/2026 (D-164)** acrescenta `profiles.must_change_password` e a
+   função `reset_member_password` (o dono da liga redefine a senha de um membro;
+   escreve em `auth.users` e apaga `auth.sessions` da conta — precisa rodar no SQL
+   Editor, como `postgres`). Sem rodar, o botão "Redefinir senha" falha e a tela
+   "Crie sua senha" nunca aparece.
 
 3. **Authentication → Sign In / Providers → Email**:
    - **Confirm email**: **desligado**  ← sem isso ninguém entra, porque o e-mail é fictício

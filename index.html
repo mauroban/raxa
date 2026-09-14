@@ -2520,6 +2520,7 @@ function renderHome(){
       <div class="tiny muted">Pode fechar o app: assim que aprovar, a liga aparece aqui.</div></div>`:''}
   <div class="hr"></div>
   <div class="tiny muted" style="text-align:center;line-height:1.6">Conectado como <b>${esc(ME?ME.username:'—')}</b> · dados no servidor<br>
+    <button data-a="senhaSheet" style="background:none;border:0;color:var(--mute);text-decoration:underline;font:inherit;cursor:pointer;padding:12px 14px;min-height:44px">trocar senha</button>
     <button data-a="logout" style="background:none;border:0;color:var(--mute);text-decoration:underline;font:inherit;cursor:pointer;padding:12px 14px;min-height:44px">sair da conta</button></div>`;
   $('#bar').innerHTML='';setNav('');
 }
@@ -6093,6 +6094,7 @@ const A={
         <div class="lbl">Conta<small>${PD.owner?'vinculada a <b>@'+esc(PD.owner)+'</b>':'ninguém assumiu este perfil'}</small></div>
         ${PD.owner?(podeConta?`<button class="btn sm ghost" data-a="pdOwner">desvincular</button>`:'')
           :podeConta?`<button class="btn sm ghost" data-a="pdOwner">Sou eu</button>`:''}
+        ${PD.owner&&DONO[l.id]&&PD.owner!==S.me.name?`<button class="btn sm ghost" data-a="pdResetPw" data-user="${esc(PD.owner)}">redefinir senha</button>`:''}
       </div>`;
     const temForm=nomeia||adm||podeConta||PD.owner!==(p.owner||null);
     openSheet(`
@@ -7529,6 +7531,7 @@ const ERROS={
   'Invalid login credentials':'Usuário ou senha errados.',
   'User already registered':'Esse usuário já existe. Vá em Entrar.',
   'Password should be at least 6 characters.':'A senha precisa de pelo menos 6 caracteres.',
+  'New password should be different from the old password.':'A senha nova precisa ser diferente da atual.',
   'Email logins are disabled':'Ative "Email" em Authentication → Providers no Supabase.',
   'Signups not allowed for this instance':'Ative "Allow new users to sign up" em Authentication → Sign In / Providers.'
 };
@@ -7543,10 +7546,11 @@ async function afterLogin(session){
   $('#app').innerHTML=topo('carregando')+'<div class="empty"><div class="big">Buscando suas ligas…</div></div>';setNav('');
   let prof=null;
   try{
-    const r=await sb.from('profiles').select('username').eq('id',session.user.id).maybeSingle();
+    const r=await sb.from('profiles').select('username,must_change_password').eq('id',session.user.id).maybeSingle();
     prof=r.data;
   }catch(e){}
   ME={id:session.user.id,username:(prof&&prof.username)||String(session.user.email||'').split('@')[0]};
+  if(prof&&prof.must_change_password){renderNovaSenha(session);return}   // entrou com a senha temporária do dono (D-164)
   try{localStorage.setItem('raxa_last_user',ME.username)}catch(e){}
   S=defState();
   S.me={id:ME.id,name:ME.username};
@@ -7613,6 +7617,96 @@ async function usaConvite(){
   if(r!=='erro')limpaConvite();
   return r;
 }
+/* ---------- senha (D-164) ----------
+   O e-mail da conta é fictício: não existe "esqueci a senha" por link. O dono
+   da liga redefine (reset_member_password) e passa a senha temporária; quem
+   entra com ela cai aqui e não vê nada antes de criar a própria. Trocar a
+   senha por vontade própria é a mesma folha, sem obrigação.                 */
+let SESSAO_NOVA=null;
+function renderNovaSenha(session,erro){
+  SESSAO_NOVA=session;
+  $('#app').innerHTML=topo('senha nova')+`
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:6px">Crie sua senha</h2>
+      <div class="tiny muted" style="line-height:1.5;margin-bottom:14px">Você entrou com a senha temporária que o dono da liga passou. Ela só serve uma vez.</div>
+      ${campoSenha('ns')}
+      ${erro?`<div class="tiny" style="color:var(--bad);margin-top:10px">${esc(erro)}</div>`:''}
+      <div style="height:14px"></div>
+      <button class="btn wide pri" data-a="doNovaSenha">Salvar e entrar</button>
+    </div>
+    <div class="tiny muted" style="text-align:center;margin-top:14px">
+      <button data-a="logout" style="background:none;border:0;color:var(--mute);text-decoration:underline;font:inherit;cursor:pointer;padding:12px 14px;min-height:44px">sair da conta</button></div>`;
+  $('#bar').innerHTML='';setNav('');
+  setTimeout(()=>{const i=$('#ns');if(i)i.focus()},120);
+}
+const campoSenha=id=>`<label class="f"><span class="k">Senha nova</span>
+    <div class="row" style="gap:8px"><input id="${id}" type="password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="mínimo 6 caracteres" style="flex:1;min-width:0">
+      <button type="button" class="btn sm ghost" data-a="verSenha" data-id="${id}">mostrar</button></div></label>`;
+async function salvaSenha(nova){
+  if(nova.length<6)return 'A senha precisa de pelo menos 6 caracteres.';
+  const r=await sb.auth.updateUser({password:nova});
+  if(r.error)return traduz(r.error);
+  try{await sb.from('profiles').update({must_change_password:false}).eq('id',ME.id)}catch(e){}
+  return null;
+}
+/* o dono pede a senha temporária de um membro e mostra na folha para passar adiante */
+async function redefineSenha(l,a){
+  if(!DONO[l.id])return toast('Só o dono da liga redefine senha');
+  if(a.user_id===ME.id)return toast('A sua você troca em "trocar senha", na lista de ligas');
+  if(!confirm('Redefinir a senha de @'+a.username+'? A senha atual deixa de valer e quem estiver logado com ela sai.'))return;
+  const {data,error}=await sb.rpc('reset_member_password',{p_id:l.id,p_user:a.user_id});
+  if(error)return toast('Não deu: '+traduz(error));
+  openSheet(`<h2>Senha temporária de @${esc(a.username)}</h2>
+    <div class="card" style="text-align:center;margin:12px 0"><div style="font-family:var(--disp);font-size:34px;letter-spacing:.18em;line-height:1.2">${esc(data)}</div></div>
+    <div class="tiny muted" style="line-height:1.5;margin-bottom:12px">Passe para a pessoa. Ela entra com o usuário <b>${esc(a.username)}</b> e essa senha, e o app pede uma senha nova na hora. Esta tela não volta: se perder, redefina de novo.</div>
+    <button class="btn wide pri" data-a="copiaTmpPw" data-u="${esc(a.username)}" data-p="${esc(data)}">Enviar</button>
+    <div style="height:8px"></div>
+    <button class="btn wide ghost" data-a="closeSheet">Fechar</button>`);
+}
+Object.assign(A,{
+  verSenha(el){const i=$('#'+el.dataset.id);if(!i)return;i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'mostrar':'esconder'},
+  async doNovaSenha(){
+    const nova=($('#ns')||{}).value||'';
+    authBusy('Salvando…');
+    const erro=await salvaSenha(nova);
+    if(erro){renderNovaSenha(SESSAO_NOVA,erro);return}
+    const s=SESSAO_NOVA;SESSAO_NOVA=null;
+    await afterLogin(s);
+  },
+  senhaSheet(){
+    openSheet(`<h2>Trocar senha</h2>
+      <div class="tiny muted" style="margin-bottom:12px">Vale para todos os aparelhos em que você entrar daqui para a frente.</div>
+      ${campoSenha('ts')}<div id="tsErro" class="tiny" style="color:var(--bad)"></div>
+      <div style="height:6px"></div>
+      <button class="btn wide pri" data-a="doTrocaSenha">Salvar</button>`);
+    setTimeout(()=>{const i=$('#ts');if(i)i.focus()},120);
+  },
+  async doTrocaSenha(){
+    const nova=($('#ts')||{}).value||'';
+    const erro=await salvaSenha(nova);
+    if(erro){const e=$('#tsErro');if(e)e.textContent=erro;return}
+    closeSheet();toast('Senha trocada');
+  },
+  accResetPw(el){
+    const l=L(),a=((ACC[l.id]||{}).lista||[]).find(x=>x.user_id===el.dataset.u);if(!a)return;
+    redefineSenha(l,a);
+  },
+  async pdResetPw(el){
+    const l=L(),user=el.dataset.user;
+    if(!DONO[l.id])return toast('Só o dono da liga redefine senha');
+    if(!ACC[l.id]||!ACC[l.id].lista)await loadAccounts(l.id);
+    const a=((ACC[l.id]||{}).lista||[]).find(x=>!x.pending&&x.username===user);
+    if(!a)return toast('Essa conta não está mais na liga');
+    redefineSenha(l,a);
+  },
+  copiaTmpPw(el){
+    const texto=`Raxa — usuário ${el.dataset.u}, senha temporária: ${el.dataset.p} (o app pede uma nova ao entrar)`;
+    if(navigator.share){navigator.share({title:'Raxa',text:texto}).catch(()=>{});return}
+    if(navigator.clipboard)navigator.clipboard.writeText(texto).then(()=>toast('Copiado'),()=>toast(el.dataset.p));
+    else toast(el.dataset.p);
+  }
+});
+
 async function boot(){
   if(!CONFIGURADO){renderSetup();return}
   guardaConvite();
@@ -7890,6 +7984,7 @@ Object.assign(A,{
             :'<div class="tiny muted" style="margin-bottom:10px">Nenhum jogador sem dono no cadastro.</div>'}
           <button class="btn wide ghost" data-a="accCreate" data-u="${esc(a.user_id)}" style="margin-bottom:10px">+ Criar jogador “${esc(a.username)}”</button>`}
       <div class="hr"></div>
+      ${DONO[l.id]&&a.user_id!==ME.id?`<button class="btn wide ghost" data-a="accResetPw" data-u="${esc(a.user_id)}" style="margin-bottom:10px">Redefinir senha</button>`:''}
       ${a.is_owner?'<div class="tiny muted">O dono da liga não pode ser removido.</div>'
         :`<button class="btn wide danger" data-a="accRemove" data-u="${esc(a.user_id)}">Tirar da liga</button>
           <div class="tiny muted" style="margin-top:6px">O jogador e o histórico ficam; só o acesso sai.</div>`}`);
