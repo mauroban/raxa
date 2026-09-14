@@ -574,6 +574,28 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 
 /* ---------- destaques e números ---------- */
 .k2{font-family:var(--body);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:11px;color:var(--mute);margin:16px 0 4px}
+/* linha de um grupo (racha, mês ou ano) no painel da liga (D-153): toque abre o período */
+.grow{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);padding:10px 2px;font:inherit;color:inherit;cursor:pointer}
+.grow:last-child{border-bottom:0}
+.grow:active{background:var(--panel2)}
+.grow .gh{display:flex;align-items:baseline;gap:8px}
+.grow .gl{font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase;white-space:nowrap}
+.grow .gm{flex:1;min-width:0;font-size:12px;color:var(--mute);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.grow .chev{color:var(--mute);font-size:18px;line-height:1}
+.grow .gd{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--fill);border-radius:999px;padding:4px 9px 4px 7px;font-size:12px;font-weight:600;max-width:100%}
+.chip>i{display:inline-flex;width:14px;justify-content:center;font-style:normal;font-size:12px}
+.chip>i svg{width:13px;height:13px}
+.chip>span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip>b{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--chalk)}
+.chip>b.ok{color:var(--ok)}.chip>b.bad{color:var(--bad)}
+.chip.lv{background:transparent;border:1px solid var(--line);padding:3px 8px}
+/* distribuição das patentes hoje (D-153): faixa proporcional, uma cor por patente */
+.patbar{display:flex;height:36px;border-radius:8px;overflow:hidden;gap:2px;margin:8px 0 6px;background:transparent;border:0;width:100%;padding:0;cursor:pointer}
+.patbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:13px;min-width:0}
+.patleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mute)}
+.patbar:active{opacity:.8}
+.patleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .dest{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
 .dest:last-of-type{border-bottom:0}
 .dest .pos{font-size:18px;line-height:1;flex:0 0 auto}
@@ -3823,7 +3845,8 @@ function viewStats(liga){
     /* o "Ver os 10 ›" mora na linha do título: é dele que a lista é */
     const ver=itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${itens.length>RK_MAX?'os '+RK_MAX:'todos'}<span class="chev">›</span></button>`:'';
     /* a dica (mínimo, unidade) só cabe na linha do título quando não há "Ver"; com ele, fica na folha */
-    const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}${hint&&!ver?` <span class="tiny muted">${hint}</span>`:''}</span>${ver}</div>`;
+    /* a dica (mínimo, unidade) vai numa linha própria, abaixo do título: na linha do título não cabia no celular (D-153) */
+    const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}</span>${ver}</div>${hint&&!ver?`<div class="tiny muted" style="margin:-3px 0 5px">${hint}</div>`:''}`;
     if(!itens.length)return `<div class="sec">${head}<div class="tiny muted" style="padding:6px 2px">${vazio||'Sem dados ainda.'}</div></div>`;
     const pos=posEmpate(itens,num);                      // empate divide a posição (D-89)
     return `<div class="sec">${head}${itens.slice(0,3).map((x,i)=>rkRowHtml(liga,eu,x,pos[i],i===0,fmt,null,nome)).join('')}</div>`;
@@ -4102,6 +4125,67 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     })()}
   </div>`;
   })();
+  /* O destaque de cada racha do mês, de cada mês do ano, de cada ano da vida
+     (D-153): uma linha por grupo com quem rendeu acima do esperado, o
+     artilheiro e quantos subiram/caíram de nível — tocar abre o período. */
+  const verPat=vePat(liga);
+  const cardGrupos=(()=>{
+    const grupoDe={mes:'racha',ano:'mes',sempre:'ano'}[tipo];if(!grupoDe)return '';
+    const G={};ms.forEach(m=>{const sid=m.sessionId||m.id,k=grupoDe==='racha'?sid:grupoDe==='mes'?MES_KEY(m.ts):String(ANO(m.ts));
+      const g=G[k]||(G[k]={k,ts:m.ts,fim:m.ts,ms:[],rachas:{},nR:0,gols:0});
+      g.ms.push(m);g.ts=Math.min(g.ts,m.ts);g.fim=Math.max(g.fim,m.ts);g.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];
+      if(!g.rachas[sid]){g.rachas[sid]=1;g.nR++}});
+    const arr=Object.values(G).sort((a,b)=>b.fim-a.fim);
+    if(arr.length<2)return '';                       // um grupo só é o próprio período
+    const act=grupoDe==='racha'?'statsRacha':grupoDe==='mes'?'statsMes':'statsAno';
+    const label=g=>grupoDe==='racha'?DIA(g.ts):grupoDe==='mes'?MESES[+g.k.slice(5)-1]:g.k;
+    const linhas=arr.map(g=>{
+      const per2=grupoDe==='racha'?'racha:'+g.k:grupoDe==='mes'?'mes:'+g.k:+g.k;
+      const gente=Object.values(statsLiga(liga,per2,semGk).J);
+      /* o mesmo piso das outras telas: 3 partidas num racha; metade dos rachas num mês ou ano */
+      const minJ=grupoDe==='racha'?3:1,minRg=grupoDe==='racha'?1:Math.max(1,Math.ceil(g.nR/2));
+      const eleg=gente.filter(x=>x.jogos>=minJ&&x.nR>=minRg);
+      const craque=verPat?[...eleg].sort((a,b)=>overPct(b)-overPct(a)||b.v-a.v)[0]
+                      :[...eleg].sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.v-a.v)[0];
+      const art=gente.filter(x=>x.gols+x.golsGk>0).sort((a,b)=>(b.gols+b.golsGk)-(a.gols+a.golsGk))[0];
+      const net={};g.ms.forEach(m=>(m.moves||[]).forEach(x=>{net[x.pid]=(net[x.pid]||0)+x.dir}));
+      const subiu=Object.values(net).filter(n=>n>0).length,caiu=Object.values(net).filter(n=>n<0).length;
+      const cv=craque?(verPat?overPct(craque):aprDe(craque.v,craque.e,craque.jogos)):0;
+      return `<button class="grow" data-a="${act}" data-id="${esc(g.k)}" data-v="${esc(g.k)}">
+        <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(g.ms.length,'partida')} · ${pl(g.gols,'gol')}</span><span class="chev">›</span></div>
+        <div class="gd">
+          ${craque?`<span class="chip" title="${verPat?'rendeu acima do esperado':'maior aproveitamento'}"><i>${ic('zap','var(--ok)')}</i><span>${esc(nameOf(liga,craque.pid))}</span><b class="${verPat?(cv>0?'ok':cv<0?'bad':''):''}">${verPat?(cv>0?'+':cv<0?'−':'')+Math.abs(Math.round(cv))+'%':cv+'%'}</b></span>`:''}
+          ${art?`<span class="chip" title="artilheiro"><i>⚽</i><span>${esc(nameOf(liga,art.pid))}</span><b>${art.gols+art.golsGk}</b></span>`:''}
+          ${verPat&&(subiu||caiu)?`<span class="chip lv" title="mudanças de nível"><b class="ok">▲${subiu}</b><b class="bad">▼${caiu}</b></span>`:''}
+        </div></button>`}).join('');
+    return `<div class="card" style="padding-bottom:4px">
+      <div class="row"><div class="k">${grupoDe==='racha'?'Racha a racha':grupoDe==='mes'?'Mês a mês':'Ano a ano'}</div><div class="sp tiny muted" style="white-space:nowrap">toque para abrir</div></div>
+      <div style="height:4px"></div>${linhas}</div>`})();
+  /* Níveis no período (D-153): a escada de hoje entre quem apareceu, e quem
+     mais subiu e mais caiu de nível nas partidas do período.               */
+  const cardNiveis=(()=>{
+    if(!verPat||!ms.length)return '';
+    const gente=Object.keys(J).map(id=>P(liga,id)).filter(p=>p&&!p.arq&&temPatente(liga,p,'L'));
+    const porPat=[0,0,0,0,0];gente.forEach(p=>porPat[patOf(p.L.rank)]++);
+    const net={};ms.forEach(m=>(m.moves||[]).forEach(x=>{const k=x.pid+'|'+(x.role||'L');const n=net[k]||(net[k]={pid:x.pid,role:x.role||'L',n:0});n.n+=x.dir}));
+    const movs=Object.values(net).filter(x=>x.n&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role))
+      .map(x=>{const tr=rt(P(liga,x.pid),x.role);return Object.assign(x,{para:tr.rank,de:clamp(tr.rank-x.n,0,TOP)})}).filter(x=>x.de!==x.para);
+    const subiu=movs.filter(x=>x.n>0).sort((a,b)=>b.n-a.n||a.para-b.para),caiu=movs.filter(x=>x.n<0).sort((a,b)=>a.n-b.n||b.para-a.para);
+    const quem={};movs.forEach(x=>quem[x.pid]=1);
+    const setas=x=>`<span style="display:inline-flex;align-items:center;gap:5px">${patBadgeShort(liga,x.de)}<span style="color:var(--mute)">→</span>${patBadgeShort(liga,x.para)}</span>`;
+    const subTxt=x=>pl(Math.abs(x.n),'divisão','divisões')+(x.role==='G'?' · no gol':'');
+    return `<div class="card">
+      <div class="k">Níveis ${rot}</div><div class="tiny muted" style="margin-top:2px">${pl(gente.length,'jogador','jogadores')} com nível, pela escada de hoje · toque para abrir a escada</div>
+      ${gente.length?`<button class="patbar" data-a="irEscada" title="abrir a escada" aria-label="abrir a escada">${porPat.map((n,k)=>n?`<i style="flex:${n};background:${PATFILL[k]};color:${patInk(k*3)}">${n}</i>`:'').join('')}</button>
+      <div class="patleg">${porPat.map((n,k)=>n?`<span><i style="background:${PATFILL[k]}"></i>${esc(liga.cfg.patNames[k])} ${n}</span>`:'').join('')}</div>`:''}
+      <div class="tiles" style="margin-top:12px">
+        <div class="tile" style="--tc:var(--ok)"><b class="num">${subiu.length}</b><span>subiram</span></div>
+        <div class="tile" style="--tc:var(--bad)"><b class="num">${caiu.length}</b><span>caíram</span></div>
+        <div class="tile" style="--tc:var(--mute2)"><b class="num">${Math.max(0,gente.length-Object.keys(quem).length)}</b><span>no mesmo nível</span></div>
+      </div>
+      ${rkSec('nsubiu','up','var(--ok)','Quem mais subiu','divisões ganhas no período',subiu,x=>x.n,setas,subTxt,'Ninguém subiu de nível no período.')}
+      ${rkSec('ncaiu','down','var(--bad)','Quem mais caiu','divisões perdidas no período',caiu,x=>-x.n,setas,subTxt,'Ninguém caiu de nível no período.')}
+    </div>`})();
   const cardsRacha=soRacha?cardsUmRacha:`
   <div class="card">
     <div class="k" style="margin-bottom:10px">O racha ${rot}</div>
@@ -4138,7 +4222,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       <div class="legend"><span><i class="avg"></i>média de gols por racha</span><span><i style="background:var(--lime)"></i>último racha</span></div>`})()}
   </div>
 
-${cardJuntos}  <div class="card">
+${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
     <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
     ${(()=>{
       /* Cada filtro faz uma pergunta, e a ordem dos rankings responde a ela:
@@ -6398,6 +6482,7 @@ const A={
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
   /* o botão do período volta ao ATUAL (último racha, mês de hoje, ano de hoje); as setas escolhem outro (D-149) */
   statsPer(el){const v=el.dataset.v;S.ui.statsPer=['sempre','mes','racha','ano'].includes(v)?v:'ano';S.ui.statsRacha=null;S.ui.statsMes=null;S.ui.statsAno=null;S.ui.ppPage=0;save();render()},
+  irEscada(){S.ui.tab='ranking';save();render()},
   statsMes(el){const k=el.dataset.v;if(!/^\d{4}-\d{2}$/.test(k||''))return;S.ui.statsMes=k;S.ui.statsPer='mes';S.ui.ppPage=0;save();render()},
   statsAno(el){const y=el.dataset.v;if(!/^\d{4}$/.test(y||''))return;S.ui.statsAno=+y;S.ui.statsPer='ano';S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},

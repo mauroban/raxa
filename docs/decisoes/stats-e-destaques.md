@@ -481,3 +481,25 @@ confundem — embaixo do eixo ele fica à mão sem competir.
 **Onde:** `grafMomento`, CSS `.chart.momento`, `.chartx span small` em `index.html` ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-153"></a>
+### D-153 · Painel da liga em Mês/Ano/Sempre: o destaque de cada grupo, os níveis, tudo com toque
+**Quando:** 2026-09-14.
+**O quê:** dois cards novos na aba Racha fora do "Último". **Racha a racha / Mês a mês / Ano a
+ano** (`cardGrupos`): uma linha por grupo do período com partidas, gols e chips — quem rendeu
+acima do esperado (`statsLiga` do grupo, `overPct`, piso 3 partidas num racha e metade dos rachas
+num mês/ano), artilheiro, ▲/▼ mudanças de nível — e a linha é um botão que abre o período
+(`statsRacha`/`statsMes`/`statsAno`). **Níveis** (`cardNiveis`, só com `vePat`): faixa
+proporcional das patentes de hoje entre quem apareceu (`.patbar`, toque → `irEscada`), tiles
+subiram/caíram/no mesmo nível e rankings "Quem mais subiu"/"Quem mais caiu" a partir de
+`m.moves` do período, com badges de → para. A dica dos rankings sai da linha do título e vai
+para uma linha própria (no celular não cabia). Tela 19 no `visual.py`.
+**Por quê:** em Mês, Ano e Sempre o painel era só tiles e rankings; faltava a história (o que
+aconteceu em cada racha do mês, em cada mês do ano), faltava a escada (o app é sobre nível e o
+painel não falava dela) e faltava por onde entrar — cada linha agora leva ao período.
+**Descartado:** repetir os rankings inteiros por grupo (a linha com três chips diz o que importa,
+o resto está a um toque); "Quem mais caiu" sem nomes (o resumo do racha já mostra quem caiu,
+D-99).
+**Onde:** `cardGrupos`, `cardNiveis`, `rkSec` (dica), `A.irEscada`, CSS `.grow`, `.chip`,
+`.patbar`, `.patleg` em `index.html` · `smoke.py` (D-149) · `visual.py` (tela 19) ·
+[Stats §2](../produto/stats.md).
+

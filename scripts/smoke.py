@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
-    'statsPer','statsTab','statsSemGk','statsRacha','statsMes','statsAno','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
+    'statsPer','statsTab','statsSemGk','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
@@ -1076,11 +1076,22 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* sempre: graficos por ano */
     A.statsPer({dataset:{v:'sempre'}});
     if(!/por ano<\/span>/.test(els['#app'].innerHTML))throw new Error('"Sempre" devia ter os graficos por ano');
+    /* D-153: o destaque de cada ano, com toque que abre o ano; e o card de níveis com a escada de hoje */
+    h=els['#app'].innerHTML;
+    if(!/Ano a ano/.test(h)||!/class="grow" data-a="statsAno"/.test(h))throw new Error('"Sempre" sem o ano a ano da liga');
+    if(vePat(l)&&(!/Níveis desde sempre/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
+    /* um grupo só é o próprio período: no ano com um mês de partidas o "mês a mês" não aparece */
+    A.statsPer({dataset:{v:'ano'}});
+    if(/Mês a mês/.test(els['#app'].innerHTML))throw new Error('ano com um mes so nao devia ter o mes a mes');
+    /* tocar num ano da lista abre o ano */
+    A.statsPer({dataset:{v:'sempre'}});A.statsAno({dataset:{v:String(ano0)}});
+    if(statsPeriodo(l)!==ano0)throw new Error('a linha do ano a ano devia abrir o ano');
+    A.statsPer({dataset:{v:'sempre'}});
     /* ficha: ano a ano com grafico */
     A.statsTab({dataset:{v:'jogador'}});
     if(!/Ano a ano/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o ano a ano');
     /* D-150: o gráfico de momento (gols em barra, % acima do esperado em linha) */
-    if(vePat(l)){if(!/class="chart momento"/.test(els['#app'].innerHTML)||!/<polyline points="/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o grafico de momento')}
+    if(vePat(l)){if(!/class="chart momento"/.test(els['#app'].innerHTML)||!/<polyline points="/.test(els['#app'].innerHTML)){const h2=els['#app'].innerHTML,i=h2.indexOf('Ano a ano');throw new Error('ficha em "Sempre" sem o grafico de momento: '+h2.slice(i,i+400).replace(/</g,'<'))}}
     else if(!/Aproveitamento <span/.test(els['#app'].innerHTML))throw new Error('com as patentes fechadas a ficha devia ter o grafico de aproveitamento');
     /* com as patentes abertas o momento tem que sair — liga e desliga só para o teste */
     const vis0=l.cfg.rankVisibility;l.cfg.rankVisibility='todos';render();

@@ -56,6 +56,7 @@ TELAS = {
     16: 'revisar',
     17: 'gol',
     18: 'momento',
+    19: 'painel da liga',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -142,6 +143,15 @@ DRIVER = r"""
     S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();
     const alvo=document.querySelector('.chart.momento');if(alvo)window.scrollTo(0,alvo.getBoundingClientRect().top+window.scrollY-160);
   }
+  if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
+    const l=L(),ult=l.matches[l.matches.length-1];
+    for(let i=1;i<=9;i++){const c=JSON.parse(JSON.stringify(ult));c.id='pl'+i;c.sessionId='spl'+Math.ceil(i/3);
+      const d=new Date();d.setFullYear(d.getFullYear()-Math.ceil(i/3));d.setMonth((i*3)%12);c.ts=d.getTime();if(c.startedAt)c.startedAt=c.ts;if(c.endedAt)c.endedAt=c.ts+600000;
+      if(i%2)c.result=1-c.result;delete c.deltas;delete c.moves;delete c.over;l.matches.push(c)}
+    rebuildAll(l);const p=l.players[1];p.owner='Mauro';S.me.name='Mauro';l.cfg.rankVisibility='todos';
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
+    const alvo=document.querySelector('.patbar');if(alvo)window.scrollTo(0,alvo.getBoundingClientRect().top+window.scrollY-140);
+  }
   if(step===17){                   /* a folha GOL! aberta na hora do gol (D-138) */
     A.goal({dataset:{s:'1'}});
   }
@@ -171,7 +181,7 @@ DRIVER = r"""
     if(r.width===0&&r.height===0)continue;
     /* dentro de uma faixa que rola de lado (filtros), passar da borda e o esperado */
     const rola=e.closest&&[...(function*(){let x=e.parentElement;while(x){yield x;x=x.parentElement}})()].some(x=>/auto|scroll/.test(getComputedStyle(x).overflowX));
-    if(r.right>LARG+1&&!rola)problemas.push('estoura a direita: '+nome(e)+' ate '+Math.round(r.right)+'px (limite '+LARG+')');
+    if(r.right>LARG+1&&!rola)problemas.push('estoura a direita: '+nome(e)+' "'+e.textContent.trim().slice(0,40)+'" ate '+Math.round(r.right)+'px (limite '+LARG+')');
     if(r.left<-1)problemas.push('estoura a esquerda: '+nome(e));
     if(cs.position==='fixed')problemas.push('position:fixed solto dentro do app: '+nome(e));
   }
