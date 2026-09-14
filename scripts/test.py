@@ -635,6 +635,20 @@ console.log('\n[18] movimentos de nivel: inicio e fim do periodo, nao o nivel de
   ok(movimentos(liga,velho)[0].de===6,'movimento sem `from` (versão antiga) lê rank − dir');
 }
 
+console.log('\n[19] empate no ranking: primeiro o de maior patente (D-159)');
+{
+  const liga={id:'z',name:'t',cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
+  const a=mk('Alto',1500,0),b=mk('Baixo',1100,0),g=mk('Gol',1700,1);liga.players.push(a,b,g);
+  [a,b].forEach(p=>{p.L.def=true;p.L.games=5});g.G.def=true;g.G.games=5;
+  const J={};J[b.id]={pid:b.id,nR:2,jogos:4,v:2,e:0,d:2,gols:3,golsGk:0,min:60*60000,minGk:0,pm:0,over:0,best:0,seq:0,sofridos:0};
+  J[a.id]={pid:a.id,nR:2,jogos:4,v:2,e:0,d:2,gols:3,golsGk:0,min:60*60000,minGk:0,pm:0,over:0,best:0,seq:0,sofridos:0};
+  J[g.id]={pid:g.id,nR:2,jogos:4,v:2,e:0,d:2,gols:0,golsGk:3,min:60*60000,minGk:60*60000,pm:0,over:0,best:0,seq:0,sofridos:0};
+  const R=listasRk(J,{},x=>x.min-x.minGk,1,liga);
+  ok(R.pct[0].pid===g.id&&R.pct[1].pid===a.id&&R.pct[2].pid===b.id,'mesmo aproveitamento: Diamante no gol, depois Prata, depois Ferro');
+  ok(patDe(liga,J[g.id])>patDe(liga,J[a.id]),'o goleiro vale pela patente de goleiro');
+  ok(posEmpate(R.pct,x=>aprDe(x.v,x.e,x.jogos)).join(',')==='1,1,1','a posição continua dividida (D-89)');
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """

@@ -144,6 +144,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-156](stats-e-destaques.md#d-156) · A faixa de níveis conta o goleiro pela patente de goleiro
 - [D-157](stats-e-destaques.md#d-157) · A média dos gráficos por mês ignora os meses sem racha
 - [D-158](stats-e-destaques.md#d-158) · Sem os gráficos de colunas por mês e por ano no painel da liga (o mês a mês / ano a ano já conta isso)
+- [D-159](stats-e-destaques.md#d-159) · Empate: primeiro o de maior patente; no chip do mês a mês, o nome e um "+N"
 
 ### [Interface](interface.md)
 

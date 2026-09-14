@@ -2158,23 +2158,33 @@ const MIN_RITMO=60*60000;                 // ritmo só com 1 h em quadra: menos 
    as taxas por tempo pedem ainda 1 h na função, senão é sorte.             */
 const pm10=x=>x.min>0?x.pm/(x.min/600000):0;                 // +/− a cada 10 min em quadra
 const overPct=x=>x.jogos?x.over/x.jogos*100:0;               // pontos % acima do esperado, por partida
-function listasRk(J,PA,minL,minR){
+/* Patente de uma linha de estatística (D-159): a da função em que a pessoa
+   mais jogou no período; sem patente, −1. É o desempate de todo ranking. */
+function patDe(liga,x){
+  const p=liga&&x&&x.pid?P(liga,x.pid):null;if(!p)return -1;
+  const pref=(x.minGk||0)>(x.min||0)-(x.minGk||0)?'G':'L',outra=pref==='G'?'L':'G';
+  const role=temPatente(liga,p,pref)?pref:temPatente(liga,p,outra)?outra:null;
+  return role?rt(p,role).rank+rt(p,role).elo/1e6:-1;   // o Elo só desempata dentro da divisão
+}
+function listasRk(J,PA,minL,minR,liga){
   minR=minR||1;
   const todos=Object.keys(J).map(id=>J[id]),base=todos.filter(x=>x.nR>=minR);
+  /* empate no número: primeiro o de maior patente (D-159); a posição continua dividida (D-89) */
+  const dp=(a,b)=>patDe(liga,b)-patDe(liga,a);
   const duplas=[],vistos={};
   Object.keys(PA||{}).forEach(a=>Object.keys(PA[a]).forEach(b=>{const k=pairKey(a,b);if(vistos[k])return;vistos[k]=1;
     const y=PA[a][b];if(y.n>=MIN_JOGOS)duplas.push({a,b,n:y.n,v:y.v,e:y.e,pct:aprDe(y.v,y.e,y.n)})}));
   duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
   return {todos,
-    rachas:[...todos].sort((a,b)=>b.nR-a.nR||b.jogos-a.jogos),
-    pm:base.filter(x=>x.min>=MIN_RITMO).sort((a,b)=>pm10(b)-pm10(a)||b.v-a.v),
-    pct:base.filter(x=>x.jogos).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.jogos-a.jogos),
-    over:base.filter(x=>x.jogos).sort((a,b)=>overPct(b)-overPct(a)||b.jogos-a.jogos),   // rendeu acima do esperado (D-143)
-    golsGk:base.filter(x=>x.golsGk&&x.minGk>=MIN_RITMO).sort((a,b)=>b.golsGk/b.minGk-a.golsGk/a.minGk),   // gol feito do gol, a cada 10 min no gol (D-110)
-    min:todos.filter(x=>x.min>0).sort((a,b)=>b.min-a.min),                              // tempo em quadra total: é volume, como a presença (D-148)
-    ritmo:base.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a)),
-    seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||b.v-a.v),
-    gk:base.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||b.minGk-a.minGk),
+    rachas:[...todos].sort((a,b)=>b.nR-a.nR||dp(a,b)||b.jogos-a.jogos),
+    pm:base.filter(x=>x.min>=MIN_RITMO).sort((a,b)=>pm10(b)-pm10(a)||dp(a,b)||b.v-a.v),
+    pct:base.filter(x=>x.jogos).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||dp(a,b)||b.jogos-a.jogos),
+    over:base.filter(x=>x.jogos).sort((a,b)=>Math.round(overPct(b))-Math.round(overPct(a))||dp(a,b)||b.jogos-a.jogos),   // rendeu acima do esperado (D-143); empate no % mostrado
+    golsGk:base.filter(x=>x.golsGk&&x.minGk>=MIN_RITMO).sort((a,b)=>b.golsGk/b.minGk-a.golsGk/a.minGk||dp(a,b)),   // gol feito do gol, a cada 10 min no gol (D-110)
+    min:todos.filter(x=>x.min>0).sort((a,b)=>b.min-a.min||dp(a,b)),                     // tempo em quadra total: é volume, como a presença (D-148)
+    ritmo:base.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a)||dp(a,b)),
+    seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||dp(a,b)||b.v-a.v),
+    gk:base.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||dp(a,b)||b.minGk-a.minGk),
     duplas};
 }
 
@@ -3843,7 +3853,7 @@ function viewStats(liga){
   const minR=soRacha?1:Math.max(1,Math.ceil(nRachasPer/2));
   const minTxt=soRacha?'':`mín. ${minR} de ${pl(nRachasPer,'racha')}`;
   const semPiso='Ninguém com '+minTxt.replace('mín. ','');
-  const R=listasRk(J,PA,minL,minR),RP=listasRk(JP,PAP,minLP,minR);
+  const R=listasRk(J,PA,minL,minR,liga),RP=listasRk(JP,PAP,minLP,minR,liga);
   const todos=R.todos,todosP=RP.todos;
   const rkRachas=R.rachas,rkPm=R.pm,rkPct=R.pct,rkOver=R.over,rkGolsGk=R.golsGk,
     rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkGk=R.gk,duplas=R.duplas;
@@ -4160,16 +4170,20 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       /* o mesmo piso das outras telas: 3 partidas num racha; metade dos rachas num mês ou ano */
       const minJ=grupoDe==='racha'?3:1,minRg=grupoDe==='racha'?1:Math.max(1,Math.ceil(g.nR/2));
       const eleg=gente.filter(x=>x.jogos>=minJ&&x.nR>=minRg);
-      const craque=verPat?[...eleg].sort((a,b)=>overPct(b)-overPct(a)||b.v-a.v)[0]
-                      :[...eleg].sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||b.v-a.v)[0];
-      const art=gente.filter(x=>x.gols+x.golsGk>0).sort((a,b)=>(b.gols+b.golsGk)-(a.gols+a.golsGk))[0];
+      /* empate no número (D-159): fica o de maior patente, com "+N" de quantos empataram */
+      const topo=(lista,val)=>{if(!lista.length)return null;
+        const ord=[...lista].sort((a,b)=>val(b)-val(a)||patDe(liga,b)-patDe(liga,a));
+        const v=val(ord[0]),iguais=ord.filter(x=>val(x)===v);return {x:ord[0],mais:iguais.length-1}};
+      const craque=topo(eleg,verPat?x=>Math.round(overPct(x)):x=>aprDe(x.v,x.e,x.jogos));
+      const art=topo(gente.filter(x=>x.gols+x.golsGk>0),x=>x.gols+x.golsGk);
+      const mais=t=>t.mais?`<small class="muted" style="font-weight:600">+${t.mais}</small>`:'';
       const mv=movimentos(liga,g.ms),subiu=mv.filter(x=>x.n>0).length,caiu=mv.filter(x=>x.n<0).length;
-      const cv=craque?(verPat?overPct(craque):aprDe(craque.v,craque.e,craque.jogos)):0;
+      const cv=craque?(verPat?overPct(craque.x):aprDe(craque.x.v,craque.x.e,craque.x.jogos)):0;
       return `<button class="grow" data-a="${act}" data-id="${esc(g.k)}" data-v="${esc(g.k)}">
         <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(g.ms.length,'partida')} · ${pl(g.gols,'gol')}</span><span class="chev">›</span></div>
         <div class="gd">
-          ${craque?`<span class="chip" title="${verPat?'rendeu acima do esperado':'maior aproveitamento'}"><i>${ic('zap','var(--ok)')}</i><span>${esc(nameOf(liga,craque.pid))}</span><b class="${verPat?(cv>0?'ok':cv<0?'bad':''):''}">${verPat?(cv>0?'+':cv<0?'−':'')+Math.abs(Math.round(cv))+'%':cv+'%'}</b></span>`:''}
-          ${art?`<span class="chip" title="artilheiro"><i>⚽</i><span>${esc(nameOf(liga,art.pid))}</span><b>${art.gols+art.golsGk}</b></span>`:''}
+          ${craque?`<span class="chip" title="${verPat?'rendeu acima do esperado':'maior aproveitamento'}${craque.mais?' · empate com mais '+craque.mais:''}"><i>${ic('zap','var(--ok)')}</i><span>${esc(nameOf(liga,craque.x.pid))}</span>${mais(craque)}<b class="${verPat?(cv>0?'ok':cv<0?'bad':''):''}">${verPat?(cv>0?'+':cv<0?'−':'')+Math.abs(Math.round(cv))+'%':cv+'%'}</b></span>`:''}
+          ${art?`<span class="chip" title="artilheiro${art.mais?' · empate com mais '+art.mais:''}"><i>⚽</i><span>${esc(nameOf(liga,art.x.pid))}</span>${mais(art)}<b>${art.x.gols+art.x.golsGk}</b></span>`:''}
           ${verPat&&(subiu||caiu)?`<span class="chip lv" title="mudanças de nível"><b class="ok">▲${subiu}</b><b class="bad">▼${caiu}</b></span>`:''}
         </div></button>`}).join('');
     return `<div class="card" style="padding-bottom:4px">

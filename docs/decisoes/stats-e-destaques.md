@@ -546,3 +546,19 @@ patentes fechadas).
 o destaque e o toque que abre — três gráficos em cima disso era repetição.
 **Onde:** `viewStats` (card "O racha …") em `index.html` · `smoke.py` · [Stats §2](../produto/stats.md).
 
+<a id="d-159"></a>
+### D-159 · Empate: primeiro o de maior patente; no chip, o nome e um "+N"
+**Quando:** 2026-09-14.
+**O quê:** `patDe(liga, x)` dá a patente de uma linha de estatística (a da função em que a
+pessoa mais jogou no período; o Elo só desempata dentro da divisão). Toda lista de `listasRk`
+usa isso como primeiro desempate, depois dos critérios de sempre; a posição continua dividida
+(D-89). "Rendeu acima do esperado" empata pelo % mostrado (arredondado), não pela fração. Nos
+chips do racha a racha / mês a mês / ano a ano (D-153), o empate mostra o de maior patente e
+um **+N** com quantos empataram.
+**Por quê:** empate escondido atrás de um nome só parecia escolha do app; e o desempate por
+vitórias ou partidas premiava volume, não nível.
+**Descartado:** listar todos os nomes empatados no chip (não cabe); desempatar por Elo entre
+divisões (o número que ninguém vê decidindo o que todo mundo vê).
+**Onde:** `patDe`, `listasRk`, `cardGrupos` (`topo`, `mais`) em `index.html` · `test.py`
+([19]) · [Stats §2 e §4](../produto/stats.md).
+
