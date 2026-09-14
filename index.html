@@ -2151,7 +2151,8 @@ function destaques(liga,dias){
      caso especial: la 2 rachas bastam.                                      */
   const piso={rachas:2,jogos:15};
   const elegiveis=gente.filter(x=>x.nR>=piso.rachas||x.jogos>=piso.jogos);
-  const top=elegiveis.slice().sort((a,b)=>b.over-a.over||b.v-a.v||b.jogos-a.jogos).slice(0,3);
+  /* por partida, como nos rankings de temporada (D-145/D-147): % de vitória real − esperada */
+  const top=elegiveis.slice().sort((a,b)=>overPct(b)-overPct(a)||b.v-a.v||b.jogos-a.jogos).slice(0,3);
   const artilheiro=gols&&comDono/gols>=.5
     ? gente.slice().sort((a,b)=>b.gols-a.gols)[0] : null;
   /* menos vazado: sofridos por tempo no gol, e só com pelo menos 1 h — menos que isso é sorte */
@@ -2596,7 +2597,7 @@ function statsBlock(liga){
 
     <div class="k2">Quem mais rendeu além do esperado</div>
     <div class="tiny muted" style="margin-bottom:6px">Mín. ${d.piso.rachas} rachas ou ${d.piso.jogos} partidas.</div>
-    ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false,ver?(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','):x.v+'V')).join('')
+    ${rendeu.length?rendeu.map((x,i)=>linhaDestaque(liga,x,i,false,ver?(overPct(x)>0?'+':overPct(x)<0?'−':'')+Math.abs(Math.round(overPct(x)))+'%':x.v+'V')).join('')
       :`<div class="tiny muted">Ainda sem gente suficiente no período.</div>`}
     <div class="hr"></div>
     <div class="duo">

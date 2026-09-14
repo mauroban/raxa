@@ -49,7 +49,7 @@ inteiro: o "craque da liga" premiava quem começou bem em março e sumiu. São d
    depois nome — para qualquer papel, inclusive o admin: este card é a tela que todo mundo abre junto no
    racha, então a posição não denuncia quem está na frente dentro da mesma divisão. (A ordem por Elo do
    admin vale só na aba Jogadores — [Patentes §8](patentes.md).)
-2. **Quem mais rendeu além do esperado** — o critério explicado abaixo; cada linha mostra o **saldo** à direita (+1,5), que é o que ordena a lista (D-144). Com as patentes fechadas, mostra as vitórias.
+2. **Quem mais rendeu além do esperado** — o critério explicado abaixo; cada linha mostra à direita a **% de vitória real − esperada, por partida** (+8%), que é o que ordena a lista (D-144, D-147 — a mesma leitura dos rankings de temporada). Com as patentes fechadas, mostra as vitórias.
 3. **Artilheiro** e **goleiro menos vazado**, lado a lado, mais **quem mais apareceu**.
 
 Cada linha do pódio escreve o que cada número é: `4 rachas · 21 partidas · 62% de aproveitamento`.

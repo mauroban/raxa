@@ -395,3 +395,12 @@ por aproveitamento dentro da divisão, para não denunciar o rating).
 badge; a ordem por Elo dentro dela só ordena, não mostra o número.
 **Onde:** `destaques` (`melhores`) em `index.html` · [Stats §3](../produto/stats.md).
 
+<a id="d-147"></a>
+### D-147 · "Quem mais rendeu" nos Destaques também é por partida
+**Quando:** 2026-09-14.
+**O quê:** a lista dos destaques dos 30 dias ordena e mostra a **% de vitória real − esperada por
+partida** (`overPct`), como o ranking de temporada (D-145), em vez do saldo somado (D-144).
+**Por quê:** o saldo somado cresce com o volume; a % por partida compara quem jogou 8 e quem jogou
+30 partidas no mês. Uma leitura só em todas as telas.
+**Onde:** `destaques` (`top`), `statsBlock` em `index.html` · [Stats §3](../produto/stats.md).
+
