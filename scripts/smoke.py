@@ -1067,7 +1067,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     if(statsPeriodo(l)!==new Date().getFullYear())throw new Error('"Ano" devia abrir no ano de hoje');
     h=els['#app'].innerHTML;
     if(!/data-a="statsAno"/.test(h))throw new Error('faltou a navegacao de ano');
-    if(!/Rachas <span/.test(h)||!/Gols por racha <span/.test(h))throw new Error('aba racha no ano devia ter os graficos por mes');
+    if(/Rachas <span/.test(h)||/Gols por racha <span/.test(h))throw new Error('aba racha no ano nao tem mais os graficos por mes (D-158)');
     A.statsAno({dataset:{v:String(ano0)}});
     if(statsPeriodo(l)!==ano0)throw new Error('seta nao levou ao ano passado');
     if(els['#app'].innerHTML.indexOf('>'+ano0+'<')<0)throw new Error('o botao do periodo devia mostrar o ano escolhido');
@@ -1075,7 +1075,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     if(statsPeriodo(l)!==new Date().getFullYear())throw new Error('tocar "Ano" de novo devia voltar ao ano de hoje');
     /* sempre: graficos por ano */
     A.statsPer({dataset:{v:'sempre'}});
-    if(!/por ano( · média [^<]*)?<\/span>/.test(els['#app'].innerHTML))throw new Error('"Sempre" devia ter os graficos por ano');
+    if(/Gols por racha <span/.test(els['#app'].innerHTML))throw new Error('"Sempre" nao tem mais os graficos por ano (D-158)');
     /* D-153: o destaque de cada ano, com toque que abre o ano; e o card de níveis com a escada de hoje */
     h=els['#app'].innerHTML;
     if(!/Ano a ano/.test(h)||!/class="grow" data-a="statsAno"/.test(h))throw new Error('"Sempre" sem o ano a ano da liga');

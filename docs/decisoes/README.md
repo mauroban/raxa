@@ -143,6 +143,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-154](stats-e-destaques.md#d-154) · Gols por racha no painel da liga; média no título dos gráficos; faixa de patentes sem contagem na legenda
 - [D-156](stats-e-destaques.md#d-156) · A faixa de níveis conta o goleiro pela patente de goleiro
 - [D-157](stats-e-destaques.md#d-157) · A média dos gráficos por mês ignora os meses sem racha
+- [D-158](stats-e-destaques.md#d-158) · Sem os gráficos de colunas por mês e por ano no painel da liga (o mês a mês / ano a ano já conta isso)
 
 ### [Interface](interface.md)
 

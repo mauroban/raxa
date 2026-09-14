@@ -536,3 +536,13 @@ média é de quando houve racha.
 **Onde:** `grafBarras`, gráficos por mês em `viewStats` em `index.html` ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-158"></a>
+### D-158 · Sem os gráficos de colunas por mês e por ano no painel da liga
+**Quando:** 2026-09-14.
+**O quê:** saem os três gráficos (rachas, partidas, gols por racha) por mês no Ano e por ano em
+Sempre (D-149/D-154/D-157). Fica o "Gols por racha" do Mês. `grafBarras` continua (ficha com as
+patentes fechadas).
+**Por quê:** o mês a mês / ano a ano (D-153) já diz rachas, partidas e gols de cada grupo, com
+o destaque e o toque que abre — três gráficos em cima disso era repetição.
+**Onde:** `viewStats` (card "O racha …") em `index.html` · `smoke.py` · [Stats §2](../produto/stats.md).
+
