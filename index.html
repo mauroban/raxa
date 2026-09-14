@@ -155,12 +155,6 @@ label.f .k{display:block;margin-bottom:6px}
 .pernav span{flex:1;min-width:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:var(--chalk);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .pernav .btn{min-width:40px;padding:6px 10px}
 .sfilt .seg.fn button{padding:8px 22px}
-.gksw{align-self:flex-end;display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:4px 2px;min-height:32px;cursor:pointer}
-.gksw i{display:block;width:30px;height:18px;border-radius:9px;background:var(--panel2);border:1px solid var(--line2);position:relative;transition:background .15s}
-.gksw i::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--mute);transition:left .15s,background .15s}
-.gksw.on{color:var(--chalk)}
-.gksw.on i{background:var(--lime);border-color:var(--lime)}
-.gksw.on i::after{left:15px;background:var(--onink)}
 
 /* ---------- home ---------- */
 .ligacard{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:15px;cursor:pointer;color:var(--chalk)}
@@ -3763,8 +3757,10 @@ function viewStats(liga){
   const soRacha=typeof per==='string'&&per.indexOf('racha:')===0;
   /* "Sem goleiros" é dos RANKINGS (D-51) — na aba Jogador ele não faz sentido:
      lá a pessoa escolhe qual função está lendo, linha ou gol (D-135).      */
-  const semGk=tab==='racha'&&!!S.ui.statsSemGk;
-  const {J,DU,PA}=statsLiga(liga,per,semGk);
+  /* o interruptor "Sem goleiros" (D-51) saiu (D-160): com os rankings em taxa
+     ele só mexia nos totais, e escondia o goleiro fixo dos rankings de goleiro */
+  const semGk=false;
+  const {J,DU,PA}=statsLiga(liga,per,null);
   const who=statsWhoId(liga,J);
   /* A pessoa é lida por FUNÇÃO: o que ela fez de linha e o que fez no gol são
      duas histórias, e misturá-las não descreve nenhuma das duas. Quem nunca
@@ -3815,7 +3811,7 @@ function viewStats(liga){
       <button class="${papel==='L'?'on':''}" data-a="statsPapel" data-v="L">Linha</button>
       <button class="${papel==='G'?'on':''}" data-a="statsPapel" data-v="G">Gol</button>
     </div>`:'')
-    :`<button class="gksw ${S.ui.statsSemGk?'on':''}" role="switch" aria-checked="${S.ui.statsSemGk?'true':'false'}" data-a="statsSemGk" title="o tempo no gol sai das contas de time; menos vazado continua"><span>Sem goleiros</span><i></i></button>`}
+    :''}
   </div>`;
   if(!liga.matches.length)return `${seg}<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
@@ -3847,7 +3843,7 @@ function viewStats(liga){
      gols por tempo só contam o tempo DE LINHA: quem revezou no gol não marca
      de lá, e a média da liga com minutos de goleiro dentro ficava baixa
      demais para comparar (D-109).                                          */
-  const minL=x=>semGk?x.min:Math.max(0,x.min-x.minGk);
+  const minL=x=>Math.max(0,x.min-x.minGk);   // tempo de linha
   const minLP=x=>papel==='G'?x.minGk:x.min;          // tempo na função que a pessoa está lendo
   /* piso dos rankings de período (D-145): metade dos rachas que houve nele */
   const minR=soRacha?1:Math.max(1,Math.ceil(nRachasPer/2));
@@ -4166,7 +4162,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const label=g=>grupoDe==='racha'?DIA(g.ts):grupoDe==='mes'?MESES[+g.k.slice(5)-1]:g.k;
     const linhas=arr.map(g=>{
       const per2=grupoDe==='racha'?'racha:'+g.k:grupoDe==='mes'?'mes:'+g.k:+g.k;
-      const gente=Object.values(statsLiga(liga,per2,semGk).J);
+      const gente=Object.values(statsLiga(liga,per2,null).J);
       /* o mesmo piso das outras telas: 3 partidas num racha; metade dos rachas num mês ou ano */
       const minJ=grupoDe==='racha'?3:1,minRg=grupoDe==='racha'?1:Math.max(1,Math.ceil(g.nR/2));
       const eleg=gente.filter(x=>x.jogos>=minJ&&x.nR>=minRg);
@@ -6506,7 +6502,6 @@ const A={
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   /* abrir os destaques de UM racha (setas ‹ › do card, ou "Destaques" na aba Jogos, D-142) */
   statsRacha(el){const id=el.dataset.id||null;if(!id)return;S.ui.statsRacha=id;S.ui.statsPer='racha';S.ui.statsTab='racha';S.ui.tab='stats';S.ui.ppPage=0;save();render()},
-  statsSemGk(){S.ui.statsSemGk=!S.ui.statsSemGk;save();render()},
   /* linha ou gol na aba Jogador (D-135): a escolha é da pessoa aberta, não
      do aparelho; a página volta ao começo do partida-a-partida, outra lista */
   statsPapel(el){S.ui.statsPapel={who:statsWhoId(L()),p:el.dataset.v==='G'?'G':'L'};S.ui.ppPage=0;save();render()},

@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
-    'statsPer','statsTab','statsSemGk','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
+    'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
@@ -1176,16 +1176,10 @@ step('partida a partida na tela do jogador, com paginacao',()=>{
     if(S.ui.ppPage)throw new Error('paginacao nao voltou');
   }
 });
-step('numeros sem goleiros: liga, redesenha e desliga (so na aba Racha, D-135)',()=>{
-  A.statsTab({dataset:{v:'jogador'}});
-  if(/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('o interruptor de goleiros nao e da aba Jogador');
+step('sem o interruptor "Sem goleiros" (D-160): o goleiro conta em tudo',()=>{
   A.statsTab({dataset:{v:'racha'}});
-  A.statsSemGk();
-  if(!S.ui.statsSemGk)throw new Error('toggle nao ligou');
-  if(!/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('chip do toggle sumiu');
+  if(/sem goleiros/i.test(els['#app'].innerHTML))throw new Error('o interruptor de goleiros saiu (D-160)');
   A.statsPer({dataset:{v:'sempre'}});
-  A.statsSemGk();
-  if(S.ui.statsSemGk)throw new Error('toggle nao desligou');
 });
 step('aba Jogador: quem ja pegou no gol escolhe entre Linha e Gol (D-135)',()=>{
   const l=L();A.statsTab({dataset:{v:'jogador'}});A.statsPer({dataset:{v:'sempre'}});

@@ -562,3 +562,17 @@ divisões (o número que ninguém vê decidindo o que todo mundo vê).
 **Onde:** `patDe`, `listasRk`, `cardGrupos` (`topo`, `mais`) em `index.html` · `test.py`
 ([19]) · [Stats §2 e §4](../produto/stats.md).
 
+<a id="d-160"></a>
+### D-160 · Sem o interruptor "Sem goleiros"
+**Quando:** 2026-09-14.
+**O quê:** o interruptor da aba Racha (D-51) sai da tela, do estado (`ui.statsSemGk`) e do
+despachante. `statsLiga(liga, per, true)` continua existindo no motor, sem uso na interface.
+**Por quê:** ele nasceu para tirar o tempo no gol dos totais de time (o goleiro joga mais).
+Com os rankings em taxa (D-145) sobrou pouco para ele fazer — e ele fazia mal: ao tirar as
+partidas no gol, o goleiro fixo ficava com zero rachas e caía fora do piso dos rankings *de
+goleiro* (menos vazado, gols de goleiro), que nunca deveriam ser filtrados. Dois caminhos
+foram considerados: prender o interruptor aos poucos rankings de volume (presença, tempo em
+quadra) ou tirá-lo; tirar é mais simples e esses dois já contam o goleiro de propósito (D-148).
+**Onde:** `viewStats` (seletor), `A.statsSemGk` (removido), CSS `.gksw` (removido) em
+`index.html` · `smoke.py` · [Stats §2](../produto/stats.md).
+
