@@ -139,6 +139,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-151](stats-e-destaques.md#d-151) · Momento sem as barras de gol: só a linha
 - [D-152](stats-e-destaques.md#d-152) · Momento: valor colado no ponto, área pintada, aproveitamento embaixo do eixo (sem segunda linha)
 - [D-153](stats-e-destaques.md#d-153) · Painel da liga em Mês/Ano/Sempre: destaque de cada racha/mês/ano com toque que abre o período, e card de níveis
+- [D-154](stats-e-destaques.md#d-154) · Gols por racha no painel da liga; média no título dos gráficos; faixa de patentes sem contagem na legenda
 
 ### [Interface](interface.md)
 

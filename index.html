@@ -592,7 +592,7 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .chip.lv{background:transparent;border:1px solid var(--line);padding:3px 8px}
 /* distribuição das patentes hoje (D-153): faixa proporcional, uma cor por patente */
 .patbar{display:flex;height:36px;border-radius:8px;overflow:hidden;gap:2px;margin:8px 0 6px;background:transparent;border:0;width:100%;padding:0;cursor:pointer}
-.patbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:13px;min-width:0}
+.patbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:13px;min-width:26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
 .patleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mute)}
 .patbar:active{opacity:.8}
 .patleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
@@ -2343,9 +2343,11 @@ const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sor
 function grafBarras(titulo,arr,val,fmt,lab,opts){
   opts=opts||{};if(arr.length<2)return '';
   const vs=arr.map(val),max=Math.max(1e-9,...vs),media=vs.reduce((a,b)=>a+b,0)/vs.length;
-  const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
+  /* a média vai no título, não na linha: o rótulo em cima da linha colidia com o valor da última coluna (D-154) */
+  const notaTxt=[opts.nota,opts.media===false?'':'média '+fmt(media)].filter(Boolean).join(' · ');
+  const nota=notaTxt?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${notaTxt}</span>`:'';
   return `<div class="k2" style="margin:16px 0 0">${titulo}${nota}</div>
-  <div class="chart">${opts.media===false?'':`<div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"><b>média ${fmt(media)}</b></div>`}
+  <div class="chart">${opts.media===false?'':`<div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"></div>`}
     ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em>${fmt(vs[i])}</em><i class="g" style="height:${(vs[i]/max*100).toFixed(1)}%"></i></div>`).join('')}</div>
   <div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?lab(r):''}</span>`).join('')}</div>`;
 }
@@ -4177,7 +4179,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     return `<div class="card">
       <div class="k">Níveis ${rot}</div><div class="tiny muted" style="margin-top:2px">${pl(gente.length,'jogador','jogadores')} com nível, pela escada de hoje · toque para abrir a escada</div>
       ${gente.length?`<button class="patbar" data-a="irEscada" title="abrir a escada" aria-label="abrir a escada">${porPat.map((n,k)=>n?`<i style="flex:${n};background:${PATFILL[k]};color:${patInk(k*3)}">${n}</i>`:'').join('')}</button>
-      <div class="patleg">${porPat.map((n,k)=>n?`<span><i style="background:${PATFILL[k]}"></i>${esc(liga.cfg.patNames[k])} ${n}</span>`:'').join('')}</div>`:''}
+      <div class="patleg">${porPat.map((n,k)=>n?`<span><i style="background:${PATFILL[k]}"></i>${esc(liga.cfg.patNames[k])}</span>`:'').join('')}</div>`:''}
       <div class="tiles" style="margin-top:12px">
         <div class="tile" style="--tc:var(--ok)"><b class="num">${subiu.length}</b><span>subiram</span></div>
         <div class="tile" style="--tc:var(--bad)"><b class="num">${caiu.length}</b><span>caíram</span></div>
@@ -4209,14 +4211,14 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       const arr=Object.values(G).sort((a,b)=>a.k.localeCompare(b.k)),lab=g=>tipo==='ano'?MESES_CURTOS[+g.k.slice(5)-1]:g.k,por=tipo==='ano'?'por mês':'por ano';
       return grafBarras('Rachas',arr,g=>g.nR,v=>String(Math.round(v*10)/10).replace('.',','),lab,{nota:por})
         +grafBarras('Partidas',arr,g=>g.partidas,v=>String(Math.round(v)),lab,{nota:por})
-        +grafBarras('Gols por partida',arr,g=>g.partidas?g.gols/g.partidas:0,v=>v.toFixed(1).replace('.',','),lab,{nota:por})})()
+        +grafBarras('Gols por racha',arr,g=>g.nR?g.gols/g.nR:0,v=>v.toFixed(1).replace('.',','),lab,{nota:por})})()
     :(()=>{ /* gols por racha (D-108): coluna por racha, o último em verde, média tracejada */
       const M={},ord=[];[...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>{const sid=m.sessionId||m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:m.ts,gols:0,n:0};ord.push(r)}
         r.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];r.n++});
       const arr=ord.slice(-12);if(arr.length<2)return '';
       const max=Math.max(1,...arr.map(r=>r.gols)),media=ord.reduce((a,r)=>a+r.gols,0)/ord.length;
-      return `<div class="k2" style="margin:16px 0 0">Gols por racha <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${arr.length<ord.length?'últimos '+arr.length:''}</span></div>
-      <div class="chart"><div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"><b>média ${media.toFixed(1).replace('.',',')}</b></div>
+      return `<div class="k2" style="margin:16px 0 0">Gols por racha <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${arr.length<ord.length?'últimos '+arr.length+' · ':''}média ${media.toFixed(1).replace('.',',')}</span></div>
+      <div class="chart"><div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"></div>
         ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em>${r.gols}</em><i class="g" style="height:${(r.gols/max*100).toFixed(1)}%"></i></div>`).join('')}</div>
       ${eixoX(arr)}
       <div class="legend"><span><i class="avg"></i>média de gols por racha</span><span><i style="background:var(--lime)"></i>último racha</span></div>`})()}

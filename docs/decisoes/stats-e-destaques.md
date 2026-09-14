@@ -503,3 +503,16 @@ D-99).
 `.patbar`, `.patleg` em `index.html` · `smoke.py` (D-149) · `visual.py` (tela 19) ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-154"></a>
+### D-154 · Gols por racha no painel; média no título do gráfico; faixa de patentes limpa
+**Quando:** 2026-09-14.
+**O quê:** o gráfico da liga por mês/ano passa de "Gols por partida" para **Gols por racha**
+(gols ÷ rachas do grupo). Em todo gráfico de colunas a **média** sai da linha tracejada e vai
+para o título ("por ano · média 7,5"): o rótulo em cima da linha colidia com o valor da última
+coluna. Na faixa de patentes, a legenda perde a contagem (o número já está no trecho), cada
+trecho ganha largura mínima e uma borda leve (no escuro, Ferro sumia no fundo).
+**Por quê:** revisão a olho dos prints (telas 19 e 8 do `visual.py`, 360 e 500 px, claro e
+escuro) depois de D-153.
+**Onde:** `grafBarras`, gráfico "Gols por racha" do mês, `cardNiveis`, CSS `.patbar i` em
+`index.html` · `smoke.py` (D-149) · [Stats §2](../produto/stats.md).
+
