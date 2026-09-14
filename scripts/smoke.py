@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
-    'statsPer','statsTab','statsSemGk','statsRacha','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
+    'statsPer','statsTab','statsSemGk','statsRacha','statsMes','statsAno','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
   const todas=Object.keys(A);
@@ -848,7 +848,7 @@ step('numeros: ultimo racha e ultimo mes',()=>{
   if(!/Quem mais ganhou/.test($('#sheet').innerHTML))throw new Error('folha do ranking da noite nao abriu');
   closeSheet();
   A.statsPer({dataset:{v:'mes'}});
-  if(!/no último mês/.test(els['#app'].innerHTML))throw new Error('periodo ultimo mes nao aplicou');
+  if(!/em (janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro) de \d{4}/.test(els['#app'].innerHTML))throw new Error('periodo do mes nao aplicou');
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
 });
 step('revisao: corrigir autor de gol de partida encerrada',()=>{
@@ -1043,6 +1043,44 @@ step('numeros: as setas andam para o racha anterior e "Ultimo" volta ao mais nov
   A.statsPer({dataset:{v:'racha'}});
   }finally{limpa()}
   if(statsPeriodo(l)!=='racha:'+idsRachas(l)[0])throw new Error('depois de limpar, o periodo devia ser o ultimo racha');
+});
+step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, graficos por mes/ano (D-149)',()=>{
+  const l=L();S.ui.tab='stats';A.statsTab({dataset:{v:'racha'}});
+  /* mês: uma partida velha em janeiro do ano passado dá um segundo mês e um segundo ano para andar */
+  const ult=l.matches[l.matches.length-1],velha=JSON.parse(JSON.stringify(ult)),ano0=new Date().getFullYear()-1;
+  velha.id='m-velho';velha.sessionId='s-velho';velha.ts=new Date(ano0,0,15,20,0).getTime();
+  delete velha.deltas;delete velha.moves;delete velha.over;l.matches.push(velha);rebuildAll(l);
+  try{
+    A.statsPer({dataset:{v:'mes'}});
+    if(statsPeriodo(l)!=='mes:'+MES_ATUAL())throw new Error('"Mês" devia abrir no mês de hoje: '+statsPeriodo(l));
+    let h=els['#app'].innerHTML;
+    if(!/class="pernav"/.test(h)||!/data-a="statsMes"/.test(h))throw new Error('faltou a navegacao de mes');
+    A.statsMes({dataset:{v:ano0+'-01'}});
+    if(statsPeriodo(l)!=='mes:'+ano0+'-01')throw new Error('seta nao levou a janeiro do ano passado');
+    h=els['#app'].innerHTML;
+    if(!/jan\/\d{2}/.test(h))throw new Error('o botao do periodo devia mostrar jan/AA');
+    if(!/em janeiro de /.test(h))throw new Error('rotulo do mes escolhido nao apareceu');
+    A.statsPer({dataset:{v:'mes'}});
+    if(statsPeriodo(l)!=='mes:'+MES_ATUAL())throw new Error('tocar "Mês" de novo devia voltar ao mes de hoje');
+    /* ano */
+    A.statsPer({dataset:{v:'ano'}});
+    if(statsPeriodo(l)!==new Date().getFullYear())throw new Error('"Ano" devia abrir no ano de hoje');
+    h=els['#app'].innerHTML;
+    if(!/data-a="statsAno"/.test(h))throw new Error('faltou a navegacao de ano');
+    if(!/Rachas <span/.test(h)||!/Gols por partida/.test(h))throw new Error('aba racha no ano devia ter os graficos por mes');
+    A.statsAno({dataset:{v:String(ano0)}});
+    if(statsPeriodo(l)!==ano0)throw new Error('seta nao levou ao ano passado');
+    if(els['#app'].innerHTML.indexOf('>'+ano0+'<')<0)throw new Error('o botao do periodo devia mostrar o ano escolhido');
+    A.statsPer({dataset:{v:'ano'}});
+    if(statsPeriodo(l)!==new Date().getFullYear())throw new Error('tocar "Ano" de novo devia voltar ao ano de hoje');
+    /* sempre: graficos por ano */
+    A.statsPer({dataset:{v:'sempre'}});
+    if(!/por ano<\/span>/.test(els['#app'].innerHTML))throw new Error('"Sempre" devia ter os graficos por ano');
+    /* ficha: ano a ano com grafico */
+    A.statsTab({dataset:{v:'jogador'}});
+    if(!/Ano a ano/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o ano a ano');
+    A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'racha'}});
+  }finally{l.matches=l.matches.filter(x=>x.id!=='m-velho');S.ui.statsMes=null;S.ui.statsAno=null;rebuildAll(l)}
 });
 step('times do racha: toque abre a escalacao original',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],t=sess.teams[0];

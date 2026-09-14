@@ -414,3 +414,28 @@ racha só premiava quem veio pouco e ficou o tempo todo.
 **Onde:** `listasRk` (`min`), `viewStats` (`SECS.min`, `posicoes`) em `index.html` ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-149"></a>
+### D-149 · Período por mês e por ano, com setas; a história no passo abaixo do período
+**Quando:** 2026-09-14.
+**O quê:** o filtro da aba Stats vira `Último · Mês · Ano · Sempre`. "30 dias" (janela móvel) vira
+**Mês** (calendário) e a lista de anos vira **Ano**; os três abrem no atual e uma linha
+**‹ … ›** abaixo do filtro anda para o anterior/seguinte (racha, mês ou ano — as setas do card
+do racha, D-142, subiram para cá). O botão mostra o escolhido (12/09, ago/26, 2025) e, tocado de
+novo, volta ao atual. Estado: `ui.statsPer` (tipo) + `ui.statsRacha`/`statsMes`/`statsAno`;
+`statsPeriodo` devolve `'mes:AAAA-MM'`, o ano, `'racha:<id>'` ou `'sempre'`, e `noPeriodo` lê.
+Gráficos (`grafBarras`): na aba Racha, por mês (no ano; meses vazios como zero até hoje) e por
+ano (em Sempre) — rachas, partidas, gols por partida; no mês continua o gols por racha. Na aba
+Jogador, `statsGrupos` (generaliza `statsAnos`) quebra o período no passo abaixo dele — racha a
+racha, mês a mês, ano a ano — com gráfico de aproveitamento (e partidas) e uma linha por grupo.
+`rotPer` dá o rótulo do período em qualquer tela.
+**Por quê:** "últimos 30 dias" não é o mês que as pessoas falam ("como foi agosto?") e a lista de
+anos só crescia; escolher mês e ano com setas é o mesmo gesto do racha. E cada período pede a
+sua curva: o mês em rachas, o ano em meses, a vida em anos.
+**Descartado:** lista de meses no seletor (não cabe); manter os 30 dias ao lado do mês (dois
+nomes para a mesma pergunta). Os destaques da tela do racha continuam em 30 dias móveis: lá não
+há seletor, e o começo do mês ficaria vazio.
+**Onde:** `MES_KEY`, `MESES`, `mesLabel`, `chavesPer`, `tipoPer`, `rotPer`, `statsPeriodo`,
+`noPeriodo`, `statsGrupos`, `statsAnos`, `grafBarras`, `viewStats` (`navPer`, `labMes`,
+`labAno`, gráficos da liga, `grupos`), `A.statsPer`/`statsMes`/`statsAno`, `A.duelo` em
+`index.html` · `smoke.py` ("periodo por mes e por ano…") · [Stats §2](../produto/stats.md).
+

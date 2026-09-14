@@ -151,6 +151,9 @@ label.f .k{display:block;margin-bottom:6px}
 .sfilt{display:flex;flex-direction:column;gap:6px;margin:2px 0 12px}
 .sfilt .seg.per button{padding:8px 2px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sfilt .seg.fn{align-self:flex-end;width:auto}
+.pernav{display:flex;align-items:center;gap:6px}
+.pernav span{flex:1;min-width:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:var(--chalk);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pernav .btn{min-width:40px;padding:6px 10px}
 .sfilt .seg.fn button{padding:8px 22px}
 .gksw{align-self:flex-end;display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:4px 2px;min-height:32px;cursor:pointer}
 .gksw i{display:block;width:30px;height:18px;border-radius:9px;background:var(--panel2);border:1px solid var(--line2);position:relative;transition:background .15s}
@@ -1960,21 +1963,53 @@ function commitGks(liga,lv,pair){
 const ANO=ms=>new Date(ms).getFullYear();
 const ANO_ATUAL=()=>new Date().getFullYear();
 /* período das estatísticas: 'sempre', 'ano' (= ano atual) ou um ano específico */
-/* 'sempre' | 'ano' (atual) | 2024 | 'mes' (últimos 30 dias) | 'racha:<id>' (o último racha) */
+/* Período (D-149): o filtro guarda o TIPO em ui.statsPer ('racha' | 'mes' |
+   'ano' | 'sempre') e o escolhido em ui.statsRacha / ui.statsMes ('AAAA-MM')
+   / ui.statsAno. `statsPeriodo` devolve o que `noPeriodo` lê:
+   'sempre' | <ano> | 'mes:AAAA-MM' | 'racha:<id>'. Sem escolha: o atual.   */
+const MES_KEY=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const MES_ATUAL=()=>MES_KEY(Date.now());
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const MESES_CURTOS=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const mesLabel=(k,curto)=>{const y=k.slice(0,4),m=+k.slice(5)-1;return curto?MESES_CURTOS[m]+'/'+y.slice(2):MESES[m]+' de '+y};
+/* as chaves que as setas ‹ › percorrem, da mais nova à mais velha: rachas da
+   liga, meses ou anos desde a primeira partida até hoje                     */
+const chavesPer=(liga,tipo)=>{
+  if(tipo==='racha')return idsRachas(liga);
+  const ms=(liga.matches||[]).filter(m=>!m.voided);
+  const d0=new Date(ms.length?Math.min(...ms.map(m=>m.ts)):Date.now()),hoje=new Date(),out=[];
+  if(tipo==='mes'){let y=hoje.getFullYear(),m=hoje.getMonth();const y0=d0.getFullYear(),m0=d0.getMonth();
+    while(y>y0||(y===y0&&m>=m0)){out.push(y+'-'+String(m+1).padStart(2,'0'));m--;if(m<0){m=11;y--}}}
+  else for(let y=hoje.getFullYear();y>=d0.getFullYear();y--)out.push(String(y));
+  return out;
+};
+const tipoPer=per=>per==='sempre'?'sempre':typeof per==='string'&&per.indexOf('racha:')===0?'racha':typeof per==='string'&&per.indexOf('mes:')===0?'mes':'ano';
+function rotPer(liga,per){
+  const t=tipoPer(per);
+  if(t==='sempre')return 'desde sempre';
+  if(t==='mes')return 'em '+mesLabel(per.slice(4));
+  if(t==='racha'){const sid=per.slice(6);if(sid===ultimoRachaId(liga))return 'no último racha';
+    const m=(liga.matches||[]).find(x=>!x.voided&&(x.sessionId||x.id)===sid);
+    return m?'no racha de '+new Date(m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'no racha'}
+  return 'em '+(per==='ano'?ANO_ATUAL():per);
+}
 const ultimoRachaId=liga=>{const ms=(liga.matches||[]).filter(m=>!m.voided);if(!ms.length)return null;const m=ms.reduce((a,b)=>b.ts>a.ts?b:a);return m.sessionId||m.id};
 /* Os rachas da liga, do mais novo ao mais velho, pelo id que `noPeriodo` lê
    (sessionId, ou id da partida avulsa). Serve às setas ‹ › do "Último" (D-142). */
 const idsRachas=liga=>{const fim={};(liga.matches||[]).filter(m=>!m.voided).forEach(m=>{const k=m.sessionId||m.id;fim[k]=Math.max(fim[k]||0,m.ts)});
   return Object.keys(fim).sort((a,b)=>fim[b]-fim[a])};
 const statsPeriodo=liga=>{const v=S.ui.statsPer;
-  if(v==='sempre'||v==='mes')return v;
+  if(v==='sempre')return v;
+  if(v==='mes'){const k=S.ui.statsMes;return 'mes:'+(/^\d{4}-\d{2}$/.test(k||'')?k:MES_ATUAL())}
+  if(v==='ano'){const y=S.ui.statsAno;return /^\d{4}$/.test(String(y||''))?+y:ANO_ATUAL()}
   /* "Último" abre no racha mais novo, mas as setas andam para os anteriores:
      o racha escolhido fica em ui.statsRacha (e só vale enquanto existir) */
   if(v==='racha'){const sel=S.ui.statsRacha;return 'racha:'+(liga?(sel&&idsRachas(liga).includes(sel)?sel:ultimoRachaId(liga)):'')}
   return /^\d{4}$/.test(String(v))?+v:'ano'};
 function noPeriodo(m,p){
   if(!p||p==='sempre')return true;
-  if(p==='mes')return m.ts>=Date.now()-30*86400000;
+  if(p==='mes')return m.ts>=Date.now()-30*86400000;                 // legado: últimos 30 dias
+  if(typeof p==='string'&&p.indexOf('mes:')===0)return MES_KEY(m.ts)===p.slice(4);
   if(typeof p==='string'&&p.indexOf('racha:')===0)return (m.sessionId||m.id)===p.slice(6);
   return ANO(m.ts)===(p==='ano'?ANO_ATUAL():+p);
 }
@@ -2207,14 +2242,16 @@ function papelJogador(liga,per,pid,JL){
   const x=(JL||statsLiga(liga,per,'L').J)[pid]||{min:0,minGk:0};
   return x.minGk>x.min?'G':'L';
 }
-/* Ano a ano, só para uma pessoa — é o "na vida" quebrado por temporada.
-   `papel` ('L'/'G') lê só o que ela fez naquela função (D-135).           */
-function statsAnos(liga,pid,papel){
+/* A história de uma pessoa quebrada em grupos (D-149): por racha (dentro de um
+   mês), por mês (dentro de um ano) ou por ano (desde sempre). `per` filtra as
+   partidas; `papel` ('L'/'G') lê só o que ela fez naquela função (D-135).
+   Sai do mais velho ao mais novo — a ordem de um gráfico.                  */
+function statsGrupos(liga,pid,papel,per,grupo){
   const so=papel==='L'||papel==='G'?papel:null;
-  const porAno={};
+  const G={};
   (liga.matches||[]).forEach(m=>{
-    if(m.voided)return;
-    const y=ANO(m.ts),sid=m.sessionId||m.id;
+    if(m.voided||!noPeriodo(m,per))return;
+    const sid=m.sessionId||m.id,k=grupo==='ano'?String(ANO(m.ts)):grupo==='mes'?MES_KEY(m.ts):sid;
     let side=null,min=0,tot=0;
     matchStints(liga,m).forEach(st=>{
       if(!st.counted)return;tot+=st.dur||0;
@@ -2223,15 +2260,29 @@ function statsAnos(liga,pid,papel){
       side=me.side;min+=st.dur||0;
     });
     if(side!==null&&contaPartida(liga,m,min,tot)){
-      const a=porAno[y]||(porAno[y]={ano:y,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
+      const a=G[k]||(G[k]={k,ano:ANO(m.ts),ts:m.ts,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0});
+      a.ts=Math.min(a.ts,m.ts);
       a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
     }
-    plusMinus(liga,m,(q,d)=>{if(q===pid&&porAno[y])porAno[y].pm+=d});
-    (m.goals||[]).forEach(g=>{if(g.pid!==pid||g.own)return;const a=porAno[ANO(m.ts)];
+    plusMinus(liga,m,(q,d)=>{if(q===pid&&G[k])G[k].pm+=d});
+    (m.goals||[]).forEach(g=>{if(g.pid!==pid||g.own)return;const a=G[k];
       if(a&&(!so||roleNoGol(liga,m,g)===so))a.gols++});
   });
-  return Object.keys(porAno).map(k=>porAno[k]).sort((x,y)=>y.ano-x.ano);
+  return Object.keys(G).map(k=>G[k]).sort((x,y)=>x.ts-y.ts);
+}
+/* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
+const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
+/* Gráfico de colunas (D-149): uma por item, valor em cima, rótulo embaixo, a
+   última em verde, média tracejada. Menos de 2 itens não é gráfico.        */
+function grafBarras(titulo,arr,val,fmt,lab,opts){
+  opts=opts||{};if(arr.length<2)return '';
+  const vs=arr.map(val),max=Math.max(1e-9,...vs),media=vs.reduce((a,b)=>a+b,0)/vs.length;
+  const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
+  return `<div class="k2" style="margin:16px 0 0">${titulo}${nota}</div>
+  <div class="chart">${opts.media===false?'':`<div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"><b>média ${fmt(media)}</b></div>`}
+    ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em>${fmt(vs[i])}</em><i class="g" style="height:${(vs[i]/max*100).toFixed(1)}%"></i></div>`).join('')}</div>
+  <div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?lab(r):''}</span>`).join('')}</div>`;
 }
 /* Quem é "eu" nesta liga: o perfil que a conta deste aparelho assumiu. */
 function euId(liga){
@@ -3632,13 +3683,26 @@ function viewStats(liga){
   const papel=naFicha?papelJogador(liga,per,who,stL.J):'L';
   const stP=papel==='G'?statsLiga(liga,per,'G'):stL;
   const JP=stP.J,DUP=stP.DU,PAP=stP.PA;
-  const anoSel=per==='sempre'||per==='mes'||soRacha?null:(per==='ano'?ANO_ATUAL():per);
+  const tipo=tipoPer(per);
+  const anoSel=tipo==='ano'?+per:null,mesSel=tipo==='mes'?per.slice(4):null;
   const ehUltimo=soRacha&&per.slice(6)===ultimoRachaId(liga);
   const dataRacha=()=>{const m=liga.matches.find(x=>!x.voided&&(x.sessionId||x.id)===per.slice(6));return m?new Date(m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):''};
-  const rot=per==='sempre'?'desde sempre':per==='mes'?'no último mês':soRacha?(ehUltimo?'no último racha':'no racha de '+dataRacha()):'em '+anoSel;
-  /* filtro de período: os anos que existem no histórico + desde sempre */
-  const anosLiga=[...new Set(liga.matches.filter(m=>!m.voided).map(m=>ANO(m.ts)))].sort((a,b)=>b-a);
-  if(!anosLiga.includes(ANO_ATUAL()))anosLiga.unshift(ANO_ATUAL());
+  const rot=rotPer(liga,per);
+  /* O botão do período diz "Último", "Mês", "Ano" quando é o atual; quando as
+     setas andaram, mostra qual é (12/09, ago/26, 2025). Tocar de novo volta
+     ao atual (D-142/D-149).                                                */
+  const labMes=mesSel&&mesSel!==MES_ATUAL()?mesLabel(mesSel,true):'Mês';
+  const labAno=anoSel&&anoSel!==ANO_ATUAL()?String(anoSel):'Ano';
+  /* setas ‹ › do período: uma linha só, para racha, mês e ano (D-149) */
+  const navPer=(()=>{
+    if(tipo==='sempre')return '';
+    const ks=chavesPer(liga,tipo);if(ks.length<2)return '';
+    const cur=tipo==='racha'?per.slice(6):tipo==='mes'?mesSel:String(anoSel);
+    const i=ks.indexOf(cur),ant=i>=0&&i<ks.length-1?ks[i+1]:null,prox=i>0?ks[i-1]:null;
+    const act=tipo==='racha'?'statsRacha':tipo==='mes'?'statsMes':'statsAno';
+    const seta=(k,ch,tit)=>`<button class="btn sm ghost" data-a="${act}" data-id="${k||''}" data-v="${k||''}" title="${tit}" aria-label="${tit}" ${k?'':'disabled'}>${ch}</button>`;
+    const meio=tipo==='racha'?'Racha de '+dataRacha():tipo==='mes'?mesLabel(mesSel):String(anoSel);
+    return `<div class="pernav">${seta(ant,'‹','anterior')}<span>${meio}</span>${seta(prox,'›','seguinte')}</div>`})();
   /* Filtros (D-114): uma família só — dois seletores segmentados empilhados
      (modo e período) e um interruptor pequeno para "Sem goleiros", sem card
      em volta. Antes eram três controles de três estilos dentro de um card. */
@@ -3649,10 +3713,11 @@ function viewStats(liga){
     </div>
     <div class="seg per">
       <button class="${soRacha?'on':''}" data-a="statsPer" data-v="racha">${soRacha&&!ehUltimo?dataRacha():'Último'}</button>
-      <button class="${per==='mes'?'on':''}" data-a="statsPer" data-v="mes">30 dias</button>
-      ${anosLiga.map(y=>`<button class="${anoSel===y?'on':''}" data-a="statsPer" data-v="${y}">${y}</button>`).join('')}
+      <button class="${tipo==='mes'?'on':''}" data-a="statsPer" data-v="mes">${labMes}</button>
+      <button class="${tipo==='ano'?'on':''}" data-a="statsPer" data-v="ano">${labAno}</button>
       <button class="${per==='sempre'?'on':''}" data-a="statsPer" data-v="sempre">Sempre</button>
     </div>
+    ${navPer}
     ${tab==='jogador'?(jogouNoGol?`<div class="seg fn">
       <button class="${papel==='L'?'on':''}" data-a="statsPapel" data-v="L">Linha</button>
       <button class="${papel==='G'?'on':''}" data-a="statsPapel" data-v="G">Gol</button>
@@ -3700,7 +3765,12 @@ function viewStats(liga){
   const rkRachas=R.rachas,rkPm=R.pm,rkPct=R.pct,rkOver=R.over,rkGolsGk=R.golsGk,
     rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkGk=R.gk,duplas=R.duplas;
   const taxaFmt=(v,dec,suf)=>`<span class="num ${v>0?'up':v<0?'dn':''}">${(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(dec).replace('.',',')}${suf||''}</span>`;
-  const anos=naFicha?statsAnos(liga,who,papel):[];
+  /* a história da pessoa no período, quebrada no passo abaixo dele (D-149):
+     mês → racha a racha · ano → mês a mês · sempre → ano a ano              */
+  const grupoDe={mes:'racha',ano:'mes',sempre:'ano'}[tipo];
+  const grupos=naFicha&&grupoDe?statsGrupos(liga,who,papel,per,grupoDe):[];
+  const labG=g=>grupoDe==='racha'?new Date(g.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):grupoDe==='mes'?MESES_CURTOS[+g.k.slice(5)-1]:g.k;
+  const tituloG={racha:'Racha a racha',mes:'Mês a mês',ano:'Ano a ano'}[grupoDe];
   const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
   /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
@@ -3849,10 +3919,12 @@ function viewStats(liga){
     </div>
     ${ratesHtml}
     ${posHtml}
-    ${anos.length&&(anos.length>1||per==='sempre')?`<div class="hr"></div>
-      <div class="k2" style="margin-top:0">Ano a ano</div>
-      ${anos.map(a=>`<div class="rk"><span class="nm num">${a.ano}</span>
-        <span class="tiny muted">${pl(a.nR,'racha')} · ${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
+    ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
+      <div class="k2" style="margin-top:0">${tituloG}</div>
+      ${grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
+      ${grupoDe==='racha'?'':grafBarras('Partidas',grupos,g=>g.jogos,v=>String(Math.round(v)),labG,{nota:grupoDe==='mes'?'por mês':'por ano'})}
+      ${[...grupos].reverse().map(a=>`<div class="rk"><span class="nm num">${labG(a)}</span>
+        <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
   </div>
 
@@ -3949,11 +4021,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const lin=(x,val,sub)=>`<div class="rk3" data-a="pSheet" data-id="${x.pid}"><span class="pos">·</span><div class="nm">${esc(nameOf(liga,x.pid))}${sub?`<small>${sub}</small>`:''}</div><span class="val">${val}</span></div>`;
     return `
   <div class="card">
-    ${(()=>{ /* ‹ › andam entre os rachas da liga (D-142): o mais novo à direita */
-      const ids=idsRachas(liga),i=ids.indexOf(sid),ant=i>=0&&i<ids.length-1?ids[i+1]:null,prox=i>0?ids[i-1]:null;
-      const seta=(id,ch,tit)=>`<button class="btn sm ghost" data-a="statsRacha" data-id="${id||''}" title="${tit}" aria-label="${tit}" ${id?'':'disabled'} style="min-width:36px;padding:4px 10px">${ch}</button>`;
-      return `<div class="row" style="margin-bottom:10px;gap:6px"><div class="k" style="flex:1;min-width:0">Racha de ${DIA(ini)} · ${new Date(ini).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${new Date(fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
-        ${ids.length>1?seta(ant,'‹','racha anterior')+seta(prox,'›','racha seguinte'):''}</div>`})()}
+    <div class="k" style="margin-bottom:10px">Racha de ${DIA(ini)} · ${new Date(ini).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}–${new Date(fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
     <div class="tiles four">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${presentes}</b><span>presentes</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
@@ -4005,7 +4073,17 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer?Math.round(ms.length/nRachasPer):'—'}</b><span>partidas por racha</span></div>
     </div>
-    ${(()=>{ /* gols por racha (D-108): coluna por racha, o último em verde, média tracejada */
+    ${tipo==='ano'||tipo==='sempre'?(()=>{ /* a liga ao longo do ano (por mês) ou da vida (por ano) — D-149 */
+      const G={};ms.forEach(m=>{const k=tipo==='ano'?MES_KEY(m.ts):String(ANO(m.ts)),g=G[k]||(G[k]={k,ts:m.ts,rachas:{},nR:0,partidas:0,gols:0});
+        g.partidas++;g.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];const sid=m.sessionId||m.id;if(!g.rachas[sid]){g.rachas[sid]=1;g.nR++}});
+      /* no ano, os meses sem racha entram como zero até o mês de hoje: o buraco também é informação */
+      if(tipo==='ano'){const fim=anoSel===ANO_ATUAL()?new Date().getMonth():11;
+        for(let i=0;i<=fim;i++){const k=anoSel+'-'+String(i+1).padStart(2,'0');if(!G[k])G[k]={k,ts:new Date(anoSel,i,1).getTime(),rachas:{},nR:0,partidas:0,gols:0}}}
+      const arr=Object.values(G).sort((a,b)=>a.k.localeCompare(b.k)),lab=g=>tipo==='ano'?MESES_CURTOS[+g.k.slice(5)-1]:g.k,por=tipo==='ano'?'por mês':'por ano';
+      return grafBarras('Rachas',arr,g=>g.nR,v=>String(Math.round(v*10)/10).replace('.',','),lab,{nota:por})
+        +grafBarras('Partidas',arr,g=>g.partidas,v=>String(Math.round(v)),lab,{nota:por})
+        +grafBarras('Gols por partida',arr,g=>g.partidas?g.gols/g.partidas:0,v=>v.toFixed(1).replace('.',','),lab,{nota:por})})()
+    :(()=>{ /* gols por racha (D-108): coluna por racha, o último em verde, média tracejada */
       const M={},ord=[];[...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>{const sid=m.sessionId||m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:m.ts,gols:0,n:0};ord.push(r)}
         r.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];r.n++});
       const arr=ord.slice(-12);if(arr.length<2)return '';
@@ -4039,7 +4117,7 @@ ${cardJuntos}  <div class="card">
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
-      const ordem=per==='mes'?['pct','over','pm','ritmo','seq','pres','min','gk','golsgk','duplas']
+      const ordem=tipo==='mes'?['pct','over','pm','ritmo','seq','pres','min','gk','golsgk','duplas']
         :per==='sempre'?['pres','pct','over','ritmo','pm','seq','min','gk','golsgk','duplas']
         :['pres','pct','over','ritmo','pm','seq','min','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
@@ -6275,7 +6353,10 @@ const A={
   toggleCfg(el){const l=L();l.cfg[el.dataset.k]=!l.cfg[el.dataset.k];save();render()},
   setVis(el){const l=L();l.cfg.rankVisibility=el.dataset.v==='admin'?'admin':'todos';save();render()},
   rankRole(el){S.ui.rankRole=el.dataset.v==='G'?'G':'L';save();render()},
-  statsPer(el){const v=el.dataset.v;S.ui.statsPer=v==='sempre'||v==='mes'||v==='racha'?v:(/^\d{4}$/.test(v)&&+v!==ANO_ATUAL()?v:'ano');S.ui.statsRacha=null;S.ui.ppPage=0;save();render()},
+  /* o botão do período volta ao ATUAL (último racha, mês de hoje, ano de hoje); as setas escolhem outro (D-149) */
+  statsPer(el){const v=el.dataset.v;S.ui.statsPer=['sempre','mes','racha','ano'].includes(v)?v:'ano';S.ui.statsRacha=null;S.ui.statsMes=null;S.ui.statsAno=null;S.ui.ppPage=0;save();render()},
+  statsMes(el){const k=el.dataset.v;if(!/^\d{4}-\d{2}$/.test(k||''))return;S.ui.statsMes=k;S.ui.statsPer='mes';S.ui.ppPage=0;save();render()},
+  statsAno(el){const y=el.dataset.v;if(!/^\d{4}$/.test(y||''))return;S.ui.statsAno=+y;S.ui.statsPer='ano';S.ui.ppPage=0;save();render()},
   statsTab(el){S.ui.statsTab=el.dataset.v==='racha'?'racha':'jogador';save();render()},
   /* abrir os destaques de UM racha (setas ‹ › do card, ou "Destaques" na aba Jogos, D-142) */
   statsRacha(el){const id=el.dataset.id||null;if(!id)return;S.ui.statsRacha=id;S.ui.statsPer='racha';S.ui.statsTab='racha';S.ui.tab='stats';S.ui.ppPage=0;save();render()},
@@ -6364,7 +6445,7 @@ const A={
     lista.forEach(x=>{a.n++;a[x.res==='V'?'v':x.res==='D'?'d':'e']++});
     openSheet(`<h2>${esc(nameOf(l,who))} ${mesmo?'&':'×'} ${esc(nameOf(l,rival))}</h2>
       <div class="tiny muted" style="margin-bottom:10px">${mesmo?'Partidas do mesmo lado':'Confrontos em lados opostos'}
-        · ${per==='ano'?ANO_ATUAL():'desde sempre'}</div>
+        · ${rotPer(l,per)}</div>
       <div class="stat" style="margin-bottom:6px">
         <div><b class="num">${a.n}</b><span>${mesmo?'juntos':'confrontos'}</span></div>
         <div><b class="num">${aprDe(a.v,a.e,a.n)}%</b><span>aproveitamento</span></div>

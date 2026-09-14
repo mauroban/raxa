@@ -134,6 +134,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-146](stats-e-destaques.md#d-146) · "Os melhores do racha" ordena por divisão e, dentro dela, por Elo
 - [D-147](stats-e-destaques.md#d-147) · "Quem mais rendeu" nos Destaques também é % por partida
 - [D-148](stats-e-destaques.md#d-148) · Tempo em quadra é volume, como presença: total, sem piso
+- [D-149](stats-e-destaques.md#d-149) · Período por mês e por ano com setas ‹ ›; gráficos por racha/mês/ano nas duas abas
 
 ### [Interface](interface.md)
 
