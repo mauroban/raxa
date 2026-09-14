@@ -709,14 +709,21 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 /* momento (D-150): barras de gol em cada coluna, linha da % acima/abaixo do
    esperado por cima, zero tracejado no meio; sem gap, para o centro da
    coluna i ser exatamente (i+½)/n e a linha do SVG cair em cima do ponto  */
-.chart.momento{gap:0;height:120px;margin-top:22px}
-.chart.momento .col em{font-size:11px;font-weight:700}
-.chart.momento .col em.ok{color:var(--ok)}.chart.momento .col em.bad{color:var(--bad)}
-.chart.momento .avg.zero{border-top-style:solid;opacity:.45}
-.chart.momento .dot{position:absolute;left:50%;width:8px;height:8px;border-radius:50%;background:var(--ok);border:2px solid var(--panel);transform:translate(-50%,50%);z-index:3}
-.chart.momento .dot.bad{background:var(--bad)}
+.chart.momento{gap:0;height:130px;margin-top:26px;border-bottom:0}
+.chart.momento .avg.zero{border-top-style:dashed;opacity:.6}
+.chart.momento .dot{position:absolute;left:50%;width:10px;height:10px;border-radius:50%;background:var(--ok);border:2px solid var(--panel);transform:translate(-50%,50%);z-index:3;box-shadow:0 0 0 1.5px var(--ok)}
+.chart.momento .dot.bad{background:var(--bad);box-shadow:0 0 0 1.5px var(--bad)}
+.chart.momento .col.cur .dot{width:12px;height:12px}
+.chart.momento .lbl{position:absolute;left:50%;font-family:var(--disp);font-weight:800;font-size:11px;line-height:1;color:var(--mute);white-space:nowrap;z-index:4}
+.chart.momento .lbl.up{transform:translate(-50%,-10px)}
+.chart.momento .lbl.dn{transform:translate(-50%,calc(100% + 10px))}
+.chart.momento .lbl.ok{color:var(--ok)}.chart.momento .lbl.bad{color:var(--bad)}
 .chart.momento svg.ln{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
-.chart.momento svg.ln polyline{fill:none;stroke:var(--ok);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.chart.momento svg.ln polygon.ok{fill:var(--ok);opacity:.14}
+.chart.momento svg.ln polygon.bad{fill:var(--bad);opacity:.14}
+.chart.momento svg.ln polyline{fill:none;stroke:var(--ok);stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.chart.momento+.chartx{border-top:1px solid var(--line2);padding-top:5px;margin-top:0}
+.chartx span small{display:block;font-size:9.5px;color:var(--mute);font-weight:600;margin-top:1px}
 .chartx{display:flex;gap:5px;margin-top:5px}
 .chartx span{flex:1 1 0;min-width:0;text-align:center;font-size:9.5px;color:var(--mute2);font-family:var(--body);overflow:hidden;white-space:nowrap}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--mute)}
@@ -2290,16 +2297,22 @@ function statsGrupos(liga,pid,papel,per,grupo){
 function grafMomento(arr,pct,lab,opts){
   opts=opts||{};if(arr.length<2)return '';
   const ps=arr.map(pct),maxP=Math.max(10,...ps.map(Math.abs));
-  const y=p=>50+p/maxP*44;                       // % de baixo para cima; 50 = zero
+  const y=p=>50+p/maxP*40;                       // % de baixo para cima; 50 = zero
+  const n=arr.length,pts=ps.map((p,i)=>(i+.5)+','+(100-y(p)).toFixed(2));
+  const area=`0.5,50 ${pts.join(' ')} ${n-.5},50`;
   const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
   const fmtP=p=>(p>0?'+':p<0?'−':'')+Math.abs(Math.round(p))+'%';
+  const sub=opts.sub;   // texto pequeno embaixo do rótulo (o aproveitamento do grupo)
   return `<div class="k2" style="margin:16px 0 0">Momento${nota}</div>
   <div class="chart momento">
     <div class="avg zero" style="bottom:50%"><b>esperado</b></div>
-    <svg class="ln" viewBox="0 0 ${arr.length} 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${ps.map((p,i)=>(i+.5)+','+(100-y(p)).toFixed(2)).join(' ')}"/></svg>
-    ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em class="${ps[i]>0?'ok':ps[i]<0?'bad':''}">${fmtP(ps[i])}</em><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span></div>`).join('')}</div>
-  <div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?lab(r):''}</span>`).join('')}</div>
-  <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span></div>`;
+    <svg class="ln" viewBox="0 0 ${n} 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs><clipPath id="mcima"><rect x="0" y="0" width="${n}" height="50"/></clipPath><clipPath id="mbaixo"><rect x="0" y="50" width="${n}" height="50"/></clipPath></defs>
+      <polygon class="ok" points="${area}" clip-path="url(#mcima)"/><polygon class="bad" points="${area}" clip-path="url(#mbaixo)"/>
+      <polyline points="${pts.join(' ')}"/></svg>
+    ${arr.map((r,i)=>`<div class="col ${i===n-1?'cur':''}"><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span><b class="lbl ${ps[i]>0?'ok':ps[i]<0?'bad':''} ${ps[i]<0?'dn':'up'}" style="bottom:${y(ps[i]).toFixed(2)}%">${fmtP(ps[i])}</b></div>`).join('')}</div>
+  <div class="chartx">${arr.map((r,i)=>`<span>${n<=8||i%2===(n-1)%2?lab(r)+(sub?`<small>${sub(r)}</small>`:''):''}</span>`).join('')}</div>
+  <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span>${sub?'<span><i style="background:var(--mute2);width:14px;height:2px;border-radius:0;vertical-align:2px"></i>aproveitamento embaixo</span>':''}</div>`;
 }
 /* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
 const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
@@ -3951,7 +3964,7 @@ function viewStats(liga){
     ${posHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
-      ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
+      ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano',sub:g=>aprDe(g.v,g.e,g.jogos)+'%'})
         :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
       ${[...grupos].reverse().map(a=>`<div class="rk"><span class="nm num">${labG(a)}</span>
         <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>

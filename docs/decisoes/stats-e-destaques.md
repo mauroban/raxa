@@ -467,3 +467,17 @@ de cada grupo, logo abaixo.
 **Por quê:** duas medidas numa coluna só (altura da barra e ponto da linha) confundiam a leitura.
 **Onde:** `grafMomento`, CSS `.chart.momento` em `index.html` · [Stats §2](../produto/stats.md).
 
+<a id="d-152"></a>
+### D-152 · Momento: valor no ponto, área pintada, aproveitamento embaixo do eixo
+**Quando:** 2026-09-14.
+**O quê:** o valor da % fica colado ao ponto (acima se positivo, abaixo se negativo), a área entre
+a linha e o zero é pintada (verde acima, vermelha abaixo, `clipPath` no SVG), ponto maior no
+grupo atual, e o **aproveitamento** de cada grupo aparece em cinza pequeno embaixo do rótulo do
+eixo (`opts.sub`).
+**Por quê:** o valor no topo da coluna ficava longe do ponto; a área dá de relance quanto tempo
+a pessoa passou acima ou abaixo do nível. Aproveitamento como segunda linha foi descartado: 0–100
+com 50 no meio e −x…+x com zero no meio são duas escalas, e duas linhas no mesmo desenho
+confundem — embaixo do eixo ele fica à mão sem competir.
+**Onde:** `grafMomento`, CSS `.chart.momento`, `.chartx span small` em `index.html` ·
+[Stats §2](../produto/stats.md).
+

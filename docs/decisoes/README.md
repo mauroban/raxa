@@ -137,6 +137,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-149](stats-e-destaques.md#d-149) · Período por mês e por ano com setas ‹ ›; gráficos por racha/mês/ano nas duas abas
 - [D-150](stats-e-destaques.md#d-150) · Momento na aba Jogador: gols em barra, % acima do esperado em linha, ao longo do tempo
 - [D-151](stats-e-destaques.md#d-151) · Momento sem as barras de gol: só a linha
+- [D-152](stats-e-destaques.md#d-152) · Momento: valor colado no ponto, área pintada, aproveitamento embaixo do eixo (sem segunda linha)
 
 ### [Interface](interface.md)
 
