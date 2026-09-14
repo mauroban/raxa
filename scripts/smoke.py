@@ -840,6 +840,10 @@ step('numeros: ultimo racha e ultimo mes',()=>{
      escalacao inteira (trecho curto descartado pode tirar — D-75), entao nao e exigido */
   if(/Times do racha/.test(h)&&!/% <small>real<\/small>/.test(h))throw new Error('faltou o realizado (empate vale meio) discreto na linha dos times');
   if(/Rankings/.test(h))throw new Error('ranking de temporada nao cabe no ultimo racha');
+  /* o ranking "rendeu acima do esperado" existe em todo periodo, nao so no racha (D-143) */
+  A.statsPer({dataset:{v:'sempre'}});
+  if(!/Rendeu acima do esperado/.test(els['#app'].innerHTML))throw new Error('ranking "rendeu acima do esperado" nao saiu em "sempre"');
+  A.statsPer({dataset:{v:'racha'}});
   A.rkSheet({dataset:{k:'rvenc'}});
   if(!/Quem mais ganhou/.test($('#sheet').innerHTML))throw new Error('folha do ranking da noite nao abriu');
   closeSheet();

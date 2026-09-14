@@ -340,3 +340,20 @@ repetir os rankings dentro da aba Jogos (duas telas com a mesma conta).
 (botão Destaques), `A.statsRacha`, `A.statsPer` em `index.html` · `smoke.py` ("numeros: as setas
 andam para o racha anterior…") · [Stats §2](../produto/stats.md).
 
+<a id="d-143"></a>
+### D-143 · "Rendeu acima do esperado" é ranking de todo período, não só do racha
+**Quando:** 2026-09-14.
+**O quê:** o saldo acima do esperado (D-13) entra em `statsLiga` (`J[pid].over`, somado de
+`m.over`) e em `listasRk` (`over`, mín. `MIN_JOGOS` partidas, como o aproveitamento). Na aba
+Racha ele aparece nos rankings de 30 dias, ano e Sempre, logo depois de "Maior aproveitamento"
+(em 30 dias, logo depois dele no topo); na aba Jogador entra em "Posição nos rankings" como
+"acima do esp.". Só com as patentes abertas — a conta nasce do nível de quem estava em quadra.
+O saldo é da pessoa, não da função: sai igual nas leituras de linha e de gol.
+**Por quê:** o ranking existia no último racha e no destaque do mês, mas quem queria saber quem
+rende acima do nível na temporada ou na carreira não tinha onde olhar.
+**Descartado:** piso próprio menor que o do aproveitamento (dois pisos na mesma tela confundem);
+separar o saldo por função (o Δ de Elo já é por função; o saldo acima do esperado é do resultado da
+pessoa em quadra).
+**Onde:** `statsLiga`, `listasRk`, `viewStats` (`SECS.over`, `ordem`, `posicoes`) em `index.html` ·
+`smoke.py` · [Stats §2](../produto/stats.md).
+
