@@ -11,6 +11,7 @@ Como o app se comporta e por quê, na linguagem de quem usa.
 | [conceitos.md](produto/conceitos.md) | Um termo não está claro: liga, racha, partida, trecho, patente, divisão, lançador… |
 | [patentes.md](produto/patentes.md) | Qualquer coisa sobre nível: escada, cortes, motor de Elo, K, calibração, anti-ioiô, entrada de quem chega, goleiro, quem vê o quê, e **o que a patente garante** (medido) |
 | [fluxo-do-racha.md](produto/fluxo-do-racha.md) | As telas do dia: presença, montagem de times, partida ao vivo, fim do racha |
+| [confirmacao-de-presenca.md](produto/confirmacao-de-presenca.md) | A lista do racha no app: agenda semanal, "Vou" na linha ou no gol, espera, quem lança confirma pelos outros, "Quem é você nesta liga?" |
 | [regras-do-racha.md](produto/regras-do-racha.md) | As regras de quadra que o app segue: time cheio, fila do "de próximo", vencedor fica, goleiro, empate |
 | [stats.md](produto/stats.md) | Painel, destaques do mês, rankings, duelos, parcerias, mínimo de partidas |
 | [contestacao-e-correcao.md](produto/contestacao-e-correcao.md) | Revisar uma partida, corrigir, anular, e o que acontece com a liga depois |
@@ -33,7 +34,7 @@ Como está construído e como se opera.
 ## Decisões
 
 Por que cada coisa é do jeito que é. [decisoes/README.md](decisoes/README.md) tem o índice de todas (D-01 em diante) e a regra para registrar uma nova; as decisões em si ficam num arquivo por tema:
-[motor de patente](decisoes/motor-de-patente.md) · [escada, calibração e palpite](decisoes/escada-calibracao-e-palpite.md) · [times, fila e goleiro](decisoes/times-fila-e-goleiro.md) · [partida e histórico](decisoes/partida-e-historico.md) · [stats e destaques](decisoes/stats-e-destaques.md) · [interface](decisoes/interface.md) · [contas e permissões](decisoes/contas-e-permissoes.md) · [dados, sync e código](decisoes/dados-sync-e-codigo.md).
+[motor de patente](decisoes/motor-de-patente.md) · [escada, calibração e palpite](decisoes/escada-calibracao-e-palpite.md) · [times, fila e goleiro](decisoes/times-fila-e-goleiro.md) · [partida e histórico](decisoes/partida-e-historico.md) · [stats e destaques](decisoes/stats-e-destaques.md) · [interface](decisoes/interface.md) · [contas e permissões](decisoes/contas-e-permissoes.md) · [chamada e confirmação](decisoes/chamada-e-confirmacao.md) · [dados, sync e código](decisoes/dados-sync-e-codigo.md).
 
 ## Fora daqui
 

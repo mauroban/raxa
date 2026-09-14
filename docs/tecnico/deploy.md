@@ -18,7 +18,8 @@ Tempo total: ~10 minutos.
    Cria as tabelas, a RLS, as funções e liga o Realtime. Pode rodar de novo sem quebrar.
    Se você já tinha aplicado uma versão anterior, rode de novo: a versão atual
    usa **tabelas por entidade** (`league_players`, `league_matches`,
-   `league_sessions`, `league_live`, `league_log`) com sync incremental —
+   `league_sessions`, `league_rsvps` — confirmação de presença, D-165 —,
+   `league_live`, `league_log`) com sync incremental —
    ligas antigas migram sozinhas na primeira leitura —, `league_requests`
    (entrada por código passa por aprovação do admin) e as funções de contas
    da liga. Não existe policy de UPDATE direto em `leagues`: toda gravação

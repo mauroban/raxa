@@ -6,8 +6,8 @@
 > · decisões em [decisões](../decisoes/README.md).
 
 > **Estado (28/08/2026):** o degrau intermediário está implementado em `supabase/schema.sql` —
-> tabelas por entidade (`league_players`, `league_matches`, `league_sessions`, `league_live`,
-> `league_log`) com payload jsonb de **fatos** e sync incremental por versão (`league_delta`,
+> tabelas por entidade (`league_players`, `league_matches`, `league_sessions`, `league_rsvps`,
+> `league_live`, `league_log`) com payload jsonb de **fatos** e sync incremental por versão (`league_delta`,
 > `save_parts`), trava otimista em `leagues.version`, `league_requests` (entrada por aprovação) e
 > `leagues.cfg`/`migrated`. Papel de admin vale no servidor para contas (D-62); a escrita da liga
 > (`save_parts`) ainda é por membro. Este documento continua sendo o alvo relacional completo
@@ -212,6 +212,16 @@ Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:
 ---
 
 ## 6. Racha, partida e trecho
+
+**Confirmação de presença (D-165, já em uso no esquema intermediário):** `league_rsvps`
+`(league_id, id, data jsonb, v, deleted)`, uma linha por pessoa por data — `data` guarda
+`{id:'AAAA-MM-DD_pid', dia, pid, papel:'L'|'G', by, t, at}`. O `at` (hora de chegada na lista, que
+define a fila de espera) é carimbado pelo servidor em `save_parts` quando a linha chega sem ele;
+`league_delta` devolve a entidade como as outras (`rsvps`), e `save_parts` devolve as linhas
+gravadas na versão nova (`rsvps`) para o aparelho trocar o relógio local pelo do servidor. A
+espera não existe no banco: é derivada de `at` e do máximo em `leagues.cfg.chamada`. No alvo
+relacional abaixo isso vira `rsvps (liga_id, data, player_id, papel, confirmado_por,
+confirmado_em default now())` com `unique (liga_id, data, player_id)`.
 
 ```sql
 create type modo_racha as enum ('curtas','unica');

@@ -384,6 +384,18 @@ create table if not exists public.league_live (
   data      jsonb,                      -- null = sem racha em andamento
   v         bigint not null default 1
 );
+-- Confirmação de presença para um racha futuro (D-165): uma linha por pessoa
+-- por data. `data` guarda {id, data:'AAAA-MM-DD', pid, papel:'L'|'G', by, t}
+-- e o servidor carimba `at` (hora de chegada na lista) — é a ordem da fila
+-- de espera, e por isso não pode vir do relógio do celular.
+create table if not exists public.league_rsvps (
+  league_id uuid   not null references public.leagues on delete cascade,
+  id        text   not null,
+  data      jsonb  not null,
+  v         bigint not null default 1,
+  deleted   boolean not null default false,
+  primary key (league_id, id)
+);
 create table if not exists public.league_log (
   league_id uuid   not null references public.leagues on delete cascade,
   seq       bigserial,
@@ -395,6 +407,7 @@ create index if not exists league_players_v  on public.league_players (league_id
 create index if not exists league_matches_v  on public.league_matches (league_id, v);
 create index if not exists league_sessions_v on public.league_sessions (league_id, v);
 create index if not exists league_log_v      on public.league_log (league_id, v);
+create index if not exists league_rsvps_v    on public.league_rsvps (league_id, v);
 
 -- Tudo passa pelas funções (security definer); sem policy = sem acesso direto.
 alter table public.league_players  enable row level security;
@@ -402,6 +415,7 @@ alter table public.league_matches  enable row level security;
 alter table public.league_sessions enable row level security;
 alter table public.league_live     enable row level security;
 alter table public.league_log      enable row level security;
+alter table public.league_rsvps    enable row level security;
 
 -- --------------------------------------------------------------- migração --
 create or replace function public.migrate_league(p_id uuid)
@@ -462,6 +476,9 @@ begin
     'sessions', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted))
                          from public.league_sessions where league_id = p_id and v > p_since
                            and (p_since > 0 or not deleted)), '[]'::jsonb),
+    'rsvps', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted))
+                       from public.league_rsvps where league_id = p_id and v > p_since
+                         and (p_since > 0 or not deleted)), '[]'::jsonb),
     'live', case when lv.league_id is not null and lv.v > p_since
                  then jsonb_build_object('data', lv.data) else null end,
     'log', coalesce((select jsonb_agg(data order by seq)
@@ -471,7 +488,10 @@ end $fn$;
 
 -- ------------------------------------------------------------------ gravar --
 -- p_parts: {name?, cfg?, players:[{id,data}|{id,deleted:true}], matches:[...],
---           sessions:[...], live:{data}|{clear:true}, log:[entrada,...]}
+--           sessions:[...], rsvps:[...], live:{data}|{clear:true}, log:[entrada,...]}
+-- rsvps: linha que chega SEM `at` ganha a hora do servidor (é a vez na fila);
+-- linha reenviada com `at` mantém o dela. As linhas gravadas voltam na
+-- resposta (`rsvps`) para o aparelho ficar com o carimbo certo.
 -- Compare-and-swap na versão da liga. Em conflito devolve o delta desde a
 -- versão do cliente: ele aplica por cima e reenvia só o que ainda difere.
 create or replace function public.save_parts(p_id uuid, p_version bigint, p_parts jsonb)
@@ -513,6 +533,17 @@ begin
       on conflict (league_id, id) do update set data = excluded.data, v = nv, deleted = false;
     end if;
   end loop;
+  for r in select * from jsonb_array_elements(coalesce(p_parts->'rsvps','[]'::jsonb)) loop
+    if coalesce((r->>'deleted')::boolean,false) then
+      update public.league_rsvps set deleted = true, v = nv where league_id = p_id and id = r->>'id';
+    else
+      insert into public.league_rsvps (league_id, id, data, v)
+      values (p_id, r->>'id',
+              case when r->'data' ? 'at' then r->'data'
+                   else r->'data' || jsonb_build_object('at', (extract(epoch from now())*1000)::bigint) end, nv)
+      on conflict (league_id, id) do update set data = excluded.data, v = nv, deleted = false;
+    end if;
+  end loop;
   if p_parts ? 'live' then
     insert into public.league_live (league_id, data, v)
     values (p_id, case when coalesce((p_parts->'live'->>'clear')::boolean,false) then null else p_parts->'live'->'data' end, nv)
@@ -528,7 +559,9 @@ begin
          updated_at = now()
    where id = p_id
   returning * into cur;
-  return jsonb_build_object('ok', true, 'version', cur.version, 'name', cur.name, 'code', cur.code);
+  return jsonb_build_object('ok', true, 'version', cur.version, 'name', cur.name, 'code', cur.code,
+    'rsvps', coalesce((select jsonb_agg(jsonb_build_object('id',id,'data',data,'deleted',deleted))
+                       from public.league_rsvps where league_id = p_id and v = nv), '[]'::jsonb));
 end $fn$;
 
 -- create_league continua recebendo o documento (é como o app monta a liga
@@ -554,6 +587,7 @@ returns jsonb language sql security definer stable set search_path = public as $
     'players',  (select count(*) from public.league_players  where league_id = p_id and not deleted),
     'matches',  (select count(*) from public.league_matches  where league_id = p_id and not deleted),
     'sessions', (select count(*) from public.league_sessions where league_id = p_id and not deleted),
+    'rsvps',    (select count(*) from public.league_rsvps    where league_id = p_id and not deleted),
     'log',      (select count(*) from public.league_log      where league_id = p_id),
     'bytes',    (select coalesce(sum(pg_column_size(data)),0) from public.league_matches  where league_id = p_id)
               + (select coalesce(sum(pg_column_size(data)),0) from public.league_players  where league_id = p_id)

@@ -13,7 +13,7 @@ Fora dessa regra, tudo continua valendo: a mesma pessoa tem **patentes independe
 
 Quando alguém cadastra "Bruninho" na tela de presença, nasce um **perfil sem dono**: existe, joga, acumula patente e estatística, mas não pertence a nenhuma conta. Esse é o caso normal — num racha de 16, metade nunca vai abrir o app.
 
-Quando o Bruninho entra na Liga, ele vê os perfis sem dono e **assume o seu**, já com todo o histórico anterior. A partir daí acompanha as próprias patentes em todas as Ligas dele num lugar só. Se alguém assumir o perfil errado, o admin desfaz o vínculo com um toque e o perfil volta a ficar sem dono.
+Quando o Bruninho entra na Liga, a aba Racha abre com **Quem é você nesta liga?** (D-166): ele toca no próprio nome entre os perfis sem dono e **assume o seu**, já com todo o histórico anterior — ou, se não está na lista, **cria o seu jogador** com o apelido que usa nesta liga (o apelido é da liga: "Bruninho" numa, "Bruno Costa" na outra). O caminho antigo continua valendo: "Este perfil sou eu" na ficha, e o admin vinculando em Pendências. Detalhes em [Confirmação de presença §5](confirmacao-de-presenca.md). A partir daí acompanha as próprias patentes em todas as Ligas dele num lugar só. Se alguém assumir o perfil errado, o admin desfaz o vínculo com um toque e o perfil volta a ficar sem dono.
 
 ## 3. Entrar numa Liga: três caminhos, uma regra
 
@@ -57,7 +57,7 @@ O padrão de quem entra é **Jogador**: só olha. O admin dá **Lançador** a qu
 
 **Visibilidade das patentes** (seção 3.8) é decisão do admin: todo mundo vê, ou só ele. Em v1, sem backend, isso vale por aparelho — a checagem já é por papel, e é a mesma que o servidor vai aplicar na v2. No app hoje o que está de fato aplicado é: **admin** = revisar/anular/apagar partida, dar papel, vincular/desvincular conta de outra pessoa, gerenciar contas da liga; **editor** = corrigir resultado de partida (nível é só admin); **lançador** = tudo que é conduzir o racha; **jogador** = só leitura (a checagem é central, no despachante de ações — `ACOES_LANCAR`/`ACOES_ADMIN`).
 
-**Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador*. Para o admin, o card **Pendências** (aba Jogadores) lista as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
+**Contas sem jogador.** Quem entra na liga pelo código vira *conta* antes de ser *jogador* — e resolve isso sozinho no cartão **Quem é você nesta liga?** da aba Racha (D-166). Para o admin, o card **Pendências** (aba Jogadores) continua listando as contas — com jogador ou sem —, e é ali que ele vincula a conta a um perfil sem dono, cria um jogador com o nome da conta ou tira a conta da liga (o jogador e o histórico ficam). Os outros membros veem só os jogadores e se cada um tem perfil atrelado.
 
 ## 7. Arquivar jogador (D-128)
 

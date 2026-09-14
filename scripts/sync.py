@@ -48,19 +48,21 @@ global.prompt=()=>'Mauro';
 global.alert=()=>{};
 
 /* -------- Supabase falso: um Postgres de mentira, com RLS de mentira -------- */
-const DB={users:[],profiles:[],leagues:[],members:[],requests:[],players:[],matches:[],sessions:[],live:{},log:[]};
+const DB={users:[],profiles:[],leagues:[],members:[],requests:[],players:[],matches:[],sessions:[],rsvps:[],live:{},log:[]};
 function delta(lid,since){
   const l=DB.leagues.find(x=>x.id===lid);
   const rows=t=>DB[t].filter(r=>r.league_id===lid&&r.v>since&&(since>0||!r.deleted)).map(r=>({id:r.id,data:jclone(r.data),deleted:r.deleted}));
   const lv=DB.live[lid];
   return {id:lid,version:l.version,name:l.name,code:l.code,cfg:jclone(l.cfg),owner:l.owner_id===UID(),players:rows('players'),matches:rows('matches'),
-    sessions:rows('sessions'),live:lv&&lv.v>since?{data:jclone(lv.data)}:null,log:DB.log.filter(r=>r.league_id===lid&&r.v>since).map(r=>jclone(r.data))};
+    sessions:rows('sessions'),rsvps:rows('rsvps'),live:lv&&lv.v>since?{data:jclone(lv.data)}:null,log:DB.log.filter(r=>r.league_id===lid&&r.v>since).map(r=>jclone(r.data))};
 }
 function applyParts(lid,parts,nv){
-  ['players','matches','sessions'].forEach(t=>(parts[t]||[]).forEach(r=>{
+  ['players','matches','sessions','rsvps'].forEach(t=>(parts[t]||[]).forEach(r=>{
     const i=DB[t].findIndex(x=>x.league_id===lid&&x.id===r.id);
     if(r.deleted){if(i>=0){DB[t][i].deleted=true;DB[t][i].v=nv}return}
     const row={league_id:lid,id:r.id,data:jclone(r.data),v:nv,deleted:false};
+    /* rsvp sem `at` ganha a hora do servidor (a vez na fila, D-165) */
+    if(t==='rsvps'&&row.data.at===undefined)row.data.at=SRV_NOW();
     if(i>=0)DB[t][i]=row;else DB[t].push(row)}));
   if(parts.live)DB.live[lid]={data:parts.live.clear?null:jclone(parts.live.data),v:nv};
   (parts.log||[]).forEach(e=>DB.log.push({league_id:lid,data:jclone(e),v:nv}));
@@ -68,6 +70,7 @@ function applyParts(lid,parts,nv){
   if(parts.name)l.name=parts.name;if(parts.cfg)l.cfg=jclone(parts.cfg);
 }
 let UID=()=>null;                           // quem esta logado (o fakeClient preenche)
+let SRV_CLOCK=0;const SRV_NOW=()=>1e12+(++SRV_CLOCK)*1000;   // relogio do servidor de mentira: so anda para frente
 let RT=[];                                  // assinantes de realtime
 const REDE={caida:false,pendura:0};         // simula sinal caido / pedido pendurado
 const uuid=(n=>()=>'uuid-'+(++n))(0);
@@ -147,7 +150,8 @@ function fakeClient(){
       row.version++;
       applyParts(p_id,p_parts||{},row.version);
       emit('UPDATE',row);
-      return{data:{ok:true,version:row.version,name:row.name,code:row.code},error:null};
+      const rsvps=DB.rsvps.filter(r=>r.league_id===p_id&&r.v===row.version).map(r=>({id:r.id,data:jclone(r.data),deleted:r.deleted}));
+      return{data:{ok:true,version:row.version,name:row.name,code:row.code,rsvps},error:null};
     },
     league_size({p_id}){return{data:{players:DB.players.filter(p=>p.league_id===p_id&&!p.deleted).length,matches:DB.matches.filter(m=>m.league_id===p_id&&!m.deleted).length,sessions:0,log:DB.log.filter(x=>x.league_id===p_id).length,bytes:1234},error:null}},
     leave_league({p_id}){
@@ -443,6 +447,32 @@ await step('partida encerrada no outro aparelho manda: o gol atrasado daqui nao 
   await sleep(700);
   ok('a tela seguiu o outro aparelho (sem partida)',!L().live.cur);
   ok('o servidor continua sem partida',!DB.live[ligaId].data.cur);
+});
+
+console.log('\n[sync] confirmacao de presenca: o servidor carimba a vez na fila (D-165)');
+await step('vou: a linha sobe sem `at`, volta carimbada, e a de outro aparelho entra na ordem do servidor',async()=>{
+  const l=L();l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),{on:true,dow:new Date().getDay(),hora:'23:59',linha:1,gol:1,abre:4});
+  l.players[0].owner=S.me.name;l.players[0].role='admin';S.ui.tab='racha';
+  const ch=proximaChamada(l);
+  ok('a chamada de hoje esta aberta',!!ch&&ch.aberta&&ch.hoje);
+  A.vou({dataset:{p:'L'}});
+  ok('local: sem carimbo antes de gravar',l.rsvps.length===1&&l.rsvps[0].at===undefined);
+  await sleep(900);
+  const row=DB.rsvps.find(r=>r.league_id===ligaId);
+  ok('servidor: a linha existe e tem `at` do servidor',!!row&&typeof row.data.at==='number');
+  ok('o aparelho recebeu o carimbo de volta',l.rsvps[0].at===row.data.at);
+  ok('sem nada pendente depois',dirty.size===0);
+  /* outro aparelho confirmou ANTES (carimbo menor): mesmo chegando depois aqui, e ele quem fica dentro */
+  const outro=l.players[1],srvRow=srv(ligaId);srvRow.version++;
+  DB.rsvps.push({league_id:ligaId,id:rsvpId(ch.dia,outro.id),data:{id:rsvpId(ch.dia,outro.id),dia:ch.dia,pid:outro.id,papel:'L',by:'luis',t:1,at:row.data.at-5000},v:srvRow.version,deleted:false});
+  emit('UPDATE',srvRow);await sleep(900);
+  const X=listaChamada(l,ch.dia);
+  ok('a confirmacao do outro chegou pelo realtime',l.rsvps.length===2);
+  ok('1 vaga: o outro (carimbo menor) esta dentro, eu na espera',X.L.dentro[0]&&X.L.dentro[0].pid===outro.id&&X.L.espera[0]&&X.L.espera[0].pid===l.players[0].id);
+  ok('o card diz que sou o 1o da espera',/1º da espera/.test(chamadaCard(l)));   // (a aba Racha esta com o racha ao vivo de antes)
+  A.naoVou();await sleep(900);
+  ok('desistir apaga no servidor',DB.rsvps.find(r=>r.league_id===ligaId&&r.id===rsvpId(ch.dia,l.players[0].id)).deleted===true);
+  l.cfg.chamada.on=false;l.players[0].owner=null;await sleep(900);   // devolve o estado dos passos seguintes (ninguem vinculado)
 });
 
 console.log('\n[sync] recarregar a pagina');

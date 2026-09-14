@@ -11,6 +11,7 @@ Documentação em `docs/`, um arquivo por assunto — **abra só o que a tarefa 
 | significado de um termo (liga, racha, trecho, divisão, lançador…) | `docs/produto/conceitos.md` |
 | nível: escada, cortes, Elo, K, calibração, anti-ioiô, entrada, goleiro, quem vê, **o que a patente garante** | `docs/produto/patentes.md` |
 | telas do dia: presença, montagem, partida ao vivo, fim do racha | `docs/produto/fluxo-do-racha.md` |
+| chamada: confirmar presença pelo app, linha/gol, espera, "quem é você" | `docs/produto/confirmacao-de-presenca.md` |
 | regra de quadra: time cheio, fila, vencedor fica, goleiro, empate | `docs/produto/regras-do-racha.md` |
 | Stats, destaques do mês, rankings, duelos, parcerias | `docs/produto/stats.md` |
 | revisar / corrigir / anular partida | `docs/produto/contestacao-e-correcao.md` |
@@ -25,7 +26,7 @@ Documentação em `docs/`, um arquivo por assunto — **abra só o que a tarefa 
 
 Decisões por tema em `docs/decisoes/`: `motor-de-patente` · `escada-calibracao-e-palpite` ·
 `times-fila-e-goleiro` · `partida-e-historico` · `stats-e-destaques` · `interface` ·
-`contas-e-permissoes` · `dados-sync-e-codigo`. Cada D-NN tem âncora `<a id="d-nn"></a>`.
+`contas-e-permissoes` · `chamada-e-confirmacao` · `dados-sync-e-codigo`. Cada D-NN tem âncora `<a id="d-nn"></a>`.
 
 ## Onde está no ar (ambiente de teste)
 - **Site:** GitHub Pages do repositório `mauroban/raxa`, branch `main`, raiz →

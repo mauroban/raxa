@@ -649,6 +649,58 @@ console.log('\n[19] empate no ranking: primeiro o de maior patente (D-159)');
   ok(posEmpate(R.pct,x=>aprDe(x.v,x.e,x.jogos)).join(',')==='1,1,1','a posição continua dividida (D-89)');
 }
 
+console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
+{
+  const liga={id:'c',name:'t',cfg:defCfg(),players:[],matches:[],sessions:[],live:null};
+  ['A','B','C','D','E'].forEach(n=>liga.players.push(mk(n,1500,0)));
+  const ids=liga.players.map(p=>p.id);
+  ok(proximaChamada(liga)===null,'sem chamada ligada nao ha proxima');
+  liga.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dow:4,hora:'19:00',linha:2,gol:1,abre:4});   // quinta 19h
+  ok(chamadaDef(5).linha===12&&chamadaDef(7).linha===18&&chamadaDef(11).linha===20&&chamadaDef(5).gol===2,'vagas sugeridas pelo formato: 3 times de linha + 2 goleiros');
+  const ter=new Date(2026,8,15,10,0).getTime();          // terca 15/09/2026 10h
+  let ch=proximaChamada(liga,ter);
+  ok(ch&&ch.dia==='2026-09-17'&&ch.aberta&&!ch.hoje,'terca: proximo e quinta 17/09, e a lista (4 dias) ja abriu');
+  ok(chamadaTitulo(ch)==='qui 17/09 · 19h','titulo curto: '+chamadaTitulo(ch));
+  liga.cfg.chamada.abre=1;
+  ok(!proximaChamada(liga,ter).aberta&&isoDia(proximaChamada(liga,ter).abre)==='2026-09-16','abre 1 dia antes: fechada na terca, abre quarta 0h');
+  liga.cfg.chamada.abre=4;
+  ch=proximaChamada(liga,new Date(2026,8,17,18,0).getTime());
+  ok(ch.dia==='2026-09-17'&&ch.hoje,'quinta 18h: e hoje');
+  ch=proximaChamada(liga,new Date(2026,8,17,21,30).getTime());
+  ok(ch.dia==='2026-09-17','quinta 21h30: ainda e o de hoje (ate 3 h depois da hora)');
+  ch=proximaChamada(liga,new Date(2026,8,17,23,0).getTime());
+  ok(ch.dia==='2026-09-24'&&!ch.hoje,'quinta 23h: ja e o da semana que vem');
+  liga.cfg.chamada.pula=['2026-09-17'];
+  ok(proximaChamada(liga,ter).dia==='2026-09-24','data cancelada e pulada');
+  ok(chamadaCancelada(liga,ter)==='2026-09-17','a cancelada entre hoje e a proxima fica a vista para desfazer');
+  ok(chamadaCancelada(liga,new Date(2026,8,18).getTime())===null,'passou: nao ha mais o que desfazer');
+  liga.cfg.chamada.pula=[];
+  /* listas: ordem de chegada pelo carimbo do servidor, corte no maximo */
+  const dia='2026-09-17';
+  ok(confirmar(liga,dia,ids[0],'L','a',100)&&confirmar(liga,dia,ids[1],'L','b',300)&&confirmar(liga,dia,ids[2],'L','c',200),'tres confirmam na linha');
+  ok(!confirmar(liga,dia,ids[0],'L','a',999),'confirmar de novo no mesmo papel nao muda nada');
+  liga.rsvps.find(r=>r.pid===ids[1]).at=150;                 // o servidor carimbou B antes de C
+  let X=listaChamada(liga,dia);
+  ok(X.L.dentro.map(r=>r.pid).join()===[ids[0],ids[1]].join()&&X.L.espera.map(r=>r.pid).join()===ids[2],'2 vagas: A e B dentro (pelo `at`), C na espera');
+  ok(minhaChamada(liga,dia,ids[1]).pos===2&&minhaChamada(liga,dia,ids[2]).espera===1&&minhaChamada(liga,dia,ids[4])===null,'posicao: B e o 2o, C e o 1o da espera, E nao esta');
+  desconfirmar(liga,dia,ids[0]);X=listaChamada(liga,dia);
+  ok(X.L.dentro.length===2&&X.L.dentro[1].pid===ids[2]&&!X.L.espera.length,'A desiste: C sobe sozinho');
+  confirmar(liga,dia,ids[3],'G','d',400);confirmar(liga,dia,ids[4],'G','e',500);
+  X=listaChamada(liga,dia);
+  ok(X.G.dentro.length===1&&X.G.espera[0].pid===ids[4],'gol tem a propria lista e a propria espera');
+  ok(confirmar(liga,dia,ids[1],'G','b',600),'B troca da linha para o gol');
+  const b=liga.rsvps.find(r=>r.pid===ids[1]);
+  ok(b.papel==='G'&&b.at===undefined&&b.t===600,'trocar zera o carimbo: vai para o fim da outra lista');
+  X=listaChamada(liga,dia);
+  ok(X.G.espera.map(r=>r.pid).join()===[ids[4],ids[1]].join()&&X.L.dentro.length===1,'B e o ultimo da espera do gol, e a linha ficou so com C');
+  liga.players[2].arq=1;
+  ok(listaChamada(liga,dia).L.dentro.length===0,'arquivado some da lista');
+  liga.players[2].arq=null;
+  ok(listaChamada(liga,'2026-09-24').n===0,'outra data, outra lista');
+  const txt=textoChamada(liga,{dia,hora:'19:00'},'L');
+  ok(/^Racha qui 17\/09 · 19h\n\nLinha \(1\/2\)\n1\. C\n\nGol \(1\/1\)\n1\. D\nEspera: E, B\n\nConfirme no app: L$/.test(txt),'texto para o grupo:\n'+txt);
+}
+
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
 process.exit(fails?1:0);
 """

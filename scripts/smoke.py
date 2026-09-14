@@ -70,7 +70,8 @@ step('toda acao tem classificacao de papel',()=>{
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo','toggleDestaques',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
-    'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove']);
+    'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
+    'vou','naoVou','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
   if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));
@@ -1051,7 +1052,8 @@ step('numeros: as setas andam para o racha anterior e "Ultimo" volta ao mais nov
 step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, graficos por mes/ano (D-149)',()=>{
   const l=L();S.ui.tab='stats';A.statsTab({dataset:{v:'racha'}});
   /* mês: uma partida velha em janeiro do ano passado dá um segundo mês e um segundo ano para andar */
-  const ult=l.matches[l.matches.length-1],velha=JSON.parse(JSON.stringify(ult)),ano0=new Date().getFullYear()-1;
+  /* a copia velha precisa ter o jogador da ficha, senao ele fica com um ano so e o grafico some (o sorteio dos times nem sempre o poe na ultima partida) */
+  const quem=statsWhoId(l),ult=[...l.matches].reverse().find(m=>temId(matchFacts(m),quem))||l.matches[l.matches.length-1],velha=JSON.parse(JSON.stringify(ult)),ano0=new Date().getFullYear()-1;
   velha.id='m-velho';velha.sessionId='s-velho';velha.ts=new Date(ano0,0,15,20,0).getTime();
   delete velha.deltas;delete velha.moves;delete velha.over;l.matches.push(velha);rebuildAll(l);
   try{
@@ -1928,6 +1930,127 @@ step('a fila e numerada e diz quem entra no proximo; quem chega vai para o fim; 
   if(lv.teams[pair[0]].ids.includes(lin)||!lv.teams[pair[0]].ids.includes(f0))throw new Error('devia sair para a fila e entrar o primeiro');
   const g=filaDe(lv);if(g[g.length-1]!==lin)throw new Error('quem sai vai para o fim');
 });
+console.log('\n[smoke] confirmacao de presenca pelo app: chamada, espera, quem e voce (D-165/D-166)');
+step('ajustes: ligar a chamada, escolher o dia, vagas por papel; jogador ve so o resumo',()=>{
+  S=defState();A.demo();const l=L();S.me.name='tester';l.players[0].owner='tester';l.players[0].role='admin';
+  S.ui.tab='cfg';render();
+  let h=els['#app'].innerHTML;
+  if(!/Confirmação de presença/.test(h)||!/data-a="chamadaOn"/.test(h))throw new Error('faltou o card da chamada nos ajustes');
+  if(/data-a="chamadaDow"/.test(h))throw new Error('desligada, nao mostra dia/hora');
+  A.chamadaOn();h=els['#app'].innerHTML;
+  if(!l.cfg.chamada.on||!/data-a="chamadaDow"/.test(h)||!/data-ch="linha"/.test(h))throw new Error('ligar nao abriu os campos');
+  if(l.cfg.chamada.linha!==12||l.cfg.chamada.gol!==2)throw new Error('5v5 sugere 12 na linha + 2 no gol: '+l.cfg.chamada.linha+'/'+l.cfg.chamada.gol);
+  A.chamadaDow({dataset:{v:String(new Date().getDay())}});
+  if(l.cfg.chamada.dow!==new Date().getDay())throw new Error('dia nao gravou');
+  l.players[0].role='jogador';render();h=els['#app'].innerHTML;
+  if(/data-a="chamadaOn"/.test(h)||!/confirmação/.test(h))throw new Error('jogador devia ver so o resumo');
+  l.players[0].role='admin';
+  S.ui.tab='racha';l.cfg.chamada.on=false;render();
+  if(!/data-a="tab" data-v="cfg"/.test(els['#app'].innerHTML))throw new Error('desligada: o admin ve o convite para ligar na aba Racha');
+  l.players[0].role='jogador';render();
+  if(/Confirmação de presença/.test(els['#app'].innerHTML))throw new Error('desligada: jogador nao ve nada');
+  l.players[0].role='admin';l.cfg.chamada.on=true;
+});
+step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de lista vai para o fim; jogador so mexe em si',()=>{
+  const l=L(),c=l.cfg.chamada;S.ui.tab='racha';
+  c.dow=(new Date().getDay()+2)%7;c.abre=1;render();
+  let h=els['#app'].innerHTML;
+  if(!/Próximo racha/.test(h)||!/A lista abre/.test(h)||/data-a="vou"/.test(h))throw new Error('fechada devia mostrar so quando abre');
+  c.abre=4;render();h=els['#app'].innerHTML;
+  if(!/data-a="vou" data-p="L"/.test(h)||!/data-a="vou" data-p="G"/.test(h))throw new Error('aberta sem os botoes Vou');
+  const ch=proximaChamada(l);
+  A.vou({dataset:{p:'L'}});
+  if(l.rsvps.length!==1||l.rsvps[0].pid!==euId(l)||l.rsvps[0].papel!=='L'||l.rsvps[0].at!==undefined)throw new Error('vou nao confirmou (e nao pode inventar `at`)');
+  h=els['#app'].innerHTML;
+  if(!/Você vai na linha · 1º/.test(h)||!/data-a="naoVou"/.test(h))throw new Error('depois de confirmar devia dizer a posicao');
+  const outros=l.players.filter(p=>p.id!==euId(l)&&!p.gk);
+  outros.slice(0,12).forEach((p,i)=>confirmar(l,ch.dia,p.id,'L','tester',1000+i));
+  const L1=listaChamada(l,ch.dia);
+  if(L1.L.dentro.length!==12||L1.L.espera.length!==1)throw new Error('corte errado: '+L1.L.dentro.length+' dentro, '+L1.L.espera.length+' espera');
+  if(L1.L.espera[0].pid!==euId(l))throw new Error('o ultimo a chegar (eu, carimbo de agora) e quem espera');
+  render();h=els['#app'].innerHTML;
+  if(!/Linha 12\/12 \+1 na espera/.test(h)||!/>Espera</.test(h)||!/Você é o 1º da espera da linha/.test(h))throw new Error('contador/espera nao apareceu');
+  A.chamadaTroca({dataset:{id:euId(l),p:'G'}});
+  const L2=listaChamada(l,ch.dia);
+  if(L2.G.dentro.length!==1||L2.G.dentro[0].pid!==euId(l))throw new Error('troca nao levou ao gol');
+  if(L2.L.espera.length||L2.L.dentro.length!==12)throw new Error('quem esperava devia subir');
+  const meu=l.rsvps.find(r=>r.pid===euId(l));if(meu.at!==undefined)throw new Error('trocar de lista tem que zerar o carimbo');
+  h=els['#app'].innerHTML;if(!/Você vai no gol · 1º/.test(h))throw new Error('estado depois da troca');
+  A.naoVou();if(l.rsvps.some(r=>r.pid===euId(l)))throw new Error('nao vou nao tirou');
+  const p=outros[0];l.players[0].role='jogador';
+  A.chamadaTirar({dataset:{id:p.id}});
+  if(!l.rsvps.some(r=>r.pid===p.id))throw new Error('jogador tirou outro da lista');
+  A.chamadaChip({dataset:{id:p.id}});if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('jogador abriu a folha de outro');
+  l.players[0].role='admin';
+  A.chamadaChip({dataset:{id:p.id}});if(!/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem lanca abre a folha de qualquer um');
+  A.chamadaTirar({dataset:{id:p.id}});
+  if(l.rsvps.some(r=>r.pid===p.id))throw new Error('quem lanca nao tirou');
+});
+step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha e desfazer',()=>{
+  const l=L(),ch=proximaChamada(l);
+  A.chamadaAlguem();let h=els['#sheet'].innerHTML;
+  if(!/Confirmar alguém/.test(h)||!/data-a="chamadaAdd"/.test(h))throw new Error('folha de confirmar alguem');
+  const gk=l.players.find(p=>p.gk&&!l.rsvps.some(r=>r.pid===p.id));
+  A.chamadaAdd({dataset:{id:gk.id,p:'G'}});
+  if(!l.rsvps.some(r=>r.pid===gk.id&&r.papel==='G'&&r.by==='tester'))throw new Error('nao confirmou no gol por outro');
+  if(!/Confirmar alguém/.test(els['#sheet'].innerHTML))throw new Error('a folha devia continuar aberta (acao repetida)');
+  if(new RegExp('data-id="'+gk.id+'"').test(els['#sheet'].innerHTML))throw new Error('quem ja esta na lista sai da folha');
+  closeSheet();
+  const txt=textoChamada(l,ch,'https://x/raxa/'),X=listaChamada(l,ch.dia);
+  if(!/^Racha /.test(txt)||!txt.includes('Linha ('+X.L.dentro.length+'/12)')||!/Gol \(1\/2\)/.test(txt)||!/1\. /.test(txt)||!/Confirme no app: https:\/\/x\/raxa\//.test(txt))throw new Error('texto: '+txt);
+  A.chamadaShare();                                            // sem navigator.share nem clipboard: so avisa
+  render();h=els['#app'].innerHTML;
+  if(!/por tester/.test(h))throw new Error('quem foi confirmado por outro leva "por"');
+  A.chamadaCancelar({dataset:{d:ch.dia}});
+  const ch2=proximaChamada(l);
+  if(!l.cfg.chamada.pula.includes(ch.dia)||ch2.dia===ch.dia)throw new Error('cancelar nao pulou a data');
+  if(chamadaCancelada(l)!==ch.dia)throw new Error('cancelada devia ficar a vista para desfazer');
+  h=els['#app'].innerHTML;if(!/cancelado/.test(h)||!/data-a="chamadaVoltar"/.test(h))throw new Error('sem o aviso de cancelado');
+  A.chamadaVoltar({dataset:{d:ch.dia}});
+  if(proximaChamada(l).dia!==ch.dia)throw new Error('desfazer nao voltou');
+});
+step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a espera sobe na lista mas nao entra marcada',()=>{
+  const l=L(),c=l.cfg.chamada;c.dow=new Date().getDay();c.hora='23:59';
+  const ch=proximaChamada(l);if(!ch||!ch.hoje||!ch.aberta)throw new Error('cenario: a chamada devia ser hoje e aberta');
+  const X=listaChamada(l,ch.dia);
+  A.startRacha();const lv=l.live;
+  if(lv.chamada!==ch.dia)throw new Error('o racha nao apontou a chamada');
+  const dentro=X.L.dentro.concat(X.G.dentro).map(r=>r.pid);
+  if(lv.presentIds.length!==dentro.length||!dentro.every(id=>lv.presentIds.includes(id)))throw new Error('presenca nao veio da chamada');
+  if(!X.G.dentro.every(r=>lv.gkToday.includes(r.pid))||!lv.gkTouched)throw new Error('goleiro confirmado devia entrar com a luva');
+  const esp=l.players.find(p=>!lv.presentIds.includes(p.id)&&!p.gk);
+  confirmar(l,ch.dia,esp.id,'L','tester',5e12);
+  const outro=l.players.find(p=>!lv.presentIds.includes(p.id)&&p.id!==esp.id);
+  const h=viewPresenca(l,lv),iE=h.indexOf('data-id="'+esp.id+'"'),iO=h.indexOf('data-id="'+outro.id+'"');
+  if(lv.presentIds.includes(esp.id))throw new Error('a espera nao entra marcada');
+  if(iE<0||iO<0||iE>iO)throw new Error('quem confirmou (espera) devia vir antes dos demais');
+  if(/Próximo racha/.test(viewRacha(l)))throw new Error('com racha em andamento o card da chamada some');
+  A.cancelRacha();
+});
+step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido proprio (D-166)',()=>{
+  const l=L();l.players[0].owner=null;l.players[0].role='jogador';S.ui.tab='racha';
+  render();let h=els['#app'].innerHTML;
+  if(!/Quem é você nesta liga\?/.test(h)||!/data-a="euSou"/.test(h)||!/data-a="euNovo"/.test(h))throw new Error('sem o card de quem e voce');
+  if(/data-a="vou"/.test(h))throw new Error('sem perfil nao tem "Vou"');
+  const n0=l.rsvps.length;A.vou({dataset:{p:'L'}});if(l.rsvps.length!==n0)throw new Error('vou sem perfil');
+  const p=l.players[2];
+  A.euSou({dataset:{id:p.id}});if(!/Sou eu/.test(els['#sheet'].innerHTML))throw new Error('folha de confirmar quem sou');
+  A.euSouOk({dataset:{id:p.id}});
+  if(p.owner!=='tester'||euId(l)!==p.id)throw new Error('sou eu nao vinculou');
+  h=els['#app'].innerHTML;if(/Quem é você/.test(h)||!/data-a="vou"/.test(h))throw new Error('com perfil, o card some e o Vou aparece');
+  p.owner=null;render();
+  ['#pn','#pg'].forEach(k=>els[k]=new El(k));
+  A.euNovo();if(!/Seu jogador/.test(els['#sheet'].innerHTML))throw new Error('folha de criar');
+  els['#pn'].value=l.players[1].name;els['#pg'].value='0';A.euNovoOk();
+  if(euId(l))throw new Error('nome repetido devia recusar');
+  const n=l.players.length;els['#pn'].value='  Mauro Bernardes  ';els['#pg'].value='1';A.euNovoOk();
+  const novo=l.players[l.players.length-1];
+  if(l.players.length!==n+1||novo.name!=='Mauro Bernardes'||novo.owner!=='tester'||!novo.gk||novo.L.def||novo.role!=='jogador')throw new Error('criar meu jogador: '+JSON.stringify({n:novo.name,o:novo.owner,gk:novo.gk,def:novo.L.def}));
+  if(!l.log.some(e=>e.a==='newPlayer'&&e.pid===novo.id))throw new Error('sem registro no log');
+  if(!/data-a="vou"/.test(els['#app'].innerHTML))throw new Error('criado: ja pode confirmar');
+  ['#pn','#pg'].forEach(k=>delete els[k]);
+});
+
 console.log('\n[smoke] dados antigos no localStorage');
 const antigo={v:1,me:{id:'x',name:''},active:'old',ui:{tab:'racha'},ligas:[{id:'old',name:'Antiga',
   cfg:{startElo:1500,kNew:40,kBase:24,placement:5,tiers:[1700,1600,1450,1350],tierNames:['a','b','c','d','e'],

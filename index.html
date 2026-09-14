@@ -1214,6 +1214,9 @@ function normalize(st){
     l.matches=(l.matches||[]).map(m=>Object.assign({goals:[],moves:[],gks:[],disputes:[],voided:false,
       mode:l.cfg.matchMode||'curtas'},m));
     l.sessions=l.sessions||[];
+    if(!Array.isArray(l.rsvps))l.rsvps=[];   // confirmações de presença (D-165)
+    l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),l.cfg.chamada||{});
+    if(!Array.isArray(l.cfg.chamada.pula))l.cfg.chamada.pula=[];
     if(!Array.isArray(l.log))l.log=[];   // registro de correções: quem, quando, o quê
     if(l.live){
       const lv=l.live;
@@ -2392,6 +2395,87 @@ function ladoNaPartida(liga,m,pid){
   return lado;
 }
 
+/* ---------- chamada: confirmação de presença pelo app (D-165) ----------
+   A liga tem um racha fixo na semana (dia + hora). A lista abre N dias antes;
+   cada um se confirma na linha ou no gol, e cada papel tem o seu máximo. A
+   fila de espera NÃO é estado: é quem passou do máximo na ordem de chegada
+   (`at`, carimbado pelo servidor). Alguém desiste, o próximo sobe sozinho.
+   Trocar de papel é confirmação nova: vai para o fim da outra lista.        */
+const DIA_MS=86400000;
+const DOW_ABR=['dom','seg','ter','qua','qui','sex','sáb'];
+function chamadaDef(fmt){return{on:false,dow:4,hora:'19:00',linha:fmt>=11?20:(fmt-1)*3,gol:2,abre:4,pula:[]}}
+const chamadaCfg=liga=>(liga.cfg.chamada&&liga.cfg.chamada.on)?liga.cfg.chamada:null;
+function isoDia(d){d=new Date(d);const m=d.getMonth()+1,dd=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd}
+function deIso(s){const a=String(s).split('-').map(Number);return new Date(a[0],a[1]-1,a[2])}
+/* "qui 17/09 · 19h" */
+function chamadaTitulo(ch){const d=deIso(ch.dia);const h=String(ch.hora||'').replace(/^(\d+):00$/,'$1h').replace(/^(\d+):(\d+)$/,'$1h$2');
+  return DOW_ABR[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+(h?' · '+h:'')}
+/* Próximo racha pela agenda: hoje (até 3 h depois da hora) ou o próximo dia
+   da semana marcado, pulando as datas canceladas. `abre` é 0h de N dias antes. */
+function proximaChamada(liga,agora){
+  const c=chamadaCfg(liga);if(!c)return null;
+  agora=agora===undefined?Date.now():agora;
+  const hoje=new Date(agora);hoje.setHours(0,0,0,0);
+  const hm=String(c.hora||'19:00').split(':').map(Number);
+  const pula=c.pula||[];
+  for(let k=0;k<70;k++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+k);
+    if(d.getDay()!==c.dow)continue;
+    const ts=new Date(d.getFullYear(),d.getMonth(),d.getDate(),hm[0]||0,hm[1]||0).getTime();
+    if(ts+3*3600000<agora)continue;
+    const dia=isoDia(d);
+    if(pula.includes(dia))continue;
+    const abre=d.getTime()-(c.abre||0)*DIA_MS;
+    return {dia,ts,hora:c.hora,abre,aberta:agora>=abre,hoje:k===0};
+  }
+  return null;
+}
+/* Racha cancelado que ainda está entre hoje e o próximo: para o admin desfazer. */
+function chamadaCancelada(liga,agora){
+  const c=chamadaCfg(liga);if(!c||!(c.pula||[]).length)return null;
+  agora=agora===undefined?Date.now():agora;
+  const hoje=isoDia(new Date(agora)),px=proximaChamada(liga,agora);
+  return (c.pula||[]).filter(d=>d>=hoje&&(!px||d<px.dia)).sort()[0]||null;
+}
+const rsvpId=(dia,pid)=>dia+'_'+pid;
+/* As duas listas de uma data, na ordem de chegada, cortadas no máximo. Só
+   quem está ativo no cadastro conta (arquivado some da lista, D-128).       */
+function listaChamada(liga,dia){
+  const c=liga.cfg.chamada||{};
+  const vivo=new Set((liga.players||[]).filter(p=>!p.arq).map(p=>p.id));
+  const rows=(liga.rsvps||[]).filter(r=>r.dia===dia&&vivo.has(r.pid))
+    .sort((a,b)=>((a.at||a.t||0)-(b.at||b.t||0))||String(a.id).localeCompare(b.id));
+  const corta=(papel,max)=>{const xs=rows.filter(r=>r.papel===papel);return{max,dentro:xs.slice(0,max),espera:xs.slice(max),todos:xs}};
+  return {L:corta('L',Math.max(0,c.linha|0)),G:corta('G',Math.max(0,c.gol|0)),n:rows.length};
+}
+/* Onde a pessoa está: {papel, pos} (dentro, 1-based) ou {papel, espera} (na fila). */
+function minhaChamada(liga,dia,pid){
+  const r=(liga.rsvps||[]).find(x=>x.dia===dia&&x.pid===pid);if(!r)return null;
+  const L=listaChamada(liga,dia)[r.papel];
+  const i=L.dentro.findIndex(x=>x.pid===pid);
+  if(i>=0)return{papel:r.papel,pos:i+1,espera:0};
+  return{papel:r.papel,pos:0,espera:L.espera.findIndex(x=>x.pid===pid)+1};
+}
+/* Confirma (ou troca de papel). Sem `at`: o servidor carimba a hora de chegada. */
+function confirmar(liga,dia,pid,papel,by,agora){
+  if(!Array.isArray(liga.rsvps))liga.rsvps=[];
+  const t=agora===undefined?Date.now():agora;
+  const r=liga.rsvps.find(x=>x.dia===dia&&x.pid===pid);
+  if(r){if(r.papel===papel)return false;r.papel=papel;r.by=by||null;r.t=t;delete r.at;return true}
+  liga.rsvps.push({id:rsvpId(dia,pid),dia,pid,papel,by:by||null,t});
+  return true;
+}
+function desconfirmar(liga,dia,pid){
+  const i=(liga.rsvps||[]).findIndex(x=>x.dia===dia&&x.pid===pid);
+  if(i<0)return false;liga.rsvps.splice(i,1);return true;
+}
+/* Texto para colar no grupo: quem está dentro, numerado, e a espera. */
+function textoChamada(liga,ch,link){
+  const L=listaChamada(liga,ch.dia),nm=r=>nameOf(liga,r.pid);
+  const bloco=(tit,x)=>{let s=tit+' ('+x.dentro.length+'/'+x.max+')\n'+(x.dentro.length?x.dentro.map((r,i)=>(i+1)+'. '+nm(r)).join('\n'):'—');
+    if(x.espera.length)s+='\nEspera: '+x.espera.map(nm).join(', ');return s};
+  return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Linha',L.L)+'\n\n'+bloco('Gol',L.G)+(link?'\n\nConfirme no app: '+link:'');
+}
 /* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
    extrai e roda no Node. Mover uma função para baixo desta linha a tira dos
    testes do motor sem nenhum aviso — não mova sem ajustar o test.py.       */
@@ -2565,8 +2649,8 @@ const opinaoVale=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel','prePick',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar','chamadaAlguem','chamadaAdd']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','chamadaOn','chamadaDow','chamadaCancelar','chamadaVoltar']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -2674,7 +2758,7 @@ const recTxt=r=>r.n?r.pct+'% · '+r.w+'V'+(r.d?' '+r.d+'E':'')+' '+r.l+'D':'aind
 /* ---------- aba racha ---------- */
 function viewRacha(liga){
   const lv=liga.live;
-  if(!lv)return `
+  if(!lv)return quemSouCard(liga)+chamadaCard(liga)+`
     <div class="card">
       <div class="k">Próximo passo</div>
       <h2 style="font-size:26px;margin:6px 0 4px">Começar um racha</h2>
@@ -2684,6 +2768,78 @@ function viewRacha(liga){
   if(lv.stage==='times')return viewTimes(liga,lv);
   return viewJogo(liga,lv);
 }
+/* ---------- quem é você / próximo racha (aba Racha, fora do dia) ---------- */
+/* Membro sem perfil nesta liga: toca no próprio nome (perfil sem dono) ou
+   cria o seu com o apelido que usa aqui (D-166). É o que destrava o "Vou". */
+function quemSouCard(liga){
+  if(!S.me.name||euId(liga))return '';
+  const livres=ativos(liga).filter(p=>!p.owner).sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
+  return `<div class="card">
+    <div class="k">Quem é você nesta liga?</div>
+    <div class="tiny muted" style="margin:2px 0 10px">${livres.length?'Toque no seu nome.':'Crie o seu jogador.'}</div>
+    ${livres.length>8?`<div class="qwrap"><input id="q" placeholder="Buscar…" oninput="filterPlayers(this.value)" autocomplete="off">
+      <button class="qclear" id="qx" onclick="limparBusca()" aria-label="limpar busca" hidden>✕</button></div><div style="height:10px"></div>`:''}
+    ${livres.length?`<div class="grid" id="plist">${livres.map(p=>`<div class="pcw" data-nm="${esc(p.name.toLowerCase())}">
+      <button class="pchip" data-a="euSou" data-id="${p.id}"><span class="nm">${esc(p.name)}</span></button></div>`).join('')}</div>
+    <div style="height:10px"></div>`:''}
+    <button class="btn wide ghost" data-a="euNovo">${livres.length?'Não estou na lista — criar meu jogador':'+ Criar meu jogador'}</button>
+  </div>`;
+}
+/* O próximo racha e as duas listas (linha e gol), com o corte e a espera.
+   Fechada: só a data e quando abre. Aberta: o botão "Vou" de quem tem perfil,
+   as listas, "Confirmar alguém" para quem lança, cancelar para o admin.      */
+function chamadaCard(liga){
+  const c=chamadaCfg(liga);
+  if(!c)return souAdmin(liga)?`<div class="card"><div class="row"><div><div class="k">Confirmação de presença</div>
+      <div class="tiny muted" style="margin-top:3px">Cada um confirma pelo app, com lista de espera.</div></div>
+      <button class="btn sm pri sp" data-a="tab" data-v="cfg">Ligar</button></div></div>`:'';
+  const ch=proximaChamada(liga),canc=chamadaCancelada(liga);
+  const cancHtml=canc&&souAdmin(liga)?`<div class="row" style="margin-bottom:8px"><div class="tiny muted">Racha de ${esc(chamadaTitulo({dia:canc,hora:''}))} cancelado</div>
+      <button class="btn sm ghost sp" data-a="chamadaVoltar" data-d="${canc}">desfazer</button></div>`:'';
+  if(!ch)return `<div class="card">${cancHtml}<div class="k">Próximo racha</div><div class="tiny muted">Sem data marcada.</div></div>`;
+  const head=`<div class="row"><div class="k">Próximo racha</div>${ch.aberta?`<button class="btn sm ghost sp" data-a="chamadaShare">Compartilhar</button>`:''}</div>
+    <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>`;
+  if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
+  const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
+  const cont=`<div class="tiny muted num">Linha ${L.L.dentro.length}/${L.L.max}${L.L.espera.length?' +'+L.L.espera.length+' na espera':''} · Gol ${L.G.dentro.length}/${L.G.max}${L.G.espera.length?' +'+L.G.espera.length+' na espera':''}</div>`;
+  let meu='';
+  if(eu&&!minha)meu=`<div class="row" style="gap:8px;margin-top:12px">
+      <button class="btn wide pri" data-a="vou" data-p="L" style="flex:2">Vou</button>
+      <button class="btn wide ghost" data-a="vou" data-p="G" style="flex:1">Vou no gol</button></div>`;
+  else if(minha){
+    const st=minha.pos?`Você vai ${minha.papel==='G'?'no gol':'na linha'} · ${minha.pos}º`
+      :`Você é o ${minha.espera}º da espera ${minha.papel==='G'?'do gol':'da linha'}`;
+    meu=`<div class="row" style="margin-top:12px;gap:8px"><div style="flex:1;font-weight:700;color:${minha.pos?'var(--ok)':'var(--gold)'}">${st}</div>
+      <button class="btn sm ghost" data-a="chamadaTroca" data-id="${eu}" data-p="${minha.papel==='G'?'L':'G'}">${minha.papel==='G'?'ir para a linha':'ir para o gol'}</button>
+      <button class="btn sm ghost" data-a="naoVou">Não vou</button></div>`;
+  }
+  const chip=(r,i,dentro)=>{const p=P(liga,r.pid);return `<div class="pcw"><button class="pchip ${dentro?'on':''}" data-a="chamadaChip" data-id="${r.pid}">
+      <span class="tiny muted num" style="min-width:18px">${i+1}.</span><span class="nm">${esc(p?p.name:'—')}</span>${r.by&&p&&r.by!==p.owner?`<span class="tiny muted">por ${esc(r.by)}</span>`:''}</button></div>`};
+  const lista=(tit,x)=>`<div class="k2">${tit} · <span class="num">${x.dentro.length}/${x.max}</span></div>
+    ${x.dentro.length?`<div class="grid">${x.dentro.map((r,i)=>chip(r,i,true)).join('')}</div>`:'<div class="tiny muted">Ninguém ainda.</div>'}
+    ${x.espera.length?`<div class="tiny muted" style="margin:8px 0 4px">Espera</div><div class="grid">${x.espera.map((r,i)=>chip(r,i,false)).join('')}</div>`:''}`;
+  return `<div class="card">${cancHtml}${head}${cont}${meu}
+    ${lista('Linha',L.L)}${lista('Gol',L.G)}
+    ${lanc?`<div style="height:12px"></div><button class="btn wide ghost" data-a="chamadaAlguem">+ Confirmar alguém</button>`:''}
+    ${souAdmin(liga)?`<div style="text-align:center;margin-top:8px"><button class="btn sm ghost" data-a="chamadaCancelar" data-d="${ch.dia}">Cancelar este racha</button></div>`:''}
+  </div>`;
+}
+/* Ajustes do admin: dia, hora, vagas por papel e quantos dias antes abre. */
+function cfgChamadaCard(liga){
+  const c=Object.assign(chamadaDef(liga.cfg.format),liga.cfg.chamada||{});
+  return `<div class="card">
+    <div class="row"><div class="k">Confirmação de presença</div><button class="btn sm sp ${c.on?'pri':'ghost'}" data-a="chamadaOn">${c.on?'Sim':'Não'}</button></div>
+    ${c.on?`<div class="k" style="margin:14px 0 6px">Dia do racha</div>
+    <div class="row" style="gap:4px">${DOW_ABR.map((d,i)=>`<button class="btn sm ${c.dow===i?'pri':'ghost'}" data-a="chamadaDow" data-v="${i}" style="flex:1;padding:0">${d}</button>`).join('')}</div>
+    <div class="row fields" style="gap:8px;margin-top:12px">
+      <label class="f"><span class="k">Hora</span><input type="time" value="${esc(c.hora)}" data-ch="hora"></label>
+      <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
+      <label class="f" title="vagas no gol"><span class="k">Gol</span><input type="number" value="${c.gol}" data-ch="gol"></label>
+      <label class="f" title="a lista abre quantos dias antes"><span class="k">Abre (dias)</span><input type="number" value="${c.abre}" data-ch="abre"></label>
+    </div>`:''}
+  </div>`;
+}
+const chamadaResumo=liga=>{const c=chamadaCfg(liga);return c?` · confirmação ${DOW_ABR[c.dow]} ${String(c.hora).replace(/:00$/,'h')} · ${c.linha} na linha + ${c.gol} no gol`:''};
 const MEDALHA=['🥇','🥈','🥉'];
 /* minutos: guardados em ms de tempo de jogo; ritmo sempre "a cada 10 min" —
    por minuto dá 0,07 e ninguém lê isso                                        */
@@ -2777,8 +2933,10 @@ function presBadgeUpd(liga,lv,chip,id){const pb=chip&&chip.querySelector?chip.qu
 function viewPresenca(liga,lv){
   /* Ordem: quem já está marcado primeiro, depois quem mais aparece nos rachas —
      é assim que se acha rápido a galera de sempre numa lista de 50 nomes.     */
+  const conf=lv.chamada?new Set((liga.rsvps||[]).filter(r=>r.dia===lv.chamada).map(r=>r.pid)):null;   // quem confirmou (espera) vem antes dos demais
   const sorted=ativos(liga).sort((a,b)=>
     (lv.presentIds.indexOf(b.id)>=0)-(lv.presentIds.indexOf(a.id)>=0)
+    ||(conf?conf.has(b.id)-conf.has(a.id):0)
     ||(b.sessions||0)-(a.sessions||0)||(b.L.games+b.G.games)-(a.L.games+a.G.games)
     ||a.name.localeCompare(b.name));
   const gks=lv.presentIds.filter(id=>ehGkHoje(lv,id)).length;
@@ -4664,7 +4822,7 @@ function viewCfgBody(liga){
   <div class="card">
     <div class="k" style="margin-bottom:6px">Formato</div>
     <div style="font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase">${fmt}</div>
-    <div class="tiny muted" style="margin-top:4px">Alvo ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}</div>
+    <div class="tiny muted" style="margin-top:4px">Alvo ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}${esc(chamadaResumo(liga))}</div>
   </div>
   ${cardArquivados(liga)}
   <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
@@ -4683,6 +4841,7 @@ function viewCfgBody(liga){
       <span class="swatch" style="--pc:${PATFILL[i]}"></span>
       <input value="${esc(n)}" data-pat="${i}" style="flex:1"></div>`).join('')}
   </div>
+  ${cfgChamadaCard(liga)}
   <div class="card">
     <div class="k" style="margin-bottom:6px">Partida</div>
     <div class="row fields" style="gap:8px">
@@ -4932,7 +5091,13 @@ const A={
 
   /* ----- presença ----- */
   startRacha(){const l=L();l.live={id:uid(),mode:l.cfg.matchMode||'curtas',started:Date.now(),stage:'presenca',
-    presentIds:[],gkToday:[],teams:[],queue:[],cur:null,matchIds:[],sel:null,lastWinner:null,gkPool:[],gkFlip:0};save();render()},
+    presentIds:[],gkToday:[],teams:[],queue:[],cur:null,matchIds:[],sel:null,lastWinner:null,gkPool:[],gkFlip:0};
+    /* a chamada de hoje vira presença: quem está dentro já entra marcado, e o
+       goleiro confirmado entra com a luva acesa (D-165). A espera só sobe na lista. */
+    const ch=proximaChamada(l);
+    if(ch&&ch.aberta&&ch.hoje){const x=listaChamada(l,ch.dia),lv=l.live;
+      lv.chamada=ch.dia;lv.presentIds=x.L.dentro.concat(x.G.dentro).map(r=>r.pid);lv.gkToday=x.G.dentro.map(r=>r.pid);lv.gkTouched=true}
+    save();render()},
   cancelRacha(){const l=L(),lv=l.live;if(!lv)return;
     const msg=lv.matchIds.length?'Cancelar o racha? As partidas já lançadas continuam no histórico.'
       :lv.presentIds.length?`Cancelar o racha? A presença de ${pl(lv.presentIds.length,'pessoa')} e os times se perdem.`:null;
@@ -5151,6 +5316,120 @@ const A={
       if(p.gk){l.live.gkToday=l.live.gkToday||[];l.live.gkToday.push(p.id)}
     }
     closeSheet();save();render();toast(n+' cadastrado');
+  },
+
+  /* ----- chamada: confirmação de presença (D-165) ----- */
+  vou(el){
+    const l=L(),eu=euId(l),ch=proximaChamada(l);
+    if(!eu)return toast('Diga quem é você primeiro');
+    if(!ch||!ch.aberta)return toast('A lista ainda não abriu');
+    if(travado())return toast(msgTrava(),{ms:3500});
+    confirmar(l,ch.dia,eu,el.dataset.p==='G'?'G':'L',S.me.name);save();render();
+    const m=minhaChamada(l,ch.dia,eu);
+    toast(m&&m.pos?'Confirmado · '+m.pos+'º':'Lista cheia — você é o '+(m?m.espera:'?')+'º da espera');
+  },
+  naoVou(){
+    const l=L(),eu=euId(l),ch=proximaChamada(l);
+    if(!eu||!ch)return;if(travado())return toast(msgTrava(),{ms:3500});
+    desconfirmar(l,ch.dia,eu);save();render();toast('Você saiu da lista');
+  },
+  /* toque no nome da lista: o próprio, ou quem lança sobre qualquer um */
+  chamadaChip(el){
+    const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
+    if(!podeLancar(l)&&p.id!==euId(l))return;
+    const m=minhaChamada(l,ch.dia,p.id);if(!m)return;
+    openSheet(`<h2>${esc(p.name)}</h2>
+      <div class="tiny muted" style="margin-bottom:12px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
+      <button class="btn wide ghost" data-a="chamadaTroca" data-id="${p.id}" data-p="${m.papel==='G'?'L':'G'}" style="margin-bottom:8px">${m.papel==='G'?'Passar para a linha':'Passar para o gol'}</button>
+      <button class="btn wide danger" data-a="chamadaTirar" data-id="${p.id}">Tirar da lista</button>
+      <div class="tiny muted" style="margin-top:6px">Quem troca de lista vai para o fim dela.</div>`);
+  },
+  chamadaTroca(el){
+    const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
+    if(!podeLancar(l)&&p.id!==euId(l))return toast('Só quem lança mexe na lista dos outros');
+    if(travado())return toast(msgTrava(),{ms:3500});
+    confirmar(l,ch.dia,p.id,el.dataset.p==='G'?'G':'L',S.me.name);closeSheet();save();render();
+    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?' · '+m.pos+'º':' · na espera'));
+  },
+  chamadaTirar(el){
+    const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
+    if(!podeLancar(l)&&p.id!==euId(l))return toast('Só quem lança mexe na lista dos outros');
+    if(travado())return toast(msgTrava(),{ms:3500});
+    desconfirmar(l,ch.dia,p.id);closeSheet();save();render();toast(p.name+' saiu da lista');
+  },
+  /* quem lança confirma por quem mandou no grupo e não tem o app */
+  chamadaAlguem(){
+    const l=L(),ch=proximaChamada(l);if(!ch||!ch.aberta)return toast('A lista ainda não abriu');
+    const ja=new Set((l.rsvps||[]).filter(r=>r.dia===ch.dia).map(r=>r.pid));
+    const cand=ativos(l).filter(p=>!ja.has(p.id)).sort((a,b)=>(b.sessions||0)-(a.sessions||0)||a.name.localeCompare(b.name));
+    openSheet(`<h2>Confirmar alguém</h2>
+      <div class="qwrap" style="margin-bottom:10px"><input id="mq" placeholder="Buscar…" oninput="mergeFiltra(this.value)" autocomplete="off"></div>
+      <div id="mlist" style="max-height:55vh;overflow:auto">${cand.length?cand.map(p=>`<div class="trow" data-nm="${esc(p.name.toLowerCase())}" style="padding:8px 0">
+        <div class="lbl">${esc(p.name)}</div>
+        <div class="row" style="gap:6px"><button class="btn sm pri" data-a="chamadaAdd" data-id="${p.id}" data-p="L">Linha</button>
+        <button class="btn sm ghost" data-a="chamadaAdd" data-id="${p.id}" data-p="G">Gol</button></div></div>`).join('')
+        :'<div class="tiny muted">Todo mundo do cadastro já está na lista.</div>'}</div>`);
+    setTimeout(()=>$('#mq')&&$('#mq').focus&&$('#mq').focus(),120);
+  },
+  chamadaAdd(el){
+    const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
+    confirmar(l,ch.dia,p.id,el.dataset.p==='G'?'G':'L',S.me.name);save();
+    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?' · '+m.pos+'º':' · na espera'));
+    A.chamadaAlguem();                      // a folha fica aberta: é ação repetida
+  },
+  chamadaShare(){
+    const l=L(),ch=proximaChamada(l);if(!ch)return;
+    const link=typeof location!=='undefined'?location.origin+location.pathname:'';
+    const texto=textoChamada(l,ch,link);
+    if(typeof navigator!=='undefined'&&navigator.share){navigator.share({title:'Raxa',text:texto}).catch(()=>{});return}
+    if(typeof navigator!=='undefined'&&navigator.clipboard)navigator.clipboard.writeText(texto).then(()=>toast('Lista copiada'),()=>toast('Não deu para copiar'));
+    else toast('Não deu para copiar');
+  },
+  chamadaOn(){const l=L();l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),l.cfg.chamada||{});l.cfg.chamada.on=!l.cfg.chamada.on;save();render()},
+  chamadaDow(el){const l=L();l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),l.cfg.chamada||{});l.cfg.chamada.dow=clamp(+el.dataset.v|0,0,6);save();render()},
+  chamadaCancelar(el){
+    const l=L(),c=chamadaCfg(l),dia=el.dataset.d;if(!c||!dia)return;
+    if(!confirm('Cancelar o racha de '+chamadaTitulo({dia,hora:c.hora})+'? A lista continua guardada.'))return;
+    if(!Array.isArray(c.pula))c.pula=[];if(!c.pula.includes(dia))c.pula.push(dia);
+    save();render();toast('Racha cancelado');
+  },
+  chamadaVoltar(el){const l=L(),c=chamadaCfg(l);if(!c)return;c.pula=(c.pula||[]).filter(d=>d!==el.dataset.d);save();render()},
+
+  /* ----- quem é você (D-166) ----- */
+  euSou(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p||p.owner||euId(l))return;
+    const n=partidasCom(l,p.id).length;
+    openSheet(`<h2>${esc(p.name)}</h2>
+      <div class="tiny muted" style="margin-bottom:14px">${n?pl(n,'partida')+' · '+pl(p.sessions||0,'racha'):'ainda sem partida'}${p.bio?' · '+esc(p.bio):''}</div>
+      <div style="font-weight:700;margin-bottom:12px">É você?</div>
+      <div class="ps-foot"><button class="btn ghost" data-a="closeSheet">Não</button><button class="btn pri" data-a="euSouOk" data-id="${p.id}">Sou eu</button></div>`);
+  },
+  euSouOk(el){
+    const l=L(),p=P(l,el.dataset.id);if(!p||!S.me.name)return;
+    if(p.owner)return toast('Esse perfil já tem dono');
+    l.players.forEach(x=>{if(x.owner===S.me.name)x.owner=null});   // uma conta, um jogador
+    p.owner=S.me.name;logAdd(l,'link',{pid:p.id,user:S.me.name});
+    closeSheet();save();render();toast('Você é '+p.name);
+  },
+  euNovo(){
+    if(euId(L()))return;
+    openSheet(`<h2>Seu jogador</h2>
+      <input id="pn" value="${esc(S.me.name||'')}" placeholder="Apelido — como te chamam aqui" autocomplete="off" aria-label="apelido"
+        style="font-family:var(--disp);font-size:20px;padding:10px 12px;width:100%;margin-bottom:4px">
+      <div class="trow"><div class="lbl">Costumo ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
+        <button class="sw" id="gkb" data-a="togGk" role="switch" aria-checked="false" aria-label="costumo ir ao gol"></button></div>
+      <input type="hidden" id="pg" value="0">
+      <div class="ps-foot"><button class="btn ghost" data-a="closeSheet">Cancelar</button><button class="btn pri" data-a="euNovoOk">Criar</button></div>`);
+    setTimeout(()=>$('#pn')&&$('#pn').focus&&$('#pn').focus(),120);
+  },
+  euNovoOk(){
+    const l=L();if(!S.me.name||euId(l))return;
+    const n=String(($('#pn')&&$('#pn').value)||'').trim().slice(0,40);if(!n)return toast('Digite o apelido');
+    if(l.players.some(x=>x.name.toLowerCase()===n.toLowerCase()))return toast('Já existe alguém com esse nome — toque nele na lista');
+    const gk=!!($('#pg')&&$('#pg').value==='1');
+    const p=mkPlayer(l,n,null,gk,null);            // sem opinião: fica sem nível até calibrar
+    p.owner=S.me.name;l.players.push(p);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:S.me.name});
+    closeSheet();save();render();toast(n+' criado — é você');
   },
 
   /* ----- times ----- */
@@ -6051,7 +6330,7 @@ const A={
     l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],
       presentIds:[...new Set([...lv.presentIds,...(lv.leftIds||[])])],
       teams:timesMontados(lv),
-      gkPool:[...(lv.gkPool||[])]});
+      gkPool:[...(lv.gkPool||[])],chamada:lv.chamada||null});
     l.live=null;save();render();
     openSheet(resumoRacha(l,l.sessions[l.sessions.length-1],ms));
   },
@@ -6906,8 +7185,16 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target,l=L();if(!l)return;
-  if((el.dataset.cfg||el.dataset.pat!==undefined)&&!souAdmin(l)){render();return toast('Só o admin mexe nos ajustes da liga')}
-  if((el.dataset.cfg||el.dataset.pat!==undefined)&&travado()){render();return toast(msgTrava(),{ms:3500})}
+  const ajuste=el.dataset.cfg||el.dataset.ch||el.dataset.pat!==undefined;
+  if(ajuste&&!souAdmin(l)){render();return toast('Só o admin mexe nos ajustes da liga')}
+  if(ajuste&&travado()){render();return toast(msgTrava(),{ms:3500})}
+  if(el.dataset.ch){                        // agenda da chamada (D-165)
+    const c=l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),l.cfg.chamada||{}),k=el.dataset.ch;
+    if(k==='hora'){if(!/^\d{2}:\d{2}$/.test(el.value)){el.value=c.hora;return toast('Hora inválida')}c.hora=el.value}
+    else{const LIM={linha:[0,99],gol:[0,20],abre:[0,30]};const v=Math.round(+el.value);
+      if(!isFinite(v)||!LIM[k]){el.value=c[k];return toast('Valor inválido')}c[k]=clamp(v,LIM[k][0],LIM[k][1]);el.value=c[k]}
+    save();toast('Salvo');return;
+  }
   if(el.dataset.cfg){
     /* campo numérico vazio ou negativo não pode virar NaN no motor: volta ao que estava */
     const LIM={targetGoals:[0,99],targetMin:[1,180],stintMin:[0,60],disputeThreshold:[1,50]};
@@ -7014,11 +7301,11 @@ const cacheKey=()=>ME?CACHEPREF+ME.id:null;
 let cacheT=null,cacheFalhou=false;
 function cacheSnapDiff(l){
   const s=SNAP[l.id];if(!s)return null;
-  const d={players:{},matches:{},sessions:{},log:s.log};
+  const d={players:{},matches:{},sessions:{},rsvps:{},log:s.log};
   const ent=(key,arr,facts)=>{const seen={};
     arr.forEach(x=>{seen[x.id]=1;const j=JSON.stringify(facts(x));if(s[key][x.id]!==j)d[key][x.id]=s[key][x.id]===undefined?null:s[key][x.id]});
     Object.keys(s[key]).forEach(id=>{if(!seen[id])d[key][id]=s[key][id]})};   // está no servidor, apagado aqui
-  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);
+  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);ent('rsvps',l.rsvps||[],x=>x);
   const live=JSON.stringify(l.live||null);if(live!==s.live)d.live=s.live;
   const cfg=JSON.stringify(l.cfg);if(cfg!==s.cfg)d.cfg=s.cfg;
   if(l.name!==s.name)d.name=s.name;
@@ -7042,7 +7329,7 @@ function cacheLoad(){
   o.ligas.forEach(c=>{
     if(!c.id||typeof c.ver!=='number')return;
     S.ligas.push({id:c.id,createdAt:c.createdAt||Date.now(),name:c.name||'Liga',cfg:c.cfg||defCfg(),
-      players:c.players||[],matches:c.matches||[],sessions:c.sessions||[],live:c.live||null,log:c.log||[]});
+      players:c.players||[],matches:c.matches||[],sessions:c.sessions||[],rsvps:c.rsvps||[],live:c.live||null,log:c.log||[]});
     VER[c.id]=c.ver;if(c.code)CODE[c.id]=c.code;DONO[c.id]=!!c.dono;
   });
   S=normalize(S);
@@ -7084,19 +7371,21 @@ const playerFacts=p=>({id:p.id,name:p.name,bio:p.bio||null,gk:!!p.gk,owner:p.own
   G:{base:p.G?p.G.base:undefined,def:!!(p.G&&p.G.def),op:(p.G&&Array.isArray(p.G.op))?p.G.op:[]}});
 const matchFacts=m=>{const o=Object.assign({},m);delete o.deltas;delete o.moves;delete o.pre;delete o.over;delete o.papel;return o};
 const factsDoc=l=>({name:l.name,cfg:l.cfg,players:(l.players||[]).map(playerFacts),
-  matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],live:l.live||null,log:l.log||[]});
-const snapNovo=()=>({players:{},matches:{},sessions:{},live:'null',log:0,name:null,cfg:null});
+  matches:(l.matches||[]).map(matchFacts),sessions:l.sessions||[],rsvps:l.rsvps||[],live:l.live||null,log:l.log||[]});
+const snapNovo=()=>({players:{},matches:{},sessions:{},rsvps:{},live:'null',log:0,name:null,cfg:null});
+/* confirmação de presença (D-165): o `at` é carimbo do servidor — nunca sai daqui inventado */
+const ENT=['players','matches','sessions','rsvps'];
 /* O que difere do último estado conhecido do servidor — e o snapshot que
    passa a valer se o servidor aceitar. Comparação por entidade, em JSON. */
 function diffParts(l){
-  const s=SNAP[l.id]||(SNAP[l.id]=snapNovo()),parts={},snap={players:{},matches:{},sessions:{}};
+  const s=SNAP[l.id]||(SNAP[l.id]=snapNovo()),parts={},snap={players:{},matches:{},sessions:{},rsvps:{}};
   const ent=(key,arr,facts)=>{
     const out=[],seen={};
     arr.forEach(x=>{const j=JSON.stringify(facts(x));seen[x.id]=1;if(s[key][x.id]!==j){out.push({id:x.id,data:JSON.parse(j)});snap[key][x.id]=j}});
     Object.keys(s[key]).forEach(id=>{if(!seen[id]){out.push({id,deleted:true});snap[key][id]=null}});
     if(out.length)parts[key]=out;
   };
-  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);
+  ent('players',l.players||[],playerFacts);ent('matches',l.matches||[],matchFacts);ent('sessions',l.sessions||[],x=>x);ent('rsvps',l.rsvps||[],x=>x);
   const live=JSON.stringify(l.live||null);if(live!==s.live){parts.live=l.live?{data:JSON.parse(live)}:{clear:true};snap.live=live}
   const cfg=JSON.stringify(l.cfg);if(cfg!==s.cfg){parts.cfg=JSON.parse(cfg);snap.cfg=cfg}
   if(l.name!==s.name){parts.name=l.name;snap.name=l.name}
@@ -7107,7 +7396,7 @@ function diffParts(l){
 }
 function commitSnap(id,snap){
   const s=SNAP[id]||(SNAP[id]=snapNovo());
-  ['players','matches','sessions'].forEach(k=>Object.keys(snap[k]).forEach(x=>{if(snap[k][x]===null)delete s[k][x];else s[k][x]=snap[k][x]}));
+  ENT.forEach(k=>Object.keys(snap[k]||{}).forEach(x=>{if(snap[k][x]===null)delete s[k][x];else s[k][x]=snap[k][x]}));
   if(snap.live!==undefined)s.live=snap.live;
   if(snap.cfg!==undefined)s.cfg=snap.cfg;
   if(snap.name!==undefined)s.name=snap.name;
@@ -7166,6 +7455,7 @@ async function flush(){
         render();dirty.add(id);
       }else if(data){
         VER[id]=data.version;commitSnap(id,snap);if(data.code)CODE[id]=data.code;
+        if(data.rsvps&&data.rsvps.length){aplicaRsvps(l,data.rsvps);render()}   // o `at` que o servidor carimbou
       }
     }
   }finally{
@@ -7175,13 +7465,22 @@ async function flush(){
   }
 }
 
+/* Linhas de confirmação que voltaram da gravação, já com o carimbo do
+   servidor: entram no lugar das locais e no snapshot, para não subir de novo. */
+function aplicaRsvps(l,rows){
+  const s=SNAP[l.id]||(SNAP[l.id]=snapNovo());if(!Array.isArray(l.rsvps))l.rsvps=[];
+  rows.forEach(r=>{const i=l.rsvps.findIndex(x=>x.id===r.id);
+    if(r.deleted){if(i>=0)l.rsvps.splice(i,1);delete s.rsvps[r.id];return}
+    if(i>=0)l.rsvps[i]=r.data;else l.rsvps.push(r.data);
+    s.rsvps[r.id]=JSON.stringify(r.data)});
+}
 /* Aplica um delta do servidor (carga inicial = tudo; depois, só o que mudou
    desde a versão que este aparelho conhece). Entidade que veio no delta
    sobrescreve a local; o resto fica como está — inclusive edição pendente. */
 function applyDelta(id,d){
   if(!d)return;
   let l=S.ligas.find(x=>x.id===id);
-  if(!l){l={id,createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],live:null,log:[],name:d.name||'Liga'};S.ligas.push(l)}
+  if(!l){l={id,createdAt:Date.now(),cfg:defCfg(),players:[],matches:[],sessions:[],rsvps:[],live:null,log:[],name:d.name||'Liga'};S.ligas.push(l)}
   const s=SNAP[id]||(SNAP[id]=snapNovo());
   if(d.name)l.name=d.name;
   if(d.cfg&&Object.keys(d.cfg).length)l.cfg=d.cfg;
@@ -7192,6 +7491,7 @@ function applyDelta(id,d){
     else{if(i>=0)l[key][i]=r.data;else l[key].push(r.data)}
     recalc=true})};
   ent('players',d.players);ent('matches',d.matches);ent('sessions',d.sessions);
+  if(d.rsvps&&d.rsvps.length){if(!Array.isArray(l.rsvps))l.rsvps=[];ent('rsvps',d.rsvps)}
   /* live mesclado: o snapshot guarda o que o SERVIDOR tem, para a soma subir na próxima gravação */
   let liveRemoto=null,mesclou=false;
   if(d.live){liveRemoto=d.live.data||null;const m=mesclaLive(l.live,liveRemoto,s.live);mesclou=m!==liveRemoto;l.live=m}
@@ -7217,7 +7517,7 @@ function applyDelta(id,d){
   /* snapshot só do que veio no delta, já normalizado — o que não veio pode
      ter edição local esperando para subir */
   const snapDe=(key,rows,facts)=>(rows||[]).forEach(r=>{if(r.deleted)return;const x=l[key].find(y=>y.id===r.id);if(x)s[key][r.id]=JSON.stringify(facts(x))});
-  snapDe('players',d.players,playerFacts);snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);
+  snapDe('players',d.players,playerFacts);snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);snapDe('rsvps',d.rsvps,x=>x);
   if(d.live)s.live=JSON.stringify(mesclou?liveRemoto:(l.live||null));
   if(d.cfg&&Object.keys(d.cfg).length)s.cfg=JSON.stringify(l.cfg);
   if(d.name)s.name=l.name;
@@ -7328,7 +7628,7 @@ function aplicaRemoto(id,data,name,code){
   const doc=data||{};
   applyDelta(id,{version:VER[id]||1,name:name||doc.name,code,cfg:doc.cfg||{},
     players:(doc.players||[]).map(p=>({id:p.id,data:p})),matches:(doc.matches||[]).map(m=>({id:m.id,data:m})),
-    sessions:(doc.sessions||[]).map(x=>({id:x.id,data:x})),live:{data:doc.live||null},log:doc.log||[]});
+    sessions:(doc.sessions||[]).map(x=>({id:x.id,data:x})),rsvps:(doc.rsvps||[]).map(x=>({id:x.id,data:x})),live:{data:doc.live||null},log:doc.log||[]});
 }
 
 /* Carga: a lista de ligas do servidor e, para cada uma, só o que mudou desde a
@@ -7665,6 +7965,7 @@ async function createLeague(name,base){
   doc.players.forEach(p=>s.players[p.id]=JSON.stringify(p));
   doc.matches.forEach(m=>s.matches[m.id]=JSON.stringify(m));
   doc.sessions.forEach(x=>s.sessions[x.id]=JSON.stringify(x));
+  (doc.rsvps||[]).forEach(x=>s.rsvps[x.id]=JSON.stringify(x));
   s.live=JSON.stringify(doc.live);s.cfg=JSON.stringify(doc.cfg);s.name=doc.name;s.log=doc.log.length;
   markDirty(data.id);
   saveUI();render();

@@ -57,6 +57,9 @@
 - **Tudo no Supabase** (Postgres + Auth + Realtime): sync incremental por versão, só fatos no banco, tempo real entre os celulares do racha, com batida de rede de reserva e prazo de 12 s por pedido
 - **Cópia da liga no aparelho** (D-102): abre sem sinal, continua lançando, sobe o que ficou pendente quando a rede volta; a cópia é da conta (some ao sair)
 
+- **Confirmação de presença pelo app** (D-165): agenda semanal da liga, lista abre N dias antes, "Vou"/"Vou no gol" com espera por papel derivada da hora do servidor, quem lança confirma pelos outros, texto para o grupo, cancelar a data; no dia, a presença já vem marcada. E **"Quem é você nesta liga?"** (D-166): o membro novo escolhe o próprio perfil ou cria o seu com apelido
+- **Perfil criado pela própria pessoa** com apelido por liga (D-166) — Pendências e "Este perfil sou eu" continuam como caminhos do admin e da ficha
+
 **Ainda não existe (v2):**
 
 - Entrar por **link de convite** ou **convite direto com busca** (seção 7.3) — hoje só o código com aprovação
@@ -66,6 +69,7 @@
 - Temporadas com reset parcial
 - Gráfico de evolução da patente ao longo do tempo
 - Motivo escrito na contestação e aviso para os admins
+- Lembrete da chamada (não há notificação: é página web), racha extra fora da agenda, estatística de "confirmou e não veio"
 - Rivalidade por trio/quarteto e exportar o painel de números
 
 ## Como o backend está montado (e o que falta)

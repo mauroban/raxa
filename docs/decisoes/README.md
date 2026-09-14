@@ -188,6 +188,12 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-130](contas-e-permissoes.md#d-130) · Trocar o código de convite: botão Novo, o antigo deixa de valer na hora
 - [D-132](contas-e-permissoes.md#d-132) · Link de convite (?c=CODIGO): quem abre entra ou cria a conta e o pedido vai sozinho
 - [D-141](contas-e-permissoes.md#d-141) · O papel de cada membro (Admin/Moderador/Lançador) só aparece para moderador ou acima
+- D-164 · *(desfeita em 2026-09-14, no mesmo dia)* senha redefinida pelo dono da liga — o dono de qualquer liga passaria a entrar na conta pessoal de um membro; conta é pessoal, não da liga
+
+### [Chamada e confirmação de presença](chamada-e-confirmacao.md)
+
+- [D-165](chamada-e-confirmacao.md#d-165) · Cada um se confirma pelo app: agenda semanal, linha ou gol, espera derivada, hora do servidor
+- [D-166](chamada-e-confirmacao.md#d-166) · "Quem é você nesta liga?": o membro escolhe o próprio perfil ou cria o seu com apelido
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

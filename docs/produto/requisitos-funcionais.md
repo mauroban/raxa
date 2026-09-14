@@ -294,6 +294,25 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 | RF-11.14 | Filtrar o histórico por **só as minhas** | P2 | ✅ v1 |
 | RF-11.15 | Sequências (maior série de vitórias, atual e recorde) — ✅ v1; rivalidade por trio/quarteto e exportar o painel — ⬜ v2 | P2 | ◐ parcial |
 
+---
+
+## RF-12 — Confirmação de presença (chamada)
+
+| # | Requisito | Pri | Status |
+|---|---|---|---|
+| RF-12.1 | O admin marca o racha da semana (dia, hora), as vagas na linha e no gol e quantos dias antes a lista abre; vagas sugeridas pelo formato | P0 | ✅ v1 |
+| RF-12.2 | Cada membro com perfil se confirma **em um toque**, na linha ou no gol, e desfaz em um toque | P0 | ✅ v1 |
+| RF-12.3 | Cada papel tem a sua lista e a sua espera; a espera é **derivada** da ordem de chegada (hora do servidor) e do máximo, nunca um estado próprio | P0 | ✅ v1 |
+| RF-12.4 | Trocar de papel é confirmação nova: vai para o fim da outra lista | P1 | ✅ v1 |
+| RF-12.5 | Quem lança confirma e tira qualquer pessoa (quem mandou no grupo e não tem o app), com a marca de quem confirmou | P0 | ✅ v1 |
+| RF-12.6 | Texto pronto para o grupo (data, listas numeradas, espera, endereço do app) via compartilhar/copiar | P1 | ✅ v1 |
+| RF-12.7 | O admin cancela o racha de uma data (a lista fica guardada) e desfaz até a data passar | P1 | ✅ v1 |
+| RF-12.8 | No dia, iniciar o racha pré-marca a presença com quem está dentro (goleiro com a luva); a espera sobe na grade sem marcar; a sessão guarda a chamada | P0 | ✅ v1 |
+| RF-12.9 | Membro sem perfil na liga escolhe o próprio perfil ou cria o seu com apelido próprio, sem depender do admin (D-166) | P0 | ✅ v1 |
+| RF-12.10 | Lembrete/notificação, racha extra fora da agenda, estatística de "confirmou e não veio" | P2 | ⬜ v2 |
+
+**Critério de aceite (RF-12.3):** com 2 vagas e três confirmações A(100), B(150), C(200), A e B estão dentro e C na espera; A desiste, C sobe sem ninguém tocar; B troca para o gol, sai da linha e entra no fim da lista do gol. Coberto por teste (`scripts/test.py` [20]).
+
 **Critério de aceite (RF-11.4/11.5):** a soma de V/E/D de um duelo é igual ao número de confrontos, e o histórico do duelo tem exatamente essa quantidade de linhas. Coberto por teste.
 
 **Critério de aceite (RF-11.11):** numa partida de 10 min com substituição aos 5, quem saiu tem 1 confronto contra cada adversário e quem entrou também — e os dois nunca aparecem como parceiros. Coberto por teste.
