@@ -1967,7 +1967,11 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   const l=L(),c=l.cfg.chamada;S.ui.tab='racha';
   c.dias[0].dow=(new Date().getDay()+2)%7;c.abre=1;render();
   let h=els['#app'].innerHTML;
-  if(!/Próximo racha/.test(h)||!/A lista abre/.test(h)||/data-a="vou"/.test(h))throw new Error('fechada devia mostrar so quando abre');
+  if(!/Próximo racha/.test(h)||!/A lista abre \w{3} \d\d\/\d\d\./.test(h)||/data-a="vou"/.test(h))throw new Error('fechada devia mostrar so quando abre (0h: sem hora)');
+  c.abreHora='20:30';render();h=els['#app'].innerHTML;
+  if(!/A lista abre \w{3} \d\d\/\d\d · 20h30\./.test(h))throw new Error('fechada com hora de abrir devia dizer a hora (D-184): '+h.slice(h.indexOf('A lista abre'),h.indexOf('A lista abre')+40));
+  if(!/data-ch="abreHora"/.test(cfgChamadaCard(l)))throw new Error('ajustes sem a hora em que a lista abre');
+  c.abreHora='00:00';
   c.abre=4;render();h=els['#app'].innerHTML;
   if(!/data-a="vou" data-p="L"/.test(h)||!/data-a="vou" data-p="G"/.test(h))throw new Error('aberta sem os botoes Vou');
   const ch=proximaChamada(l);

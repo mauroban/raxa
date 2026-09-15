@@ -11,8 +11,9 @@ alguém contando nomes.
 ## 1. O admin marca uma vez
 
 Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana** e a
-**hora** do racha, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
-(padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
+**hora** do racha, as **vagas na linha**, as **vagas no gol**, e quando a lista abre: **quantos dias
+antes** (padrão 4) e **a que horas** (padrão 0h; "2 dias antes às 20h" abre terça 20h para um racha
+de quinta, D-184). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
 7v7, 18 + 3; 11v11, 20 + 3. Não há endereço da quadra: foi tentado com a busca do OpenStreetMap e
 desfeito por qualidade (D-183); volta quando puder ser com o Google Maps.
 
@@ -28,7 +29,7 @@ sáb 10h · 12 na linha + 3 no gol") no cartão de formato dos Ajustes.
 
 O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento (D-167): sem "Próximo passo" nem destaques — **Iniciar racha** mora na barra de baixo, para quem lança.
 
-- **Lista fechada:** só a data e quando abre ("A lista abre seg 14/09").
+- **Lista fechada:** só a data e quando abre ("A lista abre seg 14/09 · 20h"; sem a hora quando é 0h).
 - **Lista aberta, sem confirmar:** dois botões, **Vou** (grande) e **Vou no gol**. Um toque
   confirma; nada de rascunho, nada de "tem certeza".
 - **Confirmado:** "Você vai na linha" (verde) ou "Você é o 2º da espera da linha" (dourado),

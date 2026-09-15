@@ -669,7 +669,12 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ok(chamadaTitulo(ch)==='qui 17/09 · 19h','titulo curto: '+chamadaTitulo(ch));
   liga.cfg.chamada.abre=1;
   ok(!proximaChamada(liga,ter).aberta&&isoDia(proximaChamada(liga,ter).abre)==='2026-09-16','abre 1 dia antes: fechada na terca, abre quarta 0h');
-  liga.cfg.chamada.abre=4;
+  /* hora em que a lista abre (D-184): 2 dias antes as 20h = terca 20h */
+  liga.cfg.chamada.abre=2;liga.cfg.chamada.abreHora='20:00';
+  ok(!proximaChamada(liga,ter).aberta&&proximaChamada(liga,ter).abre===new Date(2026,8,15,20,0).getTime(),'2 dias antes as 20h: terca 10h ainda fechada, abre terca 20h');
+  ok(proximaChamada(liga,new Date(2026,8,15,20,0).getTime()).aberta,'terca 20h em ponto: aberta');
+  ok(chamadaNorm({abreHora:'25:99'},5).abreHora==='00:00'&&chamadaNorm({},5).abreHora==='00:00','hora de abrir invalida ou ausente vira 0h');
+  liga.cfg.chamada.abre=4;liga.cfg.chamada.abreHora='00:00';
   ch=proximaChamada(liga,new Date(2026,8,17,18,0).getTime());
   ok(ch.dia==='2026-09-17'&&ch.hoje,'quinta 18h: e hoje');
   ch=proximaChamada(liga,new Date(2026,8,17,21,30).getTime());

@@ -232,3 +232,18 @@ endereço inteiro); manter só a coordenada para o futuro (dado sem uso é dado 
 [Confirmação de presença §1](../produto/confirmacao-de-presenca.md) ·
 [Ideias futuras §1](../produto/ideias-futuras.md).
 
+<a id="d-184"></a>
+### D-184 · A lista abre N dias antes **a uma hora** escolhida pelo admin
+**Quando:** 2026-09-14.
+**O quê:** `cfg.chamada.abreHora` (`HH:MM`, padrão `00:00`, validado em `chamadaNorm`).
+`proximaChamada` calcula a abertura como a data do racha menos `abre` dias, na hora `abreHora`.
+Nos Ajustes o bloco **A lista abre** tem **Dias antes** e **Às**. O cartão fechado diz "A lista
+abre seg 14/09 · 20h" (sem a hora quando é 0h).
+**Por quê:** abrir a lista à meia-noite premia quem está acordado; o grupo costuma combinar uma hora
+("abre terça às 20h") justamente para a corrida ser justa. Ligas antigas continuam abrindo à 0h.
+**Descartado:** abrir sempre na hora do racha N dias antes (não é o que os grupos combinam);
+abertura por horas antes em vez de dia + hora (menos legível: "72 h antes").
+**Onde:** `chamadaDef`, `chamadaNorm`, `proximaChamada` (motor); `chamadaCard`, `cfgChamadaCard`
+e o `change` de `data-ch="abreHora"` em `index.html` · `scripts/test.py` [20] · `scripts/smoke.py`
+· [Confirmação de presença §1 e §2](../produto/confirmacao-de-presenca.md).
+

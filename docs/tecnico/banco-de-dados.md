@@ -222,7 +222,7 @@ dela. O `at` (hora do evento no
 servidor, que define a fila de espera) é carimbado em `save_parts` quando a linha chega sem ele;
 `league_delta` devolve a entidade como as outras (`rsvps`), e `save_parts` devolve as linhas
 gravadas na versão nova (`rsvps`) para o aparelho trocar o relógio local pelo do servidor. A
-espera não existe no banco: é derivada de `at` e do máximo em `leagues.cfg.chamada`. No alvo
+espera não existe no banco: é derivada de `at` e do máximo em `leagues.cfg.chamada` (que também guarda `abre` em dias e `abreHora`, D-184). No alvo
 relacional abaixo isso vira `rsvp_events (liga_id, data, player_id, papel null, por, em default
 now())`, append-only, com índice `(liga_id, data, player_id, em)`.
 

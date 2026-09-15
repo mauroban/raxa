@@ -2415,7 +2415,7 @@ const DIA_MS=86400000;
 const DOW_ABR=['dom','seg','ter','qua','qui','sex','sáb'];
 /* `dias`: uma ou mais ocorrências na semana ({dow, hora}); padrão 1× (D-170).
    `vagas[dia]`: máximo só daquela data, quando o admin abre mais um time. */
-function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,pula:[],vagas:{}}}
+function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,abreHora:'00:00',pula:[],vagas:{}}}
 const chamadaCfg=liga=>(liga.cfg.chamada&&liga.cfg.chamada.on)?liga.cfg.chamada:null;
 /* liga gravada com `dow`/`hora` (uma ocorrência só) vira `dias` */
 function chamadaNorm(c,fmt){
@@ -2426,6 +2426,7 @@ function chamadaNorm(c,fmt){
   if(!Array.isArray(c.pula))c.pula=[];
   if(!c.vagas||typeof c.vagas!=='object')c.vagas={};
   delete c.local;delete c.geo;                 // endereço da quadra saiu (D-183)
+  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(c.abreHora))c.abreHora='00:00';   // hora em que a lista abre (D-184)
   return c;
 }
 /* vagas de uma data: o padrão da liga, ou o que o admin definiu só para ela */
@@ -2436,7 +2437,8 @@ function deIso(s){const a=String(s).split('-').map(Number);return new Date(a[0],
 function chamadaTitulo(ch){const d=deIso(ch.dia);const h=String(ch.hora||'').replace(/^(\d+):00$/,'$1h').replace(/^(\d+):(\d+)$/,'$1h$2');
   return DOW_ABR[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+(h?' · '+h:'')}
 /* Próximo racha pela agenda: hoje (até 3 h depois da hora) ou o próximo dia
-   da semana marcado, pulando as datas canceladas. `abre` é 0h de N dias antes. */
+   da semana marcado, pulando as datas canceladas. `abre` é N dias antes, na
+   hora `abreHora` (padrão 0h, D-184). */
 function proximaChamada(liga,agora){
   const c=chamadaCfg(liga);if(!c)return null;
   agora=agora===undefined?Date.now():agora;
@@ -2452,7 +2454,8 @@ function proximaChamada(liga,agora){
       if(ts+3*3600000<agora)continue;
       const dia=isoDia(d);
       if(pula.includes(dia))break;
-      const abre=d.getTime()-(c.abre||0)*DIA_MS;
+      const ah=String(c.abreHora||'00:00').split(':').map(Number);
+      const abre=new Date(d.getFullYear(),d.getMonth(),d.getDate()-(c.abre||0),ah[0]||0,ah[1]||0).getTime();
       return {dia,ts,hora:o.hora,abre,aberta:agora>=abre,hoje:k===0};
     }
   }
@@ -2872,7 +2875,7 @@ function chamadaCard(liga){
   if(!ch)return `<div class="card">${cancHtml}<div class="k">Próximo racha</div><div class="tiny muted">Sem data marcada.</div></div>`;
   const head=`<div class="row"><div class="k">Próximo racha</div>${ch.aberta?`<button class="btn sm ghost sp" data-a="chamadaShare">Compartilhar</button>`:''}</div>
     <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>`;
-  if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
+  if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:c.abreHora==='00:00'?'':c.abreHora}))}.</div></div>`;
   const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
   let meu='';
   if(eu&&!minha)meu=`<div class="row" style="gap:8px;margin-top:12px">
@@ -2929,7 +2932,7 @@ function blocoChamada(liga,sess){
     ${c.tarde.length?`<div class="tiny"><b>Saiu em cima da hora:</b> ${c.tarde.map(x=>nome(x.pid)+' ('+antes(x)+(x.by&&x.by!==(P(liga,x.pid)||{}).owner?', por '+esc(x.by):'')+')').join(', ')}</div>`:''}
   </div>`;
 }
-/* Ajustes do admin: dia, hora, vagas por papel e quantos dias antes abre. */
+/* Ajustes do admin: dia, hora, vagas por papel, e quantos dias antes e a que horas a lista abre. */
 function cfgChamadaCard(liga){
   const c=chamadaNorm(liga.cfg.chamada,liga.cfg.format);
   return `<div class="card">
@@ -2945,7 +2948,11 @@ function cfgChamadaCard(liga){
     <div class="row fields" style="gap:8px">
       <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
       <label class="f" title="vagas no gol"><span class="k">Gol</span><input type="number" value="${c.gol}" data-ch="gol"></label>
-      <label class="f" title="a lista abre quantos dias antes"><span class="k">Abre (dias)</span><input type="number" value="${c.abre}" data-ch="abre"></label>
+    </div>
+    <div class="k" style="margin:14px 0 6px">A lista abre</div>
+    <div class="row fields" style="gap:8px">
+      <label class="f" title="quantos dias antes do racha"><span class="k">Dias antes</span><input type="number" value="${c.abre}" data-ch="abre"></label>
+      <label class="f" title="a que horas"><span class="k">Às</span><input type="time" value="${esc(c.abreHora)}" data-ch="abreHora"></label>
     </div>`:''}
   </div>`;
 }
@@ -7297,6 +7304,7 @@ document.addEventListener('change',e=>{
   if(el.dataset.ch){                        // agenda da chamada (D-165)
     const c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),k=el.dataset.ch;
     if(k==='hora'){const o=c.dias[+el.dataset.i|0];if(!o)return;if(!/^\d{2}:\d{2}$/.test(el.value)){el.value=o.hora;return toast('Hora inválida')}o.hora=el.value}
+    else if(k==='abreHora'){if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(el.value)){el.value=c.abreHora;return toast('Hora inválida')}c.abreHora=el.value}
     else{const LIM={linha:[0,99],gol:[0,20],abre:[0,30]};const v=Math.round(+el.value);
       if(!isFinite(v)||!LIM[k]){el.value=c[k];return toast('Valor inválido')}c[k]=clamp(v,LIM[k][0],LIM[k][1]);el.value=c[k]}
     save();toast('Salvo');return;

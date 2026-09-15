@@ -65,7 +65,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
 | Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
 | Stats · Jogador | 3 filtros + cabeçalho da pessoa + anel + 4 tiles + posições; partida a partida rola |
-| Ajustes | liga + código + Liga + Chamada (1 dia) até a dobra; Partida, Contestação, Aparência, Exportar e Registro rolam |
+| Ajustes | liga + código + Liga + Chamada (1 dia; Vagas e "A lista abre" em duas linhas de campos) até a dobra; Partida, Contestação, Aparência, Exportar e Registro rolam |
 
 Quando a tela é de 500 px de largura as colunas não aumentam de número; só o nome cabe inteiro.
 

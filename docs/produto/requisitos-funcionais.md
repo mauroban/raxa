@@ -300,7 +300,7 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 
 | # | Requisito | Pri | Status |
 |---|---|---|---|
-| RF-12.1 | O admin marca o racha da semana (dia, hora — **uma ou mais ocorrências**, padrão uma), as vagas na linha e no gol (padrão 12 + 3 no 5v5) e quantos dias antes a lista abre | P0 | ✅ v1 |
+| RF-12.1 | O admin marca o racha da semana (dia, hora — **uma ou mais ocorrências**, padrão uma), as vagas na linha e no gol (padrão 12 + 3 no 5v5) e quando a lista abre: quantos dias antes e a que horas (D-184) | P0 | ✅ v1 |
 | RF-12.1b | O admin muda as vagas **só de uma data** (deu 4 na espera, abre mais um time) e volta ao padrão | P1 | ✅ v1 |
 | RF-12.2 | Cada membro com perfil se confirma **em um toque**, na linha ou no gol, e desfaz em um toque | P0 | ✅ v1 |
 | RF-12.3 | Cada papel tem a sua lista e a sua espera; a espera é **derivada** da ordem de chegada (hora do servidor) e do máximo, nunca um estado próprio | P0 | ✅ v1 |
