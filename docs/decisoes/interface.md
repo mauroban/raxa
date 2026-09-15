@@ -376,3 +376,19 @@ quem lança, e a folha é dele.
 **Onde:** `chamadaCard` (chip/lista) e `A.chamadaChip` em `index.html`; CSS `.grid.cham`, `.pchip.cham` ·
 `scripts/smoke.py` (badge no chip, "confirmado por" na folha) · `scripts/visual.py` tela 22 ·
 [Confirmação de presença §2](../produto/confirmacao-de-presenca.md).
+
+<a id="d-169"></a>
+### D-169 · Gol antes da linha; confirmados na frente da grade de presença; Ajustes sem cards colados
+**Quando:** 2026-09-14.
+**O quê:** (1) no cartão da chamada, no contador e no texto para o grupo, a lista do **Gol vem antes
+da Linha**. (2) **Iniciar racha** com a lista aberta guarda a chamada mesmo fora do dia: a grade de
+presença põe **quem confirmou na frente** (marcados, depois os de dentro, depois a espera, depois o
+resto); a marcação automática continua só no dia. (3) Em Ajustes, o embrulho `.cfgc` dos ajustes do
+admin não é card, e o `.card+.card` olha o DOM: o primeiro card de dentro e o card seguinte ao
+embrulho ganham os mesmos 10 px (`.card+.cfgc>.card:first-child,.cfgc+.card`) — o código de
+convite colava na Liga e o último card no Tamanho da liga.
+**Por quê:** o gol é a lista curta e a que decide se o racha fecha — é a primeira coisa que se olha.
+Na presença, quem confirmou é quem se procura primeiro. Os cards colados eram um bug de seletor.
+**Onde:** `chamadaCard`, `textoChamada`, `A.startRacha`, `viewPresenca` (ordem), CSS `.cfgc` em
+`index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (ordem das listas; grade fora do dia) ·
+`scripts/visual.py` telas 7 e 22.

@@ -27,7 +27,7 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
   confirma; nada de rascunho, nada de "tem certeza".
 - **Confirmado:** "Você vai na linha · 5º" (verde) ou "Você é o 2º da espera da linha" (dourado),
   com **ir para o gol** / **ir para a linha** e **Não vou**.
-- **As duas listas**, Linha e Gol, com os nomes numerados na ordem de chegada, em chips baixos de
+- **As duas listas**, Gol primeiro e depois Linha (o gol é curto e é o que decide se o racha fecha), com os nomes numerados na ordem de chegada, em chips baixos de
   duas colunas (14 nomes cabem numa tela, D-168) e o **badge da patente** do papel da lista à direita
   (cor + riscos, como na presença; some com os níveis fechados). O corte é visual: quem está dentro
   tem o chip aceso; abaixo, em cinza, **Espera**.
@@ -84,7 +84,9 @@ Quando quem lança toca em **Iniciar racha** no dia da chamada, a presença **j�
 quem está dentro das duas listas, e o goleiro confirmado entra com a luva acesa. Quem está na espera
 **não entra marcado**, mas sobe para logo abaixo dos marcados na grade — se apareceu, é um toque.
 A partir daí vale a grade como sempre: quem chegou, chegou. O racha guarda a qual chamada
-pertenceu.
+pertenceu. Se o racha for iniciado com a lista aberta mas **fora do dia** (teste, ou o dia virou),
+ninguém entra marcado — mas quem confirmou continua **na frente da grade**, os de dentro antes da
+espera (D-169).
 
 Com racha em andamento, o cartão da chamada some — a tela é a do racha.
 

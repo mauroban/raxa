@@ -171,6 +171,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-139](interface.md#d-139) · Ajustes e Jogadores com menos tamanho: campos de 40 px, formato em linha, 15 nomes por tela
 - [D-167](interface.md#d-167) · A aba Racha fora do dia é só a chamada: saem "Próximo passo" e "Destaques · últimos 30 dias"
 - [D-168](interface.md#d-168) · Lista da chamada mais densa: chips de 32 px, número à esquerda, badge da patente à direita
+- [D-169](interface.md#d-169) · Gol antes da linha; confirmados na frente da grade de presença; Ajustes sem cards colados
 - [D-140](times-fila-e-goleiro.md#d-140) · Goleiro é do time só quando a conta fecha (um por time); senão rodízio, um em cada gol — a montagem antiga volta
 - [D-162](times-fila-e-goleiro.md#d-162) · Cabeçalho da montagem: "(goleiro reveza)" só com um goleiro; com dois ou mais, "(goleiros à parte)"
 - [D-163](times-fila-e-goleiro.md#d-163) · Goleiro é do time pela conta da linha, não pelo "2 times" escolhido na mão

@@ -130,6 +130,9 @@ input:focus,textarea:focus{border-color:var(--chalk);box-shadow:0 0 0 1px var(--
 label.f{display:block;margin-bottom:12px}
 /* ajustes: campo de um dígito ou de uma palavra não precisa de 48px de altura —
    a fonte fica em 16px (abaixo disso o iPhone dá zoom ao focar), a caixa encolhe */
+/* o embrulho dos ajustes do admin não é card, e o `+` olha o DOM: sem isto o
+   código de convite colava na Liga, e o último card no Tamanho da liga */
+.card+.cfgc>.card:first-child,.cfgc+.card{margin-top:10px}
 .cfgc input{min-height:40px;padding:8px 12px}
 .cfgc label.f{margin-bottom:8px}
 label.f .k{display:block;margin-bottom:6px}
@@ -2475,7 +2478,7 @@ function textoChamada(liga,ch,link){
   const L=listaChamada(liga,ch.dia),nm=r=>nameOf(liga,r.pid);
   const bloco=(tit,x)=>{let s=tit+' ('+x.dentro.length+'/'+x.max+')\n'+(x.dentro.length?x.dentro.map((r,i)=>(i+1)+'. '+nm(r)).join('\n'):'—');
     if(x.espera.length)s+='\nEspera: '+x.espera.map(nm).join(', ');return s};
-  return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Linha',L.L)+'\n\n'+bloco('Gol',L.G)+(link?'\n\nConfirme no app: '+link:'');
+  return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
 }
 /* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
    extrai e roda no Node. Mover uma função para baixo desta linha a tira dos
@@ -2798,7 +2801,7 @@ function chamadaCard(liga){
     <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>`;
   if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
   const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
-  const cont=`<div class="tiny muted num">Linha ${L.L.dentro.length}/${L.L.max}${L.L.espera.length?' +'+L.L.espera.length+' na espera':''} · Gol ${L.G.dentro.length}/${L.G.max}${L.G.espera.length?' +'+L.G.espera.length+' na espera':''}</div>`;
+  const cont=`<div class="tiny muted num">Gol ${L.G.dentro.length}/${L.G.max}${L.G.espera.length?' +'+L.G.espera.length+' na espera':''} · Linha ${L.L.dentro.length}/${L.L.max}${L.L.espera.length?' +'+L.L.espera.length+' na espera':''}</div>`;
   let meu='';
   if(eu&&!minha)meu=`<div class="row" style="gap:8px;margin-top:12px">
       <button class="btn wide pri" data-a="vou" data-p="L" style="flex:2">Vou</button>
@@ -2820,7 +2823,7 @@ function chamadaCard(liga){
     ${x.dentro.length?`<div class="grid cham">${x.dentro.map((r,i)=>chip(r,i,true,papel)).join('')}</div>`:'<div class="tiny muted">Ninguém ainda.</div>'}
     ${x.espera.length?`<div class="tiny muted" style="margin:6px 0 3px">Espera</div><div class="grid cham">${x.espera.map((r,i)=>chip(r,i,false,papel)).join('')}</div>`:''}`;
   return `<div class="card">${cancHtml}${head}${cont}${meu}
-    ${lista('Linha',L.L,'L')}${lista('Gol',L.G,'G')}
+    ${lista('Gol',L.G,'G')}${lista('Linha',L.L,'L')}
     ${lanc?`<div style="height:12px"></div><button class="btn wide ghost" data-a="chamadaAlguem">+ Confirmar alguém</button>`:''}
     ${souAdmin(liga)?`<div style="text-align:center;margin-top:8px"><button class="btn sm ghost" data-a="chamadaCancelar" data-d="${ch.dia}">Cancelar este racha</button></div>`:''}
   </div>`;
@@ -2877,10 +2880,12 @@ function presBadgeUpd(liga,lv,chip,id){const pb=chip&&chip.querySelector?chip.qu
 function viewPresenca(liga,lv){
   /* Ordem: quem já está marcado primeiro, depois quem mais aparece nos rachas —
      é assim que se acha rápido a galera de sempre numa lista de 50 nomes.     */
-  const conf=lv.chamada?new Set((liga.rsvps||[]).filter(r=>r.dia===lv.chamada).map(r=>r.pid)):null;   // quem confirmou (espera) vem antes dos demais
+  /* quem confirmou na chamada vem antes dos demais: os de dentro, depois a espera (D-169) */
+  const conf={};if(lv.chamada){const x=listaChamada(liga,lv.chamada);['G','L'].forEach(k=>{x[k].dentro.forEach(r=>conf[r.pid]=1);x[k].espera.forEach(r=>conf[r.pid]=conf[r.pid]||2)})}
+  const grau=p=>conf[p.id]||3;
   const sorted=ativos(liga).sort((a,b)=>
     (lv.presentIds.indexOf(b.id)>=0)-(lv.presentIds.indexOf(a.id)>=0)
-    ||(conf?conf.has(b.id)-conf.has(a.id):0)
+    ||grau(a)-grau(b)
     ||(b.sessions||0)-(a.sessions||0)||(b.L.games+b.G.games)-(a.L.games+a.G.games)
     ||a.name.localeCompare(b.name));
   const gks=lv.presentIds.filter(id=>ehGkHoje(lv,id)).length;
@@ -5039,8 +5044,9 @@ const A={
     /* a chamada de hoje vira presença: quem está dentro já entra marcado, e o
        goleiro confirmado entra com a luva acesa (D-165). A espera só sobe na lista. */
     const ch=proximaChamada(l);
-    if(ch&&ch.aberta&&ch.hoje){const x=listaChamada(l,ch.dia),lv=l.live;
-      lv.chamada=ch.dia;lv.presentIds=x.L.dentro.concat(x.G.dentro).map(r=>r.pid);lv.gkToday=x.G.dentro.map(r=>r.pid);lv.gkTouched=true}
+    if(ch&&ch.aberta){const x=listaChamada(l,ch.dia),lv=l.live;
+      lv.chamada=ch.dia;                          // com a lista aberta, quem confirmou vem na frente da grade (D-169)
+      if(ch.hoje){lv.presentIds=x.L.dentro.concat(x.G.dentro).map(r=>r.pid);lv.gkToday=x.G.dentro.map(r=>r.pid);lv.gkTouched=true}}
     save();render()},
   cancelRacha(){const l=L(),lv=l.live;if(!lv)return;
     const msg=lv.matchIds.length?'Cancelar o racha? As partidas já lançadas continuam no histórico.'

@@ -1970,6 +1970,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(L1.L.espera[0].pid!==euId(l))throw new Error('o ultimo a chegar (eu, carimbo de agora) e quem espera');
   render();h=els['#app'].innerHTML;
   if(!/Linha 12\/12 \+1 na espera/.test(h)||!/>Espera</.test(h)||!/Você é o 1º da espera da linha/.test(h))throw new Error('contador/espera nao apareceu');
+  if(h.indexOf('Gol · <span')<0||h.indexOf('Gol · <span')>h.indexOf('Linha · <span'))throw new Error('o gol vem antes da linha (D-169)');
   A.chamadaTroca({dataset:{id:euId(l),p:'G'}});
   const L2=listaChamada(l,ch.dia);
   if(L2.G.dentro.length!==1||L2.G.dentro[0].pid!==euId(l))throw new Error('troca nao levou ao gol');
@@ -2028,6 +2029,16 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   if(lv.presentIds.includes(esp.id))throw new Error('a espera nao entra marcada');
   if(iE<0||iO<0||iE>iO)throw new Error('quem confirmou (espera) devia vir antes dos demais');
   if(/Próximo racha/.test(viewRacha(l)))throw new Error('com racha em andamento o card da chamada some');
+  A.cancelRacha();
+  /* lista aberta mas o racha nao e hoje (teste, ou o dia virou): ninguem entra marcado, mas quem confirmou vem na frente — de dentro antes da espera (D-169) */
+  c.dow=(new Date().getDay()+2)%7;const ch2=proximaChamada(l);if(!ch2.aberta||ch2.hoje)throw new Error('cenario: aberta e nao hoje');
+  const X2=listaChamada(l,ch2.dia);A.startRacha();const lv2=l.live;
+  if(lv2.presentIds.length||lv2.chamada!==ch2.dia)throw new Error('fora do dia nao marca ninguem, mas guarda a chamada');
+  const h2=viewPresenca(l,lv2),pos=id=>h2.indexOf('data-id="'+id+'"');
+  const dentroIds=X2.L.dentro.concat(X2.G.dentro).map(r=>r.pid),espIds=X2.L.espera.concat(X2.G.espera).map(r=>r.pid);
+  const fora=l.players.find(p=>!dentroIds.includes(p.id)&&!espIds.includes(p.id));
+  if(!dentroIds.every(id=>espIds.every(e=>pos(id)<pos(e))))throw new Error('quem esta dentro vem antes da espera');
+  if(!espIds.every(e=>pos(e)<pos(fora.id)))throw new Error('a espera vem antes de quem nao confirmou');
   A.cancelRacha();
 });
 step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido proprio (D-166)',()=>{

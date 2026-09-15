@@ -698,7 +698,7 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   liga.players[2].arq=null;
   ok(listaChamada(liga,'2026-09-24').n===0,'outra data, outra lista');
   const txt=textoChamada(liga,{dia,hora:'19:00'},'L');
-  ok(/^Racha qui 17\/09 · 19h\n\nLinha \(1\/2\)\n1\. C\n\nGol \(1\/1\)\n1\. D\nEspera: E, B\n\nConfirme no app: L$/.test(txt),'texto para o grupo:\n'+txt);
+  ok(/^Racha qui 17\/09 · 19h\n\nGol \(1\/1\)\n1\. D\nEspera: E, B\n\nLinha \(1\/2\)\n1\. C\n\nConfirme no app: L$/.test(txt),'texto para o grupo (gol primeiro):\n'+txt);
 }
 
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');
