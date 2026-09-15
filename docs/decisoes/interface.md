@@ -392,3 +392,18 @@ Na presença, quem confirmou é quem se procura primeiro. Os cards colados eram 
 **Onde:** `chamadaCard`, `textoChamada`, `A.startRacha`, `viewPresenca` (ordem), CSS `.cfgc` em
 `index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (ordem das listas; grade fora do dia) ·
 `scripts/visual.py` telas 7 e 22.
+
+<a id="d-173"></a>
+### D-173 · Guia de interface: tamanhos, o que cabe na tela e a ordem de cada tela, num documento só
+**Quando:** 2026-09-14.
+**O quê:** [`docs/produto/interface.md`](../produto/interface.md) reúne o que já valia espalhado por
+decisões e CSS: faixas fixas (navegação 60 px, barra de ação 54 px), tamanhos de botão, campo, chip,
+linha e placar, o que cabe numa tela de 360 × 780 por tela, a ordem de cima para baixo de cada tela,
+nove regras para tela nova e uma lista de sugestões ainda não feitas. Cor, fonte e acabamento ficam
+fora de propósito. Toda mudança de layout atualiza esse guia no mesmo commit (regra em `CLAUDE.md`).
+**Por quê:** UX é o requisito mais importante do produto (RNF-01) e o padrão de layout só existia
+como jurisprudência — quem desenhasse uma tela nova tinha que inferir do CSS. Cosmético não decide
+uso; tamanho, densidade e ordem decidem.
+**Descartado:** guia de estilo com paleta e tipografia (não muda como se usa); prints versionados
+no repositório (o `visual.py` gera em segundos).
+**Onde:** [Interface](../produto/interface.md) · `docs/README.md` · `CLAUDE.md`.

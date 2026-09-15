@@ -11,6 +11,7 @@ Como o app se comporta e por quê, na linguagem de quem usa.
 | [conceitos.md](produto/conceitos.md) | Um termo não está claro: liga, racha, partida, trecho, patente, divisão, lançador… |
 | [patentes.md](produto/patentes.md) | Qualquer coisa sobre nível: escada, cortes, motor de Elo, K, calibração, anti-ioiô, entrada de quem chega, goleiro, quem vê o quê, e **o que a patente garante** (medido) |
 | [fluxo-do-racha.md](produto/fluxo-do-racha.md) | As telas do dia: presença, montagem de times, partida ao vivo, fim do racha |
+| [interface.md](produto/interface.md) | O que é fixo e o que rola, tamanhos de botão/chip/linha, o que cabe numa tela de 360 px, a ordem de cada tela e as regras para desenhar uma tela nova |
 | [confirmacao-de-presenca.md](produto/confirmacao-de-presenca.md) | A lista do racha no app: agenda semanal, "Vou" na linha ou no gol, espera, quem lança confirma pelos outros, "Quem é você nesta liga?" |
 | [regras-do-racha.md](produto/regras-do-racha.md) | As regras de quadra que o app segue: time cheio, fila do "de próximo", vencedor fica, goleiro, empate |
 | [stats.md](produto/stats.md) | Painel, destaques do mês, rankings, duelos, parcerias, mínimo de partidas |

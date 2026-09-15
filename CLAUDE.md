@@ -12,6 +12,7 @@ Documentação em `docs/`, um arquivo por assunto — **abra só o que a tarefa 
 | nível: escada, cortes, Elo, K, calibração, anti-ioiô, entrada, goleiro, quem vê, **o que a patente garante** | `docs/produto/patentes.md` |
 | telas do dia: presença, montagem, partida ao vivo, fim do racha | `docs/produto/fluxo-do-racha.md` |
 | chamada: confirmar presença pelo app, linha/gol, espera, "quem é você" | `docs/produto/confirmacao-de-presenca.md` |
+| **qualquer tela nova ou mudança de layout**: tamanhos, o que cabe em 360 px, ordem das coisas, regras | `docs/produto/interface.md` (atualizar no mesmo commit) |
 | regra de quadra: time cheio, fila, vencedor fica, goleiro, empate | `docs/produto/regras-do-racha.md` |
 | Stats, destaques do mês, rankings, duelos, parcerias | `docs/produto/stats.md` |
 | revisar / corrigir / anular partida | `docs/produto/contestacao-e-correcao.md` |
