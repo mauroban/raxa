@@ -218,7 +218,7 @@ Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:
 `{id:'AAAA-MM-DD_pid_t', dia, pid, papel:'L'|'G'|null, by, t, at, ref?}`; `papel:null` é "saiu";
 `ref` (D-178) é a hora que vale na fila quando a própria pessoa assume uma confirmação feita por
 outro (`ordT = ref || at || t`). Nada é apagado: o estado de uma pessoa numa data é o último evento
-dela. O endereço da quadra é `leagues.cfg.chamada.local` (texto, D-179) e `cfg.chamada.geo` (`{lat, lon}` quando veio de uma sugestão, D-180). O `at` (hora do evento no
+dela. O `at` (hora do evento no
 servidor, que define a fila de espera) é carimbado em `save_parts` quando a linha chega sem ele;
 `league_delta` devolve a entidade como as outras (`rsvps`), e `save_parts` devolve as linhas
 gravadas na versão nova (`rsvps`) para o aparelho trocar o relógio local pelo do servidor. A

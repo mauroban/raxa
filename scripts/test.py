@@ -749,12 +749,9 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ok(listaChamada(liga,dia2).L.dentro.map(r=>r.pid).join()===[ids[0],ids[1]].join()&&listaChamada(liga,dia2).L.espera[0].pid===ids[2],'B continua o 2o: assumir nao manda para o fim da fila');
   ok(!assumir(liga,dia2,ids[1],'b',950)&&minhaChamada(liga,dia2,ids[1]).por===null,'assumido, nao e mais "por outro"');
   ok(listaChamada(liga,dia2,500).L.dentro.length===2,'a lista num instante antes do "confirmo" continua a mesma');
-  /* endereco da quadra (D-179): aparado na normalizacao; no texto vem com o link do mapa */
-  liga.cfg.chamada=chamadaNorm(Object.assign({},liga.cfg.chamada,{local:'  Rua X, 1 '}),liga.cfg.format);
-  ok(liga.cfg.chamada.local==='Rua X, 1'&&chamadaNorm({},5).local==='','endereco aparado; sem endereco e vazio');
-  ok(mapaUrl('Rua X, 1')==='https://www.google.com/maps/search/?api=1&query=Rua%20X%2C%201','link universal do Google Maps');
-  ok(/^Racha qui 17\/09 · 19h\n\nGol /.test(textoChamada(liga,{dia,hora:'19:00'},'L')),'texto do grupo sem o endereco, por enquanto (D-182)');
-  liga.cfg.chamada.local='';
+  /* endereco da quadra saiu (D-183): `local`/`geo` gravados antes somem na normalizacao */
+  const cn=chamadaNorm(Object.assign({},liga.cfg.chamada,{local:'Rua X, 1',geo:{lat:1,lon:2}}),liga.cfg.format);
+  ok(!('local' in cn)&&!('geo' in cn)&&typeof mapaUrl==='undefined','sem endereco nem coordenada na agenda; sem link de mapa');
 }
 
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');

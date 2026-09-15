@@ -906,8 +906,6 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 :root[data-theme="escuro"] .card{box-shadow:none}
 :root[data-theme="escuro"] .hdr{background:color-mix(in srgb,var(--bg) 86%,transparent)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}.sug .btn{justify-content:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-weight:500;min-height:40px;line-height:1.25}
-.mapa{color:var(--mute);text-decoration:underline dotted;text-underline-offset:3px;display:inline-block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -2417,9 +2415,7 @@ const DIA_MS=86400000;
 const DOW_ABR=['dom','seg','ter','qua','qui','sex','sáb'];
 /* `dias`: uma ou mais ocorrências na semana ({dow, hora}); padrão 1× (D-170).
    `vagas[dia]`: máximo só daquela data, quando o admin abre mais um time. */
-function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,pula:[],vagas:{},local:''}}
-/* endereço da quadra → link universal do Google Maps (abre o app no celular) */
-const mapaUrl=s=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(String(s||'').trim());
+function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,pula:[],vagas:{}}}
 const chamadaCfg=liga=>(liga.cfg.chamada&&liga.cfg.chamada.on)?liga.cfg.chamada:null;
 /* liga gravada com `dow`/`hora` (uma ocorrência só) vira `dias` */
 function chamadaNorm(c,fmt){
@@ -2429,16 +2425,8 @@ function chamadaNorm(c,fmt){
   delete c.dow;delete c.hora;
   if(!Array.isArray(c.pula))c.pula=[];
   if(!c.vagas||typeof c.vagas!=='object')c.vagas={};
-  c.local=String(c.local||'').trim().slice(0,140);
-  const g=c.geo;c.geo=(c.local&&g&&isFinite(+g.lat)&&isFinite(+g.lon))?{lat:+g.lat,lon:+g.lon}:null;   // só vale com endereço
+  delete c.local;delete c.geo;                 // endereço da quadra saiu (D-183)
   return c;
-}
-/* Um resultado do geocodificador (Photon/OSM) vira uma linha legível: nome, rua e
-   número, bairro, cidade, estado — sem repetir e sem o que está vazio (D-180). */
-function fmtLugar(p){
-  p=p||{};const rua=[p.street,p.housenumber].filter(Boolean).join(', ');
-  const partes=[p.name,rua,p.district,p.city||p.town||p.village||p.county,p.state].map(x=>String(x||'').trim()).filter(Boolean);
-  return partes.filter((x,i)=>partes.findIndex(y=>y.toLowerCase()===x.toLowerCase())===i).join(', ').slice(0,140);
 }
 /* vagas de uma data: o padrão da liga, ou o que o admin definiu só para ela */
 function vagasDe(c,dia){const v=(c.vagas||{})[dia]||{};return{linha:Math.max(0,(v.linha!==undefined?v.linha:c.linha)|0),gol:Math.max(0,(v.gol!==undefined?v.gol:c.gol)|0),proprio:!!(c.vagas||{})[dia]}}
@@ -2563,7 +2551,6 @@ function textoChamada(liga,ch,link){
   const L=listaChamada(liga,ch.dia),nm=r=>nameOf(liga,r.pid);
   const bloco=(tit,x)=>{let s=tit+' ('+x.dentro.length+'/'+x.max+')\n'+(x.dentro.length?x.dentro.map((r,i)=>(i+1)+'. '+nm(r)).join('\n'):'—');
     if(x.espera.length)s+='\nEspera: '+x.espera.map(nm).join(', ');return s};
-  /* o endereço fica fora do texto até a busca funcionar com o Google Maps (D-182) */
   return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
 }
 /* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
@@ -2740,7 +2727,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
   'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar','chamadaAlguem','chamadaAdd','presConf']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','localPick','chamadaOn','chamadaDow','chamadaAddDia','chamadaDelDia','chamadaVagas','chamadaVagasOk','chamadaVagasPadrao','chamadaCancelar','chamadaVoltar']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','chamadaOn','chamadaDow','chamadaAddDia','chamadaDelDia','chamadaVagas','chamadaVagasOk','chamadaVagasPadrao','chamadaCancelar','chamadaVoltar']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -2884,8 +2871,7 @@ function chamadaCard(liga){
       <button class="btn sm ghost sp" data-a="chamadaVoltar" data-d="${canc}">desfazer</button></div>`:'';
   if(!ch)return `<div class="card">${cancHtml}<div class="k">Próximo racha</div><div class="tiny muted">Sem data marcada.</div></div>`;
   const head=`<div class="row"><div class="k">Próximo racha</div>${ch.aberta?`<button class="btn sm ghost sp" data-a="chamadaShare">Compartilhar</button>`:''}</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>
-    ${c.local?`<a class="tiny mapa" href="${esc(mapaUrl(c.local))}" target="_blank" rel="noopener">${esc(c.local)}</a>`:''}`;
+    <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>`;
   if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
   const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
   let meu='';
@@ -2943,31 +2929,6 @@ function blocoChamada(liga,sess){
     ${c.tarde.length?`<div class="tiny"><b>Saiu em cima da hora:</b> ${c.tarde.map(x=>nome(x.pid)+' ('+antes(x)+(x.by&&x.by!==(P(liga,x.pid)||{}).owner?', por '+esc(x.by):'')+')').join(', ')}</div>`:''}
   </div>`;
 }
-/* Endereço com sugestões enquanto digita (D-180): Photon, o geocodificador aberto
-   do OpenStreetMap — sem chave, sem cadastro. Debounce de 350 ms, 5 resultados,
-   preferência pelo Brasil. Sem rede ou sem resposta, o campo continua texto livre. */
-let LOCAL_T=null,LOCAL_Q='';
-function localBusca(el){
-  const q=String(el.value||'').trim(),box=$('#localSug');
-  clearTimeout(LOCAL_T);if(!box)return;
-  if(q.length<4||typeof fetch!=='function'){box.innerHTML='';return}
-  LOCAL_T=setTimeout(async()=>{
-    LOCAL_Q=q;
-    try{
-      const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=5&lang=default&lat=-15&lon=-50');
-      const j=await r.json();if(LOCAL_Q!==q||!$('#localSug'))return;
-      $('#localSug').innerHTML=localSugHtml((j&&j.features)||[]);
-    }catch(e){}
-  },350);
-}
-function localSugHtml(feats){
-  const vis=[],out=[];
-  feats=feats.slice().sort((a,b)=>(((b.properties||{}).countrycode==='BR')-((a.properties||{}).countrycode==='BR')));   // Brasil primeiro
-  feats.forEach(f=>{const p=f.properties||{},t=fmtLugar(p),c=(f.geometry||{}).coordinates||[];
-    if(!t||vis.includes(t)||c.length<2)return;vis.push(t);
-    out.push(`<button class="btn sm ghost" data-a="localPick" data-v="${esc(t)}" data-lat="${+c[1]}" data-lon="${+c[0]}">${esc(t)}</button>`)});
-  return out.join('');
-}
 /* Ajustes do admin: dia, hora, vagas por papel e quantos dias antes abre. */
 function cfgChamadaCard(liga){
   const c=chamadaNorm(liga.cfg.chamada,liga.cfg.format);
@@ -2980,8 +2941,6 @@ function cfgChamadaCard(liga){
       ${c.dias.length>1?`<button class="btn sm ghost" data-a="chamadaDelDia" data-i="${i}" style="align-self:flex-end;min-height:40px" aria-label="tirar este dia">✕</button>`:''}
     </div>`).join('')}
     <button class="btn sm ghost" data-a="chamadaAddDia" style="margin-top:8px">+ Outro dia na semana</button>
-    <label class="f" style="margin-top:14px"><span class="k">Endereço da quadra</span><input type="text" value="${esc(c.local)}" data-ch="local" placeholder="Rua, número, cidade" maxlength="140" autocomplete="off" oninput="localBusca(this)"></label>
-    <div id="localSug" class="sug"></div>
     <div class="k" style="margin:14px 0 6px">Vagas</div>
     <div class="row fields" style="gap:8px">
       <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
@@ -5500,14 +5459,6 @@ const A={
     if(typeof navigator!=='undefined'&&navigator.clipboard)navigator.clipboard.writeText(texto).then(()=>toast('Lista copiada'),()=>toast('Não deu para copiar'));
     else toast('Não deu para copiar');
   },
-  /* uma sugestão escolhida: endereço legível + coordenada (D-180) */
-  localPick(el){
-    const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);
-    c.local=String(el.dataset.v||'').trim().slice(0,140);c.geo={lat:+el.dataset.lat,lon:+el.dataset.lon};
-    l.cfg.chamada=chamadaNorm(c,l.cfg.format);
-    const inp=$('input[data-ch="local"]');if(inp)inp.value=c.local;const box=$('#localSug');if(box)box.innerHTML='';
-    save();toast('Salvo');
-  },
   chamadaOn(){const l=L();l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);l.cfg.chamada.on=!l.cfg.chamada.on;save();render()},
   chamadaDow(el){const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),o=c.dias[+el.dataset.i|0];if(!o)return;o.dow=clamp(+el.dataset.v|0,0,6);save();render()},
   chamadaAddDia(){const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);if(c.dias.length>=7)return toast('Já tem um racha por dia');
@@ -7346,7 +7297,6 @@ document.addEventListener('change',e=>{
   if(el.dataset.ch){                        // agenda da chamada (D-165)
     const c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),k=el.dataset.ch;
     if(k==='hora'){const o=c.dias[+el.dataset.i|0];if(!o)return;if(!/^\d{2}:\d{2}$/.test(el.value)){el.value=o.hora;return toast('Hora inválida')}o.hora=el.value}
-    else if(k==='local'){const v=String(el.value||'').trim().slice(0,140);if(v!==c.local){c.local=v;c.geo=null}el.value=c.local}   // texto digitado à mão não tem coordenada
     else{const LIM={linha:[0,99],gol:[0,20],abre:[0,30]};const v=Math.round(+el.value);
       if(!isFinite(v)||!LIM[k]){el.value=c[k];return toast('Valor inválido')}c[k]=clamp(v,LIM[k][0],LIM[k][1]);el.value=c[k]}
     save();toast('Salvo');return;

@@ -24,8 +24,10 @@ o app tirando tarefas das costas do organizador. Coisas concretas que cabem ness
 
 ## 1. Quadras e horário
 
-- **Endereço no cadastro de cada pessoa.** Hoje só a quadra da liga tem endereço (D-179). Com o
-  endereço (ou o bairro) de cada jogador dá para saber onde a galera mora.
+- **Endereço da quadra e de cada pessoa.** O endereço da quadra foi tentado com a busca do
+  OpenStreetMap e desfeito (D-183): a busca era ruim. Quando voltar, com Google Places, vem com o
+  link do mapa no cartão e no texto do grupo. Com o endereço (ou o bairro) de cada jogador dá para
+  saber onde a galera mora.
 - **Quadras de aluguel cadastradas no app**, com agenda de horários livres. O app sugere, para a
   hora que o grupo quer jogar, a quadra que tem horário livre e **atende melhor a maioria pela
   distância**.

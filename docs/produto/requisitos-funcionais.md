@@ -313,7 +313,7 @@ A unidade de todas as contas desta seção é o **trecho**: dois jogadores se "e
 | RF-12.10 | Cada confirmação, troca e saída fica registrada com quem fez e a hora do servidor; a folha do nome mostra a linha do tempo | P0 | ✅ v1 |
 | RF-12.11 | Depois do racha: quem **confirmou e não veio** e quem **saiu em cima da hora** (menos de 3 h), no resumo e no histórico | P1 | ✅ v1 |
 | RF-12.11b | Quem foi confirmado por outra pessoa assume com **Confirmo** (sem perder a vez); depois do racha, "confirmou e não veio" separa de "confirmado por outro e não veio" (D-178) | P1 | ✅ v1 |
-| RF-12.13 | Endereço da quadra nos Ajustes com busca por sugestões: link do Google Maps no cartão (D-179, D-180); no texto do grupo só quando a busca for do Google Maps (D-182) | P2 | ✅ v1 (cartão) · ⬜ (texto) |
+| RF-12.13 | Endereço da quadra com busca de lugares (link do mapa no cartão e no texto do grupo) — só quando puder ser com o Google Maps (D-183) | P2 | ⬜ v2 |
 | RF-12.12 | Lembrete/notificação, racha extra fora da agenda | P2 | ⬜ v2 |
 
 **Critério de aceite (RF-12.3):** com 2 vagas e três confirmações A(100), B(150), C(200), A e B estão dentro e C na espera; A desiste, C sobe sem ninguém tocar; B troca para o gol, sai da linha e entra no fim da lista do gol. Coberto por teste (`scripts/test.py` [20]).

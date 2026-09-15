@@ -2003,7 +2003,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   closeSheet();els['#sheet'].innerHTML='';A.chamadaChip({dataset:{id:euId(l)}});   // quem saiu nao tem folha (nao esta em lista)
   if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem saiu nao abre folha');
 });
-step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez; endereco da quadra no cartao e no texto (D-178, D-179)',()=>{
+step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez (D-178); nada de endereco (D-183)',()=>{
   const l=L(),ch=proximaChamada(l),eu=euId(l);
   l.rsvps=l.rsvps.filter(r=>r.pid!==eu);                     // limpa a historia do tester nesta data
   const outros=l.players.filter(p=>p.id!==eu&&!p.gk).slice(0,3);
@@ -2024,29 +2024,10 @@ step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez; en
   A.chamadaChip({dataset:{id:eu}});
   if(!/na linha · [^<]*por igor<br>confirmou · /.test(els['#sheet'].innerHTML))throw new Error('linha do tempo: "na linha · por igor" e depois "confirmou": '+els['#sheet'].innerHTML.slice(0,300));
   closeSheet();
-  /* endereco da quadra (D-179): campo nos ajustes, link no cartao, duas linhas no texto do grupo */
-  const cfg=l.cfg.chamada;
-  if(!/data-ch="local"/.test(cfgChamadaCard(l)))throw new Error('ajustes sem o campo do endereco');
-  cfg.local='  Rua da Quadra, 10 - Centro ';cfg.on=true;l.cfg.chamada=chamadaNorm(cfg,l.cfg.format);
-  if(l.cfg.chamada.local!=='Rua da Quadra, 10 - Centro')throw new Error('endereco devia ser aparado');
-  render();h=els['#app'].innerHTML;
-  if(!/class="tiny mapa" href="https:\/\/www\.google\.com\/maps\/search\/\?api=1&amp;query=Rua%20da%20Quadra%2C%2010%20-%20Centro"/.test(h)||!/>Rua da Quadra, 10 - Centro</.test(h))throw new Error('cartao sem o link do mapa: '+h.slice(h.indexOf('Próximo racha'),h.indexOf('Próximo racha')+400));
-  const txt=textoChamada(l,ch,'L');
-  if(/Rua da Quadra|maps/.test(txt))throw new Error('o texto do grupo nao leva o endereco por enquanto (D-182): '+txt.slice(0,200));
-  l.cfg.chamada.local='';
-  if(/class="tiny mapa"/.test(chamadaCard(l))||/maps/.test(textoChamada(l,ch,'L')))throw new Error('sem endereco, nada de mapa');
-  /* busca com sugestoes (D-180): o resultado do geocodificador vira uma linha legivel; escolher grava endereco + coordenada */
-  if(fmtLugar({name:'Arena Society',street:'Avenida Brasil',housenumber:'1200',district:'Centro',city:'Campinas',state:'São Paulo',country:'Brasil'})!=='Arena Society, Avenida Brasil, 1200, Centro, Campinas, São Paulo')throw new Error('fmtLugar: '+fmtLugar({name:'Arena Society',street:'Avenida Brasil',housenumber:'1200',district:'Centro',city:'Campinas',state:'São Paulo'}));
-  if(fmtLugar({name:'Rua Augusta',street:'Rua Augusta',city:'São Paulo',state:'São Paulo'})!=='Rua Augusta, São Paulo')throw new Error('fmtLugar repete: '+fmtLugar({name:'Rua Augusta',street:'Rua Augusta',city:'São Paulo',state:'São Paulo'}));
-  const feats=[{properties:{name:'Arena Y',city:'Coventry',countrycode:'GB'},geometry:{coordinates:[-1.5,52.4]}},{properties:{name:'Arena X',city:'Campinas',countrycode:'BR'},geometry:{coordinates:[-47.06,-22.9]}},{properties:{name:'Arena X',city:'Campinas',countrycode:'BR'},geometry:{coordinates:[-47.07,-22.91]}},{properties:{},geometry:{coordinates:[0,0]}}];
-  const sug=localSugHtml(feats);
-  if((sug.match(/data-a="localPick"/g)||[]).length!==2||!/data-lat="-22.9" data-lon="-47.06"/.test(sug)||sug.indexOf('Arena X')>sug.indexOf('Arena Y'))throw new Error('sugestoes: uma por texto, Brasil primeiro, com a coordenada: '+sug);
-  if(!/id="localSug"/.test(cfgChamadaCard(l))||!/oninput="localBusca\(this\)"/.test(cfgChamadaCard(l)))throw new Error('ajustes sem a caixa de sugestoes');
-  A.localPick({dataset:{v:'Arena X, Campinas',lat:'-22.9',lon:'-47.06'}});
-  if(l.cfg.chamada.local!=='Arena X, Campinas'||!l.cfg.chamada.geo||l.cfg.chamada.geo.lat!==-22.9||l.cfg.chamada.geo.lon!==-47.06)throw new Error('escolher a sugestao grava endereco e coordenada');
-  l.cfg.chamada=chamadaNorm(Object.assign({},l.cfg.chamada,{local:''}),l.cfg.format);
-  if(l.cfg.chamada.geo!==null)throw new Error('sem endereco a coordenada nao fica');
-  l.cfg.chamada.local='';l.cfg.chamada.geo=null;
+  /* endereco da quadra saiu (D-183): liga gravada com `local`/`geo` perde os dois na normalizacao, e nada aparece */
+  l.cfg.chamada=chamadaNorm(Object.assign({},l.cfg.chamada,{local:'Rua X',geo:{lat:1,lon:2}}),l.cfg.format);
+  if('local' in l.cfg.chamada||'geo' in l.cfg.chamada)throw new Error('local/geo deviam sumir na normalizacao');
+  if(/data-ch="local"|localSug/.test(cfgChamadaCard(l))||/maps|class="tiny mapa"/.test(chamadaCard(l)+textoChamada(l,ch,'L')))throw new Error('sobrou endereco na tela');
   l.rsvps=l.rsvps.filter(r=>r.pid!==eu&&!outros.some(p=>p.id===r.pid));render();
 });
 step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha e desfazer',()=>{

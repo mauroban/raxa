@@ -56,7 +56,7 @@
 - **Tudo no Supabase** (Postgres + Auth + Realtime): sync incremental por versão, só fatos no banco, tempo real entre os celulares do racha, com batida de rede de reserva e prazo de 12 s por pedido
 - **Cópia da liga no aparelho** (D-102): abre sem sinal, continua lançando, sobe o que ficou pendente quando a rede volta; a cópia é da conta (some ao sair)
 
-- **Confirmação de presença pelo app** (D-165): agenda semanal da liga, lista abre N dias antes, "Vou"/"Vou no gol" com espera por papel derivada da hora do servidor, quem lança confirma pelos outros (e a pessoa assume com "Confirmo", D-178), endereço da quadra com busca por sugestões (OpenStreetMap, D-180) e link do mapa no cartão (D-179; fora do texto do grupo por enquanto, D-182), texto para o grupo, cancelar a data; no dia, a presença já vem marcada. E **"Quem é você nesta liga?"** (D-166): o membro novo escolhe o próprio perfil ou cria o seu com apelido
+- **Confirmação de presença pelo app** (D-165): agenda semanal da liga, lista abre N dias antes, "Vou"/"Vou no gol" com espera por papel derivada da hora do servidor, quem lança confirma pelos outros (e a pessoa assume com "Confirmo", D-178), texto para o grupo, cancelar a data; no dia, a presença já vem marcada. E **"Quem é você nesta liga?"** (D-166): o membro novo escolhe o próprio perfil ou cria o seu com apelido
 - **Perfil criado pela própria pessoa** com apelido por liga (D-166) — Pendências e "Este perfil sou eu" continuam como caminhos do admin e da ficha
 
 **Ainda não existe (v2):**

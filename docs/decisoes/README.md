@@ -209,6 +209,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-180](chamada-e-confirmacao.md#d-180) · Endereço com sugestões enquanto digita (Photon/OpenStreetMap), sem chave; guarda a coordenada
 - [D-181](chamada-e-confirmacao.md#d-181) · Contador de cada lista só no título dela; "Espera · N"; a linha de contadores embaixo da data saiu
 - [D-182](chamada-e-confirmacao.md#d-182) · O endereço fica fora do texto do grupo até a busca ser do Google Maps
+- [D-183](chamada-e-confirmacao.md#d-183) · Endereço da quadra removido por inteiro (desfaz D-179, D-180, D-182): a busca do OpenStreetMap era ruim; volta com Google Places
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

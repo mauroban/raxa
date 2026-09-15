@@ -1,7 +1,7 @@
 # Confirmação de presença — a lista do racha no app
 
 > Parte da documentação do Raxa — índice em [docs/README.md](../README.md).
-> Decisões em [chamada e confirmação](../decisoes/chamada-e-confirmacao.md) (D-165, D-166, D-178, D-179).
+> Decisões em [chamada e confirmação](../decisoes/chamada-e-confirmacao.md) (D-165, D-166, D-178; endereço da quadra tentado e desfeito, D-179 a D-183).
 
 A liga tem um racha fixo na semana (dia e hora). Alguns dias antes a **lista abre** e cada um se
 confirma pelo app, **na linha ou no gol**. Cada papel tem o seu máximo; quem passa dele fica na
@@ -13,12 +13,8 @@ alguém contando nomes.
 Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana** e a
 **hora** do racha, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
 (padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
-7v7, 18 + 3; 11v11, 20 + 3. E o **endereço da quadra** (D-179): enquanto o admin digita, aparecem
-até cinco sugestões de lugares e endereços (busca do OpenStreetMap, sem cadastro, D-180); um toque
-escolhe, e o app guarda o endereço legível e a coordenada. Também aceita texto livre. O endereço
-aparece embaixo da data no cartão do próximo racha como link que abre o Google Maps. No texto do
-compartilhamento ele ainda **não** vai: fica para quando a busca funcionar com o Google Maps
-(D-182). Sem endereço, nada aparece.
+7v7, 18 + 3; 11v11, 20 + 3. Não há endereço da quadra: foi tentado com a busca do OpenStreetMap e
+desfeito por qualidade (D-183); volta quando puder ser com o Google Maps.
 
 **Mais de um racha na semana** (D-170): **+ Outro dia na semana** acrescenta uma ocorrência (dia e
 hora próprios; o ✕ tira). O padrão é uma vez por semana. As vagas e o "abre N dias antes" são da
@@ -48,8 +44,7 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
   2/3", "Linha · 12/12") fica só no título dela (D-181). O corte é visual: quem está dentro
   tem o chip aceso; abaixo, em cinza, **Espera · N**.
 - **Compartilhar** gera o texto pronto para o grupo (data, Gol, Linha 12/14 com os nomes numerados,
-  espera, e o endereço do app; o endereço da quadra fica de fora por enquanto, D-182). O grupo vira
-  espelho do app, não o contrário.
+  espera, e o endereço do app). O grupo vira espelho do app, não o contrário.
 
 Quem ainda não tem perfil nesta liga vê antes o cartão **Quem é você nesta liga?** (seção 5): sem
 perfil não existe "Vou".

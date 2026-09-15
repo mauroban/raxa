@@ -215,3 +215,20 @@ origem); mandar só o link (sem o nome legível, não diz nada no grupo).
 **Onde:** `textoChamada` em `index.html` · `scripts/test.py` [20] · `scripts/smoke.py` ·
 [Confirmação de presença §1 e §2](../produto/confirmacao-de-presenca.md).
 
+<a id="d-183"></a>
+### D-183 · Endereço da quadra removido por inteiro (desfaz D-179, D-180 e D-182)
+**Quando:** 2026-09-14.
+**O quê:** saíram o campo nos Ajustes, a busca com sugestões (Photon), o link do mapa no cartão,
+`cfg.chamada.local` e `cfg.chamada.geo` (a normalização apaga os dois de uma liga gravada com
+eles), `mapaUrl`, `fmtLugar`, `localBusca`, `localSugHtml`, `A.localPick` e o CSS. O texto do
+grupo já não levava o endereço (D-182).
+**Por quê:** a busca do OpenStreetMap se mostrou ruim para o que o admin digita (nomes de quadra,
+endereços do Brasil), e um campo de endereço sem busca boa não vale a tela que ocupa. Volta quando
+puder ser com o Google Places (chave e projeto no Google Cloud), aí com o link no cartão e no texto.
+**Descartado:** manter o campo como texto livre sem busca (o admin não usa o app para digitar um
+endereço inteiro); manter só a coordenada para o futuro (dado sem uso é dado errado depois).
+**Onde:** `chamadaDef`, `chamadaNorm`, `chamadaCard`, `cfgChamadaCard`, `textoChamada` em
+`index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (local/geo somem) ·
+[Confirmação de presença §1](../produto/confirmacao-de-presenca.md) ·
+[Ideias futuras §1](../produto/ideias-futuras.md).
+
