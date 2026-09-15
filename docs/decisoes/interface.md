@@ -457,3 +457,23 @@ quanto); recolher o filtro numa linha ao rolar (mais código para ganhar 40 px).
 **Onde:** `viewStats`, CSS `.sfilt`, `.linha2` em `index.html` · `scripts/smoke.py` ·
 [Interface §1 e §4](../produto/interface.md) · [Stats §1](../produto/stats.md).
 
+<a id="d-186"></a>
+### D-186 · Textos de ajuda parados saem de sete telas
+**Quando:** 2026-09-14.
+**O quê:** removidos: "Toque em quem chegou · 🧤 marca goleiro" (presença; ficam só os contadores
+"3 no gol · 12 de 14 confirmados"), as duas frases da montagem ("4 de linha + goleiro do rodízio
+por time. Os dois primeiros começam…" e "Não são de time nenhum…"), "Todo mundo em quadra" (fila
+vazia), "toque no nome para corrigir o autor" (card Gols da partida), "Para corrigir gols… use a
+aba Jogos" (partidas de hoje), "N jogadores com nível… toque para abrir a escada" e os subtítulos
+"divisões ganhas/perdidas no período" (painel), "Pense no que o time ganha com a pessoa em quadra"
+e "— toque para ir" (minhas opiniões), "Toque no seu nome." (quem é você). O `rkSec` continua
+aceitando `hint` para os rankings com piso ("mín. N de M rachas"), que é informação, não ajuda.
+**Por quê:** a maioria usa no celular e cada linha dessas custa uma linha de nomes; quem já usou
+uma vez não lê, e quem nunca usou descobre tocando (o chip é um botão, a barra da escada é um
+botão). A regra 3 do guia já dizia isso; a tela não cumpria.
+**Descartado:** esconder depois do primeiro uso (estado a mais para uma linha de texto); mover para
+um "?" (ninguém abre).
+**Onde:** `viewPresenca`, `viewTimes`, `golsCard`, `cardPartidasHoje`, painel (`Níveis`, `rkSec`),
+`opSheet`, `quemSouCard` em `index.html` · `scripts/smoke.py` (regex dos textos) ·
+[Interface §5, regra 3](../produto/interface.md).
+

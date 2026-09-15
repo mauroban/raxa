@@ -1089,7 +1089,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* D-153: o destaque de cada ano, com toque que abre o ano; e o card de níveis com a escada de hoje */
     h=els['#app'].innerHTML;
     if(!/Ano a ano/.test(h)||!/class="grow" data-a="statsAno"/.test(h))throw new Error('"Sempre" sem o ano a ano da liga');
-    if(vePat(l)&&(!/<div class="k">Níveis<\/div>/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
+    if(vePat(l)&&(!/<div class="k" style="margin-bottom:6px">Níveis<\/div>/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
     /* um grupo só é o próprio período: no ano com um mês de partidas o "mês a mês" não aparece */
     A.statsPer({dataset:{v:'ano'}});
     if(/Mês a mês/.test(els['#app'].innerHTML))throw new Error('ano com um mes so nao devia ter o mes a mes');
@@ -1377,7 +1377,7 @@ step('12 na linha + 2 goleiros: 3 grupos de 4 e os goleiros a parte, um em cada 
     if(lv.teams.length!==3||filaDe(lv).length)throw new Error('na montagem, 3 times inteiros: veio '+lv.teams.length+' / fora '+filaDe(lv).length);
     if(lv.gkPool.length!==2||lv.teams.some(t=>t.ids.length!==4||t.ids.some(id=>ehGkHoje(lv,id))))throw new Error('3 grupos de 4 de linha e 2 goleiros no rodizio: '+lv.teams.map(t=>t.ids.length)+' / '+lv.gkPool.length);
     const h=viewTimes(l,lv);
-    if(!/um em cada gol/.test(h)||!/cada um fica no seu gol\./.test(h))throw new Error('o card devia dizer "um em cada gol" e "cada um fica no seu gol"');
+    if(!/um em cada gol/.test(h)||/cada um fica no seu gol/.test(h))throw new Error('o card devia dizer "um em cada gol" no titulo, sem a frase de ajuda (D-186)');
     if(!/goleiros à parte/.test(h)||/goleiro reveza/.test(h))throw new Error('com 2 goleiros o cabecalho diz "(goleiros à parte)", nao "reveza" (D-162)');
     /* "2 times" escolhido na mao com 12 de linha: a linha enche 3, entao os 2 goleiros continuam a parte (D-163) */
     A.nteams({dataset:{v:'2'}});
@@ -2006,6 +2006,14 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(minhaChamada(l,ch.dia,p.id))throw new Error('quem lanca nao tirou');
   closeSheet();els['#sheet'].innerHTML='';A.chamadaChip({dataset:{id:euId(l)}});   // quem saiu nao tem folha (nao esta em lista)
   if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem saiu nao abre folha');
+});
+step('sem texto de ajuda parado (D-186): presenca, montagem, partida, proxima, painel, opinioes, quem e voce',()=>{
+  const l=L(),h=els['#app'].innerHTML;
+  const ruim=/Toque em quem chegou|marca goleiro|por time\.|Os dois primeiros começam|Não são de time nenhum|Todo mundo em quadra|toque no nome para corrigir|use a aba Jogos|toque para abrir a escada|divisões ganhas no período|Pense no que o|toque para ir|Toque no seu nome/;
+  if(ruim.test(h))throw new Error('texto de ajuda parado na tela: '+h.match(ruim)[0]);
+  S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
+  if(ruim.test(els['#app'].innerHTML))throw new Error('texto de ajuda parado no painel: '+els['#app'].innerHTML.match(ruim)[0]);
+  S.ui.tab='racha';render();
 });
 step('stats: filtro fixo no topo e titulos sem o periodo (D-185)',()=>{
   S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();

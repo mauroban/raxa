@@ -114,8 +114,11 @@ Exportar / Importar / Apagar ou Sair · Tamanho da liga · Registro de correçõ
 2. **Um toque grava.** Confirmação só no que não tem volta (encerrar, cancelar com presença marcada,
    apagar). Tudo que é repetido durante o racha (gol, presença, confirmar alguém) não pergunta nada
    e não fecha a folha.
-3. **Nenhum texto de ajuda parado.** Dica só de uma linha, dizendo o próximo passo, e no meio do
-   gesto ("Toque em quem chegou"). Se precisa explicar, a tela está errada.
+3. **Nenhum texto de ajuda parado.** Nem "Toque em quem chegou", nem "toque para abrir", nem a
+   frase que explica a regra embaixo do card (D-186). Dica só no meio de um gesto (dentro de uma
+   folha, num toast), de uma linha, dizendo o próximo passo. Se precisa explicar, a tela está errada.
+   O que fica embaixo de um título é só o que muda a leitura: contadores ("3 no gol · 12 de 14
+   confirmados"), não explicações.
 4. **Lista de gente é em duas colunas**, chip de 42 px (tocar em quadra) ou 32 px (ler uma lista).
    Nome com reticências, nunca quebra de linha. Três colunas não cabem nome mais badge em 360 px.
 5. **Quem importa primeiro.** Toda lista tem uma ordem que responde "quem eu procuro": marcados,
@@ -144,4 +147,8 @@ aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogad
 escada de Jogadores em uma linha por pessoa, sem V/E/D. (D-178) "Você vai na linha" sem a posição;
 quem foi confirmado por outro vê **Confirmo** / Não vou no lugar de ir para o gol / Não vou. (D-181) a
 linha de contadores embaixo da data saiu: "Gol 2/3" e "Linha 12/12" já estão no título de cada
-lista, e a espera passou a mostrar o número dela ("Espera · 1").
+lista, e a espera passou a mostrar o número dela ("Espera · 1"). (D-186) saíram os textos de ajuda
+parados: "Toque em quem chegou · 🧤 marca goleiro", as duas frases da montagem (como os times entram
+e o que os goleiros do rodízio fazem), "Todo mundo em quadra", "toque no nome para corrigir o
+autor", "use a aba Jogos", "toque para abrir a escada", "divisões ganhas/perdidas no período",
+"Pense no que o time ganha", "toque para ir" e "Toque no seu nome".
