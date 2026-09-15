@@ -422,3 +422,19 @@ informação que quem lança já via.
 **Onde:** `confTxt`, `confDentro`, `presCount`, `viewPresenca`, `viewRacha`, `A.chamadaChip` em
 `index.html` · `scripts/smoke.py` · [Interface §4 e §6](../produto/interface.md) ·
 [Confirmação de presença §4 e §6](../produto/confirmacao-de-presenca.md).
+
+<a id="d-175"></a>
+### D-175 · Escada de Jogadores em uma linha por pessoa: sem V/E/D, 44 px, 17 nomes por tela
+**Quando:** 2026-09-14.
+**O quê:** a linha da escada perde a segunda linha de meta. Fica: badge da divisão, nome (com 🧤 e a
+marca de papel quando couber) e, à direita, só o que muda a leitura — "⏳ 3/15" enquanto calibra e o
+Elo cru para o admin — mais a seta. Altura de 52 para 44 px (`.rank.um`); de 15 para 17 nomes numa
+tela de 360 × 780. "Sem nível ainda" segue o mesmo desenho, com a contagem à direita.
+**Por quê:** o V/E/D ao lado do nome era contabilidade numa tela que é identidade (princípio 1): a
+escada diz quem está em que nível, e a campanha mora na ficha e em Stats. Menos texto por linha,
+mais nomes por tela, e a leitura por seção (Ferro, Bronze…) fica limpa.
+**Descartado:** badge compacto de cor + riscos no lugar do badge de divisão (a seção já diz a
+patente; o badge de divisão "I/II/III" já é pequeno e continua alinhado com a ficha); duas colunas
+(nome de 15 px não cabe com badge em 180 px).
+**Onde:** `viewEscada`, CSS `.rank.um`, `.rank .lado` em `index.html` · `scripts/smoke.py` ·
+[Interface §2 a §4](../produto/interface.md) · [Patentes §1](../produto/patentes.md).

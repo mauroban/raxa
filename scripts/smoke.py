@@ -811,6 +811,9 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   eu.role='lancador';l.players[1].owner='outro';l.players[1].role='admin';   // agora o admin e outra pessoa
   if(souAdmin(l))throw new Error('ainda admin');
   if(viewEscada(l).indexOf('Elo — só o admin vê')>=0)throw new Error('quem nao e admin nao pode ver o elo cru');
+  /* D-175: a linha da escada nao carrega V/E/D nem segunda linha; e uma linha por pessoa */
+  {const h=viewEscada(l);if(/\d+V \d+E \d+D/.test(h))throw new Error('a escada nao mostra V/E/D (D-175)');
+   if(!/class="rank um"/.test(h)||/class="meta"/.test(h))throw new Error('linha da escada devia ser de uma linha so')}
   const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
   if(m.result!==antes)throw new Error('lancador corrigiu resultado');
   const r0=eu.L.rank;A.opSet({dataset:{pid:eu.id,r:'L',s:'13',back:'ficha'}});

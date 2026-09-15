@@ -41,7 +41,8 @@ tela é conteúdo.
 | Campo de texto | 48 px; nos Ajustes 40 px | fonte **16 px** sempre (abaixo disso o iPhone dá zoom ao focar) |
 | Chip de nome (presença, quem sou) | 42 px, 2 colunas, 6 px de folga | nome em 13 px com reticências; badge compacto à direita; 🧤 de 38 × 42 ao lado |
 | Chip da chamada | 32 px, 2 colunas, 4 px de folga | número à esquerda, badge à direita (D-168) |
-| Linha de lista (escada, ranking, contas) | 52 px | nome 15 px + uma linha de meta em 11 px; seta › à direita |
+| Linha da escada (Jogadores) | **44 px**, uma linha só | badge de divisão, nome 15 px e, à direita, só o que muda: "⏳ 3/15" calibrando e o Elo do admin; seta › (D-175) |
+| Linha de lista (ranking, contas) | 52 px | nome 15 px + uma linha de meta em 11 px; seta › à direita |
 | Linha de racha (aba Jogos) | 60 px | data, partidas, gols; faixa verde à esquerda quando "VOCÊ" jogou |
 | Placar na partida | numeral 52 a 76 px (14 % da largura), bloco de 96 a 148 px | o bloco inteiro é o botão de gol |
 | Rótulo de seção (`.k`) | 11 px maiúsculo | em cima de cada bloco, sem texto de ajuda embaixo |
@@ -62,7 +63,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Montagem | cabeçalho com 2/3/4 times e Equilibrar + goleiros + **2 times de 4 lado a lado** por dobra; 4 times pedem uma rolagem |
 | Partida ao vivo | relógio + 2 colunas (placar + goleiro + 4 de linha) + "entram no próximo" (2 linhas) + "depois" (1 linha) + gols do jogo; o placar fica na metade de cima e a barra Fim embaixo |
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
-| Jogadores | opinião pendente + Linha/Gol + **15 linhas** de escada |
+| Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
 | Stats · Jogador | 3 filtros + cabeçalho da pessoa + anel + 4 tiles + posições; partida a partida rola |
 | Ajustes | liga + código + Liga + Chamada (1 dia) até a dobra; Partida, Contestação, Aparência, Exportar e Registro rolam |
 
@@ -92,8 +93,9 @@ lados (chance, "fica", ▲ quem entra) · reserva de goleiro · fila · Chegou �
 partidas de hoje + *Desfazer a última*. Barra: **Encerrar racha · Começar partida**.
 
 **Jogadores** — *Minhas opiniões* (uma linha, quando há pendência) · Linha / Gol · escada por
-patente, cada linha: badge, nome, V E D, partidas até calibrar · Pendências (admin). Toque na linha
-abre a ficha em folha.
+patente (cabeçalho com o nome do nível e a contagem), cada linha: badge da divisão, nome, e à direita
+só "⏳ 3/15" enquanto calibra (e o Elo cru para o admin) · *Sem nível ainda* · Pendências (admin).
+Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
 
 **Stats** — Jogador / Racha · Último / Mês / Ano / Sempre · Linha / Gol · painel.
 
@@ -135,8 +137,7 @@ Exportar / Importar / Apagar ou Sair · Tamanho da liga · Registro de correçõ
 3. **Ajustes ganhou altura:** com dois dias de chamada, Partida e Contestação saem da primeira
    dobra. Os cards de Chamada e Partida poderiam ser recolhíveis (título + resumo em uma linha,
    abre ao tocar), como o admin só mexe neles uma vez.
-4. **Jogadores: 15 linhas por tela é bom, mas o badge de patente ocupa 40 px** e o nome fica
-   estreito em 360 px. O badge compacto (cor + riscos, o mesmo dos chips) daria mais nome por linha.
 
 Feitas em 2026-09-14 (D-174): o contador "12 de 14 confirmados" na presença, "Sem racha marcado" na
-aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogador comum.
+aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogador comum. E (D-175) a
+escada de Jogadores em uma linha por pessoa, sem V/E/D.

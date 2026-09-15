@@ -174,6 +174,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-169](interface.md#d-169) · Gol antes da linha; confirmados na frente da grade de presença; Ajustes sem cards colados
 - [D-173](interface.md#d-173) · Guia de interface: tamanhos, o que cabe na tela e a ordem de cada tela, num documento só
 - [D-174](interface.md#d-174) · Três pequenas do guia: "N de N confirmados" na presença, "Sem racha marcado", folha de leitura na chamada
+- [D-175](interface.md#d-175) · Escada de Jogadores em uma linha por pessoa: sem V/E/D, 44 px, 17 nomes por tela
 - [D-140](times-fila-e-goleiro.md#d-140) · Goleiro é do time só quando a conta fecha (um por time); senão rodízio, um em cada gol — a montagem antiga volta
 - [D-162](times-fila-e-goleiro.md#d-162) · Cabeçalho da montagem: "(goleiro reveza)" só com um goleiro; com dois ou mais, "(goleiros à parte)"
 - [D-163](times-fila-e-goleiro.md#d-163) · Goleiro é do time pela conta da linha, não pelo "2 times" escolhido na mão
