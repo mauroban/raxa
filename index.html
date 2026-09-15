@@ -135,6 +135,23 @@ label.f{display:block;margin-bottom:12px}
 .card+.cfgc>.card:first-child,.cfgc+.card{margin-top:10px}
 .cfgc input{min-height:40px;padding:8px 12px}
 .cfgc label.f{margin-bottom:8px}
+/* Ajustes (D-189): cada ajuste é uma linha `.trow` — rótulo à esquerda, controle
+   à direita. Campo curto centrado na fonte de placar; hora na largura dela. */
+.card.cfg>.k{margin-bottom:2px}
+.card.cfg .trow{padding:10px 0}
+.card.cfg .trow:last-child{padding-bottom:0}
+.card.cfg .trow.col{flex-direction:column;align-items:stretch;gap:8px}
+.card.cfg .trow.col .row .lbl{flex:1}
+.card.cfg .trow .lbl{min-width:0}
+.card.cfg .seg{width:100%}
+.cfgc .cfgn,.card.cfg .cfgn{flex:0 0 74px;width:74px;min-height:38px;padding:4px 6px;text-align:center;font-family:var(--disp);font-weight:800;font-size:19px;-moz-appearance:textfield}
+.cfgn::-webkit-outer-spin-button,.cfgn::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cfgc .cfgt,.card.cfg .cfgt{flex:0 0 auto;width:auto;min-height:38px;padding:4px 10px;font-family:var(--disp);font-weight:800;font-size:17px}
+.patnames{display:grid;gap:6px}
+.patnames label{display:flex;align-items:center;gap:10px}
+.patnames .swatch{width:14px;height:14px;border-radius:4px}
+.card.cfg .cod{font-family:var(--disp);font-weight:800;font-size:26px;letter-spacing:.18em;line-height:1.05;color:var(--chalk)}
+.card.cfg .trow.convite{border-top:1px solid var(--line);margin-top:12px;padding-bottom:0}
 label.f .k{display:block;margin-bottom:6px}
 /* campos lado a lado: cada um na sua coluna, rótulo numa linha só, alinhados pela base */
 .row.fields{align-items:flex-end}
@@ -763,6 +780,15 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rate span{display:block;font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-top:4px}
 .rate small{display:block;font-size:11px;color:var(--mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate small.up{color:var(--ok)} .rate small.dn{color:var(--bad)}
+/* cartões de nível (D-188): o badge grande no lugar do número; de → para embaixo */
+.rate.lvl .b{min-height:30px;display:flex;align-items:center}
+.rate.lvl b.up{color:var(--ok)} .rate.lvl b.dn{color:var(--bad)}
+.rate.lvl small.lv{display:flex;align-items:center;gap:5px;overflow:visible}
+.rate.lvl .to{color:var(--mute)}
+.pat.big.none{background:var(--panel2);color:var(--mute);box-shadow:none;font-size:13px}
+/* seta + mini-badge do nível numa linha de racha/partida */
+.lvg{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:11px;vertical-align:middle}
+.lvg.up{color:var(--ok)} .lvg.dn{color:var(--bad)}
 
 /* ---------- ficha do jogador ---------- */
 .ps-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
@@ -874,10 +900,12 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .trow:first-of-type{border-top:0}
 .trow .lbl{font-size:14.5px}
 .trow .lbl small{display:block;font-size:12px;color:var(--mute);margin-top:2px}
-.sw{width:46px;height:28px;border-radius:14px;border:1px solid var(--line2);background:var(--panel2);position:relative;cursor:pointer;flex:0 0 auto}
-.sw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--mute);transition:.15s}
-.sw.on{background:var(--ok);border-color:var(--ok)}
-.sw.on::after{left:23px;background:#fff}
+/* trilha visível de 46×28; a borda transparente de 3px dá 52×34 de área de toque (D-189) */
+.sw{width:52px;height:34px;border-radius:17px;border:3px solid transparent;background:var(--panel2);background-clip:padding-box;
+  box-shadow:inset 0 0 0 1px var(--line2);position:relative;cursor:pointer;flex:0 0 auto;padding:0}
+.sw::after{content:'';position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--mute);transition:.15s}
+.sw.on{background:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.sw.on::after{left:22px;background:#fff}
 .ps-foot{display:flex;gap:8px;margin-top:14px}
 .ps-foot .btn{flex:1}
 
@@ -2323,7 +2351,7 @@ function statsGrupos(liga,pid,papel,per,grupo){
     });
     if(side!==null&&contaPartida(liga,m,min,tot)){
       const a=G[k]||(G[k]={k,ano:ANO(m.ts),ts:m.ts,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,min:0,pm:0,over:0});
-      a.ts=Math.min(a.ts,m.ts);
+      a.ts=Math.min(a.ts,m.ts);a.fim=Math.max(a.fim||0,m.ts);
       a.jogos++;a.min+=min;a[m.result==='draw'?'e':(m.result===side?'v':'d')]++;
       if(!a.rachas[sid]){a.rachas[sid]=1;a.nR++}
       if(m.over&&typeof m.over[pid]==='number')a.over+=m.over[pid];   // saldo acima do esperado (D-150)
@@ -2369,6 +2397,17 @@ function movimentos(liga,ms){
     const n=M[k]||(M[k]={pid:x.pid,role:x.role||'L',de:from});n.para=x.rank}));
   return Object.values(M).map(x=>Object.assign(x,{n:x.para-x.de}))
     .filter(x=>x.n&&P(liga,x.pid)&&temPatente(liga,P(liga,x.pid),x.role));
+}
+/* O nível (degrau) de uma pessoa numa função logo DEPOIS do instante `ts`:
+   o "de onde" da primeira mudança registrada depois dele — ou, se ela nunca
+   mais mudou, o nível de hoje. É o que a aba Stats usa para dizer o nível no
+   começo e no fim de um período, de um racha ou de um mês (D-188).       */
+function nivelApos(liga,pid,role,ts){
+  const p=P(liga,pid);if(!p)return null;
+  const ms=(liga.matches||[]).filter(m=>!m.voided&&m.ts>ts).sort((a,b)=>a.ts-b.ts);
+  for(const m of ms){const x=(m.moves||[]).find(x=>x.pid===pid&&(x.role||'L')===role);
+    if(x)return clamp(typeof x.from==='number'?x.from:x.rank-(x.dir||0),0,TOP)}
+  return rt(p,role).rank;
 }
 /* Ano a ano, mais recente primeiro — o "na vida" quebrado por temporada. */
 const statsAnos=(liga,pid,papel)=>statsGrupos(liga,pid,papel,'sempre','ano').sort((x,y)=>y.ano-x.ano);
@@ -2935,25 +2974,21 @@ function blocoChamada(liga,sess){
 /* Ajustes do admin: dia, hora, vagas por papel, e quantos dias antes e a que horas a lista abre. */
 function cfgChamadaCard(liga){
   const c=chamadaNorm(liga.cfg.chamada,liga.cfg.format);
-  return `<div class="card">
-    <div class="row"><div class="k">Confirmação de presença</div><button class="btn sm sp ${c.on?'pri':'ghost'}" data-a="chamadaOn">${c.on?'Sim':'Não'}</button></div>
-    ${c.on?`${c.dias.map((o,i)=>`<div class="k" style="margin:14px 0 6px">${c.dias.length>1?'Racha '+(i+1):'Dia do racha'}</div>
-    <div class="row" style="gap:4px">${DOW_ABR.map((d,k)=>`<button class="btn sm ${o.dow===k?'pri':'ghost'}" data-a="chamadaDow" data-i="${i}" data-v="${k}" style="flex:1;padding:0">${d}</button>`).join('')}</div>
-    <div class="row" style="gap:8px;margin-top:8px;align-items:center">
-      <label class="f" style="margin:0;flex:1"><span class="k">Hora</span><input type="time" value="${esc(o.hora)}" data-ch="hora" data-i="${i}"></label>
-      ${c.dias.length>1?`<button class="btn sm ghost" data-a="chamadaDelDia" data-i="${i}" style="align-self:flex-end;min-height:40px" aria-label="tirar este dia">✕</button>`:''}
+  const num=(k,v)=>`<input class="cfgn" type="number" value="${v}" data-ch="${k}" aria-label="${k}">`;
+  return `<div class="card cfg">
+    <div class="trow" style="padding-top:0"><div class="lbl"><span class="k">Confirmação de presença</span></div>
+      <button class="sw ${c.on?'on':''}" data-a="chamadaOn" role="switch" aria-checked="${c.on?'true':'false'}" aria-label="confirmação de presença"></button></div>
+    ${c.on?`${c.dias.map((o,i)=>`<div class="trow col"><div class="lbl">${c.dias.length>1?'Racha '+(i+1):'Dia do racha'}</div>
+      <div class="row" style="gap:4px">${DOW_ABR.map((d,k)=>`<button class="btn sm ${o.dow===k?'pri':'ghost'}" data-a="chamadaDow" data-i="${i}" data-v="${k}" style="flex:1;padding:0">${d}</button>`).join('')}</div>
+      <div class="row" style="gap:8px;justify-content:space-between"><div class="lbl">Hora</div>
+        <div class="row" style="gap:6px"><input class="cfgt" type="time" value="${esc(o.hora)}" data-ch="hora" data-i="${i}" aria-label="hora do racha">
+        ${c.dias.length>1?`<button class="btn sm ghost" data-a="chamadaDelDia" data-i="${i}" aria-label="tirar este dia">✕</button>`:''}</div></div>
     </div>`).join('')}
-    <button class="btn sm ghost" data-a="chamadaAddDia" style="margin-top:8px">+ Outro dia na semana</button>
-    <div class="k" style="margin:14px 0 6px">Vagas</div>
-    <div class="row fields" style="gap:8px">
-      <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
-      <label class="f" title="vagas no gol"><span class="k">Gol</span><input type="number" value="${c.gol}" data-ch="gol"></label>
-    </div>
-    <div class="k" style="margin:14px 0 6px">A lista abre</div>
-    <div class="row fields" style="gap:8px">
-      <label class="f" title="quantos dias antes do racha"><span class="k">Dias antes</span><input type="number" value="${c.abre}" data-ch="abre"></label>
-      <label class="f" title="a que horas"><span class="k">Às</span><input type="time" value="${esc(c.abreHora)}" data-ch="abreHora"></label>
-    </div>`:''}
+    <div class="trow"><button class="btn sm ghost" data-a="chamadaAddDia">+ Outro dia na semana</button></div>
+    <div class="trow"><div class="lbl">Vagas na linha</div>${num('linha',c.linha)}</div>
+    <div class="trow"><div class="lbl">Vagas no gol</div>${num('gol',c.gol)}</div>
+    <div class="trow"><div class="lbl">A lista abre<small>dias antes do racha</small></div>${num('abre',c.abre)}</div>
+    <div class="trow"><div class="lbl">Às</div><input class="cfgt" type="time" value="${esc(c.abreHora)}" data-ch="abreHora" aria-label="hora em que a lista abre"></div>`:''}
   </div>`;
 }
 const chamadaResumo=liga=>{const c=chamadaCfg(liga);return c?` · confirmação ${(c.dias||[]).map(o=>DOW_ABR[o.dow]+' '+String(o.hora).replace(/:00$/,'h')).join(', ')} · ${c.linha} na linha + ${c.gol} no gol`:''};
@@ -4123,7 +4158,7 @@ function viewStats(liga){
         const x=stintPart(st)[who];if(!x||x.role!==papel)return;sd=x.side;dur+=st.dur||0});
       if(sd===null||!contaPartida(liga,m,dur,tot))return;
       const c2=chanceHist(liga,m);
-      out.push({m,sd,ch:c2?c2[sd]:null,
+      out.push({m,sd,ch:c2?c2[sd]:null,mv:verCh?(m.moves||[]).find(y=>y.pid===who&&(y.role||'L')===papel)||null:null,
         gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own&&roleNoGol(liga,m,g)===papel).length,
         gc:(m.goals||[]).filter(g=>g.pid===who&&g.own).length,
         res:m.result==='draw'?'E':(m.result===sd?'V':'D')});
@@ -4131,7 +4166,7 @@ function viewStats(liga){
   const ppRow=x=>`<div class="goalrow">
       <span class="mine" style="color:${x.res==='V'?'var(--ok)':x.res==='D'?'var(--bad)':'var(--mute)'}">${x.res}</span>
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
-      <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
+      <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}${x.mv?`<span class="lvg ${x.mv.dir>0?'up':'dn'}" title="${x.mv.dir>0?'subiu':'caiu'} para ${esc(rankLabel(liga,x.mv.rank))}">${x.mv.dir>0?'▲':'▼'}${patDot(liga,x.mv.rank)}</span>`:''}</span>
       ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
       <span class="gcell">${x.gols<=8?'<i class="gball">⚽</i>'.repeat(x.gols):'<i class="gball">⚽</i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own">⚽</i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
@@ -4183,6 +4218,24 @@ function viewStats(liga){
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
+  /* --- o nível da pessoa (D-188): a aba não dizia nada sobre ele além do
+     badge do cabeçalho. Dois cartões na linguagem pública (patente e divisão,
+     nunca o número): HOJE — o badge, e o melhor nível ou a calibração — e
+     NO PERÍODO — quantas divisões andou e de onde para onde (D-155: nível no
+     começo e no fim do período, não o de hoje menos as setas).           */
+  const nivelHtml=(()=>{
+    if(!vePat(liga)||!p)return '';
+    const t=rt(p,papel),tem=temPatente(liga,p,papel),onde=papel==='G'?'no gol':'na linha';
+    const hoje=tem?`<div class="rate lvl"><div class="b">${patBadge(liga,t.rank,'big')}</div><span>nível ${onde}</span>
+        <small>${calibrando(liga,p,t)?'calibrando · '+calTxt(liga,t):(t.peak||0)>t.rank?'melhor: '+esc(rankLabel(liga,t.peak)):'no melhor nível'}</small></div>`
+      :`<div class="rate lvl"><div class="b"><span class="pat big none">calibrando</span></div><span>nível ${onde}</span>
+        <small>${calTxt(liga,t)} · aparece ao fim</small></div>`;
+    if(!tem||!ms.length)return `<div class="rates" style="grid-template-columns:1fr">${hoje}</div>`;
+    const ini=Math.min(...ms.map(m=>m.ts)),fim=Math.max(...ms.map(m=>m.ts));
+    const de=nivelApos(liga,who,papel,ini-1),para=nivelApos(liga,who,papel,fim),n=para-de;
+    const per2=`<div class="rate lvl"><b class="num ${n>0?'up':n<0?'dn':''}">${n>0?'▲ '+n:n<0?'▼ '+(-n):'0'}</b><span>${Math.abs(n)===1?'divisão':'divisões'} no período</span>
+        ${n?`<small class="lv">${patBadge(liga,de)}<span class="to">→</span>${patBadge(liga,para)}</small>`:`<small>${esc(rankLabel(liga,para))} o período todo</small>`}</div>`;
+    return `<div class="rates">${hoje}${per2}</div>`})();
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
@@ -4226,15 +4279,18 @@ function viewStats(liga){
         :`<div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>`}
     </div>
+    ${nivelHtml}
     ${ratesHtml}
     ${posHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
       ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano',sub:g=>aprDe(g.v,g.e,g.jogos)+'%'})
         :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
-      ${[...grupos].reverse().map(a=>`<div class="rk"><span class="nm num">${labG(a)}</span>
+      ${[...grupos].reverse().map(a=>{const nvI=vePat(liga)&&p&&temPatente(liga,p,papel)?nivelApos(liga,who,papel,a.ts-1):null,nvF=nvI===null?null:nivelApos(liga,who,papel,a.fim||a.ts);
+        const nv=nvF===null?'':`<span class="lvg ${nvF>nvI?'up':nvF<nvI?'dn':''}" title="${esc(rankLabel(liga,nvF))}${nvF!==nvI?' (era '+esc(rankLabel(liga,nvI))+')':''}">${nvF>nvI?'▲':nvF<nvI?'▼':''}${patDot(liga,nvF)}</span>`;
+        return `<div class="rk"><span class="nm num">${labG(a)}</span>${nv}
         <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
-        <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`).join('')}`:''}
+        <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`}).join('')}`:''}
   </div>
 
 ${cardPP}${papel==='G'?'':`  <div class="card">
@@ -4868,59 +4924,53 @@ function cardArquivados(liga){
 function viewCfgBody(liga){
   const c=liga.cfg;
   const fmt=`${(FORMATS.find(f=>f.n===c.format)||{l:c.format+'v'+c.format}).l} · ${c.matchMode==='unica'?'Partida única':'Várias curtas'}`;
-  const tema=`<div class="row" style="gap:6px">
-      ${[['claro','☀ Claro'],['escuro','☽ Escuro'],['auto','Automático']].map(x=>
-        `<button class="btn sm ${(S.ui.theme||'claro')===x[0]?'pri':'ghost'}" data-a="setTheme" data-v="${x[0]}" style="flex:1">${x[1]}</button>`).join('')}
-    </div>`;
-  /* Ajustes enxutos (D-131): só o que se mexe, sem texto explicando o óbvio */
+  const seg=(ops,act,cur)=>`<div class="seg">${ops.map(x=>`<button class="${cur===x[0]?'on':''}" data-a="${act}" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  const tema=seg([['claro','Claro'],['escuro','Escuro'],['auto','Automático']],'setTheme',S.ui.theme||'claro');
+  /* Ajustes enxutos (D-131): só o que se mexe, sem texto explicando o óbvio.
+     Uma gramática só (D-189): cada ajuste é uma linha — rótulo à esquerda,
+     controle à direita (interruptor, campo curto ou segmentado). */
+  const sw=(on,act,extra,lab)=>`<button class="sw ${on?'on':''}" data-a="${act}" ${extra||''} role="switch" aria-checked="${on?'true':'false'}" aria-label="${esc(lab||'')}"></button>`;
+  const num=(k,v)=>`<input class="cfgn" type="number" value="${v}" data-cfg="${k}" aria-label="${k}">`;
   if(!souAdmin(liga))return `
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Formato</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase">${fmt}</div>
-    <div class="tiny muted" style="margin-top:4px">Alvo ${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'} · níveis ${c.rankVisibility==='admin'?'só para o admin':'para todo mundo'}${esc(chamadaResumo(liga))}</div>
+  <div class="card cfg">
+    <div class="trow"><div class="lbl">Formato<small>${fmt}</small></div></div>
+    <div class="trow"><div class="lbl">Partida<small>${c.targetGoals>0?c.targetGoals+' gols ou ':''}${c.targetMin} min · ${c.winnerStays?'vencedor fica':'sem vencedor fica'}</small></div></div>
+    <div class="trow"><div class="lbl">Níveis<small>${c.rankVisibility==='admin'?'só o admin vê':'todo mundo vê'}</small></div></div>
+    ${chamadaResumo(liga)?`<div class="trow"><div class="lbl">Confirmação de presença<small>${esc(chamadaResumo(liga).replace(/^ · confirmação /,''))}</small></div></div>`:''}
   </div>
   ${cardArquivados(liga)}
-  <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
-  ${DONO[liga.id]?'':`<div class="card"><div class="row"><div class="tiny muted">Os ajustes da liga são do admin.</div><button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button></div></div>`}`;
+  <div class="card cfg"><div class="k">Aparência</div>${tema}</div>
+  ${DONO[liga.id]?'':`<div class="card cfg"><div class="trow"><div class="lbl">Sair da liga<small>os ajustes são do admin</small></div><button class="btn sm danger" data-a="leaveLiga">Sair</button></div></div>`}`;
   return `<div class="cfgc">
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Liga</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:16px;text-transform:uppercase">${fmt}</div>
-    <div class="k" style="margin:14px 0 6px">Quem vê os níveis</div>
-    <div class="row" style="gap:6px">
-      <button class="btn sm ${c.rankVisibility!=='admin'?'pri':'ghost'}" data-a="setVis" data-v="todos" style="flex:1">Todo mundo</button>
-      <button class="btn sm ${c.rankVisibility==='admin'?'pri':'ghost'}" data-a="setVis" data-v="admin" style="flex:1">Só o admin</button>
-    </div>
-    <div class="k" style="margin:14px 0 6px">Nomes dos níveis · da pior para a melhor</div>
-    ${c.patNames.map((n,i)=>`<div class="row" style="margin-bottom:4px">
-      <span class="swatch" style="--pc:${PATFILL[i]}"></span>
-      <input value="${esc(n)}" data-pat="${i}" style="flex:1"></div>`).join('')}
+  <div class="card cfg">
+    <div class="k">Níveis</div>
+    <div class="trow col"><div class="lbl">Quem vê os níveis</div>
+      ${seg([['todos','Todo mundo'],['admin','Só o admin']],'setVis',c.rankVisibility==='admin'?'admin':'todos')}</div>
+    <div class="trow col"><div class="lbl">Nomes<small>da pior para a melhor</small></div>
+      <div class="patnames">${c.patNames.map((n,i)=>`<label><span class="swatch" style="--pc:${PATFILL[i]}"></span><input value="${esc(n)}" data-pat="${i}" aria-label="nome do nível ${i+1}"></label>`).join('')}</div></div>
   </div>
   ${cfgChamadaCard(liga)}
-  <div class="card">
-    <div class="k" style="margin-bottom:6px">Partida</div>
-    <div class="row fields" style="gap:8px">
-      <label class="f" title="0 = sem alvo de gols"><span class="k">Gols</span><input type="number" value="${c.targetGoals}" data-cfg="targetGoals" placeholder="0 = sem"></label>
-      <label class="f"><span class="k">Minutos</span><input type="number" value="${c.targetMin}" data-cfg="targetMin"></label>
-      <label class="f" title="trecho mínimo para contar, em minutos"><span class="k">Trecho mín.</span><input type="number" value="${c.stintMin}" data-cfg="stintMin"></label>
-    </div>
-    ${[['winnerStays','Vencedor fica em quadra'],['askScorer','Perguntar autor do gol'],['avoidRepeat','Evitar repetir quem já jogou junto']]
-      .map(x=>`<div class="row" style="padding:6px 0 0"><div>${x[1]}</div>
-        <button class="btn sm sp ${c[x[0]]?'pri':'ghost'}" data-a="toggleCfg" data-k="${x[0]}">${c[x[0]]?'Sim':'Não'}</button></div>`).join('')}
+  <div class="card cfg">
+    <div class="k">Partida <span class="muted" style="letter-spacing:0;text-transform:none;font-weight:500">· ${fmt}</span></div>
+    <div class="trow"><div class="lbl">Gols para encerrar<small>0 = só pelo tempo</small></div>${num('targetGoals',c.targetGoals)}</div>
+    <div class="trow"><div class="lbl">Minutos</div>${num('targetMin',c.targetMin)}</div>
+    <div class="trow"><div class="lbl">Trecho mínimo<small>minutos para o trecho contar</small></div>${num('stintMin',c.stintMin)}</div>
+    ${[['winnerStays','Vencedor fica em quadra'],['askScorer','Perguntar o autor do gol'],['avoidRepeat','Evitar repetir quem já jogou junto']]
+      .map(x=>`<div class="trow"><div class="lbl">${x[1]}</div>${sw(!!c[x[0]],'toggleCfg',`data-k="${x[0]}"`,x[1])}</div>`).join('')}
   </div>
-  <div class="card">
-    <div class="row fields" style="gap:8px">
-      <label class="f" title="quantas contestações marcam a partida como disputada"><span class="k">Contestações</span><input type="number" value="${c.disputeThreshold}" data-cfg="disputeThreshold"></label>
-      <div class="f"><div class="k" style="margin-bottom:6px">Ao atingir</div>
-        <button class="btn sm ghost" data-a="toggleDispute" style="width:100%;min-height:40px">${c.disputeMode==='suspend'?'Suspende a partida':'Só sinaliza'}</button></div>
-    </div>
+  <div class="card cfg">
+    <div class="k">Contestação</div>
+    <div class="trow"><div class="lbl">Contestações para marcar<small>a partida como disputada</small></div>${num('disputeThreshold',c.disputeThreshold)}</div>
+    <div class="trow col"><div class="lbl">Ao atingir</div>
+      <div class="seg"><button class="${c.disputeMode==='suspend'?'':'on'}" ${c.disputeMode==='suspend'?'data-a="toggleDispute"':''}>Só sinaliza</button><button class="${c.disputeMode==='suspend'?'on':''}" ${c.disputeMode==='suspend'?'':'data-a="toggleDispute"'}>Suspende a partida</button></div></div>
   </div>
-  <div class="card"><div class="k" style="margin-bottom:8px">Aparência</div>${tema}</div>
+  <div class="card cfg"><div class="k">Aparência</div>${tema}</div>
   ${cardArquivados(liga)}
-  <div class="card">
-    <div class="row" style="gap:6px">
-      <button class="btn sm" data-a="export">Exportar</button>
-      <button class="btn sm" data-a="import">Importar</button>
+  <div class="card cfg">
+    <div class="k">Dados</div>
+    <div class="row" style="gap:6px;margin-top:8px">
+      <button class="btn sm ghost" data-a="export">Exportar</button>
+      <button class="btn sm ghost" data-a="import">Importar</button>
       ${DONO[liga.id]?'<button class="btn sm danger sp" data-a="delLiga">Apagar liga</button>':'<button class="btn sm danger sp" data-a="leaveLiga">Sair da liga</button>'}
     </div>
   </div></div>`;
@@ -8391,21 +8441,22 @@ Object.assign(A,{
    declaração de função sobe, então drawApp o encontra normalmente.         */
 function viewCfg(liga){
   const c=CODE[liga.id]||'——————';
-  return `<div class="card ligahdr">
-      <div class="brandmark">${esc(liga.name.slice(0,1).toUpperCase())}</div>
-      <div style="min-width:0;flex:1">
-        <h2 style="font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h2>
-        <div class="tiny muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${liga.players.length} jogadores · ${nRachas(liga)} racha${nRachas(liga)===1?'':'s'} · ${liga.matches.length} partida${liga.matches.length===1?'':'s'}</div>
+  return `<div class="card cfg">
+      <div class="ligahdr">
+        <div class="brandmark">${esc(liga.name.slice(0,1).toUpperCase())}</div>
+        <div style="min-width:0;flex:1">
+          <h2 style="font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(liga.name)}</h2>
+          <div class="tiny muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${liga.players.length} jogadores · ${nRachas(liga)} racha${nRachas(liga)===1?'':'s'} · ${liga.matches.length} partida${liga.matches.length===1?'':'s'}</div>
+        </div>
+        <button class="btn ghost sm" data-a="home">Trocar de liga</button>
       </div>
-      <button class="btn ghost sm" data-a="home">Trocar de liga</button>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:10px">
-      <div style="min-width:0;flex:1">
-        <div class="k">Código de convite</div>
-        <div style="font-family:var(--disp);font-size:20px;letter-spacing:.16em;line-height:1.15">${esc(c)}</div>
+      <div class="trow convite">
+        <div class="lbl" style="min-width:0"><small style="margin:0 0 2px">Código de convite</small><div class="cod">${esc(c)}</div></div>
+        <div class="row" style="gap:6px;flex:0 0 auto">
+          <button class="btn ghost sm" data-a="copyCode" title="link que já entra na liga">${typeof navigator!=='undefined'&&navigator.share?'Enviar link':'Copiar link'}</button>
+          ${souAdmin(liga)&&CODE[liga.id]?`<button class="btn ghost sm" data-a="newCode" title="trocar o código: o antigo deixa de valer">Novo</button>`:''}
+        </div>
       </div>
-      <button class="btn ghost sm" data-a="copyCode" title="link que já entra na liga">${typeof navigator!=='undefined'&&navigator.share?'Enviar link':'Copiar link'}</button>
-      ${souAdmin(liga)&&CODE[liga.id]?`<button class="btn ghost sm" data-a="newCode" title="trocar o código: o antigo deixa de valer">Novo</button>`:''}
     </div>`+viewCfgBody(liga)+logCard(liga);
 }
 function logCard(liga){

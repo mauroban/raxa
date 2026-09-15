@@ -491,3 +491,29 @@ por card ajuda a achar o ranking).
 **Onde:** `viewStats` (`cardNiveis`, `cardsRacha`, card dos rankings) em `index.html` ·
 `scripts/smoke.py` · [Stats §2](../produto/stats.md).
 
+<a id="d-189"></a>
+### D-189 · Ajustes em linhas: rótulo à esquerda, controle à direita
+**Quando:** 2026-09-15.
+**O quê:** a tela de Ajustes passa a ter **uma gramática só**: cada ajuste é uma linha `.trow` (a
+mesma da ficha) — rótulo com nota pequena embaixo, e o controle à direita. Sim/não vira o
+**interruptor** `.sw` (no lugar dos botões "Sim"/"Não"); número vira um **campo curto** de 74 px,
+centrado, na fonte de placar (`.cfgn`, sem as setinhas do navegador); hora, um campo na largura
+dela (`.cfgt`); escolha entre 2 ou 3 vira o **segmentado** `.seg` de largura inteira, numa linha
+própria (quem vê os níveis, ao atingir as contestações, aparência). A liga e o código de convite
+moram num card só (o código em 26 px espaçado, com *Enviar link* / *Novo* ao lado). Os cinco nomes
+dos níveis ficam numa lista com a cor de cada um. A chamada perde as duas linhas de campos lado a
+lado ("Vagas", "A lista abre") em favor de quatro linhas simples. O card "Liga" (que mostrava o
+formato) virou "Níveis"; o formato foi para o título do card Partida. Quem não é admin vê linhas
+só de leitura em vez dos controles. A trilha do interruptor continua 46 × 28, mas ganhou uma borda
+transparente de 3 px: área de toque 52 × 34, acima dos 32 px que `visual.py` exige.
+**Por quê:** "o visual da página de ajustes pode melhorar muito": eram três estilos de controle
+(botões pri/ghost em par, campos com rótulo em cima em fileiras de três, botão de alternar) com
+margens diferentes em cada card. Uma linha por ajuste é o padrão que qualquer pessoa reconhece
+(ajustes do celular) e alinha todos os controles numa coluna à direita.
+**Descartado:** cards recolhíveis para Chamada e Partida (sugestão 3 do guia): a tela do admin com
+dois dias de chamada tem ~3 telas de rolagem, e um estado a mais de abrir/fechar não pagava; fica
+em aberto. Interruptor de 32 px de altura (mudaria a trilha em toda folha).
+**Onde:** `viewCfg`, `viewCfgBody`, `cfgChamadaCard`; CSS `.card.cfg`, `.cfgn`, `.cfgt`,
+`.patnames`, `.sw` em `index.html` · `scripts/smoke.py` (passos "D-165" e "D-188") ·
+`scripts/visual.py` (tela 7) · [Interface §3–4](../produto/interface.md).
+

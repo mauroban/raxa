@@ -48,7 +48,7 @@ tela é conteúdo.
 | Placar na partida | numeral 52 a 76 px (14 % da largura), bloco de 96 a 148 px | o bloco inteiro é o botão de gol |
 | Rótulo de seção (`.k`) | 11 px maiúsculo | em cima de cada bloco, sem texto de ajuda embaixo |
 | Segmentado (`.seg`) | 36 px | filtros de Stats e Linha/Gol |
-| Interruptor (`.sw`) | 46 × 28 px | só em folhas e Ajustes |
+| Interruptor (`.sw`) | trilha 46 × 28 px; área de toque 52 × 34 px (borda transparente) | só em folhas e Ajustes |
 | Alvo de toque mínimo | **32 px** de altura (medido pelo `visual.py`) | 44 px para tudo que é da quadra (gol, presença, fim) |
 
 ## 3. O que cabe numa tela de 360 × 780
@@ -65,8 +65,8 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Partida ao vivo | relógio + 2 colunas (placar + goleiro + 4 de linha) + "entram no próximo" (2 linhas) + "depois" (1 linha) + gols do jogo; o placar fica na metade de cima e a barra Fim embaixo |
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
 | Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
-| Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + posições; partida a partida rola |
-| Ajustes | liga + código + Liga + Chamada (1 dia; Vagas e "A lista abre" em duas linhas de campos) até a dobra; Partida, Contestação, Aparência, Exportar e Registro rolam |
+| Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + os 2 cartões de nível; posições e partida a partida rolam |
+| Ajustes | liga com o código + Níveis (quem vê, 5 nomes) + o topo da Chamada até a dobra; cada ajuste é **uma linha de 44–58 px** (rótulo à esquerda, controle à direita); Partida, Contestação, Aparência, Dados e Registro rolam |
 
 Quando a tela é de 500 px de largura as colunas não aumentam de número; só o nome cabe inteiro.
 
@@ -103,9 +103,17 @@ Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
 **Jogos** — contestadas (quando há) · Todas / Só as minhas · lista de rachas (60 px cada); dentro
 do racha: cabeçalho, *Destaques do racha ›*, bloco Chamada (quando há), partidas.
 
-**Ajustes** — liga (nome, números, *Trocar de liga*) · código de convite · Liga (formato, quem vê,
-nomes dos níveis) · Confirmação de presença · Partida · Contestação · Aparência · arquivados ·
-Exportar / Importar / Apagar ou Sair · Tamanho da liga · Registro de correções (admin).
+**Ajustes** (D-189) — um card por assunto, e dentro dele **uma linha por ajuste**: rótulo (com a
+nota pequena embaixo, quando precisa) à esquerda e o controle à direita — interruptor para sim/não,
+campo curto de 74 px na fonte de placar para número, campo de hora, segmentado de largura inteira
+para escolha entre 2 ou 3 (numa linha própria). Ordem: liga (nome, números, *Trocar de liga*, e o
+código de convite com *Enviar link* / *Novo* no mesmo card) · Níveis (quem vê; os cinco nomes com a
+cor de cada um) · Confirmação de presença (interruptor no título; dias, hora, vagas na linha / no gol,
+a lista abre N dias antes / às) · Partida (formato no título; gols, minutos, trecho mínimo; vencedor
+fica, autor do gol, evitar repetir) · Contestação (quantas; só sinaliza / suspende) · Aparência ·
+arquivados · Dados (Exportar / Importar / Apagar ou Sair) · Tamanho da liga · Registro (admin).
+Quem não é admin vê o mesmo card de cima e, em vez dos controles, **linhas só de leitura** (formato,
+partida, níveis, confirmação), Aparência e *Sair da liga*.
 
 ## 5. Regras para desenhar uma tela nova
 

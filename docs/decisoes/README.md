@@ -147,6 +147,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-158](stats-e-destaques.md#d-158) · Sem os gráficos de colunas por mês e por ano no painel da liga (o mês a mês / ano a ano já conta isso)
 - [D-159](stats-e-destaques.md#d-159) · Empate: primeiro o de maior patente; no chip do mês a mês, o nome e um "+N"
 - [D-160](stats-e-destaques.md#d-160) · Sem o interruptor "Sem goleiros": o goleiro conta em tudo; rankings de goleiro nunca filtrados
+- [D-188](stats-e-destaques.md#d-188) · A aba Jogador de Stats fala do nível: hoje, melhor ou calibrando, e quantas divisões andou no período
 - [D-161](stats-e-destaques.md#d-161) · A seta do racha não troca de sub-aba (Jogador fica em Jogador)
 
 ### [Interface](interface.md)
@@ -179,6 +180,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-185](interface.md#d-185) · Filtro de Stats fixo no topo da aba; os títulos deixam de repetir o período
 - [D-186](interface.md#d-186) · Textos de ajuda parados saem de sete telas (presença, montagem, partida, próxima, painel, opiniões, quem é você)
 - [D-187](interface.md#d-187) · Painel de Stats sem os títulos "O racha", "Níveis" e "Rankings"; sem "toque para abrir"
+- [D-189](interface.md#d-189) · Ajustes em linhas: rótulo à esquerda, controle à direita (interruptor, campo curto, segmentado); liga e código num card
 - [D-140](times-fila-e-goleiro.md#d-140) · Goleiro é do time só quando a conta fecha (um por time); senão rodízio, um em cada gol — a montagem antiga volta
 - [D-162](times-fila-e-goleiro.md#d-162) · Cabeçalho da montagem: "(goleiro reveza)" só com um goleiro; com dois ou mais, "(goleiros à parte)"
 - [D-163](times-fila-e-goleiro.md#d-163) · Goleiro é do time pela conta da linha, não pelo "2 times" escolhido na mão
