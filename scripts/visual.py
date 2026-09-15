@@ -99,7 +99,7 @@ DRIVER = r"""
     }
     if(step===11||step===12||step===13)S.ui.tab='ranking';
     if(step===16){const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';}
-    if(step===7){const eu=L().players[1];eu.role='admin';L().cfg.chamada=Object.assign(chamadaDef(5),{on:true});}   /* ajustes: a tela cheia e a do admin, com a chamada ligada (D-165) */
+    if(step===7){const eu=L().players[1];eu.role='admin';L().cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:4,hora:'19:00'},{dow:6,hora:'10:00'}]});}   /* ajustes: a tela cheia e a do admin, com a chamada ligada (D-165) */
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
     if(step===7)S.ui.tab='cfg';
@@ -140,12 +140,13 @@ DRIVER = r"""
   }
   if(step===22||step===23){        /* proximo racha com a lista aberta (D-165); e o membro sem perfil escolhendo o seu (D-166) */
     const l=L();l.live=null;S.me.name='Mauro';S.ui.tab='racha';
-    const d=new Date();l.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dow:(d.getDay()+2)%7,hora:'19:00',abre:4});
+    const d=new Date();l.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:(d.getDay()+2)%7,hora:'19:00'}],abre:4});
     const ch=proximaChamada(l),lin=l.players.filter(p=>!p.gk),gks=l.players.filter(p=>p.gk);
     l.players.forEach(p=>{p.owner=null;p.role='jogador'});
     if(step===22){const eu=lin[2];eu.owner='Mauro';eu.role='admin';}
     lin.slice(0,13).forEach((p,i)=>confirmar(l,ch.dia,p.id,'L',i%4===0?'mauro':null,1000+i));
     gks.slice(0,3).forEach((p,i)=>confirmar(l,ch.dia,p.id,'G',null,2000+i));
+    l.cfg.chamada.gol=2;                                              /* um na espera do gol, para o print */
     render();closeSheet();
   }
   if(step===20||step===21){        /* 12 de linha + 2 goleiros no 5v5: 3 grupos, goleiros no rodízio, um em cada gol (D-140) */

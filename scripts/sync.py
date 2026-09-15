@@ -451,7 +451,7 @@ await step('partida encerrada no outro aparelho manda: o gol atrasado daqui nao 
 
 console.log('\n[sync] confirmacao de presenca: o servidor carimba a vez na fila (D-165)');
 await step('vou: a linha sobe sem `at`, volta carimbada, e a de outro aparelho entra na ordem do servidor',async()=>{
-  const l=L();l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),{on:true,dow:new Date().getDay(),hora:'23:59',linha:1,gol:1,abre:4});
+  const l=L();l.cfg.chamada=Object.assign(chamadaDef(l.cfg.format),{on:true,dias:[{dow:new Date().getDay(),hora:'23:59'}],linha:1,gol:1,abre:4});
   l.players[0].owner=S.me.name;l.players[0].role='admin';S.ui.tab='racha';
   const ch=proximaChamada(l);
   ok('a chamada de hoje esta aberta',!!ch&&ch.aberta&&ch.hoje);

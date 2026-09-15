@@ -1939,9 +1939,16 @@ step('ajustes: ligar a chamada, escolher o dia, vagas por papel; jogador ve so o
   if(/data-a="chamadaDow"/.test(h))throw new Error('desligada, nao mostra dia/hora');
   A.chamadaOn();h=els['#app'].innerHTML;
   if(!l.cfg.chamada.on||!/data-a="chamadaDow"/.test(h)||!/data-ch="linha"/.test(h))throw new Error('ligar nao abriu os campos');
-  if(l.cfg.chamada.linha!==12||l.cfg.chamada.gol!==2)throw new Error('5v5 sugere 12 na linha + 2 no gol: '+l.cfg.chamada.linha+'/'+l.cfg.chamada.gol);
-  A.chamadaDow({dataset:{v:String(new Date().getDay())}});
-  if(l.cfg.chamada.dow!==new Date().getDay())throw new Error('dia nao gravou');
+  if(l.cfg.chamada.linha!==12||l.cfg.chamada.gol!==3)throw new Error('5v5 sugere 12 na linha + 3 no gol: '+l.cfg.chamada.linha+'/'+l.cfg.chamada.gol);
+  A.chamadaDow({dataset:{i:'0',v:String(new Date().getDay())}});
+  if(l.cfg.chamada.dias[0].dow!==new Date().getDay())throw new Error('dia nao gravou');
+  /* mais de uma vez por semana (D-170): adiciona, aparece "Racha 1/2" e o ✕, tira */
+  A.chamadaAddDia();h=els['#app'].innerHTML;
+  if(l.cfg.chamada.dias.length!==2||!/Racha 2/.test(h)||!/data-a="chamadaDelDia"/.test(h))throw new Error('outro dia na semana');
+  A.chamadaDow({dataset:{i:'1',v:'6'}});if(l.cfg.chamada.dias[1].dow!==6)throw new Error('dia do segundo racha');
+  if(!/sáb/.test(chamadaResumo(l)))throw new Error('resumo lista os dois dias: '+chamadaResumo(l));
+  A.chamadaDelDia({dataset:{i:'1'}});if(l.cfg.chamada.dias.length!==1)throw new Error('tirar o segundo dia');
+  A.chamadaDelDia({dataset:{i:'0'}});if(l.cfg.chamada.dias.length!==1)throw new Error('o ultimo dia nao sai');
   l.players[0].role='jogador';render();h=els['#app'].innerHTML;
   if(/data-a="chamadaOn"/.test(h)||!/confirmação/.test(h))throw new Error('jogador devia ver so o resumo');
   l.players[0].role='admin';
@@ -1953,7 +1960,7 @@ step('ajustes: ligar a chamada, escolher o dia, vagas por papel; jogador ve so o
 });
 step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de lista vai para o fim; jogador so mexe em si',()=>{
   const l=L(),c=l.cfg.chamada;S.ui.tab='racha';
-  c.dow=(new Date().getDay()+2)%7;c.abre=1;render();
+  c.dias[0].dow=(new Date().getDay()+2)%7;c.abre=1;render();
   let h=els['#app'].innerHTML;
   if(!/Próximo racha/.test(h)||!/A lista abre/.test(h)||/data-a="vou"/.test(h))throw new Error('fechada devia mostrar so quando abre');
   c.abre=4;render();h=els['#app'].innerHTML;
@@ -1998,7 +2005,7 @@ step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha
   if(new RegExp('data-id="'+gk.id+'"').test(els['#sheet'].innerHTML))throw new Error('quem ja esta na lista sai da folha');
   closeSheet();
   const txt=textoChamada(l,ch,'https://x/raxa/'),X=listaChamada(l,ch.dia);
-  if(!/^Racha /.test(txt)||!txt.includes('Linha ('+X.L.dentro.length+'/12)')||!/Gol \(1\/2\)/.test(txt)||!/1\. /.test(txt)||!/Confirme no app: https:\/\/x\/raxa\//.test(txt))throw new Error('texto: '+txt);
+  if(!/^Racha /.test(txt)||!txt.includes('Linha ('+X.L.dentro.length+'/12)')||!txt.includes('Gol (1/'+X.G.max+')')||!/1\. /.test(txt)||!/Confirme no app: https:\/\/x\/raxa\//.test(txt))throw new Error('texto: '+txt);
   A.chamadaShare();                                            // sem navigator.share nem clipboard: so avisa
   render();h=els['#app'].innerHTML;
   if(/por tester/.test(h))throw new Error('o chip nao carrega quem confirmou (D-168)');
@@ -2012,9 +2019,21 @@ step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha
   h=els['#app'].innerHTML;if(!/cancelado/.test(h)||!/data-a="chamadaVoltar"/.test(h))throw new Error('sem o aviso de cancelado');
   A.chamadaVoltar({dataset:{d:ch.dia}});
   if(proximaChamada(l).dia!==ch.dia)throw new Error('desfazer nao voltou');
+  /* vagas so deste racha (D-170): 4 na espera, o admin abre mais um time */
+  ['#vl','#vg'].forEach(k=>els[k]=new El(k));
+  A.chamadaVagas({dataset:{d:ch.dia}});if(!/Vagas de /.test(els['#sheet'].innerHTML)||!/Voltar ao padrão" disabled|data-a="chamadaVagasPadrao"[^>]*disabled/.test(els['#sheet'].innerHTML))throw new Error('folha de vagas (padrao ainda)');
+  els['#vl'].value='16';els['#vg'].value='3';A.chamadaVagasOk({dataset:{d:ch.dia}});
+  const X3=listaChamada(l,ch.dia);
+  if(!l.cfg.chamada.vagas[ch.dia]||X3.L.max!==16||X3.G.max!==3||!X3.proprio)throw new Error('vagas proprias nao valeram: '+JSON.stringify(l.cfg.chamada.vagas));
+  if(!/Vagas deste racha · 16 \+ 3/.test(els['#app'].innerHTML))throw new Error('o botao mostra as vagas proprias');
+  const outraData=proximaChamada(l,deIso(ch.dia).getTime()+8*DIA_MS).dia;
+  if(listaChamada(l,outraData).L.max!==12)throw new Error('a outra data segue no padrao');
+  l.cfg.chamada.vagas['2000-01-01']={linha:1,gol:1};els['#vl'].value='12';els['#vg'].value='3';A.chamadaVagasOk({dataset:{d:ch.dia}});
+  if(l.cfg.chamada.vagas[ch.dia]||l.cfg.chamada.vagas['2000-01-01'])throw new Error('igual ao padrao apaga a propria; data passada e limpa');
+  ['#vl','#vg'].forEach(k=>delete els[k]);
 });
 step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a espera sobe na lista mas nao entra marcada',()=>{
-  const l=L(),c=l.cfg.chamada;c.dow=new Date().getDay();c.hora='23:59';
+  const l=L(),c=l.cfg.chamada;c.dias[0].dow=new Date().getDay();c.dias[0].hora='23:59';
   const ch=proximaChamada(l);if(!ch||!ch.hoje||!ch.aberta)throw new Error('cenario: a chamada devia ser hoje e aberta');
   const X=listaChamada(l,ch.dia);
   A.startRacha();const lv=l.live;
@@ -2031,7 +2050,7 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   if(/Próximo racha/.test(viewRacha(l)))throw new Error('com racha em andamento o card da chamada some');
   A.cancelRacha();
   /* lista aberta mas o racha nao e hoje (teste, ou o dia virou): ninguem entra marcado, mas quem confirmou vem na frente — de dentro antes da espera (D-169) */
-  c.dow=(new Date().getDay()+2)%7;const ch2=proximaChamada(l);if(!ch2.aberta||ch2.hoje)throw new Error('cenario: aberta e nao hoje');
+  c.dias[0].dow=(new Date().getDay()+2)%7;const ch2=proximaChamada(l);if(!ch2.aberta||ch2.hoje)throw new Error('cenario: aberta e nao hoje');
   const X2=listaChamada(l,ch2.dia);A.startRacha();const lv2=l.live;
   if(lv2.presentIds.length||lv2.chamada!==ch2.dia)throw new Error('fora do dia nao marca ninguem, mas guarda a chamada');
   const h2=viewPresenca(l,lv2),pos=id=>h2.indexOf('data-id="'+id+'"');

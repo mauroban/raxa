@@ -10,13 +10,18 @@ alguém contando nomes.
 
 ## 1. O admin marca uma vez
 
-Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana**, a
-**hora**, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
-(padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 2 no gol (três times de
-linha e um goleiro em cada gol); 6v6, 15 + 2; 7v7, 18 + 2; 11v11, 20 + 2.
+Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana** e a
+**hora** do racha, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
+(padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
+7v7, 18 + 3; 11v11, 20 + 3.
 
-É recorrente: o admin não cria nada por semana. Quem não é admin vê o resumo ("confirmação qui 19h ·
-12 na linha + 2 no gol") no cartão de formato dos Ajustes.
+**Mais de um racha na semana** (D-170): **+ Outro dia na semana** acrescenta uma ocorrência (dia e
+hora próprios; o ✕ tira). O padrão é uma vez por semana. As vagas e o "abre N dias antes" são da
+liga, iguais para todas as ocorrências. O próximo racha é sempre a ocorrência mais perto ainda por
+vir; dois rachas no **mesmo dia** não são suportados (a lista é por data).
+
+É recorrente: o admin não cria nada por semana. Quem não é admin vê o resumo ("confirmação qui 19h,
+sáb 10h · 12 na linha + 3 no gol") no cartão de formato dos Ajustes.
 
 ## 2. O que cada um vê na aba Racha
 
@@ -61,9 +66,14 @@ mandaram no grupo"). A folha do nome diz **confirmado por mauro** quando foi out
 Tocar num nome da lista (o próprio, ou qualquer um para quem lança) abre a folha da pessoa:
 **Passar para o gol / a linha** e **Tirar da lista**.
 
-O **admin** ainda tem **Cancelar este racha** (feriado, chuva): a data pula, o cartão passa para a
-semana seguinte e fica um aviso com **desfazer** até a data passar. A lista daquela data continua
-guardada.
+O **admin** ainda tem, no pé do cartão:
+
+- **Vagas deste racha** (D-170): abre uma folha com linha e gol **só para esta data** — deu 4 na
+  espera, o admin sobe a linha de 12 para 16 e mais um time entra; a espera sobe sozinha. O botão
+  passa a mostrar "Vagas deste racha · 16 + 3", e **Voltar ao padrão** desfaz. O padrão da liga
+  continua em Ajustes; datas passadas são esquecidas na próxima gravação.
+- **Cancelar este racha** (feriado, chuva): a data pula, o cartão passa para a próxima ocorrência e
+  fica um aviso com **desfazer** até a data passar. A lista daquela data continua guardada.
 
 ## 5. Quem é você nesta liga (D-166)
 

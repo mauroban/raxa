@@ -655,8 +655,11 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ['A','B','C','D','E'].forEach(n=>liga.players.push(mk(n,1500,0)));
   const ids=liga.players.map(p=>p.id);
   ok(proximaChamada(liga)===null,'sem chamada ligada nao ha proxima');
-  liga.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dow:4,hora:'19:00',linha:2,gol:1,abre:4});   // quinta 19h
-  ok(chamadaDef(5).linha===12&&chamadaDef(7).linha===18&&chamadaDef(11).linha===20&&chamadaDef(5).gol===2,'vagas sugeridas pelo formato: 3 times de linha + 2 goleiros');
+  liga.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:4,hora:'19:00'}],linha:2,gol:1,abre:4});   // quinta 19h
+  ok(chamadaDef(5).linha===12&&chamadaDef(7).linha===18&&chamadaDef(11).linha===20&&chamadaDef(5).gol===3,'vagas sugeridas pelo formato: 3 times de linha + 3 goleiros');
+  ok(chamadaDef(5).dias.length===1,'padrao: uma vez por semana');
+  const velha=chamadaNorm({on:true,dow:2,hora:'20:30',linha:10,gol:2},5);
+  ok(velha.dias.length===1&&velha.dias[0].dow===2&&velha.dias[0].hora==='20:30'&&velha.dow===undefined&&velha.linha===10,'liga gravada com dow/hora vira dias:[{dow,hora}]');
   const ter=new Date(2026,8,15,10,0).getTime();          // terca 15/09/2026 10h
   let ch=proximaChamada(liga,ter);
   ok(ch&&ch.dia==='2026-09-17'&&ch.aberta&&!ch.hoje,'terca: proximo e quinta 17/09, e a lista (4 dias) ja abriu');
@@ -675,6 +678,16 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ok(chamadaCancelada(liga,ter)==='2026-09-17','a cancelada entre hoje e a proxima fica a vista para desfazer');
   ok(chamadaCancelada(liga,new Date(2026,8,18).getTime())===null,'passou: nao ha mais o que desfazer');
   liga.cfg.chamada.pula=[];
+  /* duas vezes por semana: vale a mais perto (D-170) */
+  liga.cfg.chamada.dias=[{dow:4,hora:'19:00'},{dow:6,hora:'10:00'}];
+  ok(proximaChamada(liga,ter).dia==='2026-09-17','terca: quinta vem antes de sabado');
+  ok(proximaChamada(liga,new Date(2026,8,18,9,0).getTime()).dia==='2026-09-19'&&proximaChamada(liga,new Date(2026,8,18,9,0).getTime()).hora==='10:00','sexta: o proximo e sabado 10h');
+  ok(proximaChamada(liga,new Date(2026,8,19,14,0).getTime()).dia==='2026-09-24','sabado 14h (10h + 3 h ja passou): quinta que vem');
+  liga.cfg.chamada.dias=[{dow:4,hora:'19:00'}];
+  /* vagas so de uma data: quando da 4 na espera, abre mais um time */
+  liga.cfg.chamada.vagas={'2026-09-17':{linha:5,gol:1}};
+  ok(vagasDe(liga.cfg.chamada,'2026-09-17').linha===5&&vagasDe(liga.cfg.chamada,'2026-09-17').proprio&&vagasDe(liga.cfg.chamada,'2026-09-24').linha===2&&!vagasDe(liga.cfg.chamada,'2026-09-24').proprio,'vagas proprias valem so naquela data');
+  liga.cfg.chamada.vagas={};
   /* listas: ordem de chegada pelo carimbo do servidor, corte no maximo */
   const dia='2026-09-17';
   ok(confirmar(liga,dia,ids[0],'L','a',100)&&confirmar(liga,dia,ids[1],'L','b',300)&&confirmar(liga,dia,ids[2],'L','c',200),'tres confirmam na linha');

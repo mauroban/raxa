@@ -66,3 +66,25 @@ o admin aprova, e depois a pessoa se resolve sozinha).
 `scripts/smoke.py` (bloco D-165/D-166) e `scripts/visual.py` tela 23 ·
 [Contas e permissões §2](../produto/contas-e-permissoes.md) ·
 [Confirmação de presença §5](../produto/confirmacao-de-presenca.md).
+
+<a id="d-170"></a>
+### D-170 · Mais de um racha na semana; vagas próprias de uma data; padrão 12 + 3
+**Quando:** 2026-09-14.
+**O quê:** `cfg.chamada.dias` é uma lista de ocorrências `{dow, hora}` (padrão uma; Ajustes tem
+**+ Outro dia na semana** e ✕ por ocorrência; máximo sete). `proximaChamada` devolve a ocorrência
+mais perto ainda por vir (no mesmo dia da semana, a hora mais cedo que ainda não passou). Liga gravada
+com `dow`/`hora` migra em `chamadaNorm` (`normalize`). `cfg.chamada.vagas[dia] = {linha, gol}`
+sobrepõe o máximo **só naquela data** — folha **Vagas deste racha** no cartão (admin), com
+**Voltar ao padrão**; igual ao padrão apaga a entrada, e datas passadas são limpas ao gravar.
+`listaChamada` corta pelas vagas da data (`vagasDe`). O padrão de vagas passa a **12 + 3** no 5v5
+(gol 3 em todo formato).
+**Por quê:** há liga com dois rachas por semana, e a agenda é da liga — não um cadastro por semana.
+As vagas de uma data mudam na prática ("deu 4 na espera, abre outro time"), sem mexer no padrão.
+Com três goleiros no rodízio o racha não para quando um falta.
+**Descartado:** vagas por ocorrência da semana (o caso real é por data, não por dia fixo); dois
+rachas na mesma data (a lista e o id da confirmação são por data — se aparecer, vira chave
+`dia+hora`); "abre N dias antes" por ocorrência.
+**Onde:** `chamadaDef`, `chamadaNorm`, `vagasDe`, `proximaChamada`, `listaChamada`, `cfgChamadaCard`,
+`chamadaResumo`, `A.chamadaDow/chamadaAddDia/chamadaDelDia/chamadaVagas/chamadaVagasOk/chamadaVagasPadrao`,
+listener `data-ch` em `index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (dias, vagas) ·
+`scripts/visual.py` tela 7 · [Confirmação de presença §1 e §4](../produto/confirmacao-de-presenca.md).
