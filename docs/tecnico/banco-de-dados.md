@@ -215,8 +215,10 @@ Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:
 
 **Confirmação de presença (D-165, já em uso no esquema intermediário):** `league_rsvps`
 `(league_id, id, data jsonb, v, deleted)`, **uma linha por evento** (D-171) — `data` guarda
-`{id:'AAAA-MM-DD_pid_t', dia, pid, papel:'L'|'G'|null, by, t, at}`; `papel:null` é "saiu". Nada é
-apagado: o estado de uma pessoa numa data é o último evento dela. O `at` (hora do evento no
+`{id:'AAAA-MM-DD_pid_t', dia, pid, papel:'L'|'G'|null, by, t, at, ref?}`; `papel:null` é "saiu";
+`ref` (D-178) é a hora que vale na fila quando a própria pessoa assume uma confirmação feita por
+outro (`ordT = ref || at || t`). Nada é apagado: o estado de uma pessoa numa data é o último evento
+dela. O endereço da quadra é `leagues.cfg.chamada.local` (texto, D-179). O `at` (hora do evento no
 servidor, que define a fila de espera) é carimbado em `save_parts` quando a linha chega sem ele;
 `league_delta` devolve a entidade como as outras (`rsvps`), e `save_parts` devolve as linhas
 gravadas na versão nova (`rsvps`) para o aparelho trocar o relógio local pelo do servidor. A

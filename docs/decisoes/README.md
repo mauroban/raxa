@@ -204,6 +204,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-170](chamada-e-confirmacao.md#d-170) · Mais de um racha na semana; vagas próprias de uma data; padrão 12 + 3
 - [D-171](chamada-e-confirmacao.md#d-171) · Confirmar, trocar e sair são eventos que ficam; quem faltou e quem saiu em cima da hora
 - [D-172](chamada-e-confirmacao.md#d-172) · "Marcar os N confirmados" na grade de presença
+- [D-178](chamada-e-confirmacao.md#d-178) · Quem foi confirmado por outro assume com "Confirmo" (sem perder a vez); "Você vai na linha" sem posição; faltou em duas contas
+- [D-179](chamada-e-confirmacao.md#d-179) · Endereço da quadra: texto livre nos Ajustes, link do Google Maps no cartão e no texto do grupo
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

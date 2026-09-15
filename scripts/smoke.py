@@ -71,7 +71,7 @@ step('toda acao tem classificacao de papel',()=>{
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
-    'vou','naoVou','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk']);
+    'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
   if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));
@@ -1974,7 +1974,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   A.vou({dataset:{p:'L'}});
   if(l.rsvps.length!==1||l.rsvps[0].pid!==euId(l)||l.rsvps[0].papel!=='L'||l.rsvps[0].at!==undefined)throw new Error('vou nao confirmou (e nao pode inventar `at`)');
   h=els['#app'].innerHTML;
-  if(!/Você vai na linha · 1º/.test(h)||!/data-a="naoVou"/.test(h))throw new Error('depois de confirmar devia dizer a posicao');
+  if(!/Você vai na linha</.test(h)||/na linha · 1º/.test(h)||!/data-a="naoVou"/.test(h))throw new Error('depois de confirmar devia dizer "Você vai na linha", sem posicao (D-178)');
   const outros=l.players.filter(p=>p.id!==euId(l)&&!p.gk);
   outros.slice(0,12).forEach((p,i)=>confirmar(l,ch.dia,p.id,'L','tester',1000+i));
   const L1=listaChamada(l,ch.dia);
@@ -1988,7 +1988,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(L2.G.dentro.length!==1||L2.G.dentro[0].pid!==euId(l))throw new Error('troca nao levou ao gol');
   if(L2.L.espera.length||L2.L.dentro.length!==12)throw new Error('quem esperava devia subir');
   const meu=l.rsvps.find(r=>r.pid===euId(l));if(meu.at!==undefined)throw new Error('trocar de lista tem que zerar o carimbo');
-  h=els['#app'].innerHTML;if(!/Você vai no gol · 1º/.test(h))throw new Error('estado depois da troca');
+  h=els['#app'].innerHTML;if(!/Você vai no gol</.test(h))throw new Error('estado depois da troca');
   A.naoVou();if(minhaChamada(l,ch.dia,euId(l)))throw new Error('nao vou nao tirou');
   if(!l.rsvps.some(r=>r.pid===euId(l)&&r.papel===null&&r.by==='tester'))throw new Error('sair fica registrado como evento (D-171)');
   const p=outros[0];l.players[0].role='jogador';
@@ -2002,6 +2002,40 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(minhaChamada(l,ch.dia,p.id))throw new Error('quem lanca nao tirou');
   closeSheet();els['#sheet'].innerHTML='';A.chamadaChip({dataset:{id:euId(l)}});   // quem saiu nao tem folha (nao esta em lista)
   if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem saiu nao abre folha');
+});
+step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez; endereco da quadra no cartao e no texto (D-178, D-179)',()=>{
+  const l=L(),ch=proximaChamada(l),eu=euId(l);
+  l.rsvps=l.rsvps.filter(r=>r.pid!==eu);                     // limpa a historia do tester nesta data
+  const outros=l.players.filter(p=>p.id!==eu&&!p.gk).slice(0,3);
+  l.rsvps=l.rsvps.filter(r=>!outros.some(p=>p.id===r.pid));
+  outros.forEach((p,i)=>confirmar(l,ch.dia,p.id,'L','tester',2000+i));
+  confirmar(l,ch.dia,eu,'L','igor',2001);                    // igor me pos na lista, entre o 1o e o 2o
+  render();let h=els['#app'].innerHTML;
+  if(!/igor confirmou você na linha/.test(h)||!/data-a="confirmo"/.test(h)||!/data-a="naoVou"/.test(h)||/data-a="chamadaTroca" data-id="'+eu+'"/.test(h))throw new Error('confirmado por outro devia ver "igor confirmou você na linha" + Confirmo / Nao vou: '+h.slice(h.indexOf('Próximo racha'),h.indexOf('Próximo racha')+600));
+  const antes=listaChamada(l,ch.dia).L.dentro.map(r=>r.pid).indexOf(eu),n0=l.rsvps.length;
+  A.confirmo();
+  const meu=estadoChamada(l,ch.dia)[eu];
+  if(l.rsvps.length!==n0+1||meu.by!=='tester'||meu.papel!=='L'||meu.ref!==2001||meu.at!==undefined)throw new Error('Confirmo e um evento novo, meu, com ref = a hora que valia na fila');
+  if(listaChamada(l,ch.dia).L.dentro.map(r=>r.pid).indexOf(eu)!==antes)throw new Error('assumir a confirmacao nao muda a vez na fila');
+  if(minhaChamada(l,ch.dia,eu).por)throw new Error('depois do Confirmo nao e mais "por outro"');
+  h=els['#app'].innerHTML;
+  if(!/Você vai na linha</.test(h)||/data-a="confirmo"/.test(h))throw new Error('depois do Confirmo: "Você vai na linha", sem o botao');
+  if(!assumir(l,ch.dia,eu,'tester')===false)throw new Error('assumir de novo nao gera evento');
+  A.chamadaChip({dataset:{id:eu}});
+  if(!/na linha · [^<]*por igor<br>confirmou · /.test(els['#sheet'].innerHTML))throw new Error('linha do tempo: "na linha · por igor" e depois "confirmou": '+els['#sheet'].innerHTML.slice(0,300));
+  closeSheet();
+  /* endereco da quadra (D-179): campo nos ajustes, link no cartao, duas linhas no texto do grupo */
+  const cfg=l.cfg.chamada;
+  if(!/data-ch="local"/.test(cfgChamadaCard(l)))throw new Error('ajustes sem o campo do endereco');
+  cfg.local='  Rua da Quadra, 10 - Centro ';cfg.on=true;l.cfg.chamada=chamadaNorm(cfg,l.cfg.format);
+  if(l.cfg.chamada.local!=='Rua da Quadra, 10 - Centro')throw new Error('endereco devia ser aparado');
+  render();h=els['#app'].innerHTML;
+  if(!/class="tiny mapa" href="https:\/\/www\.google\.com\/maps\/search\/\?api=1&amp;query=Rua%20da%20Quadra%2C%2010%20-%20Centro"/.test(h)||!/>Rua da Quadra, 10 - Centro</.test(h))throw new Error('cartao sem o link do mapa: '+h.slice(h.indexOf('Próximo racha'),h.indexOf('Próximo racha')+400));
+  const txt=textoChamada(l,ch,'L');
+  if(!/^Racha [^\n]+\nRua da Quadra, 10 - Centro\nhttps:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Rua%20da%20Quadra%2C%2010%20-%20Centro\n\nGol /.test(txt))throw new Error('texto do grupo sem endereco e mapa: '+txt.slice(0,200));
+  l.cfg.chamada.local='';
+  if(/class="tiny mapa"/.test(chamadaCard(l))||/maps/.test(textoChamada(l,ch,'L')))throw new Error('sem endereco, nada de mapa');
+  l.rsvps=l.rsvps.filter(r=>r.pid!==eu&&!outros.some(p=>p.id===r.pid));render();
 });
 step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha e desfazer',()=>{
   const l=L(),ch=proximaChamada(l);
@@ -2080,17 +2114,21 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   A.cancelRacha();
   /* racha encerrado: o resumo e o historico dizem quem confirmou e nao veio, e quem saiu em cima da hora (D-171) */
   c.dias[0].dow=new Date().getDay();c.dias[0].hora='23:59';const ch3=proximaChamada(l);
-  l.players.filter(p=>!p.gk).slice(0,10).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'L','tester',ch3.ts-10*3600000+i*1000));
-  l.players.filter(p=>p.gk).slice(0,2).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'G','tester',ch3.ts-9*3600000+i*1000));
-  const X3=listaChamada(l,ch3.dia),fujao=X3.L.dentro[0].pid,tardio=X3.L.dentro[1].pid;
+  confirmar(l,ch3.dia,euId(l),'L','tester',ch3.ts-10*3600000-5000);   // eu, confirmado por mim: 1o da linha
+  l.players.filter(p=>!p.gk&&p.id!==euId(l)&&!p.owner).slice(0,10).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'L','tester',ch3.ts-10*3600000+i*1000));
+  l.players.filter(p=>p.gk&&p.id!==euId(l)).slice(0,2).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'G','tester',ch3.ts-9*3600000+i*1000));
+  const X3=listaChamada(l,ch3.dia),fujao=X3.L.dentro[0].pid,tardio=X3.L.dentro[1].pid,posto=X3.L.dentro[2].pid;
+  if(fujao!==euId(l)||P(l,posto).owner)throw new Error('o teste conta comigo em 1o (confirmei a mim mesmo) e dentro[2] sem dono (posto por outro)');
   desconfirmar(l,ch3.dia,tardio,'tester',ch3.ts-30*60000);
   A.startRacha();const lv3=l.live;
   if(lv3.chamadaTs!==ch3.ts)throw new Error('o racha guarda a hora marcada');
-  lv3.presentIds=lv3.presentIds.filter(id=>id!==fujao);lv3.gkTouched=true;
+  lv3.presentIds=lv3.presentIds.filter(id=>id!==fujao&&id!==posto);lv3.gkTouched=true;
   A.toTimes();A.startJogo();A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});A.endRacha();
   const sh=els['#sheet'].innerHTML,sess=l.sessions[l.sessions.length-1];
   if(sess.chamada!==ch3.dia||sess.chamadaTs!==ch3.ts||!sess.started)throw new Error('a sessao guarda chamada, hora marcada e apito');
-  if(!/Confirmou e não veio:<\/b> [^<]*/.test(sh)||sh.indexOf(nameOf(l,fujao))<0)throw new Error('resumo sem quem faltou');
+  const mF=sh.match(/Confirmou e não veio:<\/b> ([^<]*)/),mP=sh.match(/Confirmado por outro e não veio:<\/b> ([^<]*)/);
+  if(!mF||mF[1].indexOf(nameOf(l,fujao))<0||mF[1].indexOf(nameOf(l,posto))>=0)throw new Error('resumo sem quem confirmou a si mesmo e faltou (D-178): '+(mF&&mF[1]));
+  if(!mP||mP[1].indexOf(nameOf(l,posto)+' (por tester)')<0||mP[1].indexOf(nameOf(l,fujao))>=0)throw new Error('resumo sem quem foi confirmado por outro e faltou (D-178): '+(mP&&mP[1]));
   if(!/Saiu em cima da hora:<\/b> [^<]*30 min antes/.test(sh)||sh.indexOf(nameOf(l,tardio))<0)throw new Error('resumo sem quem saiu em cima da hora: '+sh.slice(sh.indexOf('Chamada'),sh.indexOf('Chamada')+300));
   closeSheet();
   S.ui.tab='hist';A.histRacha({dataset:{id:sess.id}});
@@ -2103,7 +2141,7 @@ step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido pr
   if(!/Quem é você nesta liga\?/.test(h)||!/data-a="euSou"/.test(h)||!/data-a="euNovo"/.test(h))throw new Error('sem o card de quem e voce');
   if(/data-a="vou"/.test(h))throw new Error('sem perfil nao tem "Vou"');
   const n0=l.rsvps.length;A.vou({dataset:{p:'L'}});if(l.rsvps.length!==n0)throw new Error('vou sem perfil');
-  const p=l.players[2];
+  const chq=proximaChamada(l),p=l.players.find(x=>!x.owner&&!x.arq&&!minhaChamada(l,chq.dia,x.id));   // um perfil livre e fora da lista de hoje
   A.euSou({dataset:{id:p.id}});if(!/Sou eu/.test(els['#sheet'].innerHTML))throw new Error('folha de confirmar quem sou');
   A.euSouOk({dataset:{id:p.id}});
   if(p.owner!=='tester'||euId(l)!==p.id)throw new Error('sou eu nao vinculou');

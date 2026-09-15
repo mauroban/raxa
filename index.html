@@ -906,6 +906,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 :root[data-theme="escuro"] .card{box-shadow:none}
 :root[data-theme="escuro"] .hdr{background:color-mix(in srgb,var(--bg) 86%,transparent)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mapa{color:var(--mute);text-decoration:underline dotted;text-underline-offset:3px;display:inline-block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -2415,7 +2416,9 @@ const DIA_MS=86400000;
 const DOW_ABR=['dom','seg','ter','qua','qui','sex','sáb'];
 /* `dias`: uma ou mais ocorrências na semana ({dow, hora}); padrão 1× (D-170).
    `vagas[dia]`: máximo só daquela data, quando o admin abre mais um time. */
-function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,pula:[],vagas:{}}}
+function chamadaDef(fmt){return{on:false,dias:[{dow:4,hora:'19:00'}],linha:fmt>=11?20:(fmt-1)*3,gol:3,abre:4,pula:[],vagas:{},local:''}}
+/* endereço da quadra → link universal do Google Maps (abre o app no celular) */
+const mapaUrl=s=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(String(s||'').trim());
 const chamadaCfg=liga=>(liga.cfg.chamada&&liga.cfg.chamada.on)?liga.cfg.chamada:null;
 /* liga gravada com `dow`/`hora` (uma ocorrência só) vira `dias` */
 function chamadaNorm(c,fmt){
@@ -2425,6 +2428,7 @@ function chamadaNorm(c,fmt){
   delete c.dow;delete c.hora;
   if(!Array.isArray(c.pula))c.pula=[];
   if(!c.vagas||typeof c.vagas!=='object')c.vagas={};
+  c.local=String(c.local||'').trim().slice(0,140);
   return c;
 }
 /* vagas de uma data: o padrão da liga, ou o que o admin definiu só para ela */
@@ -2470,6 +2474,10 @@ function chamadaCancelada(liga,agora){
    ver quem saiu em cima da hora e quem confirmou e não veio.               */
 const rsvpId=(dia,pid,t)=>dia+'_'+pid+(t?'_'+t.toString(36):'');
 const rsvpT=r=>r.at||r.t||0;
+/* a vez na fila: o evento "confirmo" (D-178) herda a hora do evento que assume (`ref`) */
+const ordT=r=>r.ref||rsvpT(r);
+/* confirmado por outra pessoa: o `by` não é a conta dona do perfil */
+const porOutro=(liga,r)=>!!(r&&r.papel&&r.by&&r.by!==((liga.players||[]).find(p=>p.id===r.pid)||{}).owner);
 /* eventos de uma data em ordem de tempo; `ate`: só o que aconteceu até ali */
 function eventosChamada(liga,dia,ate){
   return (liga.rsvps||[]).filter(r=>r.dia===dia&&(ate===undefined||rsvpT(r)<=ate))
@@ -2486,18 +2494,27 @@ function listaChamada(liga,dia,ate){
   const vivo=new Set((liga.players||[]).filter(p=>!p.arq).map(p=>p.id));
   const cur=estadoChamada(liga,dia,ate);
   const rows=Object.values(cur).filter(r=>r.papel&&vivo.has(r.pid))
-    .sort((a,b)=>(rsvpT(a)-rsvpT(b))||String(a.id).localeCompare(String(b.id)));
+    .sort((a,b)=>(ordT(a)-ordT(b))||String(a.id).localeCompare(String(b.id)));
   const corta=(papel,max)=>{const xs=rows.filter(r=>r.papel===papel);return{max,dentro:xs.slice(0,max),espera:xs.slice(max),todos:xs}};
   const v=vagasDe(c,dia);
   return {L:corta('L',v.linha),G:corta('G',v.gol),n:rows.length,proprio:v.proprio};
 }
-/* Onde a pessoa está: {papel, pos} (dentro, 1-based) ou {papel, espera} (na fila). */
+/* Onde a pessoa está: {papel, pos} (dentro, 1-based) ou {papel, espera} (na fila);
+   `por` é quem confirmou, quando não foi a própria pessoa (D-178).          */
 function minhaChamada(liga,dia,pid){
   const r=estadoChamada(liga,dia)[pid];if(!r||!r.papel)return null;
-  const L=listaChamada(liga,dia)[r.papel];
+  const L=listaChamada(liga,dia)[r.papel],por=porOutro(liga,r)?r.by:null;
   const i=L.dentro.findIndex(x=>x.pid===pid);
-  if(i>=0)return{papel:r.papel,pos:i+1,espera:0};
-  return{papel:r.papel,pos:0,espera:L.espera.findIndex(x=>x.pid===pid)+1};
+  if(i>=0)return{papel:r.papel,pos:i+1,espera:0,por};
+  return{papel:r.papel,pos:0,espera:L.espera.findIndex(x=>x.pid===pid)+1,por};
+}
+/* A própria pessoa assume a confirmação que outro fez por ela (D-178): evento
+   novo, no mesmo papel, com `ref` = a hora que vale na fila (a vez não muda). */
+function assumir(liga,dia,pid,by,agora){
+  const r=estadoChamada(liga,dia)[pid];if(!r||!r.papel||!porOutro(liga,r))return false;
+  const t=agora===undefined?Date.now():agora;
+  liga.rsvps.push({id:rsvpId(dia,pid,t),dia,pid,papel:r.papel,by:by||null,t,ref:ordT(r)});
+  return true;
 }
 /* Confirma ou troca de papel: evento novo, sem `at` (o servidor carimba). */
 function confirmar(liga,dia,pid,papel,by,agora){
@@ -2522,19 +2539,23 @@ function desconfirmar(liga,dia,pid,by,agora){
 function chamadaDoRacha(liga,sess,horas){
   if(!sess||!sess.chamada)return null;
   const dia=sess.chamada,ts=sess.chamadaTs||sess.started||sess.ts||0,ini=sess.started||sess.ts||ts;
-  const X=listaChamada(liga,dia,ini),pres=new Set(sess.presentIds||[]);
+  const X=listaChamada(liga,dia,ini),pres=new Set(sess.presentIds||[]),est=estadoChamada(liga,dia,ini);
   const faltou=X.L.dentro.concat(X.G.dentro).map(r=>r.pid).filter(id=>!pres.has(id));
   const lim=(horas||3)*3600000;
   const tarde=eventosChamada(liga,dia).filter(r=>!r.papel&&ts-rsvpT(r)<=lim&&rsvpT(r)<=ts+lim)
     .map(r=>({pid:r.pid,at:rsvpT(r),min:Math.round((ts-rsvpT(r))/60000),by:r.by}));
-  return {faltou,tarde,semAviso:faltou.filter(id=>!tarde.some(x=>x.pid===id))};
+  const semAviso=faltou.filter(id=>!tarde.some(x=>x.pid===id));
+  /* quem confirmou a si mesmo faltou; quem foi confirmado por outro talvez nem soubesse (D-178) */
+  return {faltou,tarde,semAviso,proprio:semAviso.filter(id=>!porOutro(liga,est[id])),
+    porOutro:semAviso.filter(id=>porOutro(liga,est[id])).map(id=>({pid:id,by:est[id].by}))};
 }
 /* Texto para colar no grupo: quem está dentro, numerado, e a espera. */
 function textoChamada(liga,ch,link){
   const L=listaChamada(liga,ch.dia),nm=r=>nameOf(liga,r.pid);
   const bloco=(tit,x)=>{let s=tit+' ('+x.dentro.length+'/'+x.max+')\n'+(x.dentro.length?x.dentro.map((r,i)=>(i+1)+'. '+nm(r)).join('\n'):'—');
     if(x.espera.length)s+='\nEspera: '+x.espera.map(nm).join(', ');return s};
-  return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
+  const local=String((liga.cfg.chamada||{}).local||'').trim();
+  return 'Racha '+chamadaTitulo(ch)+(local?'\n'+local+'\n'+mapaUrl(local):'')+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
 }
 /* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
    extrai e roda no Node. Mover uma função para baixo desta linha a tira dos
@@ -2854,7 +2875,8 @@ function chamadaCard(liga){
       <button class="btn sm ghost sp" data-a="chamadaVoltar" data-d="${canc}">desfazer</button></div>`:'';
   if(!ch)return `<div class="card">${cancHtml}<div class="k">Próximo racha</div><div class="tiny muted">Sem data marcada.</div></div>`;
   const head=`<div class="row"><div class="k">Próximo racha</div>${ch.aberta?`<button class="btn sm ghost sp" data-a="chamadaShare">Compartilhar</button>`:''}</div>
-    <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>`;
+    <div style="font-family:var(--disp);font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 2px">${esc(chamadaTitulo(ch))}</div>
+    ${c.local?`<a class="tiny mapa" href="${esc(mapaUrl(c.local))}" target="_blank" rel="noopener">${esc(c.local)}</a>`:''}`;
   if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
   const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
   const cont=`<div class="tiny muted num">Gol ${L.G.dentro.length}/${L.G.max}${L.G.espera.length?' +'+L.G.espera.length+' na espera':''} · Linha ${L.L.dentro.length}/${L.L.max}${L.L.espera.length?' +'+L.L.espera.length+' na espera':''}</div>`;
@@ -2863,11 +2885,18 @@ function chamadaCard(liga){
       <button class="btn wide pri" data-a="vou" data-p="L" style="flex:2">Vou</button>
       <button class="btn wide ghost" data-a="vou" data-p="G" style="flex:1">Vou no gol</button></div>`;
   else if(minha){
-    const st=minha.pos?`Você vai ${minha.papel==='G'?'no gol':'na linha'} · ${minha.pos}º`
-      :`Você é o ${minha.espera}º da espera ${minha.papel==='G'?'do gol':'da linha'}`;
+    const onde=minha.papel==='G'?'no gol':'na linha';
+    /* confirmado por outra pessoa: a própria assume ("Confirmo") ou sai — assim
+       "confirmou e não veio" separa quem se comprometeu de quem foi posto na lista (D-178) */
+    if(minha.por)meu=`<div style="margin-top:12px;font-weight:700;color:var(--gold)">${esc(minha.por)} confirmou você ${onde}${minha.pos?'':' · '+minha.espera+'º da espera'}</div>
+      <div class="row" style="gap:8px;margin-top:8px">
+      <button class="btn wide pri" data-a="confirmo" style="flex:2">Confirmo</button>
+      <button class="btn wide ghost" data-a="naoVou" style="flex:1">Não vou</button></div>`;
+    else{
+    const st=minha.pos?`Você vai ${onde}`:`Você é o ${minha.espera}º da espera ${minha.papel==='G'?'do gol':'da linha'}`;
     meu=`<div class="row" style="margin-top:12px;gap:8px"><div style="flex:1;font-weight:700;color:${minha.pos?'var(--ok)':'var(--gold)'}">${st}</div>
       <button class="btn sm ghost" data-a="chamadaTroca" data-id="${eu}" data-p="${minha.papel==='G'?'L':'G'}">${minha.papel==='G'?'ir para a linha':'ir para o gol'}</button>
-      <button class="btn sm ghost" data-a="naoVou">Não vou</button></div>`;
+      <button class="btn sm ghost" data-a="naoVou">Não vou</button></div>`;}
   }
   /* chips baixos (32 px) em duas colunas, com o badge compacto da patente do
      papel da lista (cor + riscos, D-88) — 14 nomes cabem numa tela (D-168).
@@ -2891,7 +2920,7 @@ function chamadaCard(liga){
 const horaDe=ts=>{const d=new Date(ts);return DOW_ABR[d.getDay()]+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function linhaDoTempo(liga,dia,p){
   const ev=eventosChamada(liga,dia).filter(r=>r.pid===p.id);if(!ev.length)return '';
-  const txt=r=>(r.papel===null?'saiu':r.papel==='G'?'no gol':'na linha')+' · '+horaDe(rsvpT(r))+(r.by&&r.by!==p.owner?' · por '+esc(r.by):'');
+  const txt=r=>(r.papel===null?'saiu':r.ref?'confirmou':r.papel==='G'?'no gol':'na linha')+' · '+horaDe(rsvpT(r))+(r.by&&r.by!==p.owner?' · por '+esc(r.by):'');
   return `<div class="tiny muted" style="margin-bottom:12px;line-height:1.6">${ev.map(txt).join('<br>')}</div>`;
 }
 /* O que a chamada diz de um racha encerrado: quem faltou (estava dentro e não
@@ -2901,7 +2930,8 @@ function blocoChamada(liga,sess){
   const nome=pid=>esc(nameOf(liga,pid));
   const antes=x=>x.min>=60?Math.floor(x.min/60)+'h'+(x.min%60?String(x.min%60).padStart(2,'0'):'')+' antes':x.min>=0?x.min+' min antes':'depois da hora';
   return `<div class="sec"><div class="k2">Chamada</div>
-    ${c.semAviso.length?`<div class="tiny" style="margin-bottom:4px"><b>Confirmou e não veio:</b> ${c.semAviso.map(nome).join(', ')}</div>`:''}
+    ${c.proprio.length?`<div class="tiny" style="margin-bottom:4px"><b>Confirmou e não veio:</b> ${c.proprio.map(nome).join(', ')}</div>`:''}
+    ${c.porOutro.length?`<div class="tiny" style="margin-bottom:4px"><b>Confirmado por outro e não veio:</b> ${c.porOutro.map(x=>nome(x.pid)+' (por '+esc(x.by)+')').join(', ')}</div>`:''}
     ${c.tarde.length?`<div class="tiny"><b>Saiu em cima da hora:</b> ${c.tarde.map(x=>nome(x.pid)+' ('+antes(x)+(x.by&&x.by!==(P(liga,x.pid)||{}).owner?', por '+esc(x.by):'')+')').join(', ')}</div>`:''}
   </div>`;
 }
@@ -2917,6 +2947,7 @@ function cfgChamadaCard(liga){
       ${c.dias.length>1?`<button class="btn sm ghost" data-a="chamadaDelDia" data-i="${i}" style="align-self:flex-end;min-height:40px" aria-label="tirar este dia">✕</button>`:''}
     </div>`).join('')}
     <button class="btn sm ghost" data-a="chamadaAddDia" style="margin-top:8px">+ Outro dia na semana</button>
+    <label class="f" style="margin-top:14px"><span class="k">Endereço da quadra</span><input type="text" value="${esc(c.local)}" data-ch="local" placeholder="Rua, número, bairro" maxlength="140" autocomplete="off"></label>
     <div class="k" style="margin:14px 0 6px">Vagas</div>
     <div class="row fields" style="gap:8px">
       <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
@@ -5366,7 +5397,14 @@ const A={
     if(travado())return toast(msgTrava(),{ms:3500});
     confirmar(l,ch.dia,eu,el.dataset.p==='G'?'G':'L',S.me.name);save();render();
     const m=minhaChamada(l,ch.dia,eu);
-    toast(m&&m.pos?'Confirmado · '+m.pos+'º':'Lista cheia — você é o '+(m?m.espera:'?')+'º da espera');
+    toast(m&&m.pos?'Confirmado':'Lista cheia — você é o '+(m?m.espera:'?')+'º da espera');
+  },
+  /* outra pessoa me pôs na lista: eu assumo (D-178) */
+  confirmo(){
+    const l=L(),eu=euId(l),ch=proximaChamada(l);
+    if(!eu||!ch||!ch.aberta)return;if(travado())return toast(msgTrava(),{ms:3500});
+    if(!assumir(l,ch.dia,eu,S.me.name))return;
+    save();render();toast('Confirmado');
   },
   naoVou(){
     const l=L(),eu=euId(l),ch=proximaChamada(l);
@@ -5378,10 +5416,10 @@ const A={
     const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
     const m=minhaChamada(l,ch.dia,p.id);if(!m)return;
     if(!podeLancar(l)&&p.id!==euId(l))return openSheet(`<h2>${esc(p.name)}</h2>
-      <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
+      <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha'):(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}${m.por?' · confirmado por '+esc(m.por):''}</div>
       ${linhaDoTempo(l,ch.dia,p)}`);   // jogador comum: só lê (D-174)
     openSheet(`<h2>${esc(p.name)}</h2>
-      <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
+      <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha'):(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}${m.por?' · confirmado por '+esc(m.por):''}</div>
       ${linhaDoTempo(l,ch.dia,p)}
       <button class="btn wide ghost" data-a="chamadaTroca" data-id="${p.id}" data-p="${m.papel==='G'?'L':'G'}" style="margin-bottom:8px">${m.papel==='G'?'Passar para a linha':'Passar para o gol'}</button>
       <button class="btn wide danger" data-a="chamadaTirar" data-id="${p.id}">Tirar da lista</button>
@@ -5392,7 +5430,7 @@ const A={
     if(!podeLancar(l)&&p.id!==euId(l))return toast('Só quem lança mexe na lista dos outros');
     if(travado())return toast(msgTrava(),{ms:3500});
     confirmar(l,ch.dia,p.id,el.dataset.p==='G'?'G':'L',S.me.name);closeSheet();save();render();
-    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?' · '+m.pos+'º':' · na espera'));
+    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?(m.papel==='G'?' · no gol':' · na linha'):' · na espera'));
   },
   chamadaTirar(el){
     const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
@@ -5417,7 +5455,7 @@ const A={
   chamadaAdd(el){
     const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
     confirmar(l,ch.dia,p.id,el.dataset.p==='G'?'G':'L',S.me.name);save();
-    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?' · '+m.pos+'º':' · na espera'));
+    const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?(m.papel==='G'?' · no gol':' · na linha'):' · na espera'));
     A.chamadaAlguem();                      // a folha fica aberta: é ação repetida
   },
   chamadaShare(){
@@ -7266,6 +7304,7 @@ document.addEventListener('change',e=>{
   if(el.dataset.ch){                        // agenda da chamada (D-165)
     const c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),k=el.dataset.ch;
     if(k==='hora'){const o=c.dias[+el.dataset.i|0];if(!o)return;if(!/^\d{2}:\d{2}$/.test(el.value)){el.value=o.hora;return toast('Hora inválida')}o.hora=el.value}
+    else if(k==='local'){c.local=String(el.value||'').trim().slice(0,140);el.value=c.local}
     else{const LIM={linha:[0,99],gol:[0,20],abre:[0,30]};const v=Math.round(+el.value);
       if(!isFinite(v)||!LIM[k]){el.value=c[k];return toast('Valor inválido')}c[k]=clamp(v,LIM[k][0],LIM[k][1]);el.value=c[k]}
     save();toast('Salvo');return;

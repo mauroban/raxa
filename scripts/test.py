@@ -731,6 +731,30 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ok(r.tarde.length===1&&r.tarde[0].pid===ids[3]&&r.tarde[0].min===40,'saiu em cima da hora: D, 40 min antes');
   ok(r.semAviso.join()===[ids[0],ids[4]].join(),'sem aviso = faltou e nao avisou');
   ok(chamadaDoRacha(liga,{presentIds:[]})===null,'racha sem chamada nao tem o que dizer');
+  /* confirmado por outro x confirmou a si mesmo (D-178): `by` e a conta dona do perfil */
+  liga.players[0].owner='a';liga.players[4].owner=null;
+  ok(!porOutro(liga,estadoChamada(liga,dia)[ids[0]])&&porOutro(liga,estadoChamada(liga,dia)[ids[4]]),'A confirmou a si mesmo (by = dono); E foi confirmado por "e" sem ter conta');
+  let r2=chamadaDoRacha(liga,sess);
+  ok(r2.proprio.join()===ids[0]&&r2.porOutro.length===1&&r2.porOutro[0].pid===ids[4]&&r2.porOutro[0].by==='e','faltou em duas contas: A (proprio) e E (por outro, "e")');
+  ok(minhaChamada(liga,dia,ids[4]).por==='e'&&minhaChamada(liga,dia,ids[0]).por===null,'minhaChamada diz quem confirmou, quando nao foi a pessoa');
+  /* assumir: evento novo, meu, com `ref` = a hora que valia na fila — a vez nao muda */
+  const dia2='2026-09-24';liga.players[1].owner='b';
+  confirmar(liga,dia2,ids[0],'L','a',100);confirmar(liga,dia2,ids[1],'L','x',200);confirmar(liga,dia2,ids[2],'L','c',300);
+  liga.rsvps.find(r=>r.dia===dia2&&r.pid===ids[1]).at=210;   // o servidor carimbou B
+  ok(!assumir(liga,dia2,ids[0],'a',900),'quem confirmou a si mesmo nao tem o que assumir');
+  ok(!assumir(liga,dia2,ids[4],'e',900),'quem nao esta na lista nao assume nada');
+  ok(assumir(liga,dia2,ids[1],'b',900),'B assume a confirmacao que x fez por ele');
+  const bb=estadoChamada(liga,dia2)[ids[1]];
+  ok(bb.by==='b'&&bb.papel==='L'&&bb.ref===210&&bb.t===900&&bb.at===undefined,'o evento "confirmo" e de B, no mesmo papel, ref = at do evento assumido, sem carimbo');
+  ok(listaChamada(liga,dia2).L.dentro.map(r=>r.pid).join()===[ids[0],ids[1]].join()&&listaChamada(liga,dia2).L.espera[0].pid===ids[2],'B continua o 2o: assumir nao manda para o fim da fila');
+  ok(!assumir(liga,dia2,ids[1],'b',950)&&minhaChamada(liga,dia2,ids[1]).por===null,'assumido, nao e mais "por outro"');
+  ok(listaChamada(liga,dia2,500).L.dentro.length===2,'a lista num instante antes do "confirmo" continua a mesma');
+  /* endereco da quadra (D-179): aparado na normalizacao; no texto vem com o link do mapa */
+  liga.cfg.chamada=chamadaNorm(Object.assign({},liga.cfg.chamada,{local:'  Rua X, 1 '}),liga.cfg.format);
+  ok(liga.cfg.chamada.local==='Rua X, 1'&&chamadaNorm({},5).local==='','endereco aparado; sem endereco e vazio');
+  ok(mapaUrl('Rua X, 1')==='https://www.google.com/maps/search/?api=1&query=Rua%20X%2C%201','link universal do Google Maps');
+  ok(/^Racha qui 17\/09 · 19h\nRua X, 1\nhttps:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Rua%20X%2C%201\n\nGol /.test(textoChamada(liga,{dia,hora:'19:00'},'L')),'texto do grupo com endereco e mapa logo abaixo da data');
+  liga.cfg.chamada.local='';
 }
 
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');

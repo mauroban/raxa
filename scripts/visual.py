@@ -140,7 +140,7 @@ DRIVER = r"""
   }
   if(step===22||step===23){        /* proximo racha com a lista aberta (D-165); e o membro sem perfil escolhendo o seu (D-166) */
     const l=L();l.live=null;S.me.name='Mauro';S.ui.tab='racha';
-    const d=new Date();l.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:(d.getDay()+2)%7,hora:'19:00'}],abre:4});
+    const d=new Date();l.cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:(d.getDay()+2)%7,hora:'19:00'}],abre:4,local:'Arena Society, Av. Brasil, 1200'});
     const ch=proximaChamada(l),lin=l.players.filter(p=>!p.gk),gks=l.players.filter(p=>p.gk);
     l.players.forEach(p=>{p.owner=null;p.role='jogador'});
     if(step===22){const eu=lin[2];eu.owner='Mauro';eu.role='admin';}

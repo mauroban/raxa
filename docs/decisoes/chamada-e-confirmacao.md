@@ -126,3 +126,46 @@ o que a chamada veio evitar; a espera fica de fora porque só entra quem aparece
 **Descartado:** marcar a espera junto (não confirmou vaga); botão fixo sempre visível (ruído).
 **Onde:** `viewPresenca`, `A.presConf` em `index.html` · `scripts/smoke.py` (grade fora do dia) ·
 [Confirmação de presença §6](../produto/confirmacao-de-presenca.md).
+
+<a id="d-178"></a>
+### D-178 · Quem foi confirmado por outro assume com "Confirmo"; "Você vai na linha" sem posição
+**Quando:** 2026-09-14.
+**O quê:** o evento de confirmação guarda `by` (quem tocou); `porOutro(liga,r)` é verdade quando o
+`by` não é a conta dona do perfil. Para essa pessoa o cartão mostra "**mauro confirmou você na
+linha**" com **Confirmo** e **Não vou**; `assumir(liga,dia,pid,by)` grava um evento novo no mesmo
+papel com `ref` = a hora que valia na fila, e `listaChamada` ordena por `ordT = ref || at || t` —
+a vez não muda. `minhaChamada` devolve `por`; `chamadaDoRacha` separa `semAviso` em **proprio** e
+**porOutro** (com o `by`), e o bloco Chamada mostra "Confirmou e não veio" e "Confirmado por outro e
+não veio: Igor (por mauro)". A linha do tempo diz "confirmou · hora" no evento assumido. Junto: a
+frase de quem está dentro perdeu o "· 5º" (toast, cartão e folha) — a posição só aparece na espera.
+**Por quê:** "confirmou e não veio" só é justo quando foi a pessoa que confirmou; quem foi posto na
+lista pelo lançador porque mandou no grupo talvez nem tenha visto. Separar as duas contas é o que
+faz a informação servir na conversa do grupo. E a posição de quem está dentro não muda nada (todo
+mundo dentro joga), só confundia — "1º" parecia um ranking.
+**Descartado:** editar o evento original (viola D-171: nada se edita, e o servidor só carimba a
+linha inteira); assumir como confirmação nova sem `ref` (mandava a pessoa para o fim da fila por ter
+feito a coisa certa); pedir Confirmo a todo mundo (quem tocou em Vou já confirmou).
+**Onde:** `ordT`, `porOutro`, `minhaChamada`, `assumir`, `chamadaDoRacha` (motor); `chamadaCard`,
+`linhaDoTempo`, `blocoChamada`, `A.confirmo`, `A.vou`/`chamadaChip` (toasts e folha) em
+`index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (passo "confirmado por outro" e o
+resumo em duas contas) · [Confirmação de presença §2, §4 e §6](../produto/confirmacao-de-presenca.md)
+· [Banco de dados §6](../tecnico/banco-de-dados.md) (`ref`).
+
+<a id="d-179"></a>
+### D-179 · Endereço da quadra: texto livre nos Ajustes, link do Google Maps no cartão e no grupo
+**Quando:** 2026-09-14.
+**O quê:** `cfg.chamada.local` (texto livre, até 140 caracteres, aparado em `chamadaNorm`). Com
+endereço, o cartão do próximo racha mostra uma linha embaixo da data (`a.mapa`, link
+`https://www.google.com/maps/search/?api=1&query=…`, que abre o app do Maps no celular) e o texto
+de compartilhar ganha duas linhas logo abaixo da data: o endereço e o link. Sem endereço, nada.
+**Por quê:** "onde é" é a segunda pergunta do grupo depois de "quem vai"; um link que abre o mapa
+resolve para quem é novo ou convidado. Texto livre com a URL universal de busca custa zero: nenhuma
+chave de API, nenhuma chamada de rede, nenhum campo estruturado.
+**Descartado:** autocompletar com a API do Places (chave, cobrança, lentidão no campo, e o admin
+digita o endereço uma vez só); guardar latitude/longitude (não há uso ainda — quando houver quadras
+cadastradas, ver [Ideias futuras](../produto/ideias-futuras.md)); embed do mapa no cartão (pesado
+e ocupa a tela que é da lista).
+**Onde:** `chamadaDef`, `chamadaNorm`, `mapaUrl`, `textoChamada` (motor); `chamadaCard`,
+`cfgChamadaCard`, o `change` de `data-ch="local"` em `index.html` · `scripts/test.py` [20] ·
+`scripts/smoke.py` · `scripts/visual.py` (print s22) ·
+[Confirmação de presença §1 e §2](../produto/confirmacao-de-presenca.md).

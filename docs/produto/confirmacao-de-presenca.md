@@ -1,7 +1,7 @@
 # Confirmação de presença — a lista do racha no app
 
 > Parte da documentação do Raxa — índice em [docs/README.md](../README.md).
-> Decisões em [chamada e confirmação](../decisoes/chamada-e-confirmacao.md) (D-165, D-166).
+> Decisões em [chamada e confirmação](../decisoes/chamada-e-confirmacao.md) (D-165, D-166, D-178, D-179).
 
 A liga tem um racha fixo na semana (dia e hora). Alguns dias antes a **lista abre** e cada um se
 confirma pelo app, **na linha ou no gol**. Cada papel tem o seu máximo; quem passa dele fica na
@@ -13,7 +13,9 @@ alguém contando nomes.
 Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana** e a
 **hora** do racha, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
 (padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
-7v7, 18 + 3; 11v11, 20 + 3.
+7v7, 18 + 3; 11v11, 20 + 3. E o **endereço da quadra** (D-179), um campo de texto livre: aparece
+embaixo da data no cartão do próximo racha como link que abre o Google Maps, e vai no texto do
+compartilhamento com o link do mapa. Sem endereço, nada aparece.
 
 **Mais de um racha na semana** (D-170): **+ Outro dia na semana** acrescenta uma ocorrência (dia e
 hora próprios; o ✕ tira). O padrão é uma vez por semana. As vagas e o "abre N dias antes" são da
@@ -30,14 +32,20 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
 - **Lista fechada:** só a data e quando abre ("A lista abre seg 14/09").
 - **Lista aberta, sem confirmar:** dois botões, **Vou** (grande) e **Vou no gol**. Um toque
   confirma; nada de rascunho, nada de "tem certeza".
-- **Confirmado:** "Você vai na linha · 5º" (verde) ou "Você é o 2º da espera da linha" (dourado),
-  com **ir para o gol** / **ir para a linha** e **Não vou**.
+- **Confirmado:** "Você vai na linha" (verde) ou "Você é o 2º da espera da linha" (dourado),
+  com **ir para o gol** / **ir para a linha** e **Não vou**. Quem está dentro não vê a posição:
+  a ordem só importa na espera (D-178).
+- **Confirmado por outra pessoa** ("o Igor mandou no grupo e o lançador pôs na lista"): a própria
+  pessoa vê "**mauro confirmou você na linha**" (dourado) com **Confirmo** (grande) e **Não vou**.
+  Confirmo é um toque, não muda a vez na fila, e a partir daí a confirmação é dela — é isso que
+  separa, depois do racha, quem se comprometeu e faltou de quem foi posto na lista por alguém (D-178).
 - **As duas listas**, Gol primeiro e depois Linha (o gol é curto e é o que decide se o racha fecha), com os nomes numerados na ordem de chegada, em chips baixos de
   duas colunas (14 nomes cabem numa tela, D-168) e o **badge da patente** do papel da lista à direita
   (cor + riscos, como na presença; some com os níveis fechados). O corte é visual: quem está dentro
   tem o chip aceso; abaixo, em cinza, **Espera**.
-- **Compartilhar** gera o texto pronto para o grupo (data, Linha 12/14 com os nomes numerados,
-  espera, Gol, e o endereço do app). O grupo vira espelho do app, não o contrário.
+- **Compartilhar** gera o texto pronto para o grupo (data, endereço da quadra com o link do mapa
+  quando há, Gol, Linha 12/14 com os nomes numerados, espera, e o endereço do app). O grupo vira
+  espelho do app, não o contrário.
 
 Quem ainda não tem perfil nesta liga vê antes o cartão **Quem é você nesta liga?** (seção 5): sem
 perfil não existe "Vou".
@@ -65,7 +73,8 @@ perfil não existe "Vou".
 Nem todo mundo vai abrir o app — e a lista do grupo não pode continuar em paralelo. Então **lançador,
 moderador e admin** têm **+ Confirmar alguém**: uma folha com a busca e, em cada nome, **Linha** e
 **Gol**. Um toque confirma e a folha continua aberta, porque é ação repetida ("o Bruninho e o Igor
-mandaram no grupo"). A folha do nome diz **confirmado por mauro** quando foi outra pessoa que confirmou.
+mandaram no grupo"). A folha do nome diz **confirmado por mauro** quando foi outra pessoa que confirmou,
+e a linha do tempo mostra "confirmou · qui 18:40" quando a própria pessoa depois assumiu (D-178).
 
 Tocar num nome da lista (o próprio, ou qualquer um para quem lança) abre a folha da pessoa:
 **Passar para o gol / a linha** e **Tirar da lista**. O jogador comum abre a folha dos outros só
@@ -110,7 +119,9 @@ Com racha em andamento, o cartão da chamada some — a tela é a do racha.
 
 **Quem faltou e quem saiu em cima da hora** (D-171). No resumo do fim do racha e no racha dentro
 da aba Jogos aparece o bloco **Chamada**, só quando há o que dizer: **Confirmou e não veio** (estava
-dentro da lista no apito e não está na presença) e **Saiu em cima da hora** (saiu da lista a menos
+dentro da lista no apito, a confirmação era dela mesma, e não está na presença), **Confirmado por
+outro e não veio** (idem, mas quem confirmou foi outra pessoa — "Igor (por mauro)" — e ela nunca
+tocou em Confirmo; talvez nem soubesse, D-178) e **Saiu em cima da hora** (saiu da lista a menos
 de 3 h da hora marcada, com quanto tempo antes e por quem, quando não foi a própria pessoa). O racha
 guarda a data da chamada, a hora marcada e o apito para essa conta ser refeita a qualquer momento.
 
