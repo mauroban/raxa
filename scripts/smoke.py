@@ -873,7 +873,7 @@ step('revisao: corrigir autor de gol de partida encerrada',()=>{
 step('numeros: abas jogador/racha e listas compactas',()=>{
   A.statsTab({dataset:{v:'racha'}});
   const h=els['#app'].innerHTML;
-  if(!/Rankings/.test(h)||!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
+  if(!/Mais tempo em quadra/.test(h)||!/Gols a cada 10 min/.test(h))throw new Error('aba racha sem rankings novos');
   /* D-145: taxa, nao total — sem Artilharia nem Mais vitorias na temporada; piso "min. N de M rachas" escrito */
   if(/>Artilharia</.test(h)||/Mais vitórias/.test(h))throw new Error('ranking de total (gols, vitorias) nao cabe na temporada (D-145)');
   if(!/mín\. \d+ de \d+ rachas?/.test(h))throw new Error('faltou o piso "min. N de M rachas" nos rankings');
@@ -1089,7 +1089,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* D-153: o destaque de cada ano, com toque que abre o ano; e o card de níveis com a escada de hoje */
     h=els['#app'].innerHTML;
     if(!/Ano a ano/.test(h)||!/class="grow" data-a="statsAno"/.test(h))throw new Error('"Sempre" sem o ano a ano da liga');
-    if(vePat(l)&&(!/<div class="k" style="margin-bottom:6px">Níveis<\/div>/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
+    if(vePat(l)&&(!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
     /* um grupo só é o próprio período: no ano com um mês de partidas o "mês a mês" não aparece */
     A.statsPer({dataset:{v:'ano'}});
     if(/Mês a mês/.test(els['#app'].innerHTML))throw new Error('ano com um mes so nao devia ter o mes a mes');
@@ -2009,7 +2009,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
 });
 step('sem texto de ajuda parado (D-186): presenca, montagem, partida, proxima, painel, opinioes, quem e voce',()=>{
   const l=L(),h=els['#app'].innerHTML;
-  const ruim=/Toque em quem chegou|marca goleiro|por time\.|Os dois primeiros começam|Não são de time nenhum|Todo mundo em quadra|toque no nome para corrigir|use a aba Jogos|toque para abrir a escada|divisões ganhas no período|Pense no que o|toque para ir|Toque no seu nome/;
+  const ruim=/Toque em quem chegou|marca goleiro|por time\.|Os dois primeiros começam|Não são de time nenhum|Todo mundo em quadra|toque no nome para corrigir|use a aba Jogos|toque para abrir a escada|divisões ganhas no período|Pense no que o|toque para ir|Toque no seu nome|toque para abrir<|<div class="k"[^>]*>(Rankings|O racha|Níveis)<\/div>/;
   if(ruim.test(h))throw new Error('texto de ajuda parado na tela: '+h.match(ruim)[0]);
   S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
   if(ruim.test(els['#app'].innerHTML))throw new Error('texto de ajuda parado no painel: '+els['#app'].innerHTML.match(ruim)[0]);
@@ -2021,7 +2021,7 @@ step('stats: filtro fixo no topo e titulos sem o periodo (D-185)',()=>{
   if(!/class="sfilt"/.test(h))throw new Error('sem o filtro');
   if(/Rankings em \d{4}|O racha em \d{4}|Você · em|Jogador · em|Posição nos rankings <span/.test(h))throw new Error('titulo repetindo o periodo');
   S.ui.statsTab='racha';S.ui.statsPer='sempre';render();h=els['#app'].innerHTML;
-  if(/Rankings desde sempre|O racha desde sempre|Níveis desde sempre/.test(h))throw new Error('titulo repetindo "desde sempre"');
+  if(/Rankings|O racha<|Níveis</.test(h))throw new Error('titulo repetindo "desde sempre"');
   S.ui.tab='racha';render();
 });
 step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez (D-178); nada de endereco (D-183)',()=>{

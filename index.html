@@ -4402,7 +4402,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
           ${verPat&&(subiu||caiu)?`<span class="chip lv" title="mudanças de nível"><b class="ok">▲${subiu}</b><b class="bad">▼${caiu}</b></span>`:''}
         </div></button>`}).join('');
     return `<div class="card" style="padding-bottom:4px">
-      <div class="row"><div class="k">${grupoDe==='racha'?'Racha a racha':grupoDe==='mes'?'Mês a mês':'Ano a ano'}</div><div class="sp tiny muted" style="white-space:nowrap">toque para abrir</div></div>
+      <div class="row"><div class="k">${grupoDe==='racha'?'Racha a racha':grupoDe==='mes'?'Mês a mês':'Ano a ano'}</div></div>
       <div style="height:4px"></div>${linhas}</div>`})();
   /* Níveis no período (D-153): a escada de hoje entre quem apareceu, e quem
      mais subiu e mais caiu de nível nas partidas do período.               */
@@ -4421,7 +4421,6 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const setas=x=>`<span style="display:inline-flex;align-items:center;gap:5px">${patBadgeShort(liga,x.de)}<span style="color:var(--mute)">→</span>${patBadgeShort(liga,x.para)}</span>`;
     const subTxt=x=>pl(Math.abs(x.n),'divisão','divisões')+(x.role==='G'?' · no gol':'');
     return `<div class="card">
-      <div class="k" style="margin-bottom:6px">Níveis</div>
       ${gente.length?`<button class="patbar" data-a="irEscada" title="abrir a escada" aria-label="abrir a escada">${porPat.map((n,k)=>n?`<i style="flex:${n};background:${PATFILL[k]};color:${patInk(k*3)}">${n}</i>`:'').join('')}</button>
       <div class="patleg">${porPat.map((n,k)=>n?`<span><i style="background:${PATFILL[k]}"></i>${esc(liga.cfg.patNames[k])}</span>`:'').join('')}</div>`:''}
       <div class="tiles" style="margin-top:12px">
@@ -4434,7 +4433,6 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     </div>`})();
   const cardsRacha=soRacha?cardsUmRacha:`
   <div class="card">
-    <div class="k" style="margin-bottom:10px">O racha</div>
     <div class="tiles">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer}</b><span>racha${nRachasPer===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
@@ -4459,7 +4457,6 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
   </div>
 
 ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
-    <div class="k" style="margin-bottom:2px">Rankings</div>
     ${(()=>{
       /* Cada filtro faz uma pergunta, e a ordem dos rankings responde a ela:
          30 dias pergunta FORMA (campanha recente primeiro), um ano pergunta

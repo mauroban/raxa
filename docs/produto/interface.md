@@ -151,4 +151,6 @@ lista, e a espera passou a mostrar o número dela ("Espera · 1"). (D-186) saír
 parados: "Toque em quem chegou · 🧤 marca goleiro", as duas frases da montagem (como os times entram
 e o que os goleiros do rodízio fazem), "Todo mundo em quadra", "toque no nome para corrigir o
 autor", "use a aba Jogos", "toque para abrir a escada", "divisões ganhas/perdidas no período",
-"Pense no que o time ganha", "toque para ir" e "Toque no seu nome".
+"Pense no que o time ganha", "toque para ir" e "Toque no seu nome". (D-187) no painel de Stats, os
+títulos "O racha", "Níveis" e "Rankings" saíram (o conteúdo se rotula sozinho), e o "toque para
+abrir" do Racha a racha também.

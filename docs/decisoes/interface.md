@@ -477,3 +477,17 @@ um "?" (ninguém abre).
 `opSheet`, `quemSouCard` em `index.html` · `scripts/smoke.py` (regex dos textos) ·
 [Interface §5, regra 3](../produto/interface.md).
 
+<a id="d-187"></a>
+### D-187 · Painel de Stats sem os títulos "O racha", "Níveis" e "Rankings"
+**Quando:** 2026-09-14.
+**O quê:** os três cards do painel (aba Racha de Stats) perdem o título: os tiles já têm rótulo
+("gols por partida", "subiram", "caíram"), a barra de níveis tem a legenda das divisões, e cada
+ranking tem o próprio título ("Quem mais ganhou", "Artilheiros"). Saiu também o "toque para abrir"
+do card Racha a racha / Mês a mês / Ano a ano (a linha é um botão, D-186).
+**Por quê:** com o filtro fixo (D-185) e sem o período nos títulos, "O racha" e "Rankings" viraram
+uma palavra em cima de um conteúdo que se explica; cada uma custava uma linha no celular.
+**Descartado:** título só no primeiro card (inconsistente); juntar os três cards num só (a rolagem
+por card ajuda a achar o ranking).
+**Onde:** `viewStats` (`cardNiveis`, `cardsRacha`, card dos rankings) em `index.html` ·
+`scripts/smoke.py` · [Stats §2](../produto/stats.md).
+
