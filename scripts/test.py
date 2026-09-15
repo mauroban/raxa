@@ -692,18 +692,24 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   const dia='2026-09-17';
   ok(confirmar(liga,dia,ids[0],'L','a',100)&&confirmar(liga,dia,ids[1],'L','b',300)&&confirmar(liga,dia,ids[2],'L','c',200),'tres confirmam na linha');
   ok(!confirmar(liga,dia,ids[0],'L','a',999),'confirmar de novo no mesmo papel nao muda nada');
-  liga.rsvps.find(r=>r.pid===ids[1]).at=150;                 // o servidor carimbou B antes de C
+  liga.rsvps.find(r=>r.pid===ids[1]&&r.papel==='L').at=150;  // o servidor carimbou B antes de C
   let X=listaChamada(liga,dia);
   ok(X.L.dentro.map(r=>r.pid).join()===[ids[0],ids[1]].join()&&X.L.espera.map(r=>r.pid).join()===ids[2],'2 vagas: A e B dentro (pelo `at`), C na espera');
   ok(minhaChamada(liga,dia,ids[1]).pos===2&&minhaChamada(liga,dia,ids[2]).espera===1&&minhaChamada(liga,dia,ids[4])===null,'posicao: B e o 2o, C e o 1o da espera, E nao esta');
-  desconfirmar(liga,dia,ids[0]);X=listaChamada(liga,dia);
+  const nAntes=liga.rsvps.length;
+  desconfirmar(liga,dia,ids[0],'a',250);X=listaChamada(liga,dia);
   ok(X.L.dentro.length===2&&X.L.dentro[1].pid===ids[2]&&!X.L.espera.length,'A desiste: C sobe sozinho');
+  ok(liga.rsvps.length===nAntes+1&&liga.rsvps[liga.rsvps.length-1].papel===null,'sair e um evento a mais, nao um apagamento (D-171)');
+  ok(!desconfirmar(liga,dia,ids[0],'a',260),'sair de novo nao gera evento');
+  ok(minhaChamada(liga,dia,ids[0])===null,'quem saiu nao esta em lista nenhuma');
+  ok(listaChamada(liga,dia,120).L.dentro.length===1&&listaChamada(liga,dia,120).L.dentro[0].pid===ids[0],'a lista como estava num instante: so A tinha confirmado ate 120');
   confirmar(liga,dia,ids[3],'G','d',400);confirmar(liga,dia,ids[4],'G','e',500);
   X=listaChamada(liga,dia);
   ok(X.G.dentro.length===1&&X.G.espera[0].pid===ids[4],'gol tem a propria lista e a propria espera');
   ok(confirmar(liga,dia,ids[1],'G','b',600),'B troca da linha para o gol');
-  const b=liga.rsvps.find(r=>r.pid===ids[1]);
-  ok(b.papel==='G'&&b.at===undefined&&b.t===600,'trocar zera o carimbo: vai para o fim da outra lista');
+  const b=estadoChamada(liga,dia)[ids[1]];
+  ok(b.papel==='G'&&b.at===undefined&&b.t===600,'trocar e evento novo sem carimbo: vai para o fim da outra lista');
+  ok(eventosChamada(liga,dia).filter(r=>r.pid===ids[1]).length===2,'a historia de B guarda a linha e depois o gol');
   X=listaChamada(liga,dia);
   ok(X.G.espera.map(r=>r.pid).join()===[ids[4],ids[1]].join()&&X.L.dentro.length===1,'B e o ultimo da espera do gol, e a linha ficou so com C');
   liga.players[2].arq=1;
@@ -712,6 +718,16 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   ok(listaChamada(liga,'2026-09-24').n===0,'outra data, outra lista');
   const txt=textoChamada(liga,{dia,hora:'19:00'},'L');
   ok(/^Racha qui 17\/09 · 19h\n\nGol \(1\/1\)\n1\. D\nEspera: E, B\n\nLinha \(1\/2\)\n1\. C\n\nConfirme no app: L$/.test(txt),'texto para o grupo (gol primeiro):\n'+txt);
+  /* depois do racha: quem faltou e quem saiu em cima da hora (D-171) */
+  const hora=new Date(2026,8,17,19,0).getTime();
+  confirmar(liga,dia,ids[0],'L','a',hora-5*3600000);            // A volta 5 h antes (1 vaga? nao: 2 vagas — C e A dentro)
+  desconfirmar(liga,dia,ids[3],'d',hora-40*60000);              // D (gol) sai 40 min antes
+  const sess={chamada:dia,chamadaTs:hora,started:hora+10*60000,presentIds:[ids[2]]};
+  const r=chamadaDoRacha(liga,sess);
+  ok(r.faltou.join()===[ids[0],ids[4]].join(),'faltou: A (linha) e E (subiu no gol quando D saiu) estavam dentro no apito e nao vieram: '+r.faltou.map(i=>nameOf(liga,i)));
+  ok(r.tarde.length===1&&r.tarde[0].pid===ids[3]&&r.tarde[0].min===40,'saiu em cima da hora: D, 40 min antes');
+  ok(r.semAviso.join()===[ids[0],ids[4]].join(),'sem aviso = faltou e nao avisou');
+  ok(chamadaDoRacha(liga,{presentIds:[]})===null,'racha sem chamada nao tem o que dizer');
 }
 
 console.log(fails?'\n*** '+fails+' FALHA(S) ***':'\nTODOS OS TESTES PASSARAM');

@@ -88,3 +88,28 @@ rachas na mesma data (a lista e o id da confirmação são por data — se apare
 `chamadaResumo`, `A.chamadaDow/chamadaAddDia/chamadaDelDia/chamadaVagas/chamadaVagasOk/chamadaVagasPadrao`,
 listener `data-ch` em `index.html` · `scripts/test.py` [20] · `scripts/smoke.py` (dias, vagas) ·
 `scripts/visual.py` tela 7 · [Confirmação de presença §1 e §4](../produto/confirmacao-de-presenca.md).
+
+<a id="d-171"></a>
+### D-171 · Confirmar, trocar e sair são eventos que ficam; quem faltou e quem saiu em cima da hora
+**Quando:** 2026-09-14.
+**O quê:** `league_rsvps` deixa de ter uma linha por pessoa e passa a ter **uma linha por evento**
+(`id = dia_pid_t`): confirmar/trocar (`papel:'L'|'G'`) e sair (`papel:null`), sempre com `by` e o
+`at` do servidor; nada é apagado nem editado. `estadoChamada(liga,dia,ate)` = último evento de cada
+pessoa (até um instante, se pedido); `listaChamada` corta sobre esse estado; `eventosChamada` é a
+história. A folha do nome mostra a linha do tempo. O racha guarda `chamada`, `chamadaTs` (hora
+marcada) e `started` (apito); `chamadaDoRacha(liga,sess)` devolve **faltou** (dentro no apito e
+ausente da presença), **tarde** (saiu a menos de 3 h da hora marcada) e **semAviso**; o bloco
+**Chamada** aparece no resumo do fim e no racha da aba Jogos. Linhas antigas (`dia_pid`) continuam
+válidas como eventos.
+**Por quê:** "quem cancelou em cima da hora" e "quem confirmou e não veio" são a informação que
+resolve a briga do racha — e só existe se sair também for um fato com hora. Apagar a linha jogava
+isso fora. O SQL não muda: o carimbo do servidor já vale para qualquer linha nova.
+**Descartado:** guardar a história dentro da linha da pessoa (o servidor só carimba a linha inteira,
+não cada entrada); tombstone com hora (a linha apagada não volta no delta inicial); penalidade
+automática (é conversa do grupo, não regra do app — a informação basta).
+**Onde:** `rsvpId`, `rsvpT`, `eventosChamada`, `estadoChamada`, `listaChamada`, `minhaChamada`,
+`confirmar`, `desconfirmar`, `chamadaDoRacha` (motor); `linhaDoTempo`, `blocoChamada`,
+`resumoRacha`, `viewHist`, `A.startRacha`/`endRacha` em `index.html` · `scripts/test.py` [20] ·
+`scripts/smoke.py` (eventos, resumo e histórico) · `scripts/sync.py` (sair é linha nova) ·
+[Confirmação de presença §3 e §6](../produto/confirmacao-de-presenca.md) ·
+[Banco de dados §6](../tecnico/banco-de-dados.md).

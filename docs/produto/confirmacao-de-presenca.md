@@ -51,6 +51,10 @@ perfil não existe "Vou".
   não volta, o app mostra a ordem pelo relógio local; a resposta do servidor corrige.
 - **Trocar de lista é confirmação nova.** Quem vai da linha para o gol (ou o contrário) entra no
   **fim** da outra lista. Regra de uma frase, ninguém contesta.
+- **Nada se apaga: cada toque é um evento com hora do servidor** (D-171). Confirmar, trocar de
+  lista e sair ficam registrados com quem fez e quando. O estado de alguém numa data é o último
+  evento dela. A folha do nome mostra a linha do tempo ("na linha · qui 14:02 · saiu · sáb 18:40 ·
+  por mauro").
 - **Confirmar não é presença.** Quem conta para a patente é quem esteve na quadra, como sempre.
 - **Só quem está no cadastro entra na lista;** arquivado some dela.
 - **Sem sinal há 20 s, o botão não grava** (a regra de leitura do racha, D-104): o app avisa em
@@ -99,6 +103,12 @@ ninguém entra marcado — mas quem confirmou continua **na frente da grade**, o
 espera (D-169).
 
 Com racha em andamento, o cartão da chamada some — a tela é a do racha.
+
+**Quem faltou e quem saiu em cima da hora** (D-171). No resumo do fim do racha e no racha dentro
+da aba Jogos aparece o bloco **Chamada**, só quando há o que dizer: **Confirmou e não veio** (estava
+dentro da lista no apito e não está na presença) e **Saiu em cima da hora** (saiu da lista a menos
+de 3 h da hora marcada, com quanto tempo antes e por quem, quando não foi a própria pessoa). O racha
+guarda a data da chamada, a hora marcada e o apito para essa conta ser refeita a qualquer momento.
 
 ## 7. O que ficou de fora, de propósito
 

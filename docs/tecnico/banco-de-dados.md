@@ -214,14 +214,15 @@ Tudo o que envolve membro é do admin, e cada ação vira linha no `audit_log`:
 ## 6. Racha, partida e trecho
 
 **Confirmação de presença (D-165, já em uso no esquema intermediário):** `league_rsvps`
-`(league_id, id, data jsonb, v, deleted)`, uma linha por pessoa por data — `data` guarda
-`{id:'AAAA-MM-DD_pid', dia, pid, papel:'L'|'G', by, t, at}`. O `at` (hora de chegada na lista, que
-define a fila de espera) é carimbado pelo servidor em `save_parts` quando a linha chega sem ele;
+`(league_id, id, data jsonb, v, deleted)`, **uma linha por evento** (D-171) — `data` guarda
+`{id:'AAAA-MM-DD_pid_t', dia, pid, papel:'L'|'G'|null, by, t, at}`; `papel:null` é "saiu". Nada é
+apagado: o estado de uma pessoa numa data é o último evento dela. O `at` (hora do evento no
+servidor, que define a fila de espera) é carimbado em `save_parts` quando a linha chega sem ele;
 `league_delta` devolve a entidade como as outras (`rsvps`), e `save_parts` devolve as linhas
 gravadas na versão nova (`rsvps`) para o aparelho trocar o relógio local pelo do servidor. A
 espera não existe no banco: é derivada de `at` e do máximo em `leagues.cfg.chamada`. No alvo
-relacional abaixo isso vira `rsvps (liga_id, data, player_id, papel, confirmado_por,
-confirmado_em default now())` com `unique (liga_id, data, player_id)`.
+relacional abaixo isso vira `rsvp_events (liga_id, data, player_id, papel null, por, em default
+now())`, append-only, com índice `(liga_id, data, player_id, em)`.
 
 ```sql
 create type modo_racha as enum ('curtas','unica');

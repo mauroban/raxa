@@ -464,14 +464,15 @@ await step('vou: a linha sobe sem `at`, volta carimbada, e a de outro aparelho e
   ok('sem nada pendente depois',dirty.size===0);
   /* outro aparelho confirmou ANTES (carimbo menor): mesmo chegando depois aqui, e ele quem fica dentro */
   const outro=l.players[1],srvRow=srv(ligaId);srvRow.version++;
-  DB.rsvps.push({league_id:ligaId,id:rsvpId(ch.dia,outro.id),data:{id:rsvpId(ch.dia,outro.id),dia:ch.dia,pid:outro.id,papel:'L',by:'luis',t:1,at:row.data.at-5000},v:srvRow.version,deleted:false});
+  DB.rsvps.push({league_id:ligaId,id:rsvpId(ch.dia,outro.id,1),data:{id:rsvpId(ch.dia,outro.id,1),dia:ch.dia,pid:outro.id,papel:'L',by:'luis',t:1,at:row.data.at-5000},v:srvRow.version,deleted:false});
   emit('UPDATE',srvRow);await sleep(900);
   const X=listaChamada(l,ch.dia);
   ok('a confirmacao do outro chegou pelo realtime',l.rsvps.length===2);
   ok('1 vaga: o outro (carimbo menor) esta dentro, eu na espera',X.L.dentro[0]&&X.L.dentro[0].pid===outro.id&&X.L.espera[0]&&X.L.espera[0].pid===l.players[0].id);
   ok('o card diz que sou o 1o da espera',/1º da espera/.test(chamadaCard(l)));   // (a aba Racha esta com o racha ao vivo de antes)
   A.naoVou();await sleep(900);
-  ok('desistir apaga no servidor',DB.rsvps.find(r=>r.league_id===ligaId&&r.id===rsvpId(ch.dia,l.players[0].id)).deleted===true);
+  const saiu=DB.rsvps.filter(r=>r.league_id===ligaId&&r.data.pid===l.players[0].id&&r.data.papel===null);
+  ok('desistir e uma linha nova no servidor, carimbada — nada apagado',saiu.length===1&&typeof saiu[0].data.at==='number'&&!saiu[0].deleted&&DB.rsvps.filter(r=>r.league_id===ligaId).every(r=>!r.deleted));
   l.cfg.chamada.on=false;l.players[0].owner=null;await sleep(900);   // devolve o estado dos passos seguintes (ninguem vinculado)
 });
 

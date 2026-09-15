@@ -1984,21 +1984,24 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(L2.L.espera.length||L2.L.dentro.length!==12)throw new Error('quem esperava devia subir');
   const meu=l.rsvps.find(r=>r.pid===euId(l));if(meu.at!==undefined)throw new Error('trocar de lista tem que zerar o carimbo');
   h=els['#app'].innerHTML;if(!/Você vai no gol · 1º/.test(h))throw new Error('estado depois da troca');
-  A.naoVou();if(l.rsvps.some(r=>r.pid===euId(l)))throw new Error('nao vou nao tirou');
+  A.naoVou();if(minhaChamada(l,ch.dia,euId(l)))throw new Error('nao vou nao tirou');
+  if(!l.rsvps.some(r=>r.pid===euId(l)&&r.papel===null&&r.by==='tester'))throw new Error('sair fica registrado como evento (D-171)');
   const p=outros[0];l.players[0].role='jogador';
   A.chamadaTirar({dataset:{id:p.id}});
-  if(!l.rsvps.some(r=>r.pid===p.id))throw new Error('jogador tirou outro da lista');
+  if(!minhaChamada(l,ch.dia,p.id))throw new Error('jogador tirou outro da lista');
   A.chamadaChip({dataset:{id:p.id}});if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('jogador abriu a folha de outro');
   l.players[0].role='admin';
   A.chamadaChip({dataset:{id:p.id}});if(!/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem lanca abre a folha de qualquer um');
   A.chamadaTirar({dataset:{id:p.id}});
-  if(l.rsvps.some(r=>r.pid===p.id))throw new Error('quem lanca nao tirou');
+  if(minhaChamada(l,ch.dia,p.id))throw new Error('quem lanca nao tirou');
+  closeSheet();els['#sheet'].innerHTML='';A.chamadaChip({dataset:{id:euId(l)}});   // quem saiu nao tem folha (nao esta em lista)
+  if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem saiu nao abre folha');
 });
 step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha e desfazer',()=>{
   const l=L(),ch=proximaChamada(l);
   A.chamadaAlguem();let h=els['#sheet'].innerHTML;
   if(!/Confirmar alguém/.test(h)||!/data-a="chamadaAdd"/.test(h))throw new Error('folha de confirmar alguem');
-  const gk=l.players.find(p=>p.gk&&p.id!==euId(l)&&!l.rsvps.some(r=>r.pid===p.id));
+  const gk=l.players.find(p=>p.gk&&p.id!==euId(l)&&!minhaChamada(l,ch.dia,p.id));
   A.chamadaAdd({dataset:{id:gk.id,p:'G'}});
   if(!l.rsvps.some(r=>r.pid===gk.id&&r.papel==='G'&&r.by==='tester'))throw new Error('nao confirmou no gol por outro');
   if(!/Confirmar alguém/.test(els['#sheet'].innerHTML))throw new Error('a folha devia continuar aberta (acao repetida)');
@@ -2009,8 +2012,8 @@ step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha
   A.chamadaShare();                                            // sem navigator.share nem clipboard: so avisa
   render();h=els['#app'].innerHTML;
   if(/por tester/.test(h))throw new Error('o chip nao carrega quem confirmou (D-168)');
-  A.chamadaChip({dataset:{id:gk.id}});if(!/confirmado por tester/.test(els['#sheet'].innerHTML))throw new Error('a folha do nome diz quem confirmou');closeSheet();
-  const comPat=l.players.find(p=>!p.gk&&temPatente(l,p,'L')&&l.rsvps.some(r=>r.pid===p.id&&r.papel==='L'));
+  A.chamadaChip({dataset:{id:gk.id}});if(!/no gol · \w{3} \d\d:\d\d · por tester/.test(els['#sheet'].innerHTML))throw new Error('a folha do nome mostra a linha do tempo com quem confirmou: '+els['#sheet'].innerHTML.slice(0,300));closeSheet();
+  const comPat=l.players.find(p=>!p.gk&&temPatente(l,p,'L')&&(minhaChamada(l,ch.dia,p.id)||{}).papel==='L');
   if(comPat){const i=h.indexOf('data-id="'+comPat.id+'"');if(!/class="pdot/.test(h.slice(i,i+400)))throw new Error('chip da chamada sem o badge da patente')}
   A.chamadaCancelar({dataset:{d:ch.dia}});
   const ch2=proximaChamada(l);
@@ -2059,6 +2062,24 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   if(!dentroIds.every(id=>espIds.every(e=>pos(id)<pos(e))))throw new Error('quem esta dentro vem antes da espera');
   if(!espIds.every(e=>pos(e)<pos(fora.id)))throw new Error('a espera vem antes de quem nao confirmou');
   A.cancelRacha();
+  /* racha encerrado: o resumo e o historico dizem quem confirmou e nao veio, e quem saiu em cima da hora (D-171) */
+  c.dias[0].dow=new Date().getDay();c.dias[0].hora='23:59';const ch3=proximaChamada(l);
+  l.players.filter(p=>!p.gk).slice(0,10).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'L','tester',ch3.ts-10*3600000+i*1000));
+  l.players.filter(p=>p.gk).slice(0,2).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'G','tester',ch3.ts-9*3600000+i*1000));
+  const X3=listaChamada(l,ch3.dia),fujao=X3.L.dentro[0].pid,tardio=X3.L.dentro[1].pid;
+  desconfirmar(l,ch3.dia,tardio,'tester',ch3.ts-30*60000);
+  A.startRacha();const lv3=l.live;
+  if(lv3.chamadaTs!==ch3.ts)throw new Error('o racha guarda a hora marcada');
+  lv3.presentIds=lv3.presentIds.filter(id=>id!==fujao);lv3.gkTouched=true;
+  A.toTimes();A.startJogo();A.startMatch();A.goal({dataset:{s:'0'}});A.finish({dataset:{r:'0'}});A.endRacha();
+  const sh=els['#sheet'].innerHTML,sess=l.sessions[l.sessions.length-1];
+  if(sess.chamada!==ch3.dia||sess.chamadaTs!==ch3.ts||!sess.started)throw new Error('a sessao guarda chamada, hora marcada e apito');
+  if(!/Confirmou e não veio:<\/b> [^<]*/.test(sh)||sh.indexOf(nameOf(l,fujao))<0)throw new Error('resumo sem quem faltou');
+  if(!/Saiu em cima da hora:<\/b> [^<]*30 min antes/.test(sh)||sh.indexOf(nameOf(l,tardio))<0)throw new Error('resumo sem quem saiu em cima da hora: '+sh.slice(sh.indexOf('Chamada'),sh.indexOf('Chamada')+300));
+  closeSheet();
+  S.ui.tab='hist';A.histRacha({dataset:{id:sess.id}});
+  if(!/Confirmou e não veio/.test(els['#app'].innerHTML))throw new Error('o historico do racha tambem mostra a chamada');
+  S.ui.tab='racha';
 });
 step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido proprio (D-166)',()=>{
   const l=L();l.players[0].owner=null;l.players[0].role='jogador';S.ui.tab='racha';
