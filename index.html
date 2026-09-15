@@ -4320,13 +4320,13 @@ function viewStats(liga){
     ${nivelHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
-      ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano',sub:g=>aprDe(g.v,g.e,g.jogos)+'%'})
+      ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
         :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
       ${[...grupos].reverse().map(a=>{const nvI=vePat(liga)&&p&&temPatente(liga,p,papel)?nivelApos(liga,who,papel,a.ts-1):null,nvF=nvI===null?null:nivelApos(liga,who,papel,a.fim||a.ts);
         /* colunas fixas (rótulo · nível · números · %): o nível fica alinhado numa coluna só, e não colado no texto de largura variável */
         const nv=`<span class="lvg ${nvF===null?'':nvF>nvI?'up':nvF<nvI?'dn':''}" title="${nvF===null?'':esc(rankLabel(liga,nvF))+(nvF!==nvI?' (era '+esc(rankLabel(liga,nvI))+')':'')}">${nvF===null?'':(nvF>nvI?'▲':nvF<nvI?'▼':'')+patDot(liga,nvF)}</span>`;
         return `<div class="rk grupo"><span class="nm num">${labG(a)}</span>${nv}
-        <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')} · ${fmtMin(a.min)}</span>
+        <span class="tiny muted">${grupoDe==='racha'?'':pl(a.nR,'racha')+' · '}${pl(a.jogos,'partida')} · ${pl(a.gols,'gol','gols')}</span>
         <span class="val num">${aprDe(a.v,a.e,a.jogos)}%</span></div>`}).join('')}`:''}
   </div>
 

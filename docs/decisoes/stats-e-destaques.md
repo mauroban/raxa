@@ -613,3 +613,17 @@ existe para o jogador); repetir o bloco na aba Racha.
 **Onde:** `nivelHtml`, linhas dos grupos em `viewStats`; `linhaNivel`, `nivelApos`, `statsGrupos` em
 `index.html` · `scripts/smoke.py` (passo "D-188") · [Stats §2](../produto/stats.md).
 
+<a id="d-190"></a>
+### D-190 · Momento sem o aproveitamento embaixo do eixo; resumo do grupo sem minutos
+**Quando:** 2026-09-15.
+**O quê:** o gráfico Momento (aba Jogador) deixa de escrever o aproveitamento do grupo em cinza
+embaixo de cada rótulo do eixo, e a legenda "aproveitamento embaixo" some com ele — o aproveitamento
+fica só na linha do resumo (racha a racha / mês a mês / ano a ano), à direita, onde já estava. Essa
+linha perde os minutos ("1 racha · 4 partidas · 2 gols").
+**Por quê:** "o aproveitamento no gráfico de momento está meio confuso": eram duas escalas no mesmo
+desenho (D-152), e o leitor lia o % embaixo como se fosse o ponto de cima. Minutos no resumo eram
+número a mais numa linha que já diz partidas e gols.
+**Descartado:** manter o % embaixo só quando o eixo tem poucos rótulos.
+**Onde:** chamada de `grafMomento` e linhas dos grupos em `viewStats` (`index.html`) ·
+[Stats §2](../produto/stats.md).
+
