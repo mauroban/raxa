@@ -994,7 +994,7 @@ step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que an
   const pap=papelJogador(l,'sempre',eu);
   if(temPatente(l,p,pap)&&!/class="lvtl"/.test(h))throw new Error('sem a linha do tempo do nível');
   if(temPatente(l,p,pap)&&!/Entrada|Início/.test(h))throw new Error('a linha do tempo devia começar na entrada');
-  if(temPatente(l,p,pap)&&!/divis(ão|ões)|o período todo/.test(h))throw new Error('o título não diz o que o nível fez no período');
+  if(temPatente(l,p,pap)&&!/divis(ão|ões) no período|sem mudança no período/.test(h))throw new Error('o título não diz o que o nível fez no período');
   if(!temPatente(l,p,pap)&&!/calibrando · /.test(h))throw new Error('sem nível: devia dizer calibrando');
   if(/1[0-9]{3}/.test((h.match(/Nível n[ao] [\s\S]{0,400}/)||[''])[0].replace(/<[^>]+>/g,'')))throw new Error('número de Elo vazou no bloco de nível');
   /* nivelApos: antes da primeira mudança registrada é o "de onde" dela; sem mudança é o nível de hoje */

@@ -527,9 +527,6 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .rank.um .pat{font-size:11px;padding:2px 6px;min-width:28px!important}
 .rank.um .pat .dv i{height:9px}
 .rank .lado{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto;font-size:11.5px}
-.form{display:flex;gap:3px}
-.form i{width:7px;height:7px;border-radius:2px;background:var(--mute2);display:block}
-.form i.v{background:var(--ok)} .form i.d{background:var(--bad)} .form i.e{background:var(--mute)}
 /* card de subida/queda: neutro, o badge dentro dele dá a cor */
 /* resumo do fim do racha (D-99): uma linha por item, colunas fixas; seta verde sobe, vermelha cai */
 .sumrow{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -4157,7 +4154,6 @@ function viewStats(liga){
   const grupos=naFicha&&grupoDe?statsGrupos(liga,who,papel,per,grupoDe):[];
   const labG=g=>grupoDe==='racha'?new Date(g.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):grupoDe==='mes'?MESES_CURTOS[+g.k.slice(5)-1]:g.k;
   const tituloG={racha:'Racha a racha',mes:'Mês a mês',ano:'Ano a ano'}[grupoDe];
-  const formaDots=arr=>arr.length?`<span class="form">${arr.map(f=>`<i class="${f==='V'?'v':f==='D'?'d':'e'}"></i>`).join('')}</span>`:'';
 
   /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
      setinha e sem barra — a lista inteira, com detalhe e ordem, é da folha. */
@@ -4293,7 +4289,6 @@ function viewStats(liga){
         <div class="row" style="gap:6px;flex-wrap:wrap">
           ${vePat(liga)&&p&&temPatente(liga,p,'L')?patBadge(liga,p.L.rank):''}
           ${vePat(liga)&&p&&temPatente(liga,p,'G')?patBadge(liga,p.G.rank)+'<span class="tiny muted">no gol</span>':''}
-          ${me.ultimos.length?formaDots(me.ultimos):''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
