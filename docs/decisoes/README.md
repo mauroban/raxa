@@ -199,6 +199,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-166](chamada-e-confirmacao.md#d-166) · "Quem é você nesta liga?": o membro escolhe o próprio perfil ou cria o seu com apelido
 - [D-170](chamada-e-confirmacao.md#d-170) · Mais de um racha na semana; vagas próprias de uma data; padrão 12 + 3
 - [D-171](chamada-e-confirmacao.md#d-171) · Confirmar, trocar e sair são eventos que ficam; quem faltou e quem saiu em cima da hora
+- [D-172](chamada-e-confirmacao.md#d-172) · "Marcar os N confirmados" na grade de presença
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

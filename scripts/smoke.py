@@ -2061,6 +2061,13 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   const fora=l.players.find(p=>!dentroIds.includes(p.id)&&!espIds.includes(p.id));
   if(!dentroIds.every(id=>espIds.every(e=>pos(id)<pos(e))))throw new Error('quem esta dentro vem antes da espera');
   if(!espIds.every(e=>pos(e)<pos(fora.id)))throw new Error('a espera vem antes de quem nao confirmou');
+  /* um toque marca todos os confirmados (dentro), goleiro com a luva; a espera fica (D-172) */
+  if(!new RegExp('Marcar os '+dentroIds.length+' confirmados').test(h2))throw new Error('sem o botao de marcar os confirmados: '+dentroIds.length);
+  A.presConf();
+  if(lv2.presentIds.length!==dentroIds.length||!dentroIds.every(id=>lv2.presentIds.includes(id)))throw new Error('nao marcou os confirmados');
+  if(!X2.G.dentro.every(r=>ehGkHoje(lv2,r.pid)))throw new Error('goleiro confirmado sem a luva');
+  if(espIds.some(id=>lv2.presentIds.includes(id)))throw new Error('a espera nao entra');
+  if(/Marcar os \d+ confirmados/.test(viewPresenca(l,lv2)))throw new Error('todos marcados: o botao some');
   A.cancelRacha();
   /* racha encerrado: o resumo e o historico dizem quem confirmou e nao veio, e quem saiu em cima da hora (D-171) */
   c.dias[0].dow=new Date().getDay();c.dias[0].hora='23:59';const ch3=proximaChamada(l);

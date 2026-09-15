@@ -113,3 +113,16 @@ automática (é conversa do grupo, não regra do app — a informação basta).
 `scripts/smoke.py` (eventos, resumo e histórico) · `scripts/sync.py` (sair é linha nova) ·
 [Confirmação de presença §3 e §6](../produto/confirmacao-de-presenca.md) ·
 [Banco de dados §6](../tecnico/banco-de-dados.md).
+
+<a id="d-172"></a>
+### D-172 · "Marcar os N confirmados" na grade de presença
+**Quando:** 2026-09-14.
+**O quê:** com racha iniciado e chamada guardada (`lv.chamada`), a grade de presença mostra, acima da
+busca, o botão **Marcar os N confirmados** enquanto houver gente **dentro** das listas sem marca.
+Um toque marca todos, goleiro confirmado com a luva (`gkToday`, `gkTouched`); a espera não entra.
+Some quando não sobra ninguém.
+**Por quê:** fora do dia (ou quando a pré-marcação não valeu) marcar 14 nomes um a um é justamente
+o que a chamada veio evitar; a espera fica de fora porque só entra quem apareceu.
+**Descartado:** marcar a espera junto (não confirmou vaga); botão fixo sempre visível (ruído).
+**Onde:** `viewPresenca`, `A.presConf` em `index.html` · `scripts/smoke.py` (grade fora do dia) ·
+[Confirmação de presença §6](../produto/confirmacao-de-presenca.md).

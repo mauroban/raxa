@@ -2702,7 +2702,7 @@ const opinaoVale=liga=>PODE_OPINAR.includes(meuPapel(liga));
 const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fillDel','fillOff','pickSide','setSide','scorerSide','clearSel','prePick',
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
-  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar','chamadaAlguem','chamadaAdd']);
+  'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar','chamadaAlguem','chamadaAdd','presConf']);
 const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','chamadaOn','chamadaDow','chamadaAddDia','chamadaDelDia','chamadaVagas','chamadaVagasOk','chamadaVagasPadrao','chamadaCancelar','chamadaVoltar']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
@@ -2964,12 +2964,15 @@ function viewPresenca(liga,lv){
     ||(b.sessions||0)-(a.sessions||0)||(b.L.games+b.G.games)-(a.L.games+a.G.games)
     ||a.name.localeCompare(b.name));
   const gks=lv.presentIds.filter(id=>ehGkHoje(lv,id)).length;
+  /* confirmados na chamada ainda sem marca: um toque marca todos (D-172) */
+  const faltam=Object.keys(conf).filter(id=>conf[id]===1&&lv.presentIds.indexOf(id)<0).length;
   return `
   <div class="card">
     <div class="row"><div class="k">Quem chegou</div>
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
     <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span></div>
     <div style="height:10px"></div>
+    ${faltam?`<button class="btn wide ghost" data-a="presConf" style="margin-bottom:10px">Marcar os ${faltam} confirmados</button>`:''}
     <div class="qwrap"><input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
       <button class="qclear" id="qx" onclick="limparBusca()" aria-label="limpar busca" hidden>✕</button></div>
     <div style="height:10px"></div>
@@ -5485,6 +5488,14 @@ const A={
     closeSheet();save();render();toast(n+' criado — é você');
   },
 
+  /* marca de uma vez quem está DENTRO das listas da chamada; a espera continua a um toque (D-172) */
+  presConf(){
+    const l=L(),lv=l.live;if(!lv||!lv.chamada)return;
+    const x=listaChamada(l,lv.chamada);let n=0;
+    x.L.dentro.concat(x.G.dentro).forEach(r=>{if(!P(l,r.pid)||lv.presentIds.includes(r.pid))return;lv.presentIds.push(r.pid);n++;
+      if(r.papel==='G'&&!ehGkHoje(lv,r.pid)){lv.gkToday=lv.gkToday||[];lv.gkToday.push(r.pid)}});
+    lv.gkTouched=true;save();render();toast(n?pl(n,'confirmado')+' marcado'+(n===1?'':'s'):'Todos já estavam marcados');
+  },
   /* ----- times ----- */
   toTimes(){
     const l=L(),lv=l.live;

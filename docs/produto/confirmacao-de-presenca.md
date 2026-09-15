@@ -100,7 +100,9 @@ quem está dentro das duas listas, e o goleiro confirmado entra com a luva acesa
 A partir daí vale a grade como sempre: quem chegou, chegou. O racha guarda a qual chamada
 pertenceu. Se o racha for iniciado com a lista aberta mas **fora do dia** (teste, ou o dia virou),
 ninguém entra marcado — mas quem confirmou continua **na frente da grade**, os de dentro antes da
-espera (D-169).
+espera (D-169). Enquanto houver confirmado sem marca, a grade tem o botão **Marcar os N confirmados**
+(D-172): um toque marca quem está dentro das duas listas, goleiro com a luva; a espera continua a um
+toque por nome. O botão some quando não sobra ninguém para marcar.
 
 Com racha em andamento, o cartão da chamada some — a tela é a do racha.
 
