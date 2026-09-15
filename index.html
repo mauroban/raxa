@@ -2812,7 +2812,7 @@ const recTxt=r=>r.n?r.pct+'% · '+r.w+'V'+(r.d?' '+r.d+'E':'')+' '+r.l+'D':'aind
 function viewRacha(liga){
   const lv=liga.live;
   /* fora do dia: quem é você (sem perfil) e o próximo racha; "Iniciar racha" mora na barra (D-167) */
-    if(!lv)return quemSouCard(liga)+chamadaCard(liga);
+    if(!lv)return quemSouCard(liga)+chamadaCard(liga)||'<div class="empty">Sem racha marcado</div>';   // jogador comum, chamada desligada (D-174)
   if(lv.stage==='presenca')return viewPresenca(liga,lv);
   if(lv.stage==='times')return viewTimes(liga,lv);
   return viewJogo(liga,lv);
@@ -2970,7 +2970,7 @@ function viewPresenca(liga,lv){
   <div class="card">
     <div class="row"><div class="k">Quem chegou</div>
       <div class="sp num" id="prescount" style="font-family:var(--disp);font-size:22px">${lv.presentIds.length}</div></div>
-    <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span></div>
+    <div class="tiny muted" style="margin-top:2px">Toque em quem chegou · 🧤 marca goleiro<span id="gkcount">${gks?' — '+gks+' no gol':''}</span><span id="confcount">${confTxt(lv,conf)}</span></div>
     <div style="height:10px"></div>
     ${faltam?`<button class="btn wide ghost" data-a="presConf" style="margin-bottom:10px">Marcar os ${faltam} confirmados</button>`:''}
     <div class="qwrap"><input id="q" placeholder="Buscar jogador…" oninput="filterPlayers(this.value)" autocomplete="off">
@@ -5042,8 +5042,12 @@ function closeSheet(){PD=null;
   $('#sheet').classList.remove('on');$('#scrim').classList.remove('on');
   if(typeof refetchPendentes==='function')setTimeout(refetchPendentes,50);   // atualização que ficou esperando a folha fechar
 }
+/* "12 de 14 confirmados": quantos dos que estavam dentro da chamada já chegaram (D-174) */
+function confDentro(liga,lv){if(!lv.chamada)return null;const x=listaChamada(liga,lv.chamada);return x.L.dentro.concat(x.G.dentro).map(r=>r.pid)}
+function confTxt(lv,conf){const d=Object.keys(conf||{}).filter(id=>conf[id]===1);if(!d.length)return '';const n=d.filter(id=>lv.presentIds.includes(id)).length;return ' · '+n+' de '+d.length+' confirmados'}
 function presCount(liga,lv){
   const c=$('#prescount');if(c)c.textContent=lv.presentIds.length;
+  const cc=$('#confcount');if(cc){const d=confDentro(liga,lv);const conf={};(d||[]).forEach(id=>conf[id]=1);cc.textContent=confTxt(lv,conf)}
   const g=$('#gkcount');
   if(g){const n=lv.presentIds.filter(id=>(lv.gkToday||[]).indexOf(id)>=0).length;
     g.textContent=n?' — '+n+' no gol':''}
@@ -5366,8 +5370,10 @@ const A={
   /* toque no nome da lista: o próprio, ou quem lança sobre qualquer um */
   chamadaChip(el){
     const l=L(),ch=proximaChamada(l),p=P(l,el.dataset.id);if(!ch||!p)return;
-    if(!podeLancar(l)&&p.id!==euId(l))return;
     const m=minhaChamada(l,ch.dia,p.id);if(!m)return;
+    if(!podeLancar(l)&&p.id!==euId(l))return openSheet(`<h2>${esc(p.name)}</h2>
+      <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
+      ${linhaDoTempo(l,ch.dia,p)}`);   // jogador comum: só lê (D-174)
     openSheet(`<h2>${esc(p.name)}</h2>
       <div class="tiny muted" style="margin-bottom:8px">${m.pos?(m.papel==='G'?'No gol':'Na linha')+' · '+m.pos+'º':(m.espera+'º da espera '+(m.papel==='G'?'do gol':'da linha'))}</div>
       ${linhaDoTempo(l,ch.dia,p)}

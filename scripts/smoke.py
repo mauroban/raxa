@@ -1956,6 +1956,7 @@ step('ajustes: ligar a chamada, escolher o dia, vagas por papel; jogador ve so o
   if(!/data-a="tab" data-v="cfg"/.test(els['#app'].innerHTML))throw new Error('desligada: o admin ve o convite para ligar na aba Racha');
   l.players[0].role='jogador';render();
   if(/Confirmação de presença/.test(els['#app'].innerHTML))throw new Error('desligada: jogador nao ve nada');
+  if(!/Sem racha marcado/.test(els['#app'].innerHTML))throw new Error('aba Racha vazia devia dizer "Sem racha marcado" (D-174)');
   l.players[0].role='admin';l.cfg.chamada.on=true;
 });
 step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de lista vai para o fim; jogador so mexe em si',()=>{
@@ -1989,7 +1990,8 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   const p=outros[0];l.players[0].role='jogador';
   A.chamadaTirar({dataset:{id:p.id}});
   if(!minhaChamada(l,ch.dia,p.id))throw new Error('jogador tirou outro da lista');
-  A.chamadaChip({dataset:{id:p.id}});if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('jogador abriu a folha de outro');
+  A.chamadaChip({dataset:{id:p.id}});const shJ=els['#sheet'].innerHTML;
+  if(/Tirar da lista/.test(shJ)||shJ.indexOf(p.name)<0||!/na linha · /.test(shJ))throw new Error('jogador ve a folha do outro so de leitura, com a linha do tempo (D-174): '+shJ.slice(0,200));
   l.players[0].role='admin';
   A.chamadaChip({dataset:{id:p.id}});if(!/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem lanca abre a folha de qualquer um');
   A.chamadaTirar({dataset:{id:p.id}});
@@ -2044,6 +2046,9 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   const dentro=X.L.dentro.concat(X.G.dentro).map(r=>r.pid);
   if(lv.presentIds.length!==dentro.length||!dentro.every(id=>lv.presentIds.includes(id)))throw new Error('presenca nao veio da chamada');
   if(!X.G.dentro.every(r=>lv.gkToday.includes(r.pid))||!lv.gkTouched)throw new Error('goleiro confirmado devia entrar com a luva');
+  const nD=X.L.dentro.length+X.G.dentro.length;
+  if(nD&&!new RegExp(nD+' de '+nD+' confirmados').test(viewPresenca(l,lv)))throw new Error('contador "N de N confirmados" (D-174)');
+  if(nD){A.pres({dataset:{id:X.L.dentro[0].pid}});if(!new RegExp((nD-1)+' de '+nD+' confirmados').test(viewPresenca(l,lv)))throw new Error('desmarcar um baixa o contador');A.pres({dataset:{id:X.L.dentro[0].pid}})}
   const esp=l.players.find(p=>!lv.presentIds.includes(p.id)&&!p.gk);
   confirmar(l,ch.dia,esp.id,'L','tester',5e12);
   const outro=l.players.find(p=>!lv.presentIds.includes(p.id)&&p.id!==esp.id);

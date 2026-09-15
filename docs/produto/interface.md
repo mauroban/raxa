@@ -75,7 +75,7 @@ data grande, contadores "Gol x/y · Linha x/y", **o meu estado ou Vou / Vou no g
 (dentro, espera), lista Linha (dentro, espera), *+ Confirmar alguém* (quem lança), *Vagas deste
 racha · Cancelar este racha* (admin). Barra: **Iniciar racha** (quem lança).
 
-**Presença** — contador grande à direita · dica de uma linha · *Marcar os N confirmados* (quando
+**Presença** — contador grande à direita · dica de uma linha (com "12 de 14 confirmados" quando há chamada) · *Marcar os N confirmados* (quando
 há) · busca com ✕ · grade de chips (marcados primeiro, depois confirmados dentro, depois espera,
 depois quem mais joga) · *+ Novo jogador*. Barra: **Cancelar · Montar times (N)**.
 
@@ -126,20 +126,17 @@ Exportar / Importar / Apagar ou Sair · Tamanho da liga · Registro de correçõ
 
 ## 6. Sugestões de melhoria (não feitas — para decidir)
 
-1. **Presença: mostrar o contador "faltam N da chamada".** Na grade do dia, ao lado do "Quem
-   chegou", um "12 de 14 confirmados" diria de cara quem ainda não chegou, sem procurar. Custo baixo.
-2. **Chamada: colapsar a lista de quem já está dentro quando está cheia.** Com 12 + 3 dentro e 4
+1. **Chamada: colapsar a lista de quem já está dentro quando está cheia.** Com 12 + 3 dentro e 4
    na espera, quem abre a tela quer ver **a espera e o próprio estado**; os 15 nomes de dentro
    poderiam vir recolhidos numa linha ("12/12 · ver") quando a pessoa já está confirmada. Mais
    nomes por tela nos dias cheios.
-3. **Partida ao vivo: a fila "depois" poderia ser uma linha só** ("depois: Juliano, Mauro, Igor, +2")
+2. **Partida ao vivo: a fila "depois" poderia ser uma linha só** ("depois: Juliano, Mauro, Igor, +2")
    em vez de chips. Ganha 2 linhas para o placar e os gols, que são o que se olha a cada 30 s.
-4. **Ajustes ganhou altura:** com dois dias de chamada, Partida e Contestação saem da primeira
+3. **Ajustes ganhou altura:** com dois dias de chamada, Partida e Contestação saem da primeira
    dobra. Os cards de Chamada e Partida poderiam ser recolhíveis (título + resumo em uma linha,
    abre ao tocar), como o admin só mexe neles uma vez.
-5. **Jogadores: 15 linhas por tela é bom, mas o badge de patente ocupa 40 px** e o nome fica
+4. **Jogadores: 15 linhas por tela é bom, mas o badge de patente ocupa 40 px** e o nome fica
    estreito em 360 px. O badge compacto (cor + riscos, o mesmo dos chips) daria mais nome por linha.
-6. **Racha vazio para o jogador comum**: com a chamada desligada, quem não lança vê a aba Racha em
-   branco. Uma linha só ("Sem racha marcado") evita a sensação de tela quebrada.
-7. **Tocar no chip da chamada como jogador comum não faz nada** nos nomes dos outros. Uma folha só
-   de leitura (posição e linha do tempo) daria a mesma informação que quem lança vê, sem os botões.
+
+Feitas em 2026-09-14 (D-174): o contador "12 de 14 confirmados" na presença, "Sem racha marcado" na
+aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogador comum.

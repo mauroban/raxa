@@ -68,7 +68,8 @@ moderador e admin** têm **+ Confirmar alguém**: uma folha com a busca e, em ca
 mandaram no grupo"). A folha do nome diz **confirmado por mauro** quando foi outra pessoa que confirmou.
 
 Tocar num nome da lista (o próprio, ou qualquer um para quem lança) abre a folha da pessoa:
-**Passar para o gol / a linha** e **Tirar da lista**.
+**Passar para o gol / a linha** e **Tirar da lista**. O jogador comum abre a folha dos outros só
+para ler: posição e linha do tempo, sem botões (D-174).
 
 O **admin** ainda tem, no pé do cartão:
 
@@ -95,7 +96,8 @@ vínculo errado na ficha ou em Pendências.
 ## 6. No dia do racha
 
 Quando quem lança toca em **Iniciar racha** no dia da chamada, a presença **já vem marcada** com
-quem está dentro das duas listas, e o goleiro confirmado entra com a luva acesa. Quem está na espera
+quem está dentro das duas listas, e o goleiro confirmado entra com a luva acesa. A linha de dica da
+grade mostra **"12 de 14 confirmados"**: quantos dos que estavam dentro já chegaram (D-174). Quem está na espera
 **não entra marcado**, mas sobe para logo abaixo dos marcados na grade — se apareceu, é um toque.
 A partir daí vale a grade como sempre: quem chegou, chegou. O racha guarda a qual chamada
 pertenceu. Se o racha for iniciado com a lista aberta mas **fora do dia** (teste, ou o dia virou),

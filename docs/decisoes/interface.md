@@ -407,3 +407,18 @@ uso; tamanho, densidade e ordem decidem.
 **Descartado:** guia de estilo com paleta e tipografia (não muda como se usa); prints versionados
 no repositório (o `visual.py` gera em segundos).
 **Onde:** [Interface](../produto/interface.md) · `docs/README.md` · `CLAUDE.md`.
+
+<a id="d-174"></a>
+### D-174 · Três pequenas do guia: "N de N confirmados" na presença, "Sem racha marcado", folha de leitura na chamada
+**Quando:** 2026-09-14.
+**O quê:** (1) a linha de dica da grade de presença ganha "· 12 de 14 confirmados" (quantos dos que
+estavam dentro da chamada já estão marcados), atualizada no lugar como o contador. (2) A aba Racha
+sem racha, sem chamada e sem "quem é você" mostra "Sem racha marcado" em vez de tela em branco.
+(3) O jogador comum, ao tocar num nome da chamada que não é o dele, abre a folha só de leitura:
+posição e linha do tempo, sem Tirar/Passar.
+**Por quê:** as três estavam na lista de sugestões do guia de interface (D-173) e custam pouco:
+uma diz de cara quem falta, outra evita cara de tela quebrada, a terceira dá ao jogador a mesma
+informação que quem lança já via.
+**Onde:** `confTxt`, `confDentro`, `presCount`, `viewPresenca`, `viewRacha`, `A.chamadaChip` em
+`index.html` · `scripts/smoke.py` · [Interface §4 e §6](../produto/interface.md) ·
+[Confirmação de presença §4 e §6](../produto/confirmacao-de-presenca.md).
