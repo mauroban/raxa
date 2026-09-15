@@ -440,3 +440,20 @@ patente; o badge de divisão "I/II/III" já é pequeno e continua alinhado com a
 (nome de 15 px não cabe com badge em 180 px).
 **Onde:** `viewEscada`, CSS `.rank.um`, `.rank .lado` em `index.html` · `scripts/smoke.py` ·
 [Interface §2 a §4](../produto/interface.md) · [Patentes §1](../produto/patentes.md).
+
+<a id="d-185"></a>
+### D-185 · Filtro de Stats fixo no topo; os títulos deixam de repetir o período
+**Quando:** 2026-09-14.
+**O quê:** `.sfilt` (Jogador/Racha, período, setas ‹ ›, Linha/Gol) é `position:sticky` no topo da
+aba Stats, com o fundo da página, e as setas de período e o Linha/Gol dividem a mesma linha
+(`.linha2`) para não passar de três linhas (≈124 px). Com o filtro sempre à vista, saiu o período
+dos títulos: "Você · em 2026" → "Você", "Posição nos rankings em 2026", "Partida a partida · em
+2026", "O racha em 2026", "Rankings em 2026", "Níveis desde sempre" ficam só com o nome. `rotPer`
+continua nas folhas (duelo, ranking aberto), que cobrem o filtro.
+**Por quê:** trocar o período é a ação mais frequente de Stats e acontecia lá em cima depois de
+rolar; e com o filtro à vista, o "em 2026" em seis títulos era a mesma informação sete vezes.
+**Descartado:** fixar só a linha do período (o Jogador/Racha muda a página inteira e é tão usado
+quanto); recolher o filtro numa linha ao rolar (mais código para ganhar 40 px).
+**Onde:** `viewStats`, CSS `.sfilt`, `.linha2` em `index.html` · `scripts/smoke.py` ·
+[Interface §1 e §4](../produto/interface.md) · [Stats §1](../produto/stats.md).
+

@@ -151,9 +151,10 @@ label.f .k{display:block;margin-bottom:6px}
 .seg button{flex:1;border:0;background:transparent;color:var(--mute);border-radius:8px;padding:9px 4px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
 .seg button.on{background:var(--chalk);color:var(--onink)}
 /* filtros da Stats (D-114): seletores empilhados + interruptor, sem card */
-.sfilt{display:flex;flex-direction:column;gap:6px;margin:2px 0 12px}
+.sfilt{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;position:sticky;top:0;z-index:36;background:var(--bg);padding:8px 0 8px}   /* fixo no topo da aba (D-185): o período está sempre à vista, e os títulos não o repetem */
+.sfilt .linha2{display:flex;align-items:center;gap:6px}.sfilt .linha2 .pernav{flex:1;min-width:0}
 .sfilt .seg.per button{padding:8px 2px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sfilt .seg.fn{align-self:flex-end;width:auto}
+.sfilt .seg.fn{align-self:flex-end;width:auto;flex:0 0 auto}
 .pernav{display:flex;align-items:center;gap:6px}
 .pernav span{flex:1;min-width:0;text-align:center;font-family:var(--disp);font-weight:700;font-size:14px;color:var(--chalk);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .pernav .btn{min-width:40px;padding:6px 10px}
@@ -4002,7 +4003,7 @@ function viewStats(liga){
   const anoSel=tipo==='ano'?+per:null,mesSel=tipo==='mes'?per.slice(4):null;
   const ehUltimo=soRacha&&per.slice(6)===ultimoRachaId(liga);
   const dataRacha=()=>{const m=liga.matches.find(x=>!x.voided&&(x.sessionId||x.id)===per.slice(6));return m?new Date(m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):''};
-  const rot=rotPer(liga,per);
+  /* o período não vai nos títulos: o filtro é fixo no topo e já diz (D-185); só as folhas usam rotPer */
   /* O botão do período diz "Último", "Mês", "Ano" quando é o atual; quando as
      setas andaram, mostra qual é (12/09, ago/26, 2025). Tocar de novo volta
      ao atual (D-142/D-149).                                                */
@@ -4032,12 +4033,11 @@ function viewStats(liga){
       <button class="${tipo==='ano'?'on':''}" data-a="statsPer" data-v="ano">${labAno}</button>
       <button class="${per==='sempre'?'on':''}" data-a="statsPer" data-v="sempre">Sempre</button>
     </div>
-    ${navPer}
-    ${tab==='jogador'?(jogouNoGol?`<div class="seg fn">
+    ${(()=>{const fn=tab==='jogador'&&jogouNoGol?`<div class="seg fn">
       <button class="${papel==='L'?'on':''}" data-a="statsPapel" data-v="L">Linha</button>
       <button class="${papel==='G'?'on':''}" data-a="statsPapel" data-v="G">Gol</button>
-    </div>`:'')
-    :''}
+    </div>`:'';
+      return navPer&&fn?`<div class="linha2">${navPer}${fn}</div>`:navPer+fn})()}
   </div>`;
   if(!liga.matches.length)return `${seg}<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
@@ -4147,7 +4147,7 @@ function viewStats(liga){
   const cardPP=pps.length?`
   <div class="card">
     <div class="row" style="margin-bottom:8px"><div class="k">Partida a partida</div>
-      <div class="sp tiny muted">${rot}${verCh?' · % = prob. de vitória':''}</div></div>
+      ${verCh?'<div class="sp tiny muted">% = prob. de vitória</div>':''}</div>
     ${pps.slice(ppIni,ppFim).map(ppRow).join('')}
     ${pps.length>PP_PAG?`<div class="row" style="gap:6px;margin-top:8px;align-items:center">
       <button class="btn sm ghost" data-a="ppPage" data-d="-1" ${ppPag===0?'disabled':''} style="flex:0 0 auto">‹ recentes</button>
@@ -4190,7 +4190,7 @@ function viewStats(liga){
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
-  const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${rot}</span></div>
+  const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const eixoX=arr=>`<div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?dd(r.ts):''}</span>`).join('')}</div>`;
@@ -4201,7 +4201,7 @@ function viewStats(liga){
     <div class="hero">
       <div class="avatar ${vePat(liga)&&p&&temPatente(liga,p,papel)?divCls(p[papel].rank):''}" style="${vePat(liga)&&p&&temPatente(liga,p,papel)?patVars(p[papel].rank):'--pc:var(--lime)'}">${esc(iniciais(p?p.name:'?'))}</div>
       <div class="who">
-        <div class="k">${who===eu?'Você':'Jogador'} · ${rot}</div>
+        <div class="k">${who===eu?'Você':'Jogador'}</div>
         <h2>${esc(p?p.name:'—')}</h2>
         <div class="row" style="gap:6px;flex-wrap:wrap">
           ${vePat(liga)&&p&&temPatente(liga,p,'L')?patBadge(liga,p.L.rank):''}
@@ -4428,7 +4428,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const setas=x=>`<span style="display:inline-flex;align-items:center;gap:5px">${patBadgeShort(liga,x.de)}<span style="color:var(--mute)">→</span>${patBadgeShort(liga,x.para)}</span>`;
     const subTxt=x=>pl(Math.abs(x.n),'divisão','divisões')+(x.role==='G'?' · no gol':'');
     return `<div class="card">
-      <div class="k">Níveis ${rot}</div><div class="tiny muted" style="margin-top:2px">${pl(gente.length,'jogador','jogadores')} com nível, pela escada de hoje · toque para abrir a escada</div>
+      <div class="k">Níveis</div><div class="tiny muted" style="margin-top:2px">${pl(gente.length,'jogador','jogadores')} com nível, pela escada de hoje · toque para abrir a escada</div>
       ${gente.length?`<button class="patbar" data-a="irEscada" title="abrir a escada" aria-label="abrir a escada">${porPat.map((n,k)=>n?`<i style="flex:${n};background:${PATFILL[k]};color:${patInk(k*3)}">${n}</i>`:'').join('')}</button>
       <div class="patleg">${porPat.map((n,k)=>n?`<span><i style="background:${PATFILL[k]}"></i>${esc(liga.cfg.patNames[k])}</span>`:'').join('')}</div>`:''}
       <div class="tiles" style="margin-top:12px">
@@ -4441,7 +4441,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     </div>`})();
   const cardsRacha=soRacha?cardsUmRacha:`
   <div class="card">
-    <div class="k" style="margin-bottom:10px">O racha ${rot}</div>
+    <div class="k" style="margin-bottom:10px">O racha</div>
     <div class="tiles">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer}</b><span>racha${nRachasPer===1?'':'s'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
@@ -4466,7 +4466,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
   </div>
 
 ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
-    <div class="k" style="margin-bottom:2px">Rankings ${rot}</div>
+    <div class="k" style="margin-bottom:2px">Rankings</div>
     ${(()=>{
       /* Cada filtro faz uma pergunta, e a ordem dos rankings responde a ela:
          30 dias pergunta FORMA (campanha recente primeiro), um ano pergunta

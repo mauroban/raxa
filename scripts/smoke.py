@@ -853,7 +853,7 @@ step('numeros: ultimo racha e ultimo mes',()=>{
   if(!/Quem mais ganhou/.test($('#sheet').innerHTML))throw new Error('folha do ranking da noite nao abriu');
   closeSheet();
   A.statsPer({dataset:{v:'mes'}});
-  if(!/em (janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro) de \d{4}/.test(els['#app'].innerHTML))throw new Error('periodo do mes nao aplicou');
+  if(!/class="on" data-a="statsPer" data-v="mes"/.test(els['#app'].innerHTML)||statsPeriodo(L()).slice(0,4)!=='mes:')throw new Error('periodo do mes nao aplicou (o botao aceso e o filtro fixo dizem o periodo; os titulos nao, D-185)');
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
 });
 step('revisao: corrigir autor de gol de partida encerrada',()=>{
@@ -1069,7 +1069,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     if(statsPeriodo(l)!=='mes:'+ano0+'-01')throw new Error('seta nao levou a janeiro do ano passado');
     h=els['#app'].innerHTML;
     if(!/jan\/\d{2}/.test(h))throw new Error('o botao do periodo devia mostrar jan/AA');
-    if(!/em janeiro de /.test(h))throw new Error('rotulo do mes escolhido nao apareceu');
+    if(!/<span>janeiro de \d{4}<\/span>/.test(h))throw new Error('rotulo do mes escolhido nao apareceu na linha das setas');
     A.statsPer({dataset:{v:'mes'}});
     if(statsPeriodo(l)!=='mes:'+MES_ATUAL())throw new Error('tocar "Mês" de novo devia voltar ao mes de hoje');
     /* ano */
@@ -1089,7 +1089,7 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* D-153: o destaque de cada ano, com toque que abre o ano; e o card de níveis com a escada de hoje */
     h=els['#app'].innerHTML;
     if(!/Ano a ano/.test(h)||!/class="grow" data-a="statsAno"/.test(h))throw new Error('"Sempre" sem o ano a ano da liga');
-    if(vePat(l)&&(!/Níveis desde sempre/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
+    if(vePat(l)&&(!/<div class="k">Níveis<\/div>/.test(h)||!/class="patbar"/.test(h)||!/Quem mais subiu/.test(h)))throw new Error('"Sempre" sem o card de niveis');
     /* um grupo só é o próprio período: no ano com um mês de partidas o "mês a mês" não aparece */
     A.statsPer({dataset:{v:'ano'}});
     if(/Mês a mês/.test(els['#app'].innerHTML))throw new Error('ano com um mes so nao devia ter o mes a mes');
@@ -2006,6 +2006,15 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(minhaChamada(l,ch.dia,p.id))throw new Error('quem lanca nao tirou');
   closeSheet();els['#sheet'].innerHTML='';A.chamadaChip({dataset:{id:euId(l)}});   // quem saiu nao tem folha (nao esta em lista)
   if(/Tirar da lista/.test(els['#sheet'].innerHTML))throw new Error('quem saiu nao abre folha');
+});
+step('stats: filtro fixo no topo e titulos sem o periodo (D-185)',()=>{
+  S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();
+  let h=els['#app'].innerHTML;
+  if(!/class="sfilt"/.test(h))throw new Error('sem o filtro');
+  if(/Rankings em \d{4}|O racha em \d{4}|Você · em|Jogador · em|Posição nos rankings <span/.test(h))throw new Error('titulo repetindo o periodo');
+  S.ui.statsTab='racha';S.ui.statsPer='sempre';render();h=els['#app'].innerHTML;
+  if(/Rankings desde sempre|O racha desde sempre|Níveis desde sempre/.test(h))throw new Error('titulo repetindo "desde sempre"');
+  S.ui.tab='racha';render();
 });
 step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez (D-178); nada de endereco (D-183)',()=>{
   const l=L(),ch=proximaChamada(l),eu=euId(l);

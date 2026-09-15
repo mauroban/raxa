@@ -20,6 +20,7 @@ De baixo para cima, o que não sai do lugar:
 | **Navegação** (5 abas: Racha · Stats · Jogadores · Jogos · Ajustes) | 60 px + área segura do iPhone | Fixa embaixo, onde o polegar chega. Ícone em cima, rótulo de 12 px embaixo. Ponto vermelho na aba Racha = racha ao vivo; ponto verde em Jogadores = opiniões pendentes. |
 | **Barra de ação** (só quando há ação principal) | 54 px de botão + 10 px de folga em cima e embaixo | Logo acima da navegação. É onde vive a **ação primária** da tela: Iniciar racha, Montar times (N), Começar racha, Começar partida, Fim · placar, Encerrar racha. No máximo **dois botões** lado a lado (secundário à esquerda, primário à direita) mais, na partida, o ↩ de 62 px. |
 | **Conteúdo** | o resto, rolável | Cards de 14 px de padding e 10 px entre eles, largura total até 640 px (no computador o app é uma coluna centrada). Folga de 12 px nas laterais. |
+| **Filtro de Stats** (só na aba Stats) | 36 px por seletor + 6 px entre eles: 2 a 3 linhas (Jogador/Racha, período, e setas ‹ › com Linha/Gol na mesma linha) | Fixo no topo da aba enquanto o conteúdo rola (D-185). Por isso nenhum título repete o período: "Rankings", não "Rankings em 2026". |
 
 Não existe cabeçalho fixo em cima: o nome da liga mora em Ajustes (D-137). O primeiro pixel da
 tela é conteúdo.
@@ -64,7 +65,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Partida ao vivo | relógio + 2 colunas (placar + goleiro + 4 de linha) + "entram no próximo" (2 linhas) + "depois" (1 linha) + gols do jogo; o placar fica na metade de cima e a barra Fim embaixo |
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
 | Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
-| Stats · Jogador | 3 filtros + cabeçalho da pessoa + anel + 4 tiles + posições; partida a partida rola |
+| Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + posições; partida a partida rola |
 | Ajustes | liga + código + Liga + Chamada (1 dia; Vagas e "A lista abre" em duas linhas de campos) até a dobra; Partida, Contestação, Aparência, Exportar e Registro rolam |
 
 Quando a tela é de 500 px de largura as colunas não aumentam de número; só o nome cabe inteiro.
@@ -97,7 +98,7 @@ patente (cabeçalho com o nome do nível e a contagem), cada linha: badge da div
 só "⏳ 3/15" enquanto calibra (e o Elo cru para o admin) · *Sem nível ainda* · Pendências (admin).
 Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
 
-**Stats** — Jogador / Racha · Último / Mês / Ano / Sempre · Linha / Gol · painel.
+**Stats** — filtro fixo: Jogador / Racha · Último / Mês / Ano / Sempre · ‹ período › + Linha / Gol · painel.
 
 **Jogos** — contestadas (quando há) · Todas / Só as minhas · lista de rachas (60 px cada); dentro
 do racha: cabeçalho, *Destaques do racha ›*, bloco Chamada (quando há), partidas.
