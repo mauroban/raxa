@@ -511,3 +511,19 @@ ancorava a nota. O cartão tem avatar, nome, descrição e as opções — só i
 travar a opinião depois de dada (a pessoa muda de ideia vendo jogar, e é isso que se quer).
 **Onde:** `pSheet` (sem escada, botão `opIr`), `A.opIr`, toast de `opSet` em `index.html` ·
 `scripts/smoke.py` (ficha leva ao cartão; a nota se dá lá) · [Patentes §8](../produto/patentes.md).
+
+<a id="d-177"></a>
+### D-177 · A média aparada tira um sexto de cada ponta: os dois terços centrais
+**14/09/2026.** A D-96 tirava sempre **uma** opinião de cada ponta, qualquer que fosse o número.
+Com 12 opiniões sobravam 10 na média: duas destoantes do mesmo lado já puxavam a entrada. **Decidido:**
+tira-se um sexto das opiniões de cada ponta, arredondado (`Math.round(n/6)`), com mínimo de uma — a
+média fica com os dois terços centrais. Até 8 opiniões nada muda (1 por lado); de 9 a 14 saem 2 por
+lado; de 15 a 20, 3. O corte é simétrico, para a entrada não pender para um lado; a mediana continua
+sempre no centro do que sobra. O desvio (aviso de divergência) segue sendo a mediana dos desvios, sem
+mudança.
+**Descartado:** "6 ou mais tira 2 por lado" (degrau fixo que não escala); manter os dois terços por
+`floor(2n/3)` (com 3 opiniões ficariam 2, sem centro, e o corte sairia assimétrico); `ceil(n/6)`
+(cortava 2 por lado já com 7 opiniões, deixando 3 — amostra pequena para ligas médias).
+**Onde:** `juntaOpinioes` em `index.html` · `scripts/test.py` ("nove opinioes", "oito opinioes",
+"doze opinioes") · [Patentes §"A entrada é feita de opiniões"](../produto/patentes.md).
+

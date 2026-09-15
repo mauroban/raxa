@@ -981,7 +981,7 @@ function juntaOpinioes(vals){
   if(!n)return{e:null,dv:false,desvio:0};
   let e;
   if(n<=2)e=v.reduce((a,x)=>a+x,0)/n;
-  else{const c=v.slice(1,n-1);e=c.reduce((a,x)=>a+x,0)/c.length}   // média aparada: sem a mais alta e a mais baixa
+  else{const k=Math.max(1,Math.round(n/6)),c=v.slice(k,n-k);e=c.reduce((a,x)=>a+x,0)/c.length}   // média aparada: tira um sexto de cada ponta (ao menos uma) — os dois terços centrais (D-177)
   const d=v.map(x=>Math.abs(x-e)).sort((a,b)=>a-b);
   const desvio=n%2?d[(n-1)/2]:(d[n/2-1]+d[n/2])/2;   // mediana dos desvios
   return{e,dv:n>1&&desvio>=OP_DIVERGE,desvio};
