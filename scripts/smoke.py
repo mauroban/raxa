@@ -992,7 +992,8 @@ step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que an
   let h=els['#app'].innerHTML;
   if(!/Nível na linha|Nível no gol/.test(h))throw new Error('a aba Jogador não fala do nível');
   const pap=papelJogador(l,'sempre',eu);
-  if(temPatente(l,p,pap)&&!/class="lvchart"/.test(h))throw new Error('sem o gráfico da trajetória do nível');
+  if(temPatente(l,p,pap)&&!/class="lvtl"/.test(h))throw new Error('sem a linha do tempo do nível');
+  if(temPatente(l,p,pap)&&!/Entrada|Início/.test(h))throw new Error('a linha do tempo devia começar na entrada');
   if(temPatente(l,p,pap)&&!/divis(ão|ões)|o período todo/.test(h))throw new Error('o título não diz o que o nível fez no período');
   if(!temPatente(l,p,pap)&&!/calibrando · /.test(h))throw new Error('sem nível: devia dizer calibrando');
   if(/1[0-9]{3}/.test((h.match(/Nível n[ao] [\s\S]{0,400}/)||[''])[0].replace(/<[^>]+>/g,'')))throw new Error('número de Elo vazou no bloco de nível');
@@ -1002,7 +1003,7 @@ step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que an
   if(nivelApos(l,eu,'L',Date.now()+1)!==p.L.rank)throw new Error('nivelApos depois de tudo devia ser o nível de hoje');
   const adm=l.players.filter(q=>q.role==='admin');l.cfg.rankVisibility='admin';adm.forEach(q=>q.role='jogador');
   const me0=S.me.name;S.me.name='ninguem_'+Date.now();render();h=els['#app'].innerHTML;
-  if(/lvchart|Nível na linha|Nível no gol/.test(h))throw new Error('com as patentes fechadas o bloco de nível some');
+  if(/lvtl|Nível na linha|Nível no gol/.test(h))throw new Error('com as patentes fechadas o bloco de nível some');
   S.me.name=me0;adm.forEach(q=>q.role='admin');l.cfg.rankVisibility=vis0;S.ui.statsWho=who0;
   S.ui.tab='cfg';render();h=els['#app'].innerHTML;
   if(souAdmin(l)&&(!/class="sw on" data-a="toggleCfg"|class="sw " data-a="toggleCfg"/.test(h)||!/class="cfgn"/.test(h)))throw new Error('ajustes em linhas: interruptor e campo curto (D-189)');
