@@ -18,6 +18,7 @@ Documentação em `docs/`, um arquivo por assunto — **abra só o que a tarefa 
 | revisar / corrigir / anular partida | `docs/produto/contestacao-e-correcao.md` |
 | membros, entrada na liga, papéis, admin | `docs/produto/contas-e-permissoes.md` (+ `docs/tecnico/banco-de-dados.md`) |
 | princípios de produto (lista curta) | `docs/produto/principios.md` |
+| ideias para o futuro (quadras, contratar jogador, pagamento) e monetização | `docs/produto/ideias-futuras.md` |
 | requisitos RF / RNF | `docs/produto/requisitos-funcionais.md` · `requisitos-nao-funcionais.md` |
 | o que o protótipo faz hoje / como o backend está montado | `docs/tecnico/prototipo.md` |
 | modelo de dados | `docs/tecnico/banco-de-dados.md` |

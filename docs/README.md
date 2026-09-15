@@ -18,6 +18,7 @@ Como o app se comporta e por quê, na linguagem de quem usa.
 | [contestacao-e-correcao.md](produto/contestacao-e-correcao.md) | Revisar uma partida, corrigir, anular, e o que acontece com a liga depois |
 | [contas-e-permissoes.md](produto/contas-e-permissoes.md) | Membro = jogador, entrada na liga, papéis, o que o admin pode |
 | [principios.md](produto/principios.md) | Os princípios de produto que valem defender numa discussão (lista curta) |
+| [ideias-futuras.md](produto/ideias-futuras.md) | Ideias anotadas de leve para lembrar depois (quadras, contratar jogador, pagamento) e as hipóteses de monetização |
 | [requisitos-funcionais.md](produto/requisitos-funcionais.md) | RF-01 a RF-11 com prioridade, status e critério de aceite |
 | [requisitos-nao-funcionais.md](produto/requisitos-nao-funcionais.md) | RNF-01 a RNF-11 com metas verificáveis |
 
