@@ -790,8 +790,8 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .lvtl .bd{margin-top:6px;display:flex;justify-content:center;min-width:0}
 .lvtl .bd .pat{max-width:100%;overflow:hidden;white-space:nowrap}
 .lvtl .dt{font-size:10px;color:var(--mute2);margin-top:4px}
-.k2 .lvnota{text-transform:none;letter-spacing:0;font-weight:500;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.k2 .lvnota .up{color:var(--ok);font-weight:700}.k2 .lvnota .dn{color:var(--bad);font-weight:700}
+.lvnota{color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lvnota .up{color:var(--ok);font-weight:700}.lvnota .dn{color:var(--bad);font-weight:700}
 /* seta + mini-badge do nível numa linha de racha/partida */
 .lvg{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;font-size:11px;vertical-align:middle}
 .lvg.up{color:var(--ok)} .lvg.dn{color:var(--bad)}
@@ -2385,7 +2385,7 @@ function grafMomento(arr,pct,lab,opts){
   const nota=opts.nota?` <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${opts.nota}</span>`:'';
   const fmtP=p=>(p>0?'+':p<0?'−':'')+Math.abs(Math.round(p))+'%';
   const sub=opts.sub;   // texto pequeno embaixo do rótulo (o aproveitamento do grupo)
-  return `<div class="k2" style="margin:16px 0 0">Momento${nota}</div>
+  return `<div class="k2" style="margin:0">Momento${nota}</div>
   <div class="chart momento">
     <div class="avg zero" style="bottom:50%"><b>esperado</b></div>
     <svg class="ln" viewBox="0 0 ${n} 100" preserveAspectRatio="none" aria-hidden="true">
@@ -2396,11 +2396,12 @@ function grafMomento(arr,pct,lab,opts){
   <div class="chartx">${arr.map((r,i)=>`<span>${n<=8||i%2===(n-1)%2?lab(r)+(sub?`<small>${sub(r)}</small>`:''):''}</span>`).join('')}</div>
   <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span>${sub?'<span><i style="background:var(--mute2);width:14px;height:2px;border-radius:0;vertical-align:2px"></i>aproveitamento embaixo</span>':''}</div>`;
 }
-/* Linha do tempo do nível (D-188): quatro marcos, em ordem de data — a
-   entrada (ou o início do período), o mínimo, o máximo e o atual — cada um
-   com o rótulo, o ponto na cor da patente sobre o trilho, o badge e a data.
-   Marcos que caem no mesmo ponto (entrou no mínimo; o máximo é o de hoje) se
-   juntam num nó só, com os rótulos empilhados. O nível é reconstruído pelas
+/* Linha do tempo do nível (D-188/D-191): quatro marcos, sempre quatro — a
+   entrada (ou o início do período) na ponta esquerda, hoje na direita, e no
+   meio o mínimo e o máximo na ordem em que aconteceram — cada um com o
+   rótulo, o ponto na cor da patente sobre o trilho, o badge e a data. Marcos
+   iguais repetem o badge: a leitura é a mesma em qualquer ficha. Só em Ano e
+   Sempre: dentro de um mês há pouca história. O nível é reconstruído pelas
    mudanças registradas (`m.moves`), do começo do período em diante.        */
 function linhaNivel(liga,pid,role,ms,labs){
   const p=P(liga,pid);if(!p||!ms.length||!temPatente(liga,p,role))return '';
@@ -2410,15 +2411,10 @@ function linhaNivel(liga,pid,role,ms,labs){
   ord.forEach(m=>{const x=(m.moves||[]).find(y=>y.pid===pid&&(y.role||'L')===role);if(x)pts.push({ts:m.ts,r:clamp(x.rank,0,TOP)})});
   const atual=pts[pts.length-1].r;
   let mx=pts[0],mn=pts[0];pts.forEach(x=>{if(x.r>mx.r)mx=x;if(x.r<mn.r)mn=x});   // o primeiro a chegar lá
-  /* entrada e hoje são as pontas e nunca se juntam; mínimo e máximo entram
-     entre elas na ordem da data, e se colam ao nó vizinho quando é o mesmo
-     nível sem mudança no meio (entrou no mínimo; o máximo é o de hoje) */
-  const mesmo=(n,m)=>n.r===m.r&&!pts.some(x=>x.ts>n.ts&&x.ts<=m.ts&&x.r!==m.r);
-  const nos=[{k:'ini',labs:[labs.ini],ts:ini,r:pts[0].r}];
-  [{k:'min',lab:'Mínimo',ts:mn.ts,r:mn.r},{k:'max',lab:'Máximo',ts:mx.ts,r:mx.r}].sort((a,b)=>a.ts-b.ts).forEach(m=>{
-    const n=nos[nos.length-1];if(mesmo(n,m))n.labs.push(m.lab);else nos.push({k:m.k,labs:[m.lab],ts:m.ts,r:m.r})});
-  const f={k:'fim',lab:labs.fim,ts:fim,r:atual},n=nos[nos.length-1];
-  if(n.k!=='ini'&&mesmo(n,f)){n.k='fim';n.labs.push(f.lab);n.ts=fim}else nos.push({k:'fim',labs:[f.lab],ts:fim,r:atual});
+  /* sempre quatro nós, mesmo que repitam o badge: início na ponta esquerda,
+     hoje na direita, mínimo e máximo no meio na ordem em que aconteceram */
+  const meio=[{k:'min',labs:['Mínimo'],ts:mn.ts,r:mn.r},{k:'max',labs:['Máximo'],ts:mx.ts,r:mx.r}].sort((a,b)=>a.ts-b.ts);
+  const nos=[{k:'ini',labs:[labs.ini],ts:ini,r:pts[0].r},...meio,{k:'fim',labs:[labs.fim],ts:fim,r:atual}];
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
   return `<div class="lvtl" style="--n:${nos.length}">${nos.map((n,i)=>`<div class="node ${n.k}">
       <div class="lab">${n.labs.map(esc).join('<br>')}</div>
@@ -4153,7 +4149,6 @@ function viewStats(liga){
   const grupoDe={mes:'racha',ano:'mes',sempre:'ano'}[tipo];
   const grupos=naFicha&&grupoDe?statsGrupos(liga,who,papel,per,grupoDe):[];
   const labG=g=>grupoDe==='racha'?new Date(g.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):grupoDe==='mes'?MESES_CURTOS[+g.k.slice(5)-1]:g.k;
-  const tituloG={racha:'Racha a racha',mes:'Mês a mês',ano:'Ano a ano'}[grupoDe];
 
   /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
      setinha e sem barra — a lista inteira, com detalhe e ordem, é da folha. */
@@ -4262,16 +4257,16 @@ function viewStats(liga){
      quantas divisões andou e de onde para onde (nível no começo e no fim do
      período, D-155); embaixo, a calibração, quando ainda calibra.          */
   const nivelHtml=(()=>{
-    if(!vePat(liga)||!p||!ms.length)return '';
+    if(!vePat(liga)||!p||!ms.length||!(tipo==='ano'||per==='sempre'))return '';   // só em Ano e Sempre (D-191)
     const t=rt(p,papel),tem=temPatente(liga,p,papel),onde=papel==='G'?'no gol':'na linha';
-    if(!tem)return `<div class="hr"></div><div class="k2" style="margin-top:0">Nível ${onde}</div><div class="tiny muted">calibrando · ${calTxt(liga,t)}</div>`;
+    if(!tem)return `<div class="hr"></div><div class="tiny muted">nível ${onde}: calibrando · ${calTxt(liga,t)}</div>`;
     const ini=Math.min(...ms.map(m=>m.ts)),fim=Math.max(...ms.map(m=>m.ts));
     const de=nivelApos(liga,who,papel,ini-1),para=nivelApos(liga,who,papel,fim),n=para-de;
     const nota=n?`<span class="${n>0?'up':'dn'}">${n>0?'▲':'▼'} ${Math.abs(n)} ${Math.abs(n)===1?'divisão':'divisões'}</span> no período`:'sem mudança no período';
     const atualPer=per==='sempre'||(tipo==='mes'&&mesSel===MES_ATUAL())||(tipo==='ano'&&anoSel===ANO_ATUAL())||ehUltimo;
     const labs={ini:per==='sempre'?'Entrada':'Início',fim:atualPer?'Hoje':'Fim'};
     const pe=calibrando(liga,p,t)?`calibrando · ${calTxt(liga,t)}`:'';
-    return `<div class="hr"></div><div class="sec" style="margin-top:0"><div class="k2"><span>Nível ${onde}</span><span class="tiny lvnota">${nota}</span></div>
+    return `<div class="hr"></div><div class="sec" style="margin-top:0"><div class="tiny lvnota">${nota}</div>
       ${linhaNivel(liga,who,papel,ms,labs)}${pe?`<div class="tiny muted" style="margin-top:6px">${pe}</div>`:''}</div>`})();
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
@@ -4319,7 +4314,6 @@ function viewStats(liga){
     ${posHtml}
     ${nivelHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
-      <div class="k2" style="margin-top:0">${tituloG}</div>
       ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})
         :grafBarras('Aproveitamento',grupos,g=>aprDe(g.v,g.e,g.jogos),v=>Math.round(v)+'%',labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano'})}
       ${[...grupos].reverse().map(a=>{const nvI=vePat(liga)&&p&&temPatente(liga,p,papel)?nivelApos(liga,who,papel,a.ts-1):null,nvF=nvI===null?null:nivelApos(liga,who,papel,a.fim||a.ts);

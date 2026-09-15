@@ -627,3 +627,21 @@ número a mais numa linha que já diz partidas e gols.
 **Onde:** chamada de `grafMomento` e linhas dos grupos em `viewStats` (`index.html`) ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-191"></a>
+### D-191 · Linha do tempo só em Ano e Sempre, sempre com quatro marcos; sem os títulos "Nível na linha" e "Mês a mês"
+**Quando:** 2026-09-15.
+**O quê:** a linha do tempo do nível (D-188) só aparece nos períodos **Ano** e **Sempre**, e mostra
+**sempre quatro nós**, mesmo que repitam o badge: Início/Entrada na ponta esquerda, Hoje/Fim na
+direita, e Mínimo e Máximo no meio na ordem em que aconteceram (a versão anterior juntava marcos
+iguais num nó só). Saem dois títulos: "Nível na linha / no gol" em cima da linha do tempo (fica só a
+nota "▲ 2 divisões no período") e "Mês a mês / Racha a racha / Ano a ano" em cima do gráfico
+Momento (o próprio título "Momento por mês" já diz o passo).
+**Por quê:** "não será melhor sempre mostrar 4 badges mesmo que sejam os mesmos, início no começo e
+hoje no final, com mínimo e máximo variando conforme o que aconteceu primeiro?" — com nós que se
+juntam, a mesma ficha mudava de forma de um mês para o outro; quatro fixos se leem de relance.
+"Dentro do mês tem muito pouca data": num mês o nível quase não anda, e quatro badges iguais não
+dizem nada. Os dois títulos eram óbvios e, um em cima do outro com o Momento, confundiam.
+**Descartado:** manter os títulos com fonte menor; mostrar a linha no mês só quando houve mudança.
+**Onde:** `linhaNivel`, `nivelHtml` e o bloco dos grupos em `viewStats` (`index.html`) ·
+`scripts/smoke.py` (passos "D-185" e "D-188") · [Stats §2](../produto/stats.md).
+

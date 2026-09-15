@@ -990,20 +990,22 @@ step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que an
   const vis0=l.cfg.rankVisibility,who0=S.ui.statsWho,tab0=S.ui.tab;
   l.cfg.rankVisibility='todos';S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();
   let h=els['#app'].innerHTML;
-  if(!/Nível na linha|Nível no gol/.test(h))throw new Error('a aba Jogador não fala do nível');
+  if(!/class="lvtl"|nível n[ao] [a-z]+: calibrando/.test(h))throw new Error('a aba Jogador não fala do nível');
   const pap=papelJogador(l,'sempre',eu);
   if(temPatente(l,p,pap)&&!/class="lvtl"/.test(h))throw new Error('sem a linha do tempo do nível');
+  if(temPatente(l,p,pap)&&(h.match(/class="node /g)||[]).length!==4)throw new Error('a linha do tempo tem sempre 4 marcos (D-191)');
+  S.ui.statsPer='mes';render();if(/class="lvtl"/.test(els['#app'].innerHTML))throw new Error('no mês não há linha do tempo (D-191)');S.ui.statsPer='sempre';render();
   if(temPatente(l,p,pap)&&!/Entrada|Início/.test(h))throw new Error('a linha do tempo devia começar na entrada');
   if(temPatente(l,p,pap)&&!/divis(ão|ões) no período|sem mudança no período/.test(h))throw new Error('o título não diz o que o nível fez no período');
   if(!temPatente(l,p,pap)&&!/calibrando · /.test(h))throw new Error('sem nível: devia dizer calibrando');
-  if(/1[0-9]{3}/.test((h.match(/Nível n[ao] [\s\S]{0,400}/)||[''])[0].replace(/<[^>]+>/g,'')))throw new Error('número de Elo vazou no bloco de nível');
+  if(/1[0-9]{3}/.test((h.match(/class="lvtl"[\s\S]{0,1500}/)||[''])[0].replace(/<[^>]+>/g,'').replace(/\d\d\/\d\d\/\d\d/g,'')))throw new Error('número de Elo vazou no bloco de nível');
   /* nivelApos: antes da primeira mudança registrada é o "de onde" dela; sem mudança é o nível de hoje */
   const mv=[...l.matches].filter(m=>!m.voided&&(m.moves||[]).length).sort((a,b)=>a.ts-b.ts)[0];
   if(mv){const x=mv.moves[0];if(nivelApos(l,x.pid,x.role||'L',mv.ts-1)!==x.from)throw new Error('nivelApos antes da mudança devia ser o "de onde"')}
   if(nivelApos(l,eu,'L',Date.now()+1)!==p.L.rank)throw new Error('nivelApos depois de tudo devia ser o nível de hoje');
   const adm=l.players.filter(q=>q.role==='admin');l.cfg.rankVisibility='admin';adm.forEach(q=>q.role='jogador');
   const me0=S.me.name;S.me.name='ninguem_'+Date.now();render();h=els['#app'].innerHTML;
-  if(/lvtl|Nível na linha|Nível no gol/.test(h))throw new Error('com as patentes fechadas o bloco de nível some');
+  if(/lvtl|lvnota/.test(h))throw new Error('com as patentes fechadas o bloco de nível some');
   S.me.name=me0;adm.forEach(q=>q.role='admin');l.cfg.rankVisibility=vis0;S.ui.statsWho=who0;
   S.ui.tab='cfg';render();h=els['#app'].innerHTML;
   if(souAdmin(l)&&(!/class="sw on" data-a="toggleCfg"|class="sw " data-a="toggleCfg"/.test(h)||!/class="cfgn"/.test(h)))throw new Error('ajustes em linhas: interruptor e campo curto (D-189)');
@@ -1123,9 +1125,9 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     A.statsPer({dataset:{v:'sempre'}});
     /* ficha: ano a ano com grafico */
     A.statsTab({dataset:{v:'jogador'}});
-    if(!/Ano a ano/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o ano a ano');
+    if(!/Momento.*por ano/.test(els['#app'].innerHTML))throw new Error('ficha em "Sempre" sem o ano a ano (Momento por ano)');   // sem o título "Ano a ano" (D-191)
     /* D-150: o gráfico de momento (gols em barra, % acima do esperado em linha) */
-    if(vePat(l)){if(!/class="chart momento"/.test(els['#app'].innerHTML)||!/<polyline points="/.test(els['#app'].innerHTML)){const h2=els['#app'].innerHTML,i=h2.indexOf('Ano a ano');throw new Error('ficha em "Sempre" sem o grafico de momento: '+h2.slice(i,i+400).replace(/</g,'<'))}}
+    if(vePat(l)){if(!/class="chart momento"/.test(els['#app'].innerHTML)||!/<polyline points="/.test(els['#app'].innerHTML)){const h2=els['#app'].innerHTML,i=h2.indexOf('Momento');throw new Error('ficha em "Sempre" sem o grafico de momento: '+h2.slice(i,i+400).replace(/</g,'<'))}}
     else if(!/Aproveitamento <span/.test(els['#app'].innerHTML))throw new Error('com as patentes fechadas a ficha devia ter o grafico de aproveitamento');
     /* com as patentes abertas o momento tem que sair — liga e desliga só para o teste */
     const vis0=l.cfg.rankVisibility;l.cfg.rankVisibility='todos';render();
@@ -2043,6 +2045,7 @@ step('stats: filtro fixo no topo e titulos sem o periodo (D-185)',()=>{
   S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='ano';render();
   let h=els['#app'].innerHTML;
   if(!/class="sfilt"/.test(h))throw new Error('sem o filtro');
+  if(/>Mês a mês<|>Ano a ano<|>Racha a racha</.test(h))throw new Error('título do grupo em cima do Momento (D-191)');
   if(/Rankings em \d{4}|O racha em \d{4}|Você · em|Jogador · em|Posição nos rankings <span/.test(h))throw new Error('titulo repetindo o periodo');
   S.ui.statsTab='racha';S.ui.statsPer='sempre';render();h=els['#app'].innerHTML;
   if(/Rankings|O racha<|Níveis</.test(h))throw new Error('titulo repetindo "desde sempre"');
