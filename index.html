@@ -7560,10 +7560,14 @@ function applyDelta(id,d){
   if(d.name)l.name=d.name;
   if(d.cfg&&Object.keys(d.cfg).length)l.cfg=d.cfg;
   let recalc=false;
+  const mescladas={};                              // jogador que chegou por cima de edição pendente aqui (D-176)
   const ent=(key,rows)=>{(rows||[]).forEach(r=>{
     const i=l[key].findIndex(x=>x.id===r.id);
     if(r.deleted){if(i>=0)l[key].splice(i,1);delete s[key][r.id]}
-    else{if(i>=0)l[key][i]=r.data;else l[key].push(r.data)}
+    else{
+      let data=r.data;
+      if(key==='players'&&i>=0){const m=mesclaJogador(s.players[r.id],l.players[i],r.data);if(m!==r.data){data=m;mescladas[r.id]=r.data}}
+      if(i>=0)l[key][i]=data;else l[key].push(data)}
     recalc=true})};
   ent('players',d.players);ent('matches',d.matches);ent('sessions',d.sessions);
   if(d.rsvps&&d.rsvps.length){if(!Array.isArray(l.rsvps))l.rsvps=[];ent('rsvps',d.rsvps)}
@@ -7592,13 +7596,49 @@ function applyDelta(id,d){
   /* snapshot só do que veio no delta, já normalizado — o que não veio pode
      ter edição local esperando para subir */
   const snapDe=(key,rows,facts)=>(rows||[]).forEach(r=>{if(r.deleted)return;const x=l[key].find(y=>y.id===r.id);if(x)s[key][r.id]=JSON.stringify(facts(x))});
-  snapDe('players',d.players,playerFacts);snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);snapDe('rsvps',d.rsvps,x=>x);
+  snapDe('players',d.players,playerFacts);
+  /* jogador mesclado: o snapshot guarda o que o SERVIDOR tem, para a edição pendente subir na próxima gravação */
+  Object.keys(mescladas).forEach(id=>{s.players[id]=JSON.stringify(playerFacts(migPlayer(l,JSON.parse(JSON.stringify(mescladas[id])))))});snapDe('matches',d.matches,matchFacts);snapDe('sessions',d.sessions,x=>x);snapDe('rsvps',d.rsvps,x=>x);
   if(d.live)s.live=JSON.stringify(mesclou?liveRemoto:(l.live||null));
   if(d.cfg&&Object.keys(d.cfg).length)s.cfg=JSON.stringify(l.cfg);
   if(d.name)s.name=l.name;
   if(logSync!==null)s.log=logSync;
   if(s.log===0&&logSync===null)s.log=(l.log||[]).length;
   cacheSave();
+}
+/* ---------- edição pendente do jogador vs. linha que chegou do servidor (D-176) ----------
+   A linha do jogador é substituída inteira pelo que vem do servidor. Se ESTE
+   aparelho tinha uma edição ainda não gravada nela (renomeou, mudou a
+   descrição, deu uma opinião) e o outro gravou a mesma linha antes (uma
+   opinião, um vínculo de conta), a edição daqui sumia em silêncio com o
+   toast "Atualizado por outra pessoa" — apelidos "se perdendo". Aqui a
+   mesclagem é por campo, a três vias: o que mudou AQUI em relação ao que o
+   servidor tinha (snapshot) vale; o resto vem de lá. Opinião é por autor:
+   a que este aparelho deu/mudou/tirou fica, as outras vêm do servidor.
+   Entrada e "def" são derivadas das opiniões (`consolida`) e se refazem.  */
+const CAMPOS_JOG=['name','bio','gk','owner','role','created','arq'];
+function mesclaJogador(baseJ,local,remoto){
+  if(!local||!baseJ)return remoto;
+  const j=x=>JSON.stringify(x===undefined?null:x),lf=playerFacts(local);
+  if(JSON.stringify(lf)===baseJ)return remoto;               // nada pendente aqui
+  let base=null;try{base=JSON.parse(baseJ)}catch(e){return remoto}
+  if(!base)return remoto;
+  const out=JSON.parse(JSON.stringify(remoto));let mudou=false;
+  CAMPOS_JOG.forEach(k=>{if(j(lf[k])!==j(base[k])){out[k]=lf[k];mudou=true}});
+  ['L','G'].forEach(r=>{
+    const bo=(base[r]&&base[r].op)||[],lo=(lf[r]&&lf[r].op)||[];
+    if(j(bo)===j(lo))return;
+    const por=a=>{const m={};a.forEach(o=>m[String(o.by)]=o);return m};
+    const B=por(bo),Lm=por(lo);
+    out[r]=out[r]||{};const ro=Array.isArray(out[r].op)?out[r].op:[];
+    const ops=[],vistos=new Set();
+    ro.forEach(o=>{const k=String(o.by);vistos.add(k);
+      if(j(Lm[k])!==j(B[k])){if(Lm[k])ops.push(Lm[k])}     // mexida aqui (ou tirada): vale o daqui
+      else ops.push(o)});
+    lo.forEach(o=>{const k=String(o.by);if(!vistos.has(k)&&j(Lm[k])!==j(B[k]))ops.push(o)});   // dada aqui, o servidor não tinha
+    out[r].op=ops;mudou=true;
+  });
+  return mudou?out:remoto;
 }
 /* ---------- dois celulares na mesma partida ----------
    O `live` é um bloco só. Quando o servidor recusa a gravação porque o outro

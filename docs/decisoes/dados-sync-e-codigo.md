@@ -245,3 +245,27 @@ por importância (a ordem do tempo é a que conta a história); renumerar decis�
 código, testes e commits).
 **Onde:** `docs/README.md` (mapa) · `docs/decisoes/README.md` (índice) · `CLAUDE.md` · sem teste — a
 verificação de links foi um script descartável no momento da mudança.
+
+<a id="d-176"></a>
+### D-176 · Edição pendente do jogador não some quando a linha dele chega do servidor
+**14/09/2026.** Apelidos e descrições "se perdiam depois de um tempo". Causa: a linha do jogador
+chegava **inteira** do servidor por cima da cópia local (`applyDelta`), inclusive no caminho de
+conflito do `save_parts`. Se este aparelho tinha uma edição ainda não gravada nessa linha (renomeou,
+mudou a descrição, deu uma opinião) e outro aparelho gravou a **mesma linha** antes — uma opinião no
+"Minhas opiniões", um vínculo de conta, um "costuma ir ao gol" —, a edição daqui era substituída, o
+snapshot passava a dizer que estava tudo sincronizado e nada era reenviado: sumia em silêncio, com o
+toast "Atualizado por outra pessoa". Quanto mais tempo a gravação ficava pendente (sem sinal, app em
+segundo plano), maior a janela. **Decidido:** a linha do jogador se mescla **por campo, a três vias**,
+como o `live` já fazia (D-102/D-104): o que mudou *aqui* em relação ao que o servidor tinha
+(snapshot) vale; o resto vem do servidor. Opinião é por autor — a que este aparelho deu, mudou ou
+tirou fica; as dos outros vêm de lá. Entrada e `def` são derivadas das opiniões (`consolida`) e se
+refazem. O snapshot do jogador mesclado guarda o que o **servidor** tem, para a edição pendente subir
+na gravação seguinte (mesmo truque do `live`).
+**Descartado:** avisar em vez de mesclar (a pessoa não sabe o que perdeu, e renomear de novo
+perderia de novo); "última gravação vence" com carimbo de hora (relógios de celular não são
+confiáveis, e o problema é justamente o campo diferente); mesclar também as partidas (a correção de
+partida é rara e feita por uma pessoa; fica como está, linha inteira).
+**Onde:** `mesclaJogador`, `CAMPOS_JOG`, `mescladas` em `applyDelta` (`index.html`) ·
+`scripts/sync.py` ("apelido editado aqui sobrevive a opiniao gravada la", "opiniao dada aqui
+sobrevive ao apelido mudado la") · [Contas §Ficha](../produto/contas-e-permissoes.md) ·
+[Protótipo](../tecnico/prototipo.md).

@@ -216,6 +216,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-102](dados-sync-e-codigo.md#d-102) · Pronto para a quadra: cópia da liga no aparelho, prazo por pedido, batida de rede e avisos de mesclagem
 - [D-104](dados-sync-e-codigo.md#d-104) · Consistência acima de tudo: o mesmo lance conta uma vez, e sem sinal há 20 s é só leitura
 - [D-116](dados-sync-e-codigo.md#d-116) · Documentação dividida por assunto em `docs/`, decisões em arquivos por tema
+- [D-176](dados-sync-e-codigo.md#d-176) · Edição pendente do jogador (apelido, descrição, opinião) se mescla por campo com a linha que chega do servidor, em vez de sumir
 
 ---
 

@@ -369,6 +369,32 @@ await step('gravacao velha nao atropela a nova',async()=>{
   ok('a versao local acompanhou',VER[ligaId]===srv(ligaId).version,'local v'+VER[ligaId]+' servidor v'+srv(ligaId).version);
 });
 
+await step('apelido editado aqui sobrevive a opiniao gravada la no mesmo jogador (D-176)',async()=>{
+  /* a linha do jogador chegava inteira do servidor por cima da edicao pendente: o apelido "se perdia" */
+  const xid=L().players[3].id;
+  A.pSheet({dataset:{id:xid}});PD.name='Zé Apelido';PD.bio='o do gol de placa';A.pdSave();
+  const row=srv(ligaId),pr=DB.players.find(p=>p.league_id===ligaId&&p.id===xid);
+  const d=JSON.parse(JSON.stringify(pr.data));d.L.op.push({by:'outro',e:1600,ts:1});   // outro aparelho deu opiniao, com o nome velho
+  row.version++;pr.data=d;pr.v=row.version;emit('UPDATE',row);
+  await sleep(1500);
+  const srvP=DB.players.find(p=>p.id===xid).data,locP=P(L(),xid);
+  ok('o servidor ficou com o apelido e a descricao daqui',srvP.name==='Zé Apelido'&&srvP.bio==='o do gol de placa',srvP.name+' / '+srvP.bio);
+  ok('e com a opiniao de la',srvP.L.op.some(o=>o.by==='outro'),JSON.stringify(srvP.L.op));
+  ok('a tela mostra o mesmo',locP.name==='Zé Apelido'&&locP.L.op.some(o=>o.by==='outro'));
+  ok('nada ficou pendente',dirty.size===0&&VER[ligaId]===srv(ligaId).version);
+});
+await step('opiniao dada aqui sobrevive ao apelido mudado la (D-176)',async()=>{
+  if(!euId(L())){L().players[0].owner=S.me.name;save();await sleep(700)}
+  const xid=L().players[4].id,eu=euId(L());
+  A.opSet({dataset:{pid:xid,r:'L',s:'3'}});                                          // opiniao local, ainda nao gravada
+  const row=srv(ligaId),pr=DB.players.find(p=>p.league_id===ligaId&&p.id===xid);
+  const d=JSON.parse(JSON.stringify(pr.data));d.name='Renomeado Lá';row.version++;pr.data=d;pr.v=row.version;emit('UPDATE',row);
+  await sleep(1500);
+  const srvP=DB.players.find(p=>p.id===xid).data,locP=P(L(),xid);
+  ok('o servidor tem o nome de la e a opiniao daqui',srvP.name==='Renomeado Lá'&&srvP.L.op.some(o=>o.by===eu),srvP.name+' '+JSON.stringify(srvP.L.op));
+  ok('a tela idem',locP.name==='Renomeado Lá'&&locP.L.op.some(o=>o.by===eu));
+});
+
 console.log('\n[sync] tempo real');
 await step('mudanca de fora chega sem recarregar',async()=>{
   const row=srv(ligaId);
