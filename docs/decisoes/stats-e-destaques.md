@@ -598,8 +598,9 @@ própria faixa), um ponto por mudança e o de hoje maior no fim. Embaixo, "melho
 "calibrando · 7/15" quando há o que dizer. O "de" e o "para" são o nível **no começo e no fim do
 período** (`nivelApos`: o "de onde" da primeira mudança registrada depois do instante; sem mudança,
 o nível de hoje), a mesma régua da D-155. O racha a racha / mês a mês / ano a ano mostra o mini-badge do nível
-no fim de cada grupo (▲/▼ quando mudou dentro dele; `statsGrupos` passou a guardar `fim`), e o
-partida a partida marca a partida em que o nível mudou, com a seta e o badge novo ao lado do placar.
+no fim de cada grupo (▲/▼ quando mudou dentro dele; `statsGrupos` passou a guardar `fim`). O
+partida a partida **não** marca a mudança (entrou e saiu no mesmo dia: "isso pode ser invisível" —
+o gráfico já conta).
 Tudo some com as patentes fechadas.
 **Por quê:** "a página de stats do jogador não fala nada sobre o nível dele" — o badge do cabeçalho
 era a única menção, e o nível é o coração do produto. O período já quebrava a história em rachas e
@@ -609,6 +610,6 @@ primeiras versões do mesmo dia: o badge grande ficou pesado e desalinhado, e o 
 no cabeçalho — "o que seria interessante é um gráfico de variação da patente, badges no y, tempo no
 x"); mostrar a distância para o próximo corte ou o Elo (§1 de patentes: o número não
 existe para o jogador); uma curva suave no lugar dos degraus (o nível não é contínuo); repetir o bloco na aba Racha.
-**Onde:** `nivelHtml`, `ppRow`, linhas dos grupos em `viewStats`; `grafNivel`, `nivelApos`, `statsGrupos` em
+**Onde:** `nivelHtml`, linhas dos grupos em `viewStats`; `grafNivel`, `nivelApos`, `statsGrupos` em
 `index.html` · `scripts/smoke.py` (passo "D-188") · [Stats §2](../produto/stats.md).
 

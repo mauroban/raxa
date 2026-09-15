@@ -4218,7 +4218,7 @@ function viewStats(liga){
         const x=stintPart(st)[who];if(!x||x.role!==papel)return;sd=x.side;dur+=st.dur||0});
       if(sd===null||!contaPartida(liga,m,dur,tot))return;
       const c2=chanceHist(liga,m);
-      out.push({m,sd,ch:c2?c2[sd]:null,mv:verCh?(m.moves||[]).find(y=>y.pid===who&&(y.role||'L')===papel)||null:null,
+      out.push({m,sd,ch:c2?c2[sd]:null,
         gols:(m.goals||[]).filter(g=>g.pid===who&&!g.own&&roleNoGol(liga,m,g)===papel).length,
         gc:(m.goals||[]).filter(g=>g.pid===who&&g.own).length,
         res:m.result==='draw'?'E':(m.result===sd?'V':'D')});
@@ -4226,7 +4226,7 @@ function viewStats(liga){
   const ppRow=x=>`<div class="goalrow">
       <span class="mine" style="color:${x.res==='V'?'var(--ok)':x.res==='D'?'var(--bad)':'var(--mute)'}">${x.res}</span>
       <span class="tiny muted num" style="min-width:74px">${new Date(x.m.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
-      <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}${x.mv?`<span class="lvg ${x.mv.dir>0?'up':'dn'}" title="${x.mv.dir>0?'subiu':'caiu'} para ${esc(rankLabel(liga,x.mv.rank))}">${x.mv.dir>0?'▲':'▼'}${patDot(liga,x.mv.rank)}</span>`:''}</span>
+      <span class="num" style="flex:1">${(x.m.score||[0,0])[x.sd]}-${(x.m.score||[0,0])[1-x.sd]}</span>
       ${verCh?`<span class="tiny muted num" style="min-width:48px;text-align:right" title="prob. de vitória no início">${x.ch!==null?pct(x.ch):'—'}</span>`:''}
       <span class="gcell">${x.gols<=8?'<i class="gball">⚽</i>'.repeat(x.gols):'<i class="gball">⚽</i><span class="num">×'+x.gols+'</span>'}${x.gc?`<span title="gol contra">${'<i class="gball own">⚽</i>'.repeat(Math.min(x.gc,3))}</span>`:''}</span>
     </div>`;
