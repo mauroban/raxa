@@ -4,6 +4,24 @@
 > Nada aqui é decisão nem requisito: é lembrete. Quando uma ideia virar trabalho, ela sai daqui e
 > ganha documento de produto, D-NN e RF. Anotado em 2026-09-14.
 
+## 0. O problema central: administrar o racha cansa, e racha cansado acaba
+
+Quem organiza faz, toda semana, um trabalho invisível: chamar gente para fechar os times, cobrar
+resposta de quem não respondeu, pedir para os de sempre convidarem amigos quando falta gente,
+acertar horário e local, correr atrás de goleiro, cobrar o rateio e anotar quem pagou. É trabalho
+de graça, cai sempre na mesma pessoa, e quando ela cansa o racha acaba. Tudo abaixo serve a isso:
+o app tirando tarefas das costas do organizador. Coisas concretas que cabem nessa linha:
+
+- **Fechar os times**: o app diz quantos faltam e sugere a quem chamar (quem costuma ir e ainda
+  não respondeu, quem está na espera de outro dia), com uma mensagem pronta para o grupo.
+- **Convidar amigos**: quando falta gente, pedir aos confirmados que tragam alguém, com o link de
+  entrada da liga; o convidado já cai na chamada.
+- **Horário e local** combinados uma vez e repetidos sozinhos (a agenda já existe; a quadra com
+  reserva é a seção 1).
+- **Pagamento**: rateio da quadra entre os confirmados, quem pagou e quem falta, sem o organizador
+  cobrar um a um (seção 1 e monetização).
+- **Goleiro**: quando não fecha, contratar (seção 2).
+
 ## 1. Quadras e horário
 
 - **Endereço no cadastro de cada pessoa.** Hoje só a quadra da liga tem endereço (D-179). Com o

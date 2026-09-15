@@ -206,6 +206,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-172](chamada-e-confirmacao.md#d-172) · "Marcar os N confirmados" na grade de presença
 - [D-178](chamada-e-confirmacao.md#d-178) · Quem foi confirmado por outro assume com "Confirmo" (sem perder a vez); "Você vai na linha" sem posição; faltou em duas contas
 - [D-179](chamada-e-confirmacao.md#d-179) · Endereço da quadra: texto livre nos Ajustes, link do Google Maps no cartão e no texto do grupo
+- [D-180](chamada-e-confirmacao.md#d-180) · Endereço com sugestões enquanto digita (Photon/OpenStreetMap), sem chave; guarda a coordenada
+- [D-181](chamada-e-confirmacao.md#d-181) · Contador de cada lista só no título dela; "Espera · N"; a linha de contadores embaixo da data saiu
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

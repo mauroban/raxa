@@ -1981,7 +1981,7 @@ step('aba Racha: abre N dias antes; Vou / Vou no gol; corte e espera; trocar de 
   if(L1.L.dentro.length!==12||L1.L.espera.length!==1)throw new Error('corte errado: '+L1.L.dentro.length+' dentro, '+L1.L.espera.length+' espera');
   if(L1.L.espera[0].pid!==euId(l))throw new Error('o ultimo a chegar (eu, carimbo de agora) e quem espera');
   render();h=els['#app'].innerHTML;
-  if(!/Linha 12\/12 \+1 na espera/.test(h)||!/>Espera</.test(h)||!/Você é o 1º da espera da linha/.test(h))throw new Error('contador/espera nao apareceu');
+  if(/Linha 12\/12 \+1 na espera/.test(h)||!/Linha · <span class="num">12\/12<\/span>/.test(h)||!/Espera · <span class="num">1<\/span>/.test(h)||!/Você é o 1º da espera da linha/.test(h))throw new Error('contador so no titulo de cada lista (D-181), espera com o numero dela');
   if(h.indexOf('Gol · <span')<0||h.indexOf('Gol · <span')>h.indexOf('Linha · <span'))throw new Error('o gol vem antes da linha (D-169)');
   A.chamadaTroca({dataset:{id:euId(l),p:'G'}});
   const L2=listaChamada(l,ch.dia);
@@ -2035,6 +2035,18 @@ step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez; en
   if(!/^Racha [^\n]+\nRua da Quadra, 10 - Centro\nhttps:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Rua%20da%20Quadra%2C%2010%20-%20Centro\n\nGol /.test(txt))throw new Error('texto do grupo sem endereco e mapa: '+txt.slice(0,200));
   l.cfg.chamada.local='';
   if(/class="tiny mapa"/.test(chamadaCard(l))||/maps/.test(textoChamada(l,ch,'L')))throw new Error('sem endereco, nada de mapa');
+  /* busca com sugestoes (D-180): o resultado do geocodificador vira uma linha legivel; escolher grava endereco + coordenada */
+  if(fmtLugar({name:'Arena Society',street:'Avenida Brasil',housenumber:'1200',district:'Centro',city:'Campinas',state:'São Paulo',country:'Brasil'})!=='Arena Society, Avenida Brasil, 1200, Centro, Campinas, São Paulo')throw new Error('fmtLugar: '+fmtLugar({name:'Arena Society',street:'Avenida Brasil',housenumber:'1200',district:'Centro',city:'Campinas',state:'São Paulo'}));
+  if(fmtLugar({name:'Rua Augusta',street:'Rua Augusta',city:'São Paulo',state:'São Paulo'})!=='Rua Augusta, São Paulo')throw new Error('fmtLugar repete: '+fmtLugar({name:'Rua Augusta',street:'Rua Augusta',city:'São Paulo',state:'São Paulo'}));
+  const feats=[{properties:{name:'Arena Y',city:'Coventry',countrycode:'GB'},geometry:{coordinates:[-1.5,52.4]}},{properties:{name:'Arena X',city:'Campinas',countrycode:'BR'},geometry:{coordinates:[-47.06,-22.9]}},{properties:{name:'Arena X',city:'Campinas',countrycode:'BR'},geometry:{coordinates:[-47.07,-22.91]}},{properties:{},geometry:{coordinates:[0,0]}}];
+  const sug=localSugHtml(feats);
+  if((sug.match(/data-a="localPick"/g)||[]).length!==2||!/data-lat="-22.9" data-lon="-47.06"/.test(sug)||sug.indexOf('Arena X')>sug.indexOf('Arena Y'))throw new Error('sugestoes: uma por texto, Brasil primeiro, com a coordenada: '+sug);
+  if(!/id="localSug"/.test(cfgChamadaCard(l))||!/oninput="localBusca\(this\)"/.test(cfgChamadaCard(l)))throw new Error('ajustes sem a caixa de sugestoes');
+  A.localPick({dataset:{v:'Arena X, Campinas',lat:'-22.9',lon:'-47.06'}});
+  if(l.cfg.chamada.local!=='Arena X, Campinas'||!l.cfg.chamada.geo||l.cfg.chamada.geo.lat!==-22.9||l.cfg.chamada.geo.lon!==-47.06)throw new Error('escolher a sugestao grava endereco e coordenada');
+  l.cfg.chamada=chamadaNorm(Object.assign({},l.cfg.chamada,{local:''}),l.cfg.format);
+  if(l.cfg.chamada.geo!==null)throw new Error('sem endereco a coordenada nao fica');
+  l.cfg.chamada.local='';l.cfg.chamada.geo=null;
   l.rsvps=l.rsvps.filter(r=>r.pid!==eu&&!outros.some(p=>p.id===r.pid));render();
 });
 step('confirmar alguem (folha fica aberta), texto para o grupo, cancelar o racha e desfazer',()=>{

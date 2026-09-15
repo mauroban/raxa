@@ -13,9 +13,11 @@ alguém contando nomes.
 Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **dia da semana** e a
 **hora** do racha, as **vagas na linha**, as **vagas no gol** e **quantos dias antes** a lista abre
 (padrão 4). As vagas vêm sugeridas pelo formato: 5v5 sugere 12 na linha e 3 no gol; 6v6, 15 + 3;
-7v7, 18 + 3; 11v11, 20 + 3. E o **endereço da quadra** (D-179), um campo de texto livre: aparece
-embaixo da data no cartão do próximo racha como link que abre o Google Maps, e vai no texto do
-compartilhamento com o link do mapa. Sem endereço, nada aparece.
+7v7, 18 + 3; 11v11, 20 + 3. E o **endereço da quadra** (D-179): enquanto o admin digita, aparecem
+até cinco sugestões de lugares e endereços (busca do OpenStreetMap, sem cadastro, D-180); um toque
+escolhe, e o app guarda o endereço legível e a coordenada. Também aceita texto livre. O endereço
+aparece embaixo da data no cartão do próximo racha como link que abre o Google Maps, e vai no texto
+do compartilhamento com o link do mapa. Sem endereço, nada aparece.
 
 **Mais de um racha na semana** (D-170): **+ Outro dia na semana** acrescenta uma ocorrência (dia e
 hora próprios; o ✕ tira). O padrão é uma vez por semana. As vagas e o "abre N dias antes" são da
@@ -41,8 +43,9 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
   separa, depois do racha, quem se comprometeu e faltou de quem foi posto na lista por alguém (D-178).
 - **As duas listas**, Gol primeiro e depois Linha (o gol é curto e é o que decide se o racha fecha), com os nomes numerados na ordem de chegada, em chips baixos de
   duas colunas (14 nomes cabem numa tela, D-168) e o **badge da patente** do papel da lista à direita
-  (cor + riscos, como na presença; some com os níveis fechados). O corte é visual: quem está dentro
-  tem o chip aceso; abaixo, em cinza, **Espera**.
+  (cor + riscos, como na presença; some com os níveis fechados). O contador de cada lista ("Gol ·
+  2/3", "Linha · 12/12") fica só no título dela (D-181). O corte é visual: quem está dentro
+  tem o chip aceso; abaixo, em cinza, **Espera · N**.
 - **Compartilhar** gera o texto pronto para o grupo (data, endereço da quadra com o link do mapa
   quando há, Gol, Linha 12/14 com os nomes numerados, espera, e o endereço do app). O grupo vira
   espelho do app, não o contrário.

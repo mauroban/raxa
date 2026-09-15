@@ -906,6 +906,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 :root[data-theme="escuro"] .card{box-shadow:none}
 :root[data-theme="escuro"] .hdr{background:color-mix(in srgb,var(--bg) 86%,transparent)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}.sug .btn{justify-content:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-weight:500;min-height:40px;line-height:1.25}
 .mapa{color:var(--mute);text-decoration:underline dotted;text-underline-offset:3px;display:inline-block;margin-top:2px}
 </style>
 </head>
@@ -2429,7 +2430,15 @@ function chamadaNorm(c,fmt){
   if(!Array.isArray(c.pula))c.pula=[];
   if(!c.vagas||typeof c.vagas!=='object')c.vagas={};
   c.local=String(c.local||'').trim().slice(0,140);
+  const g=c.geo;c.geo=(c.local&&g&&isFinite(+g.lat)&&isFinite(+g.lon))?{lat:+g.lat,lon:+g.lon}:null;   // só vale com endereço
   return c;
+}
+/* Um resultado do geocodificador (Photon/OSM) vira uma linha legível: nome, rua e
+   número, bairro, cidade, estado — sem repetir e sem o que está vazio (D-180). */
+function fmtLugar(p){
+  p=p||{};const rua=[p.street,p.housenumber].filter(Boolean).join(', ');
+  const partes=[p.name,rua,p.district,p.city||p.town||p.village||p.county,p.state].map(x=>String(x||'').trim()).filter(Boolean);
+  return partes.filter((x,i)=>partes.findIndex(y=>y.toLowerCase()===x.toLowerCase())===i).join(', ').slice(0,140);
 }
 /* vagas de uma data: o padrão da liga, ou o que o admin definiu só para ela */
 function vagasDe(c,dia){const v=(c.vagas||{})[dia]||{};return{linha:Math.max(0,(v.linha!==undefined?v.linha:c.linha)|0),gol:Math.max(0,(v.gol!==undefined?v.gol:c.gol)|0),proprio:!!(c.vagas||{})[dia]}}
@@ -2731,7 +2740,7 @@ const ACOES_LANCAR=new Set(['startRacha','cancelRacha','fillPick','fillSet','fil
   'endMatch','pauseMatch','cancelMatch','delGoal','goalScorer','setGoalScorer','pres','presGk','addPlayer','savePlayer','toTimes',
   'backPres','teamsBack','gkMode','toPool','nteams','balance','shuffle','sel','toTeam','lateSheet','lateFila','lateIn','lateTeam',
   'lateGk','startJogo','startMatch','leaveRacha','leaveDo','nada','leaveSheet','saiFila','preUndo','slotPick','slotSet','preGk','setPreGk','goal','ungoal','scorer','vaiProGol','undo','subPick','doSub','finish','voltarPartida','trocaFica','endRacha','delPlayer','arquivar','reativar','chamadaAlguem','chamadaAdd','presConf']);
-const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','chamadaOn','chamadaDow','chamadaAddDia','chamadaDelDia','chamadaVagas','chamadaVagasOk','chamadaVagasPadrao','chamadaCancelar','chamadaVoltar']);
+const ACOES_ADMIN=new Set(['toggleCfg','setVis','saveLiga','opDe','newCode','localPick','chamadaOn','chamadaDow','chamadaAddDia','chamadaDelDia','chamadaVagas','chamadaVagasOk','chamadaVagasPadrao','chamadaCancelar','chamadaVoltar']);
 const vePat=liga=>liga.cfg.rankVisibility!=='admin'||souAdmin(liga);
 const patDot=(liga,step)=>vePat(liga)?`<span class="pdot ${divCls(step)}" style="${patVars(step)}" title="${esc(rankLabel(liga,step))}">${'<i></i>'.repeat(step%3+1)}</span>`:'';
 const ehGkHoje=(lv,id)=>(lv.gkToday||[]).indexOf(id)>=0;
@@ -2879,7 +2888,6 @@ function chamadaCard(liga){
     ${c.local?`<a class="tiny mapa" href="${esc(mapaUrl(c.local))}" target="_blank" rel="noopener">${esc(c.local)}</a>`:''}`;
   if(!ch.aberta)return `<div class="card">${cancHtml}${head}<div class="tiny muted">A lista abre ${esc(chamadaTitulo({dia:isoDia(ch.abre),hora:''}))}.</div></div>`;
   const L=listaChamada(liga,ch.dia),eu=euId(liga),minha=eu?minhaChamada(liga,ch.dia,eu):null,lanc=podeLancar(liga);
-  const cont=`<div class="tiny muted num">Gol ${L.G.dentro.length}/${L.G.max}${L.G.espera.length?' +'+L.G.espera.length+' na espera':''} · Linha ${L.L.dentro.length}/${L.L.max}${L.L.espera.length?' +'+L.L.espera.length+' na espera':''}</div>`;
   let meu='';
   if(eu&&!minha)meu=`<div class="row" style="gap:8px;margin-top:12px">
       <button class="btn wide pri" data-a="vou" data-p="L" style="flex:2">Vou</button>
@@ -2906,8 +2914,8 @@ function chamadaCard(liga){
       <span class="n num">${i+1}</span><span class="nm">${esc(p?p.name:'—')}</span>${b?`<span class="pb">${b}</span>`:''}</button></div>`};
   const lista=(tit,x,papel)=>`<div class="k2" style="margin-top:12px">${tit} · <span class="num">${x.dentro.length}/${x.max}</span></div>
     ${x.dentro.length?`<div class="grid cham">${x.dentro.map((r,i)=>chip(r,i,true,papel)).join('')}</div>`:'<div class="tiny muted">Ninguém ainda.</div>'}
-    ${x.espera.length?`<div class="tiny muted" style="margin:6px 0 3px">Espera</div><div class="grid cham">${x.espera.map((r,i)=>chip(r,i,false,papel)).join('')}</div>`:''}`;
-  return `<div class="card">${cancHtml}${head}${cont}${meu}
+    ${x.espera.length?`<div class="tiny muted" style="margin:6px 0 3px">Espera · <span class="num">${x.espera.length}</span></div><div class="grid cham">${x.espera.map((r,i)=>chip(r,i,false,papel)).join('')}</div>`:''}`;
+  return `<div class="card">${cancHtml}${head}${meu}
     ${lista('Gol',L.G,'G')}${lista('Linha',L.L,'L')}
     ${lanc?`<div style="height:12px"></div><button class="btn wide ghost" data-a="chamadaAlguem">+ Confirmar alguém</button>`:''}
     ${souAdmin(liga)?`<div class="row" style="justify-content:center;gap:6px;margin-top:8px">
@@ -2935,6 +2943,31 @@ function blocoChamada(liga,sess){
     ${c.tarde.length?`<div class="tiny"><b>Saiu em cima da hora:</b> ${c.tarde.map(x=>nome(x.pid)+' ('+antes(x)+(x.by&&x.by!==(P(liga,x.pid)||{}).owner?', por '+esc(x.by):'')+')').join(', ')}</div>`:''}
   </div>`;
 }
+/* Endereço com sugestões enquanto digita (D-180): Photon, o geocodificador aberto
+   do OpenStreetMap — sem chave, sem cadastro. Debounce de 350 ms, 5 resultados,
+   preferência pelo Brasil. Sem rede ou sem resposta, o campo continua texto livre. */
+let LOCAL_T=null,LOCAL_Q='';
+function localBusca(el){
+  const q=String(el.value||'').trim(),box=$('#localSug');
+  clearTimeout(LOCAL_T);if(!box)return;
+  if(q.length<4||typeof fetch!=='function'){box.innerHTML='';return}
+  LOCAL_T=setTimeout(async()=>{
+    LOCAL_Q=q;
+    try{
+      const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=5&lang=default&lat=-15&lon=-50');
+      const j=await r.json();if(LOCAL_Q!==q||!$('#localSug'))return;
+      $('#localSug').innerHTML=localSugHtml((j&&j.features)||[]);
+    }catch(e){}
+  },350);
+}
+function localSugHtml(feats){
+  const vis=[],out=[];
+  feats=feats.slice().sort((a,b)=>(((b.properties||{}).countrycode==='BR')-((a.properties||{}).countrycode==='BR')));   // Brasil primeiro
+  feats.forEach(f=>{const p=f.properties||{},t=fmtLugar(p),c=(f.geometry||{}).coordinates||[];
+    if(!t||vis.includes(t)||c.length<2)return;vis.push(t);
+    out.push(`<button class="btn sm ghost" data-a="localPick" data-v="${esc(t)}" data-lat="${+c[1]}" data-lon="${+c[0]}">${esc(t)}</button>`)});
+  return out.join('');
+}
 /* Ajustes do admin: dia, hora, vagas por papel e quantos dias antes abre. */
 function cfgChamadaCard(liga){
   const c=chamadaNorm(liga.cfg.chamada,liga.cfg.format);
@@ -2947,7 +2980,8 @@ function cfgChamadaCard(liga){
       ${c.dias.length>1?`<button class="btn sm ghost" data-a="chamadaDelDia" data-i="${i}" style="align-self:flex-end;min-height:40px" aria-label="tirar este dia">✕</button>`:''}
     </div>`).join('')}
     <button class="btn sm ghost" data-a="chamadaAddDia" style="margin-top:8px">+ Outro dia na semana</button>
-    <label class="f" style="margin-top:14px"><span class="k">Endereço da quadra</span><input type="text" value="${esc(c.local)}" data-ch="local" placeholder="Rua, número, bairro" maxlength="140" autocomplete="off"></label>
+    <label class="f" style="margin-top:14px"><span class="k">Endereço da quadra</span><input type="text" value="${esc(c.local)}" data-ch="local" placeholder="Rua, número, cidade" maxlength="140" autocomplete="off" oninput="localBusca(this)"></label>
+    <div id="localSug" class="sug"></div>
     <div class="k" style="margin:14px 0 6px">Vagas</div>
     <div class="row fields" style="gap:8px">
       <label class="f" title="vagas na linha"><span class="k">Linha</span><input type="number" value="${c.linha}" data-ch="linha"></label>
@@ -5466,6 +5500,14 @@ const A={
     if(typeof navigator!=='undefined'&&navigator.clipboard)navigator.clipboard.writeText(texto).then(()=>toast('Lista copiada'),()=>toast('Não deu para copiar'));
     else toast('Não deu para copiar');
   },
+  /* uma sugestão escolhida: endereço legível + coordenada (D-180) */
+  localPick(el){
+    const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);
+    c.local=String(el.dataset.v||'').trim().slice(0,140);c.geo={lat:+el.dataset.lat,lon:+el.dataset.lon};
+    l.cfg.chamada=chamadaNorm(c,l.cfg.format);
+    const inp=$('input[data-ch="local"]');if(inp)inp.value=c.local;const box=$('#localSug');if(box)box.innerHTML='';
+    save();toast('Salvo');
+  },
   chamadaOn(){const l=L();l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);l.cfg.chamada.on=!l.cfg.chamada.on;save();render()},
   chamadaDow(el){const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),o=c.dias[+el.dataset.i|0];if(!o)return;o.dow=clamp(+el.dataset.v|0,0,6);save();render()},
   chamadaAddDia(){const l=L(),c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format);if(c.dias.length>=7)return toast('Já tem um racha por dia');
@@ -7304,7 +7346,7 @@ document.addEventListener('change',e=>{
   if(el.dataset.ch){                        // agenda da chamada (D-165)
     const c=l.cfg.chamada=chamadaNorm(l.cfg.chamada,l.cfg.format),k=el.dataset.ch;
     if(k==='hora'){const o=c.dias[+el.dataset.i|0];if(!o)return;if(!/^\d{2}:\d{2}$/.test(el.value)){el.value=o.hora;return toast('Hora inválida')}o.hora=el.value}
-    else if(k==='local'){c.local=String(el.value||'').trim().slice(0,140);el.value=c.local}
+    else if(k==='local'){const v=String(el.value||'').trim().slice(0,140);if(v!==c.local){c.local=v;c.geo=null}el.value=c.local}   // texto digitado à mão não tem coordenada
     else{const LIM={linha:[0,99],gol:[0,20],abre:[0,30]};const v=Math.round(+el.value);
       if(!isFinite(v)||!LIM[k]){el.value=c[k];return toast('Valor inválido')}c[k]=clamp(v,LIM[k][0],LIM[k][1]);el.value=c[k]}
     save();toast('Salvo');return;

@@ -58,7 +58,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Tela | O que cabe sem rolar |
 |---|---|
 | Presença | cabeçalho + busca + **14 chips** (7 linhas de 42 px em 2 colunas) — a galera de sempre |
-| Chamada (aba Racha fora do dia) | data (+ endereço em uma linha) + contadores + o meu estado + Gol (2 + espera) + Linha (12) + espera + "Confirmar alguém" |
+| Chamada (aba Racha fora do dia) | data (+ endereço em uma linha) + o meu estado + Gol (2 + espera) + Linha (12) + espera + "Confirmar alguém" |
 | Quem é você | rótulo + busca + **18 nomes** (9 linhas) + "criar meu jogador" |
 | Montagem | cabeçalho com 2/3/4 times e Equilibrar + goleiros + **2 times de 4 lado a lado** por dobra; 4 times pedem uma rolagem |
 | Partida ao vivo | relógio + 2 colunas (placar + goleiro + 4 de linha) + "entram no próximo" (2 linhas) + "depois" (1 linha) + gols do jogo; o placar fica na metade de cima e a barra Fim embaixo |
@@ -72,7 +72,7 @@ Quando a tela é de 500 px de largura as colunas não aumentam de número; só o
 ## 4. A ordem de cada tela, de cima para baixo
 
 **Aba Racha, sem racha** — 1. *Quem é você nesta liga?* (só sem perfil) · 2. *Próximo racha*:
-data grande, endereço da quadra (link do mapa, quando há), contadores "Gol x/y · Linha x/y",
+data grande, endereço da quadra (link do mapa, quando há),
 **o meu estado ou Vou / Vou no gol** (confirmado por outro: "X confirmou você" + **Confirmo** / Não vou), lista Gol
 (dentro, espera), lista Linha (dentro, espera), *+ Confirmar alguém* (quem lança), *Vagas deste
 racha · Cancelar este racha* (admin). Barra: **Iniciar racha** (quem lança).
@@ -143,4 +143,7 @@ Feitas em 2026-09-14 (D-174): o contador "12 de 14 confirmados" na presença, "S
 aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogador comum. E (D-175) a
 escada de Jogadores em uma linha por pessoa, sem V/E/D. (D-178) "Você vai na linha" sem a posição;
 quem foi confirmado por outro vê **Confirmo** / Não vou no lugar de ir para o gol / Não vou. (D-179)
-endereço da quadra em uma linha embaixo da data e um campo a mais no card Chamada dos Ajustes.
+endereço da quadra em uma linha embaixo da data e um campo a mais no card Chamada dos Ajustes, com
+sugestões (até 5 botões de 40 px, texto à esquerda) logo abaixo enquanto digita (D-180). (D-181) a
+linha de contadores embaixo da data saiu: "Gol 2/3" e "Linha 12/12" já estão no título de cada
+lista, e a espera passou a mostrar o número dela ("Espera · 1").

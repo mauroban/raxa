@@ -169,3 +169,36 @@ e ocupa a tela que é da lista).
 `cfgChamadaCard`, o `change` de `data-ch="local"` em `index.html` · `scripts/test.py` [20] ·
 `scripts/smoke.py` · `scripts/visual.py` (print s22) ·
 [Confirmação de presença §1 e §2](../produto/confirmacao-de-presenca.md).
+
+<a id="d-180"></a>
+### D-180 · Endereço com sugestões enquanto digita (Photon/OpenStreetMap), sem chave
+**Quando:** 2026-09-14.
+**O quê:** o campo do endereço busca no Photon (`photon.komoot.io`, geocodificador aberto sobre o
+OpenStreetMap) a cada pausa de 350 ms a partir de 4 letras, com preferência pelo Brasil, e mostra
+até cinco sugestões (`localBusca`, `localSugHtml`); `fmtLugar` monta a linha legível (nome, rua e
+número, bairro, cidade, estado, sem repetir). Escolher (`A.localPick`) grava `cfg.chamada.local` e
+`cfg.chamada.geo = {lat, lon}`; digitar à mão continua valendo e zera a coordenada; sem endereço a
+coordenada some (`chamadaNorm`). Sem rede ou sem resposta, o campo é texto livre como antes.
+**Por quê:** digitar o endereço inteiro é lento e sai errado; a busca "igual ao Google Maps" é o
+que se espera de um campo de endereço. O Photon não pede chave nem cartão, aceita busca por
+autocompletar e responde em um pedido só. A coordenada vem de graça e é o que as ideias de quadra
+e distância vão precisar ([Ideias futuras](../produto/ideias-futuras.md)).
+**Descartado:** Google Places Autocomplete (precisa de projeto no Google Cloud com cartão de
+crédito e chave no `config.js`; fica como troca futura se a cobertura do OSM para nomes de arenas
+não bastar — a interface não muda); Nominatim (a política de uso proíbe autocompletar);
+geolocalização do aparelho para ordenar (pede permissão por uma coisa que o admin faz uma vez).
+**Onde:** `fmtLugar`, `chamadaNorm` (motor); `localBusca`, `localSugHtml`, `cfgChamadaCard`,
+`A.localPick` em `index.html` · `scripts/smoke.py` (fmtLugar, sugestões, escolher) ·
+[Confirmação de presença §1](../produto/confirmacao-de-presenca.md).
+
+<a id="d-181"></a>
+### D-181 · Contador de cada lista só no título dela; "Espera · N"
+**Quando:** 2026-09-14.
+**O quê:** a linha "Gol 2/3 +1 na espera · Linha 12/12" embaixo da data saiu do cartão do próximo
+racha. O contador já está no título de cada lista ("Gol · 2/3", "Linha · 12/12"); a espera ganhou
+o número dela ("Espera · 1") para não perder o "+1 na espera".
+**Por quê:** o mesmo número duas vezes na mesma tela é ruído; o título da lista é o lugar dele.
+**Descartado:** tirar do título e deixar embaixo da data (o número longe da lista que ele conta).
+**Onde:** `chamadaCard` em `index.html` · `scripts/smoke.py` ·
+[Confirmação de presença §2](../produto/confirmacao-de-presenca.md) · [Interface §3 e §4](../produto/interface.md).
+
