@@ -780,12 +780,11 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rate span{display:block;font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-top:4px}
 .rate small{display:block;font-size:11px;color:var(--mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate small.up{color:var(--ok)} .rate small.dn{color:var(--bad)}
-/* cartões de nível (D-188): o badge grande no lugar do número; de → para embaixo */
-.rate.lvl .b{min-height:30px;display:flex;align-items:center}
+/* cartões de nível (D-188): mesma anatomia dos vizinhos; o nome do nível em
+   caixa alta com o mini-badge de cor/divisão na frente */
+.rate.lvl b{display:flex;align-items:center;gap:7px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate.lvl b .pdot{height:20px;width:22px;border-radius:5px}.rate.lvl b .pdot i{height:12px}
 .rate.lvl b.up{color:var(--ok)} .rate.lvl b.dn{color:var(--bad)}
-.rate.lvl small.lv{display:flex;align-items:center;gap:5px;overflow:visible}
-.rate.lvl .to{color:var(--mute)}
-.pat.big.none{background:var(--panel2);color:var(--mute);box-shadow:none;font-size:13px}
 /* seta + mini-badge do nível numa linha de racha/partida */
 .lvg{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:11px;vertical-align:middle}
 .lvg.up{color:var(--ok)} .lvg.dn{color:var(--bad)}
@@ -4226,15 +4225,17 @@ function viewStats(liga){
   const nivelHtml=(()=>{
     if(!vePat(liga)||!p)return '';
     const t=rt(p,papel),tem=temPatente(liga,p,papel),onde=papel==='G'?'no gol':'na linha';
-    const hoje=tem?`<div class="rate lvl"><div class="b">${patBadge(liga,t.rank,'big')}</div><span>nível ${onde}</span>
+    /* os dois cartões têm a mesma anatomia do `.rate`: número grande, rótulo,
+       nota — o nível vai em texto com o mini-badge de cor/divisão na frente */
+    const hoje=tem?`<div class="rate lvl"><b>${patDot(liga,t.rank)}${esc(patName(liga,t.rank))} ${divOf(t.rank)}</b><span>nível ${onde}</span>
         <small>${calibrando(liga,p,t)?'calibrando · '+calTxt(liga,t):(t.peak||0)>t.rank?'melhor: '+esc(rankLabel(liga,t.peak)):'no melhor nível'}</small></div>`
-      :`<div class="rate lvl"><div class="b"><span class="pat big none">calibrando</span></div><span>nível ${onde}</span>
-        <small>${calTxt(liga,t)} · aparece ao fim</small></div>`;
+      :`<div class="rate lvl"><b class="muted">—</b><span>nível ${onde}</span>
+        <small>calibrando · ${calTxt(liga,t)}</small></div>`;
     if(!tem||!ms.length)return `<div class="rates" style="grid-template-columns:1fr">${hoje}</div>`;
     const ini=Math.min(...ms.map(m=>m.ts)),fim=Math.max(...ms.map(m=>m.ts));
     const de=nivelApos(liga,who,papel,ini-1),para=nivelApos(liga,who,papel,fim),n=para-de;
     const per2=`<div class="rate lvl"><b class="num ${n>0?'up':n<0?'dn':''}">${n>0?'▲ '+n:n<0?'▼ '+(-n):'0'}</b><span>${Math.abs(n)===1?'divisão':'divisões'} no período</span>
-        ${n?`<small class="lv">${patBadge(liga,de)}<span class="to">→</span>${patBadge(liga,para)}</small>`:`<small>${esc(rankLabel(liga,para))} o período todo</small>`}</div>`;
+        <small>${n?esc(rankLabel(liga,de))+' → '+esc(rankLabel(liga,para)):esc(rankLabel(liga,para))+' o período todo'}</small></div>`;
     return `<div class="rates">${hoje}${per2}</div>`})();
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';

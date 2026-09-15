@@ -589,10 +589,10 @@ quadra) ou tirá-lo; tirar é mais simples e esses dois já contam o goleiro de 
 ### D-188 · A aba Jogador de Stats fala do nível: hoje, melhor ou calibrando, e o que andou no período
 **Quando:** 2026-09-15.
 **O quê:** o card da pessoa ganha dois cartões (na grade `.rates`, logo abaixo dos tiles), na função
-que se está lendo (Linha/Gol, D-135): **Nível na linha / no gol** — o badge grande de hoje e, embaixo,
-"calibrando · 7/15 partidas", "melhor: Ouro 3" ou "no melhor nível" (quem ainda não tem nível vê
-"calibrando", quanto falta e "aparece ao fim") — e **N divisões no período** (▲/▼ colorido, 0 quando
-não mudou) com badge de → para. O "de" e o "para" são o nível **no começo e no fim do período**
+que se está lendo (Linha/Gol, D-135): **Nível na linha / no gol** — o nome do nível de hoje em caixa alta com o mini-badge de cor/divisão na frente e, embaixo,
+"calibrando · 7/15 partidas", "melhor: Ouro 3" ou "no melhor nível" (quem ainda não tem nível vê um
+traço e "calibrando · 7/15 partidas") — e **N divisões no período** (▲/▼ colorido, 0 quando
+não mudou) com "de → para" em texto embaixo. O "de" e o "para" são o nível **no começo e no fim do período**
 (`nivelApos`: o "de onde" da primeira mudança registrada depois do instante; sem mudança, o nível de
 hoje), a mesma régua da D-155. O racha a racha / mês a mês / ano a ano mostra o mini-badge do nível
 no fim de cada grupo (▲/▼ quando mudou dentro dele; `statsGrupos` passou a guardar `fim`), e o
@@ -601,7 +601,8 @@ Tudo some com as patentes fechadas.
 **Por quê:** "a página de stats do jogador não fala nada sobre o nível dele" — o badge do cabeçalho
 era a única menção, e o nível é o coração do produto. O período já quebrava a história em rachas e
 meses; faltava dizer o que o nível fez nela.
-**Descartado:** mostrar a distância para o próximo corte ou o Elo (§1 de patentes: o número não
+**Descartado:** o badge grande de metal no cartão (ficou pesado e desalinhado do vizinho; a
+primeira versão do mesmo dia); mostrar a distância para o próximo corte ou o Elo (§1 de patentes: o número não
 existe para o jogador); um gráfico de nível ao longo do tempo (o mini-badge por grupo já conta a
 trajetória, sem um segundo gráfico ao lado do Momento); repetir o bloco na aba Racha.
 **Onde:** `nivelHtml`, `ppRow`, linhas dos grupos em `viewStats`; `nivelApos`, `statsGrupos` em
