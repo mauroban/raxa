@@ -41,7 +41,7 @@ tela é conteúdo.
 | Campo de texto | 48 px; nos Ajustes 40 px | fonte **16 px** sempre (abaixo disso o iPhone dá zoom ao focar) |
 | Chip de nome (presença, quem sou) | 42 px, 2 colunas, 6 px de folga | nome em 13 px com reticências; badge compacto à direita; 🧤 de 38 × 42 ao lado |
 | Chip da chamada | 32 px, 2 colunas, 4 px de folga | número à esquerda, badge à direita (D-168) |
-| Linha da escada (Jogadores) | **44 px**, uma linha só | badge de divisão, nome 15 px e, à direita, só o que muda: "⏳ 3/15" calibrando e o Elo do admin; seta › (D-175) |
+| Linha da escada (Jogadores) | **44 px**, uma linha só | badge de divisão de 28 px, nome 14 px e, à direita, só o que muda: "⏳ 3/15" calibrando e o Elo do admin; seta › (D-175) |
 | Linha de lista (ranking, contas) | 52 px | nome 15 px + uma linha de meta em 11 px; seta › à direita |
 | Linha de racha (aba Jogos) | 60 px | data, partidas, gols; faixa verde à esquerda quando "VOCÊ" jogou |
 | Placar na partida | numeral 52 a 76 px (14 % da largura), bloco de 96 a 148 px | o bloco inteiro é o botão de gol |
