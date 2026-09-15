@@ -208,6 +208,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-179](chamada-e-confirmacao.md#d-179) · Endereço da quadra: texto livre nos Ajustes, link do Google Maps no cartão e no texto do grupo
 - [D-180](chamada-e-confirmacao.md#d-180) · Endereço com sugestões enquanto digita (Photon/OpenStreetMap), sem chave; guarda a coordenada
 - [D-181](chamada-e-confirmacao.md#d-181) · Contador de cada lista só no título dela; "Espera · N"; a linha de contadores embaixo da data saiu
+- [D-182](chamada-e-confirmacao.md#d-182) · O endereço fica fora do texto do grupo até a busca ser do Google Maps
 
 ### [Dados, sync e código](dados-sync-e-codigo.md)
 

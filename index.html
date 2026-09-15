@@ -2563,8 +2563,8 @@ function textoChamada(liga,ch,link){
   const L=listaChamada(liga,ch.dia),nm=r=>nameOf(liga,r.pid);
   const bloco=(tit,x)=>{let s=tit+' ('+x.dentro.length+'/'+x.max+')\n'+(x.dentro.length?x.dentro.map((r,i)=>(i+1)+'. '+nm(r)).join('\n'):'—');
     if(x.espera.length)s+='\nEspera: '+x.espera.map(nm).join(', ');return s};
-  const local=String((liga.cfg.chamada||{}).local||'').trim();
-  return 'Racha '+chamadaTitulo(ch)+(local?'\n'+local+'\n'+mapaUrl(local):'')+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
+  /* o endereço fica fora do texto até a busca funcionar com o Google Maps (D-182) */
+  return 'Racha '+chamadaTitulo(ch)+'\n\n'+bloco('Gol',L.G)+'\n\n'+bloco('Linha',L.L)+(link?'\n\nConfirme no app: '+link:'');
 }
 /* @@FIM-DO-MOTOR@@ — daqui para CIMA é o motor puro que scripts/test.py
    extrai e roda no Node. Mover uma função para baixo desta linha a tira dos

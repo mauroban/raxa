@@ -16,8 +16,9 @@ Em **Ajustes → Confirmação de presença**: liga o interruptor, escolhe o **d
 7v7, 18 + 3; 11v11, 20 + 3. E o **endereço da quadra** (D-179): enquanto o admin digita, aparecem
 até cinco sugestões de lugares e endereços (busca do OpenStreetMap, sem cadastro, D-180); um toque
 escolhe, e o app guarda o endereço legível e a coordenada. Também aceita texto livre. O endereço
-aparece embaixo da data no cartão do próximo racha como link que abre o Google Maps, e vai no texto
-do compartilhamento com o link do mapa. Sem endereço, nada aparece.
+aparece embaixo da data no cartão do próximo racha como link que abre o Google Maps. No texto do
+compartilhamento ele ainda **não** vai: fica para quando a busca funcionar com o Google Maps
+(D-182). Sem endereço, nada aparece.
 
 **Mais de um racha na semana** (D-170): **+ Outro dia na semana** acrescenta uma ocorrência (dia e
 hora próprios; o ✕ tira). O padrão é uma vez por semana. As vagas e o "abre N dias antes" são da
@@ -46,8 +47,8 @@ O cartão **Próximo racha** é a aba Racha enquanto não há racha em andamento
   (cor + riscos, como na presença; some com os níveis fechados). O contador de cada lista ("Gol ·
   2/3", "Linha · 12/12") fica só no título dela (D-181). O corte é visual: quem está dentro
   tem o chip aceso; abaixo, em cinza, **Espera · N**.
-- **Compartilhar** gera o texto pronto para o grupo (data, endereço da quadra com o link do mapa
-  quando há, Gol, Linha 12/14 com os nomes numerados, espera, e o endereço do app). O grupo vira
+- **Compartilhar** gera o texto pronto para o grupo (data, Gol, Linha 12/14 com os nomes numerados,
+  espera, e o endereço do app; o endereço da quadra fica de fora por enquanto, D-182). O grupo vira
   espelho do app, não o contrário.
 
 Quem ainda não tem perfil nesta liga vê antes o cartão **Quem é você nesta liga?** (seção 5): sem

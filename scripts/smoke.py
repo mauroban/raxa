@@ -2032,7 +2032,7 @@ step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez; en
   render();h=els['#app'].innerHTML;
   if(!/class="tiny mapa" href="https:\/\/www\.google\.com\/maps\/search\/\?api=1&amp;query=Rua%20da%20Quadra%2C%2010%20-%20Centro"/.test(h)||!/>Rua da Quadra, 10 - Centro</.test(h))throw new Error('cartao sem o link do mapa: '+h.slice(h.indexOf('Próximo racha'),h.indexOf('Próximo racha')+400));
   const txt=textoChamada(l,ch,'L');
-  if(!/^Racha [^\n]+\nRua da Quadra, 10 - Centro\nhttps:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Rua%20da%20Quadra%2C%2010%20-%20Centro\n\nGol /.test(txt))throw new Error('texto do grupo sem endereco e mapa: '+txt.slice(0,200));
+  if(/Rua da Quadra|maps/.test(txt))throw new Error('o texto do grupo nao leva o endereco por enquanto (D-182): '+txt.slice(0,200));
   l.cfg.chamada.local='';
   if(/class="tiny mapa"/.test(chamadaCard(l))||/maps/.test(textoChamada(l,ch,'L')))throw new Error('sem endereco, nada de mapa');
   /* busca com sugestoes (D-180): o resultado do geocodificador vira uma linha legivel; escolher grava endereco + coordenada */

@@ -202,3 +202,16 @@ o número dela ("Espera · 1") para não perder o "+1 na espera".
 **Onde:** `chamadaCard` em `index.html` · `scripts/smoke.py` ·
 [Confirmação de presença §2](../produto/confirmacao-de-presenca.md) · [Interface §3 e §4](../produto/interface.md).
 
+<a id="d-182"></a>
+### D-182 · O endereço fica fora do texto do grupo até a busca ser do Google Maps
+**Quando:** 2026-09-14.
+**O quê:** `textoChamada` volta a não levar o endereço nem o link do mapa; o campo, a coordenada e
+o link no cartão (D-179, D-180) continuam.
+**Por quê:** o texto vai para o grupo inteiro e é a cara do racha; um endereço vindo do
+OpenStreetMap pode sair incompleto ou com nome estranho, e não dá para checar antes de enviar.
+No cartão o admin vê e corrige; na mensagem, não. Entra quando a busca for do Google Places.
+**Descartado:** mandar só quando a coordenada veio de uma sugestão (o problema é o texto, não a
+origem); mandar só o link (sem o nome legível, não diz nada no grupo).
+**Onde:** `textoChamada` em `index.html` · `scripts/test.py` [20] · `scripts/smoke.py` ·
+[Confirmação de presença §1 e §2](../produto/confirmacao-de-presenca.md).
+

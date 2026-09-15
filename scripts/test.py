@@ -753,7 +753,7 @@ console.log('\n[20] chamada: proxima data, abertura, corte e espera (D-165)');
   liga.cfg.chamada=chamadaNorm(Object.assign({},liga.cfg.chamada,{local:'  Rua X, 1 '}),liga.cfg.format);
   ok(liga.cfg.chamada.local==='Rua X, 1'&&chamadaNorm({},5).local==='','endereco aparado; sem endereco e vazio');
   ok(mapaUrl('Rua X, 1')==='https://www.google.com/maps/search/?api=1&query=Rua%20X%2C%201','link universal do Google Maps');
-  ok(/^Racha qui 17\/09 · 19h\nRua X, 1\nhttps:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Rua%20X%2C%201\n\nGol /.test(textoChamada(liga,{dia,hora:'19:00'},'L')),'texto do grupo com endereco e mapa logo abaixo da data');
+  ok(/^Racha qui 17\/09 · 19h\n\nGol /.test(textoChamada(liga,{dia,hora:'19:00'},'L')),'texto do grupo sem o endereco, por enquanto (D-182)');
   liga.cfg.chamada.local='';
 }
 
