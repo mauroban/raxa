@@ -588,23 +588,27 @@ quadra) ou tirá-lo; tirar é mais simples e esses dois já contam o goleiro de 
 <a id="d-188"></a>
 ### D-188 · A aba Jogador de Stats fala do nível: hoje, melhor ou calibrando, e o que andou no período
 **Quando:** 2026-09-15.
-**O quê:** o card da pessoa ganha dois cartões (na grade `.rates`, logo abaixo dos tiles), na função
-que se está lendo (Linha/Gol, D-135): **Nível na linha / no gol** — o nome do nível de hoje em caixa alta com o mini-badge de cor/divisão na frente e, embaixo,
-"calibrando · 7/15 partidas", "melhor: Ouro 3" ou "no melhor nível" (quem ainda não tem nível vê um
-traço e "calibrando · 7/15 partidas") — e **N divisões no período** (▲/▼ colorido, 0 quando
-não mudou) com "de → para" em texto embaixo. O "de" e o "para" são o nível **no começo e no fim do período**
-(`nivelApos`: o "de onde" da primeira mudança registrada depois do instante; sem mudança, o nível de
-hoje), a mesma régua da D-155. O racha a racha / mês a mês / ano a ano mostra o mini-badge do nível
+**O quê:** o card da pessoa ganha, depois das posições nos rankings, a seção **Nível na linha / no gol**
+(a função que se está lendo, D-135): o título diz o que o nível fez no período — "▲ 5 divisões ·
+Bronze 2 → Ouro 1" ou "Prata 3 o período todo" — e embaixo o **gráfico da trajetória** (`grafNivel`):
+a escada no eixo y (um badge por patente, faixa tingida na cor dela, linha fina por divisão; só as
+patentes por onde a pessoa passou, ao menos duas, 14 px por divisão) e o tempo no eixo x; a linha em
+**degraus**, cada patamar na cor da patente da hora, com contorno de giz (prata e diamante sumiam na
+própria faixa), um ponto por mudança e o de hoje maior no fim. Embaixo, "melhor nível: Ouro 3" ou
+"calibrando · 7/15" quando há o que dizer. O "de" e o "para" são o nível **no começo e no fim do
+período** (`nivelApos`: o "de onde" da primeira mudança registrada depois do instante; sem mudança,
+o nível de hoje), a mesma régua da D-155. O racha a racha / mês a mês / ano a ano mostra o mini-badge do nível
 no fim de cada grupo (▲/▼ quando mudou dentro dele; `statsGrupos` passou a guardar `fim`), e o
 partida a partida marca a partida em que o nível mudou, com a seta e o badge novo ao lado do placar.
 Tudo some com as patentes fechadas.
 **Por quê:** "a página de stats do jogador não fala nada sobre o nível dele" — o badge do cabeçalho
 era a única menção, e o nível é o coração do produto. O período já quebrava a história em rachas e
 meses; faltava dizer o que o nível fez nela.
-**Descartado:** o badge grande de metal no cartão (ficou pesado e desalinhado do vizinho; a
-primeira versão do mesmo dia); mostrar a distância para o próximo corte ou o Elo (§1 de patentes: o número não
-existe para o jogador); um gráfico de nível ao longo do tempo (o mini-badge por grupo já conta a
-trajetória, sem um segundo gráfico ao lado do Momento); repetir o bloco na aba Racha.
-**Onde:** `nivelHtml`, `ppRow`, linhas dos grupos em `viewStats`; `nivelApos`, `statsGrupos` em
+**Descartado:** dois cartões de "nível hoje" e "divisões no período" ao lado dos de ritmo (as duas
+primeiras versões do mesmo dia: o badge grande ficou pesado e desalinhado, e o nível de hoje já está
+no cabeçalho — "o que seria interessante é um gráfico de variação da patente, badges no y, tempo no
+x"); mostrar a distância para o próximo corte ou o Elo (§1 de patentes: o número não
+existe para o jogador); uma curva suave no lugar dos degraus (o nível não é contínuo); repetir o bloco na aba Racha.
+**Onde:** `nivelHtml`, `ppRow`, linhas dos grupos em `viewStats`; `grafNivel`, `nivelApos`, `statsGrupos` em
 `index.html` · `scripts/smoke.py` (passo "D-188") · [Stats §2](../produto/stats.md).
 

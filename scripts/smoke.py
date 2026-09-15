@@ -990,17 +990,19 @@ step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que an
   const vis0=l.cfg.rankVisibility,who0=S.ui.statsWho,tab0=S.ui.tab;
   l.cfg.rankVisibility='todos';S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();
   let h=els['#app'].innerHTML;
-  if(!/rate lvl/.test(h)||!/nível na linha|nível no gol/.test(h))throw new Error('sem o cartão de nível na aba Jogador');
-  if(temPatente(l,p,'L')&&!/divis(ão|ões) no período/.test(h))throw new Error('sem o cartão do período');
-  if(!/calibrando|melhor: |no melhor nível|aparece ao fim/.test(h))throw new Error('o cartão não diz nem calibrando nem melhor nível');
-  if(/1[0-9]{3}/.test(h.match(/rate lvl[\s\S]{0,600}/)[0]))throw new Error('número de Elo vazou no cartão de nível');
+  if(!/Nível na linha|Nível no gol/.test(h))throw new Error('a aba Jogador não fala do nível');
+  const pap=papelJogador(l,'sempre',eu);
+  if(temPatente(l,p,pap)&&!/class="lvchart"/.test(h))throw new Error('sem o gráfico da trajetória do nível');
+  if(temPatente(l,p,pap)&&!/divis(ão|ões)|o período todo/.test(h))throw new Error('o título não diz o que o nível fez no período');
+  if(!temPatente(l,p,pap)&&!/calibrando · /.test(h))throw new Error('sem nível: devia dizer calibrando');
+  if(/1[0-9]{3}/.test((h.match(/Nível n[ao] [\s\S]{0,400}/)||[''])[0].replace(/<[^>]+>/g,'')))throw new Error('número de Elo vazou no bloco de nível');
   /* nivelApos: antes da primeira mudança registrada é o "de onde" dela; sem mudança é o nível de hoje */
   const mv=[...l.matches].filter(m=>!m.voided&&(m.moves||[]).length).sort((a,b)=>a.ts-b.ts)[0];
   if(mv){const x=mv.moves[0];if(nivelApos(l,x.pid,x.role||'L',mv.ts-1)!==x.from)throw new Error('nivelApos antes da mudança devia ser o "de onde"')}
   if(nivelApos(l,eu,'L',Date.now()+1)!==p.L.rank)throw new Error('nivelApos depois de tudo devia ser o nível de hoje');
   const adm=l.players.filter(q=>q.role==='admin');l.cfg.rankVisibility='admin';adm.forEach(q=>q.role='jogador');
   const me0=S.me.name;S.me.name='ninguem_'+Date.now();render();h=els['#app'].innerHTML;
-  if(/rate lvl/.test(h))throw new Error('com as patentes fechadas o cartão de nível some');
+  if(/lvchart|Nível na linha|Nível no gol/.test(h))throw new Error('com as patentes fechadas o bloco de nível some');
   S.me.name=me0;adm.forEach(q=>q.role='admin');l.cfg.rankVisibility=vis0;S.ui.statsWho=who0;
   S.ui.tab='cfg';render();h=els['#app'].innerHTML;
   if(souAdmin(l)&&(!/class="sw on" data-a="toggleCfg"|class="sw " data-a="toggleCfg"/.test(h)||!/class="cfgn"/.test(h)))throw new Error('ajustes em linhas: interruptor e campo curto (D-189)');

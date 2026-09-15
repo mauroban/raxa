@@ -780,11 +780,26 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rate span{display:block;font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-top:4px}
 .rate small{display:block;font-size:11px;color:var(--mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate small.up{color:var(--ok)} .rate small.dn{color:var(--bad)}
-/* cartões de nível (D-188): mesma anatomia dos vizinhos; o nome do nível em
-   caixa alta com o mini-badge de cor/divisão na frente */
-.rate.lvl b{display:flex;align-items:center;gap:7px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rate.lvl b .pdot{height:20px;width:22px;border-radius:5px}.rate.lvl b .pdot i{height:12px}
-.rate.lvl b.up{color:var(--ok)} .rate.lvl b.dn{color:var(--bad)}
+/* trajetória do nível (D-188): escada no y (um badge por patente, faixa tingida,
+   uma linha fina por divisão), tempo no x, linha em degraus na cor da patente */
+.lvchart{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:8px;align-items:start}
+.lvchart .yax{display:grid;grid-auto-rows:calc(var(--row)*3)}
+.lvchart .yax>div{display:flex;align-items:center;justify-content:flex-end}
+.lvchart .yax .pat{font-size:10px;padding:3px 7px;min-width:0}
+.lvchart .plot{position:relative;height:var(--h);margin-right:8px;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--row) - 1px),var(--line) calc(var(--row) - 1px),var(--line) var(--row))}
+.lvchart .band{position:absolute;left:0;right:0;border-radius:5px;background:color-mix(in srgb,var(--pc) 16%,transparent)}
+.lvchart svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lvchart svg path{fill:none;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.lvchart svg .halo{stroke:var(--chalk);stroke-width:4.5}
+.lvchart svg .seg{stroke-width:2.4}
+.lvchart .dot{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--pc);border:2px solid var(--chalk);transform:translate(-50%,-50%);z-index:2}
+.lvchart .dot.end{width:15px;height:15px;box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 45%,transparent)}
+.lvchart .lvx{position:relative;height:13px;margin-right:8px}
+.lvchart .lvx span{position:absolute;top:0;font-size:9.5px;color:var(--mute2);transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lvchart .lvx span:first-child{transform:none}.lvchart .lvx span:last-child{transform:translateX(-100%)}
+.k2 .lvnota{text-transform:none;letter-spacing:0;font-weight:500;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k2 .lvnota .up{color:var(--ok);font-weight:700}.k2 .lvnota .dn{color:var(--bad);font-weight:700}
 /* seta + mini-badge do nível numa linha de racha/partida */
 .lvg{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:11px;vertical-align:middle}
 .lvg.up{color:var(--ok)} .lvg.dn{color:var(--bad)}
@@ -2384,6 +2399,52 @@ function grafMomento(arr,pct,lab,opts){
     ${arr.map((r,i)=>`<div class="col ${i===n-1?'cur':''}"><span class="dot ${ps[i]<0?'bad':''}" style="bottom:${y(ps[i]).toFixed(2)}%"></span><b class="lbl ${ps[i]>0?'ok':ps[i]<0?'bad':''} ${ps[i]<0?'dn':'up'}" style="bottom:${y(ps[i]).toFixed(2)}%">${fmtP(ps[i])}</b></div>`).join('')}</div>
   <div class="chartx">${arr.map((r,i)=>`<span>${n<=8||i%2===(n-1)%2?lab(r)+(sub?`<small>${sub(r)}</small>`:''):''}</span>`).join('')}</div>
   <div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>% de vitória acima do esperado</span><span><i class="avg"></i>jogou o que o nível dizia</span>${sub?'<span><i style="background:var(--mute2);width:14px;height:2px;border-radius:0;vertical-align:2px"></i>aproveitamento embaixo</span>':''}</div>`;
+}
+/* Trajetória do nível (D-188): a escada no eixo y — um badge por patente, três
+   divisões por faixa, a faixa tingida na cor da patente — e o tempo no eixo x.
+   A linha é em degraus (o nível é um estado, não uma curva): cada patamar na
+   cor da patente em que a pessoa estava, com o contorno de giz para a prata
+   e o diamante não sumirem na própria faixa; um ponto a cada mudança; o de
+   hoje maior, no fim. Só as patentes por onde a pessoa passou (e ao menos
+   duas), para o degrau ter altura de se ver.                               */
+function grafNivel(liga,pid,role,ms){
+  const p=P(liga,pid);if(!p||!ms.length||!temPatente(liga,p,role))return '';
+  const ord=[...ms].filter(m=>!m.voided).sort((a,b)=>a.ts-b.ts);
+  let ini=ord[0].ts,fim=ord[ord.length-1].ts;if(fim<=ini)fim=ini+1;
+  const pts=[{ts:ini,r:nivelApos(liga,pid,role,ini-1),ini:true}];
+  ord.forEach(m=>{const x=(m.moves||[]).find(y=>y.pid===pid&&(y.role||'L')===role);if(x)pts.push({ts:m.ts,r:clamp(x.rank,0,TOP),de:clamp(typeof x.from==='number'?x.from:x.rank-(x.dir||0),0,TOP)})});
+  const ultimo=pts[pts.length-1].r;
+  const rs=pts.map(x=>x.r);
+  let lo=patOf(Math.min(...rs))*3,hi=patOf(Math.max(...rs))*3+2;
+  if(hi-lo<5){if(hi<TOP)hi=Math.min(TOP,hi+3);else lo=Math.max(0,lo-3)}
+  const ROW=14,H=(hi-lo+1)*ROW;
+  const X=ts=>((ts-ini)/(fim-ini)*100),Y=r=>(hi-r+.5)*ROW;
+  const bandas=[];for(let k=patOf(hi);k>=patOf(lo);k--)bandas.push(k);
+  const yax=bandas.map(k=>`<div>${patBadgePat(liga,k*3)}</div>`).join('');
+  const faixas=bandas.map(k=>`<div class="band" style="--pc:${PATFILL[k]};top:${(hi-(k*3+2))*ROW}px;height:${3*ROW}px"></div>`).join('');
+  /* degraus: patamar na cor da patente, subida/descida de giz */
+  let halo='',segs='';
+  pts.forEach((a,i)=>{
+    const xb=i<pts.length-1?X(pts[i+1].ts):100,ya=Y(a.r);
+    halo+=`M${X(a.ts).toFixed(2)},${ya}H${xb.toFixed(2)}`;
+    segs+=`<path class="seg" style="stroke:${patColor(a.r)}" d="M${X(a.ts).toFixed(2)},${ya}H${xb.toFixed(2)}"/>`;
+    if(i<pts.length-1)halo+=`V${Y(pts[i+1].r)}`;
+  });
+  const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const dots=pts.slice(1).map(x=>`<span class="dot" style="--pc:${patColor(x.r)};left:${X(x.ts).toFixed(2)}%;top:${Y(x.r)}px" title="${dd(x.ts)} · ${x.r>x.de?'subiu':'caiu'} para ${esc(rankLabel(liga,x.r))}"></span>`).join('')
+    +`<span class="dot end" style="--pc:${patColor(ultimo)};left:100%;top:${Y(ultimo)}px" title="${esc(rankLabel(liga,ultimo))}"></span>`;
+  /* rótulos do tempo: quatro marcas; hora numa noite só, dia/mês no resto, mês/ano em anos */
+  const span=fim-ini,fmt=ts=>{const d=new Date(ts);
+    return span<36*3600000?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+      :span<400*86400000?dd(ts):MESES_CURTOS[d.getMonth()]+'/'+String(d.getFullYear()).slice(2)};
+  const ticks=[0,1/3,2/3,1].map(f=>`<span style="left:${(f*100).toFixed(1)}%">${fmt(ini+span*f)}</span>`).join('');
+  return `<div class="lvchart" style="--row:${ROW}px;--h:${H}px">
+    <div class="yax">${yax}</div>
+    <div class="plot">${faixas}
+      <svg viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="halo" d="${halo}"/>${segs}</svg>
+      ${dots}</div>
+    <div></div><div class="lvx">${ticks}</div>
+  </div>`;
 }
 /* Movimentos de nível num conjunto de partidas (D-155): por pessoa e função,
    o nível ANTES da primeira mudança e DEPOIS da última, na ordem do tempo —
@@ -4217,26 +4278,20 @@ function viewStats(liga){
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
-  /* --- o nível da pessoa (D-188): a aba não dizia nada sobre ele além do
-     badge do cabeçalho. Dois cartões na linguagem pública (patente e divisão,
-     nunca o número): HOJE — o badge, e o melhor nível ou a calibração — e
-     NO PERÍODO — quantas divisões andou e de onde para onde (D-155: nível no
-     começo e no fim do período, não o de hoje menos as setas).           */
+  /* --- o nível da pessoa no período (D-188): o gráfico da trajetória — o
+     de hoje já está no cabeçalho. O título diz quantas divisões andou e de
+     onde para onde (nível no começo e no fim do período, D-155); embaixo, o
+     melhor nível de sempre ou a calibração, quando há o que dizer.         */
   const nivelHtml=(()=>{
-    if(!vePat(liga)||!p)return '';
+    if(!vePat(liga)||!p||!ms.length)return '';
     const t=rt(p,papel),tem=temPatente(liga,p,papel),onde=papel==='G'?'no gol':'na linha';
-    /* os dois cartões têm a mesma anatomia do `.rate`: número grande, rótulo,
-       nota — o nível vai em texto com o mini-badge de cor/divisão na frente */
-    const hoje=tem?`<div class="rate lvl"><b>${patDot(liga,t.rank)}${esc(patName(liga,t.rank))} ${divOf(t.rank)}</b><span>nível ${onde}</span>
-        <small>${calibrando(liga,p,t)?'calibrando · '+calTxt(liga,t):(t.peak||0)>t.rank?'melhor: '+esc(rankLabel(liga,t.peak)):'no melhor nível'}</small></div>`
-      :`<div class="rate lvl"><b class="muted">—</b><span>nível ${onde}</span>
-        <small>calibrando · ${calTxt(liga,t)}</small></div>`;
-    if(!tem||!ms.length)return `<div class="rates" style="grid-template-columns:1fr">${hoje}</div>`;
+    if(!tem)return `<div class="hr"></div><div class="k2" style="margin-top:0">Nível ${onde}</div><div class="tiny muted">calibrando · ${calTxt(liga,t)}</div>`;
     const ini=Math.min(...ms.map(m=>m.ts)),fim=Math.max(...ms.map(m=>m.ts));
     const de=nivelApos(liga,who,papel,ini-1),para=nivelApos(liga,who,papel,fim),n=para-de;
-    const per2=`<div class="rate lvl"><b class="num ${n>0?'up':n<0?'dn':''}">${n>0?'▲ '+n:n<0?'▼ '+(-n):'0'}</b><span>${Math.abs(n)===1?'divisão':'divisões'} no período</span>
-        <small>${n?esc(rankLabel(liga,de))+' → '+esc(rankLabel(liga,para)):esc(rankLabel(liga,para))+' o período todo'}</small></div>`;
-    return `<div class="rates">${hoje}${per2}</div>`})();
+    const nota=n?`<span class="${n>0?'up':'dn'}">${n>0?'▲':'▼'} ${Math.abs(n)} ${Math.abs(n)===1?'divisão':'divisões'}</span> · ${esc(rankLabel(liga,de))} → ${esc(rankLabel(liga,para))}`:`${esc(rankLabel(liga,para))} o período todo`;
+    const pe=calibrando(liga,p,t)?`calibrando · ${calTxt(liga,t)}`:(t.peak||0)>t.rank?`melhor nível: ${esc(rankLabel(liga,t.peak))}`:'';
+    return `<div class="hr"></div><div class="sec" style="margin-top:0"><div class="k2"><span>Nível ${onde}</span><span class="tiny lvnota">${nota}</span></div>
+      ${grafNivel(liga,who,papel,ms)}${pe?`<div class="tiny muted" style="margin-top:6px">${pe}</div>`:''}</div>`})();
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
@@ -4280,9 +4335,9 @@ function viewStats(liga){
         :`<div class="tile" style="--tc:var(--gold)"><b class="num">${me.gols}</b><span>gols</span></div>
       <div class="tile" style="--tc:var(--coral)"><b class="num">${MINS(me.min)}</b><span>minutos</span></div>`}
     </div>
-    ${nivelHtml}
     ${ratesHtml}
     ${posHtml}
+    ${nivelHtml}
     ${grupos.length&&(grupos.length>1||tipo==='sempre')?`<div class="hr"></div>
       <div class="k2" style="margin-top:0">${tituloG}</div>
       ${vePat(liga)?grafMomento(grupos,overPct,labG,{nota:grupoDe==='racha'?'por racha':grupoDe==='mes'?'por mês':'por ano',sub:g=>aprDe(g.v,g.e,g.jogos)+'%'})

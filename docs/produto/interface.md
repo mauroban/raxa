@@ -65,7 +65,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Partida ao vivo | relógio + 2 colunas (placar + goleiro + 4 de linha) + "entram no próximo" (2 linhas) + "depois" (1 linha) + gols do jogo; o placar fica na metade de cima e a barra Fim embaixo |
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
 | Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
-| Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + os 2 cartões de nível; posições e partida a partida rolam |
+| Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + posições; o gráfico da trajetória do nível e o partida a partida rolam |
 | Ajustes | liga com o código + Níveis (quem vê, 5 nomes) + o topo da Chamada até a dobra; cada ajuste é **uma linha de 44–58 px** (rótulo à esquerda, controle à direita); Partida, Contestação, Aparência, Dados e Registro rolam |
 
 Quando a tela é de 500 px de largura as colunas não aumentam de número; só o nome cabe inteiro.
