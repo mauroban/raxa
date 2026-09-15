@@ -813,7 +813,8 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   if(viewEscada(l).indexOf('Elo — só o admin vê')>=0)throw new Error('quem nao e admin nao pode ver o elo cru');
   /* D-175: a linha da escada nao carrega V/E/D nem segunda linha; e uma linha por pessoa */
   {const h=viewEscada(l);if(/\d+V \d+E \d+D/.test(h))throw new Error('a escada nao mostra V/E/D (D-175)');
-   if(!/class="rank um"/.test(h)||/class="meta"/.test(h))throw new Error('linha da escada devia ser de uma linha so')}
+   if(!/class="rank um"/.test(h)||/class="meta"/.test(h))throw new Error('linha da escada devia ser de uma linha so');
+   if(/⏳ \d+\/\d+ partidas/.test(h))throw new Error('na escada o calibrando e so o numero, sem "partidas" (D-175)')}
   const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
   if(m.result!==antes)throw new Error('lancador corrigiu resultado');
   const r0=eu.L.rank;A.opSet({dataset:{pid:eu.id,r:'L',s:'13',back:'ficha'}});

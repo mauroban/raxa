@@ -1559,6 +1559,7 @@ function calibrando(liga,p,tr){
 /* texto do que falta calibrar, no idioma da liga */
 const calMeta=liga=>liga.cfg.matchMode==='unica'?{n:liga.cfg.calRachas,u:'rachas',de:tr=>tr.sessions||0}:{n:liga.cfg.calGames,u:'partidas',de:tr=>tr.games||0};
 const calTxt=(liga,tr)=>{const c=calMeta(liga);return c.de(tr)+'/'+c.n+' '+c.u};
+const calNum=(liga,tr)=>{const c=calMeta(liga);return c.de(tr)+'/'+c.n};   // só o número: na escada, o nome não abrevia (D-175)
 function updateRank(liga,p,tr){
   tr=tr||p.L;
   const cfg=liga.cfg,before=tr.rank;
@@ -3879,7 +3880,7 @@ function viewEscada(liga){
     <div class="card" style="padding:0">${semNivel.map(p=>{const tr=rt(p,role);return `<div class="rank um" data-a="pSheet" data-id="${p.id}">
       <span class="pat" style="--pc:var(--mute);min-width:32px;justify-content:center"><b>⏳</b></span>
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(liga,p)}</div></div>
-      <div class="lado"><span class="prov">${calTxt(liga,tr)}</span>${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}</div>
+      <div class="lado"><span class="prov" title="calibrando: ${calTxt(liga,tr)}">⏳ ${calNum(liga,tr)}</span>${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}</div>
       </div>`}).join('')}</div>
     <div class="tiny muted" style="margin:6px 2px 10px">Nível aparece depois de ${calMeta(liga).n} ${calMeta(liga).u} — ou se o admin definir um na ficha.</div>`:'';
   if(!ps.length)return html+(semNivel.length?blocoSem:`<div class="empty"><div class="big">Ninguém no gol ainda</div>Quem pegar no gol ganha um nível de goleiro próprio.</div>`);
@@ -3898,7 +3899,7 @@ function viewEscada(liga){
       ${patDivOnly(liga,tr.rank)}
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}${role==='G'?' 🧤':''}${papelMarca(liga,p)}</div></div>
       <div class="lado">
-        ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calTxt(liga,tr)}</span>`:''}
+        ${calibrando(liga,p,tr)?`<span class="prov" title="ainda calibrando: ${calTxt(liga,tr)}">⏳ ${calNum(liga,tr)}</span>`:''}
         ${souAdmin(liga)?`<span class="num" style="opacity:.4;font-size:10px" title="Elo — só o admin vê">${Math.round(tr.elo)}</span>`:''}
         <span style="color:var(--mute);font-size:18px">›</span>
       </div>

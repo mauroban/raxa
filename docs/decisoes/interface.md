@@ -428,8 +428,9 @@ informação que quem lança já via.
 **Quando:** 2026-09-14.
 **O quê:** a linha da escada perde a segunda linha de meta. Fica: badge da divisão, nome (com 🧤 e a
 marca de papel quando couber) e, à direita, só o que muda a leitura — "⏳ 3/15" enquanto calibra e o
-Elo cru para o admin — mais a seta. Altura de 52 para 44 px (`.rank.um`); de 15 para 17 nomes numa
-tela de 360 × 780. "Sem nível ainda" segue o mesmo desenho, com a contagem à direita.
+Elo cru para o admin — mais a seta. O calibrando é só o número ("⏳ 3/15", `calNum`; a palavra
+"partidas" fica no title e na nota de rodapé), para o nome nunca abreviar em 360 px. Altura de 52
+para 44 px (`.rank.um`); de 15 para 17 nomes numa tela de 360 × 780. "Sem nível ainda" segue o mesmo desenho, com a contagem à direita.
 **Por quê:** o V/E/D ao lado do nome era contabilidade numa tela que é identidade (princípio 1): a
 escada diz quem está em que nível, e a campanha mora na ficha e em Stats. Menos texto por linha,
 mais nomes por tela, e a leitura por seção (Ferro, Bronze…) fica limpa.
