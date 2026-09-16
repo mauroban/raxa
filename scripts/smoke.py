@@ -690,7 +690,9 @@ step('opinar sobre o nivel: um toque salva, a entrada e media/mediana e o histor
   if(Math.round(p.L.base)!==Math.round((stepMid(10)+stepMid(4))/2))throw new Error('duas opinioes: base devia ser a media');
   if(!p.L.dv)throw new Error('duas patentes de distancia: devia marcar divergencia');
   A.pSheet({dataset:{id:p.id}});
-  if(!/Opiniões muito diferentes/.test(els['#sheet'].innerHTML))throw new Error('ficha nao avisou a divergencia');
+  if(!/Opiniões muito diferentes \(/.test(els['#sheet'].innerHTML))throw new Error('ficha nao avisou a divergencia com os extremos (admin)');
+  {const me=l.players.find(x=>x.id===eu),r0=me.role;me.role='lancador';A.pSheet({dataset:{id:p.id}});const hd=els['#sheet'].innerHTML;   // D-197: para quem não modera, o aviso vem sem as patentes extremas
+   if(!/Opiniões muito diferentes: as partidas/.test(hd)||/muito diferentes \(/.test(hd))throw new Error('lançador devia ver o aviso sem os extremos');me.role=r0;}
   /* D-121: não existe anular a opinião de outra pessoa — nem botão na ficha, nem ação */
   if(A.opDel)throw new Error('a acao de anular opiniao de outro nao deveria existir');
   if(/data-a="opDel"/.test(els['#sheet'].innerHTML))throw new Error('a ficha nao deveria ter o ✕ de anular');
@@ -1639,9 +1641,12 @@ step('ficha: admin ve o botao com a contagem; a folha lista por posicao; nao-adm
    rebuildAll(l);A.opDe({dataset:{id:eu}});const h2=$('#sheet').innerHTML;
    if(!/oprow2 destoa/.test(h2)||!/\d divisões abaixo da opinião média/.test(h2))throw new Error('Ferro contra três Prata devia estar marcado como destoante');
    A.opDe({dataset:{id:outros[0].id}});if(/oprow2 destoa/.test($('#sheet').innerHTML))throw new Error('Prata igual à entrada não destoa');
-   me.role='lancador';A.pSheet({dataset:{id:alvo.id}});const h3=$('#sheet').innerHTML;   // não-admin: vê o consolidado; a nota dele ainda vale
-   if(!/class="opcnt"/.test(h3)||!/Prata <b class="num">3<\/b>/.test(h3)||!/Ferro <b class="num">1<\/b>/.test(h3))throw new Error('a ficha devia dizer quantas de cada patente, para jogador comum');
+   me.role='moderador';A.pSheet({dataset:{id:alvo.id}});const h3=$('#sheet').innerHTML;   // moderador: vê o consolidado (D-197); a nota dele ainda vale
+   if(!/class="opcnt"/.test(h3)||!/Prata <b class="num">3<\/b>/.test(h3)||!/Ferro <b class="num">1<\/b>/.test(h3))throw new Error('a ficha devia dizer quantas de cada patente, para moderador');
    if(outros.some(o=>h3.indexOf(o.name)>=0&&h3.indexOf(o.name)>h3.indexOf('opcnt')))throw new Error('o consolidado não leva nome');
+   me.role='lancador';A.pSheet({dataset:{id:alvo.id}});const h4=$('#sheet').innerHTML;   // lançador e jogador: só "4 opiniões" e a entrada (D-197)
+   if(/class="opcnt"/.test(h4)||/Ferro <b class="num">/.test(h4))throw new Error('lançador não devia ver quantas de cada patente');
+   if(!/4 opiniões/.test(h4))throw new Error('lançador devia ver a contagem');
    me.role='admin';}
   me.role='jogador';A.opDe({dataset:{id:eu}});h=$('#sheet').innerHTML;
   if(h.includes('não valem'))throw new Error('quem nao e admin nao abre a folha');

@@ -568,3 +568,26 @@ igual); esconder o consolidado de quem lança (a D-194 acabou de abri-lo para to
 **Onde:** painel de nível em `A.pSheet` (`index.html`) · `scripts/smoke.py` (passos D-127 e D-125)
 · [Patentes §8](../produto/patentes.md) · [Contas e permissões](../produto/contas-e-permissoes.md).
 
+<a id="d-197"></a>
+### D-197 · Quantas de cada patente e os extremos: só para moderador ou acima
+**Quando:** 2026-09-16.
+**O quê:** o consolidado "Ferro 1 · Bronze 2 · Prata 4" da ficha (D-194) passa a aparecer só para
+**moderador e admin**. Jogador e lançador ficam com a entrada e "7 opiniões". O aviso de divergência
+segue para todos, mas as duas patentes extremas ("Ferro × Ouro") só para moderador ou acima; os
+outros leem "Opiniões muito diferentes: as partidas mandam mais". Sem atraso e sem mínimo de
+opiniões. Nada muda no motor nem na folha do admin (D-124).
+**Por quê:** "às vezes a pessoa sai dando nota na hora e fica claro" — em grupo pequeno, a contagem
+mudando logo depois de alguém opinar entrega quem deu a nota, e os extremos entregam a mesma coisa
+com 3 opiniões. O moderador já é quem vê papéis e quem manda no quê (D-141); é o grupo que precisa
+enxergar a distribuição para conversar. O resto fica "por fora" do motor de decisão, que é a
+solução mais simples. Custo assumido: o avaliado perde o "4 de 7 me deram Prata" da D-194; a
+entrada e a contagem já dizem que a nota é sólida.
+**Descartado:** mínimo de 5 opiniões para mostrar (com "Prata 4 · Ferro 1" a pessoa ainda deduz o
+Ferro pelo contexto; não dá anonimato de verdade em grupo pequeno); entrar na contagem só na
+meia-noite dois dias depois da opinião (mistura o que entrou no dia, mas exige o mesmo filtro no
+contador, guardar a nota anterior de quem altera e a entrada continuaria mudando na hora — muita
+regra para um vazamento que continua existindo); opinião alterada esperando (alterar na hora não
+é problema: só confunde quem tenta deduzir autor).
+**Onde:** `miolo` no painel de nível de `A.pSheet` (`index.html`) · `scripts/smoke.py` (passos
+D-95 e D-124) · [Patentes §8](../produto/patentes.md).
+

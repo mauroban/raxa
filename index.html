@@ -6587,7 +6587,8 @@ const A={
         ${adm?`<button class="btn sm sp" data-a="reativar" data-id="${p.id}">Reativar</button>`:''}</div></div>`:''}
       ${ver?`<div class="lv2">${cardNivel('L','Linha')}${cardNivel('G','🧤 Gol')}</div>`:''}
       ${ver?(()=>{const t=rt(p,role),ops=opsAtivas(l,t).filter(o=>o.e!==null).sort((a,b)=>b.e-a.e),minha=(t.op||[]).find(o=>o.by===eu);
-        const extremos=ops.length>1?`${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))}`:'';
+        const miolo=souModerador(l);   // D-197: quantas de cada patente e os extremos só para moderador ou acima — em grupo pequeno, "Ferro 1" logo depois de alguém opinar entrega quem foi
+        const extremos=miolo&&ops.length>1?` (${esc(rankLabel(l,stepOf(ops[ops.length-1].e)))} × ${esc(rankLabel(l,stepOf(ops[0].e)))})`:'';
         return `<div class="ps-panel">
         <div class="k">Nível ${role==='G'?'no gol':'na linha'}</div>
         ${role==='G'?`<div class="tiny muted" style="margin:-2px 0 8px">No gol, na dúvida, não opine: o app acha o lugar em ${calMeta(l).n} ${calMeta(l).u}.</div>`:''}
@@ -6595,10 +6596,10 @@ const A={
           <div class="lbl">ENTRADA</div>
           <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões'):'sem opinião'}</span></div>
         </div>
-        ${/* quantas de cada patente (D-194): o consolidado, sem nome — para qualquer papel */''}
-        ${ops.length?`<div class="opcnt">${(()=>{const c=[0,0,0,0,0];ops.forEach(o=>c[patOf(stepOf(o.e))]++);
+        ${/* quantas de cada patente (D-194): o consolidado, sem nome — só moderador ou acima (D-197); os outros ficam com a entrada e a contagem */''}
+        ${miolo&&ops.length?`<div class="opcnt">${(()=>{const c=[0,0,0,0,0];ops.forEach(o=>c[patOf(stepOf(o.e))]++);
           return c.map((n,i)=>n?`<span title="${esc(l.cfg.patNames[i])}"><i class="swatch" style="--pc:${PATFILL[i]}"></i>${esc(l.cfg.patNames[i])} <b class="num">${n}</b></span>`:'').join('')})()}</div>`:''}${/* o "hoje" já está no cartão do topo (badge, partidas, V/E/D); opinião individual não aparece (D-125) */''}
-        ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
+        ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes${extremos}: as partidas mandam mais.</div>`:''}
         ${/* sem o botão "Sua opinião: X · mudar ›" (D-196): ao lado do consolidado dos outros, ele induzia a mudar a nota pela dos outros; opina-se só em "Minhas opiniões" */''}
       </div>`})():''}
       <div class="stat four">
