@@ -657,3 +657,20 @@ mudar" — sem a linha, a aba não dizia qual ano estava aberto.
 **Onde:** `navPer` em `viewStats` (`index.html`) · `scripts/smoke.py` (passo "D-149") ·
 [Stats §2](../produto/stats.md).
 
+<a id="d-193"></a>
+### D-193 · Taxas por tempo em "por hora", com uma casa decimal
+**Quando:** 2026-09-15.
+**O quê:** toda taxa por tempo passa de "a cada 10 min" (duas casas) para **por hora** (uma casa):
+gols por hora e sofridos por hora nos cartões de ritmo e na média da liga, os rankings Gols por
+hora, Menos vazado ("sofridos por hora"), Gols de goleiro por hora e +/− por hora, a linha da ficha
+do jogador e o "Menos vazado" do racha ("3,1/h"). `por10` virou `porHora`, `pm10` virou `pmHora`.
+Ordem dos rankings e pisos (1 h na função) não mudam: é a mesma razão em outra unidade.
+**Por quê:** "os números de gols a cada 10 minutos estão todos ficando entre 0 e 1" — 0,39 contra
+0,31 ninguém compara; 2,3 contra 1,8 se lê de relance. Na quadra a pessoa joga 40 a 60 min por
+racha, então gols por hora fica perto de "gols por noite", que é como todo mundo já pensa; e a
+unidade passa a bater com o piso de 1 hora dos rankings.
+**Descartado:** gols por partida como taxa única (partidas têm durações diferentes, D-109);
+manter duas casas por hora (precisão que o dado não tem).
+**Onde:** `porHora`, `pmHora`, `listasRk`, cartões de ritmo e rankings em `viewStats`, ficha em
+`A.pSheet` (`index.html`) · `scripts/smoke.py` · [Stats §2](../produto/stats.md).
+

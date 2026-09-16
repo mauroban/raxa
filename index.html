@@ -249,7 +249,7 @@ label.f .k{display:block;margin-bottom:6px}
 .pdot{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:16px;width:18px;border-radius:4px;flex:0 0 auto;color:var(--ink,var(--onink))}
 .pdot i{display:block;width:2px;height:9px;border-radius:1px;background:currentColor;box-shadow:0 1px 0 var(--emb,rgba(255,255,255,.4))}
 .swatch{width:9px;height:9px;border-radius:3px;background:var(--pc);flex:0 0 auto}
-/* uma bola ⚽ por gol na "partida a partida" — a mesma da linha "gols a cada 10 min";
+/* uma bola ⚽ por gol na "partida a partida" — a mesma da linha "gols por hora";
    gol contra é a MESMA bola com os gomos vermelhos e o branco intacto (D-107). Emoji não
    aceita color, e a bola muda por aparelho: no celular (Android/iPhone) é preta e branca,
    no Windows é azul e branca. Dois passos no filter cobrem os dois:
@@ -2203,10 +2203,10 @@ function inseparaveis(liga,st){
    `minL` é o tempo NA FUNÇÃO que está sendo lida: quem chama decide.      */
 const MIN_RITMO=60*60000;                 // ritmo só com 1 h em quadra: menos que isso é sorte
 /* Rankings de período (D-145): estatística de longo prazo, não total. Tudo é
-   taxa — por partida ou a cada 10 min — menos presença e tempo em quadra,
+   taxa — por partida ou por hora — menos presença e tempo em quadra,
    que são o próprio volume (D-148). Piso: `minR` rachas no período (metade dos que houve);
    as taxas por tempo pedem ainda 1 h na função, senão é sorte.             */
-const pm10=x=>x.min>0?x.pm/(x.min/600000):0;                 // +/− a cada 10 min em quadra
+const pmHora=x=>x.min>0?x.pm/(x.min/3600000):0;              // +/− por hora em quadra
 const overPct=x=>x.jogos?x.over/x.jogos*100:0;               // pontos % acima do esperado, por partida
 /* Patente de uma linha de estatística (D-159): a da função em que a pessoa
    mais jogou no período; sem patente, −1. É o desempate de todo ranking. */
@@ -2227,10 +2227,10 @@ function listasRk(J,PA,minL,minR,liga){
   duplas.sort((x,y)=>y.pct-x.pct||y.n-x.n);
   return {todos,
     rachas:[...todos].sort((a,b)=>b.nR-a.nR||dp(a,b)||b.jogos-a.jogos),
-    pm:base.filter(x=>x.min>=MIN_RITMO).sort((a,b)=>pm10(b)-pm10(a)||dp(a,b)||b.v-a.v),
+    pm:base.filter(x=>x.min>=MIN_RITMO).sort((a,b)=>pmHora(b)-pmHora(a)||dp(a,b)||b.v-a.v),
     pct:base.filter(x=>x.jogos).sort((a,b)=>aprDe(b.v,b.e,b.jogos)-aprDe(a.v,a.e,a.jogos)||dp(a,b)||b.jogos-a.jogos),
     over:base.filter(x=>x.jogos).sort((a,b)=>Math.round(overPct(b))-Math.round(overPct(a))||dp(a,b)||b.jogos-a.jogos),   // rendeu acima do esperado (D-143); empate no % mostrado
-    golsGk:base.filter(x=>x.golsGk&&x.minGk>=MIN_RITMO).sort((a,b)=>b.golsGk/b.minGk-a.golsGk/a.minGk||dp(a,b)),   // gol feito do gol, a cada 10 min no gol (D-110)
+    golsGk:base.filter(x=>x.golsGk&&x.minGk>=MIN_RITMO).sort((a,b)=>b.golsGk/b.minGk-a.golsGk/a.minGk||dp(a,b)),   // gol feito do gol, por hora no gol (D-110)
     min:todos.filter(x=>x.min>0).sort((a,b)=>b.min-a.min||dp(a,b)),                     // tempo em quadra total: é volume, como a presença (D-148)
     ritmo:base.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a)||dp(a,b)),
     seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||dp(a,b)||b.v-a.v),
@@ -3028,11 +3028,12 @@ function cfgChamadaCard(liga){
   </div>`;
 }
 const chamadaResumo=liga=>{const c=chamadaCfg(liga);return c?` · confirmação ${(c.dias||[]).map(o=>DOW_ABR[o.dow]+' '+String(o.hora).replace(/:00$/,'h')).join(', ')} · ${c.linha} na linha + ${c.gol} no gol`:''};
-/* minutos: guardados em ms de tempo de jogo; ritmo sempre "a cada 10 min" —
-   por minuto dá 0,07 e ninguém lê isso                                        */
+/* minutos: guardados em ms de tempo de jogo; ritmo sempre "por hora", com uma
+   casa decimal (D-193) — a cada 10 min dava 0,39 e por minuto 0,07, e ninguém
+   lê isso; por hora fica perto de "gols por noite", que é como se pensa       */
 const MINS=ms=>Math.round((ms||0)/60000);
 const fmtMin=ms=>{const m=MINS(ms);return m>=90?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min'};
-const por10=(n,ms)=>ms>0?(n/((ms||0)/600000)).toFixed(2).replace('.',','):'—';
+const porHora=(n,ms)=>ms>0?(n/((ms||0)/3600000)).toFixed(1).replace('.',','):'—';
 const iniciais=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 /* Quantos rachas a liga ja teve. Sai do historico (sessionId das partidas), e
    nao de um contador: racha cancelado ou em andamento nao mente na conta.   */
@@ -4222,7 +4223,7 @@ function viewStats(liga){
 
   /* --- ritmo com a média da liga ao lado (D-108): o número sozinho não diz
      se 0,39 é muito ou pouco; a liga inteira no mesmo período diz          */
-  const r10=(n,ms)=>ms>0?n/(ms/600000):null;
+  const r10=(n,ms)=>ms>0?n/(ms/3600000):null;   // por hora, só para comparar com a liga
   const ligaGols=todosP.reduce((a,x)=>a+x.gols,0),ligaMin=todosP.reduce((a,x)=>a+minLP(x),0);
   const ligaSof=todosP.reduce((a,x)=>a+x.sofridos,0),ligaMinGk=todosP.reduce((a,x)=>a+x.minGk,0);
   const cmp=(meu,liga,maiorMelhor)=>meu===null||liga===null||meu===liga?'':((meu>liga)===maiorMelhor?'up':'dn');
@@ -4234,10 +4235,10 @@ function viewStats(liga){
   const ligaJogos=todosP.reduce((a,x)=>a+x.jogos,0);
   const naLinha=papel==='L'&&minLP(me)>=PISO_FUNCAO,noGol=papel==='G'&&me.minGk>=PISO_FUNCAO;
   const cartoes=[
-    naLinha?`<div class="rate"><b class="num">${por10(me.gols,minLP(me))}</b><span>gols / 10 min</span>
-        <small class="${cmp(r10(me.gols,minLP(me)),r10(ligaGols,ligaMin),true)}">média da liga: ${por10(ligaGols,ligaMin)}</small></div>`:null,
-    noGol?`<div class="rate"><b class="num">${por10(me.sofridos,me.minGk)}</b><span>sofridos / 10 min</span>
-        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">média da liga: ${por10(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small>
+    naLinha?`<div class="rate"><b class="num">${porHora(me.gols,minLP(me))}</b><span>gols por hora</span>
+        <small class="${cmp(r10(me.gols,minLP(me)),r10(ligaGols,ligaMin),true)}">média da liga: ${porHora(ligaGols,ligaMin)}</small></div>`:null,
+    noGol?`<div class="rate"><b class="num">${porHora(me.sofridos,me.minGk)}</b><span>sofridos por hora</span>
+        <small class="${cmp(r10(me.sofridos,me.minGk),r10(ligaSof,ligaMinGk),false)}">média da liga: ${porHora(ligaSof,ligaMinGk)} · ${fmtMin(me.minGk)}</small>
         ${me.golsGk?`<small style="color:var(--gold)">${pl(me.golsGk,'gol')} feito${me.golsGk===1?'':'s'} do gol</small>`:''}</div>`:null,
     naLinha&&me.jogos?`<div class="rate"><b class="num">${dec2(me.gols/me.jogos)}</b><span>gols por partida</span>
         <small class="${cmp(me.gols/me.jogos,ligaGols/Math.max(1,ligaJogos),true)}">média da liga: ${dec2(ligaGols/Math.max(1,ligaJogos))}</small></div>`:null
@@ -4250,7 +4251,7 @@ function viewStats(liga){
       ? [['gk',RP.gk,x=>1/(1+x.sofridos/x.minGk),'menos vazado'],['golsgk',RP.golsGk,x=>x.golsGk/x.minGk,'gols do gol'],
          ['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,
          ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol']]
-      : [longa?['pm',RP.pm,pm10,'+/−']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,
+      : [longa?['pm',RP.pm,pmHora,'+/−']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
@@ -4437,7 +4438,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
     ${rendeu.length?rkSec('rrendeu','up','var(--ok)','Rendeu acima do esperado','mín. 3 partidas',rendeu,x=>x.over,x=>(x.over>0?'+':'')+x.over.toFixed(1),x=>(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j):''}
     ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
-    ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk)+'<small>/10 min</small>',x=>fmtMin(x.minGk)+' no gol'):''}
+    ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk)+'<small>/h</small>',x=>fmtMin(x.minGk)+' no gol'):''}
     ${gc.length?rkSec('rgc','<i class="gball own">⚽</i>',null,'Gol contra','',gc,x=>x.gc,x=>pl(x.gc,'gol')+' contra'):''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
@@ -4554,12 +4555,12 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
          porque lá V/E/D é um só por noite (D-45).                          */
       const SECS={
         /* tudo taxa, menos presença (D-145); o piso "mín. N de M rachas" vai na dica de cada um */
-        pm:rkSec('pm','bars','var(--cyan)','+/− a cada 10 min',`gols a favor − contra em quadra · ${minTxt} · 1 h`,rkPm,pm10,x=>taxaFmt(pm10(x),2),x=>pmTxt(x.pm)+' em '+fmtMin(x.min),semPiso+' e 1 h em quadra ainda.'),
+        pm:rkSec('pm','bars','var(--cyan)','+/− por hora',`gols a favor − contra em quadra · ${minTxt} · 1 h`,rkPm,pmHora,x=>taxaFmt(pmHora(x),1),x=>pmTxt(x.pm)+' em '+fmtMin(x.min),semPiso+' e 1 h em quadra ainda.'),
         pres:rkSec('pres','cal','var(--lime)','Mais presenças','',rkRachas,x=>x.nR,x=>pl(x.nR,'racha'),x=>pl(x.jogos,'partida')),
         min:rkSec('min','clock','var(--coral)','Mais tempo em quadra','',rkMin,x=>x.min,x=>fmtMin(x.min),x=>Math.round(MINS(x.min)/Math.max(1,x.nR))+' min por racha'),
-        ritmo:rkSec('ritmo','zap','var(--white)','Gols a cada 10 min',`de linha · ${minTxt} · 1 h`,rkRitmo,x=>x.gols/minL(x),x=>por10(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha',semPiso+', 1 h de linha e gol marcado ainda.'),
-        gk:rkSec('gk','shield','var(--cyan)','Menos vazado',`sofridos/10 min · ${minTxt} · 1 h no gol`,rkGk,x=>1/(1+x.sofridos/x.minGk),x=>por10(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol',semPiso+' e 1 h no gol ainda.'),
-        golsgk:rkGolsGk.length?rkSec('golsgk','shield','var(--gold)','Gols de goleiro a cada 10 min',`feitos de dentro do gol · ${minTxt} · 1 h no gol`,rkGolsGk,x=>x.golsGk/x.minGk,x=>por10(x.golsGk,x.minGk),x=>pl(x.golsGk,'gol')+' em '+fmtMin(x.minGk)+' no gol'):'',
+        ritmo:rkSec('ritmo','zap','var(--white)','Gols por hora',`de linha · ${minTxt} · 1 h`,rkRitmo,x=>x.gols/minL(x),x=>porHora(x.gols,minL(x)),x=>x.gols+' gols em '+fmtMin(minL(x))+' de linha',semPiso+', 1 h de linha e gol marcado ainda.'),
+        gk:rkSec('gk','shield','var(--cyan)','Menos vazado',`sofridos por hora · ${minTxt} · 1 h no gol`,rkGk,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol',semPiso+' e 1 h no gol ainda.'),
+        golsgk:rkGolsGk.length?rkSec('golsgk','shield','var(--gold)','Gols de goleiro por hora',`feitos de dentro do gol · ${minTxt} · 1 h no gol`,rkGolsGk,x=>x.golsGk/x.minGk,x=>porHora(x.golsGk,x.minGk),x=>pl(x.golsGk,'gol')+' em '+fmtMin(x.minGk)+' no gol'):'',
         seq:rkSec('seq','flame','var(--coral)','Maior sequência',`3 ou mais · ${minTxt}`,rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.'),
         pct:rkSec('pct','up','var(--ok)','Maior aproveitamento',`pontos (V=3, E=1) · ${minTxt}`,rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),semPiso+' ainda.'),
         /* o mesmo critério do racha e dos destaques do mês (D-13), em todo período (D-143), por partida (D-145): pontos % de vitória além do que o confronto indicava; nasce do nível, some com as patentes fechadas */
@@ -6598,7 +6599,7 @@ const A={
         <div><b class="num">${MINS(j.min)}</b><span>min</span></div>
       </div>
       ${jt.length?`<div class="tiny" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--line2);border-radius:10px;color:var(--mute)">🔗 Joga ${Math.round(jt[0].pct*100)}% das partidas com <b>${esc(nameOf(l,jt[0].a===p.id?jt[0].b:jt[0].a))}</b> — os dois têm o mesmo nível por construção. Separe-os por alguns rachas para o app medir cada um.</div>`:''}
-      <div class="tiny muted" style="margin:6px 0 10px">⚽ ${por10(p.goals,j.min)} gols a cada 10 min${j.minGk?` · 🧤 ${por10(j.sofridos,j.minGk)} sofridos a cada 10 min em ${fmtMin(j.minGk)} no gol`:''}</div>
+      <div class="tiny muted" style="margin:6px 0 10px">⚽ ${porHora(p.goals,j.min)} gols por hora${j.minGk?` · 🧤 ${porHora(j.sofridos,j.minGk)} sofridos por hora em ${fmtMin(j.minGk)} no gol`:''}</div>
       ${nomeia?`<div class="trow">
         <div class="lbl">Costuma ir ao gol<small>entra no rodízio de goleiro por padrão</small></div>
         <button class="sw ${PD.gk?'on':''}" data-a="pdGk" role="switch" aria-checked="${PD.gk?'true':'false'}" aria-label="costuma ir ao gol"></button>

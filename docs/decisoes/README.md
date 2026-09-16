@@ -147,6 +147,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-158](stats-e-destaques.md#d-158) · Sem os gráficos de colunas por mês e por ano no painel da liga (o mês a mês / ano a ano já conta isso)
 - [D-159](stats-e-destaques.md#d-159) · Empate: primeiro o de maior patente; no chip do mês a mês, o nome e um "+N"
 - [D-160](stats-e-destaques.md#d-160) · Sem o interruptor "Sem goleiros": o goleiro conta em tudo; rankings de goleiro nunca filtrados
+- [D-193](stats-e-destaques.md#d-193) · Taxas por tempo em "por hora", com uma casa decimal (era a cada 10 min)
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas
 - [D-191](stats-e-destaques.md#d-191) · Linha do tempo do nível só em Ano e Sempre, sempre com quatro marcos; sem os títulos "Nível na linha" e "Mês a mês"
 - [D-190](stats-e-destaques.md#d-190) · Momento sem o aproveitamento embaixo do eixo; resumo do grupo sem minutos
