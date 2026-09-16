@@ -424,3 +424,20 @@ escopo — passariam pela simulação de convergência, D-82).
 **Onde:** `applyMatch` (`m.pre` dos titulares, `m.papel`), `matchFacts`, `revNivel` em `index.html` ·
 `scripts/test.py` [17] · `scripts/smoke.py` (revisão: uma linha por papel, titular sem Elo de largada) ·
 [Contestação e correção](../produto/contestacao-e-correcao.md).
+
+<a id="d-195"></a>
+### D-195 · Partida de segundos continua contando inteira
+**Quando:** 2026-09-15.
+**O quê:** nada muda. No modo de várias curtas, uma partida encerrada pelo apito conta com peso 1
+no Elo, no V/E/D e na calibração, dure 12 segundos ou 12 minutos. O trecho mínimo (`stintMin`)
+segue valendo só para trechos cortados por substituição.
+**Por quê:** nos dados reais há partidas de 12, 18 e 24 segundos com gol — toque errado no "Fim"
+logo depois do gol. A proposta era perguntar "12 segundos. Contar?" ou anular com desfazer. Ficou
+de fora: "no calor do racha vai ter marcação errada mesmo; precisamos aproveitar os resultados".
+Um gol marcado é um gol que aconteceu; o que se errou foi o apito, e a partida seguinte continua
+dali. Perguntar no meio do racha é uma tela a mais para quem já está sem mão (§0 de ideias futuras).
+**Descartado:** pergunta ao encerrar abaixo do trecho mínimo; anulação automática com desfazer;
+peso proporcional à duração (mudaria a régua de toda partida curta por causa das erradas).
+**Onde:** `splitStints` em `index.html` (sem mudança) · [Ideias futuras §5](../produto/ideias-futuras.md)
+para o cansaço, anotado na mesma conversa.
+

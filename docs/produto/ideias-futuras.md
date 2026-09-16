@@ -82,3 +82,16 @@ Sequência plausível: primeiro base de rachas e quadras usando de graça (a cha
 inteiro para o app), depois assinatura de quadra (2), depois pagamento e comissão (1 e 4) quando
 houver volume, e contratação de jogador (seção 2) por último porque depende do grafo entre ligas
 ter densidade.
+
+## 5. Cansaço no motor de nível (a revisar com mais dados)
+
+Nos dois primeiros rachas reais (29/08 e 12/09 de 2026, 26 partidas) o time que **ficou em quadra**
+por ter vencido a anterior venceu 42% das vezes contra 53% esperado pelo nível; o lado com 5 min ou
+mais a mais nas pernas, 40% contra 54%. Sinal, não prova (19 e 10 partidas). O Elo trata toda
+partida como igual, então quem fica perde mais pontos do que deveria e quem entra descansado ganha
+mais. **Decisão (2026-09-15): não mexer agora; revisar com ~100 partidas**, medindo o desconto com
+o `converge.py`. E a régua para quando chegar lá: o cansaço **impacta uns mais que outros, e
+aguentar melhor é mérito de quem aguenta** — o ajuste, se vier, desconta o cansaço *médio* do lado
+que ficou, nunca o de cada pessoa; quem rende acima disso continua ganhando por isso. Os trechos já
+gravam tudo que a medição precisa (quem estava, quanto tempo, resultado, chance de largada).
+
