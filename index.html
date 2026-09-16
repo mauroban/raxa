@@ -4073,10 +4073,12 @@ function viewStats(liga){
      ao atual (D-142/D-149).                                                */
   const labMes=mesSel&&mesSel!==MES_ATUAL()?mesLabel(mesSel,true):'Mês';
   const labAno=anoSel&&anoSel!==ANO_ATUAL()?String(anoSel):'Ano';
-  /* setas ‹ › do período: uma linha só, para racha, mês e ano (D-149) */
+  /* setas ‹ › do período: uma linha só, para racha, mês e ano (D-149). Com um
+     período só, a linha fica (o nome do ano/mês/racha se vê) e as duas setas
+     ficam apagadas até haver outro para onde ir (D-192).                  */
   const navPer=(()=>{
     if(tipo==='sempre')return '';
-    const ks=chavesPer(liga,tipo);if(ks.length<2)return '';
+    const ks=chavesPer(liga,tipo);if(!ks.length)return '';
     const cur=tipo==='racha'?per.slice(6):tipo==='mes'?mesSel:String(anoSel);
     const i=ks.indexOf(cur),ant=i>=0&&i<ks.length-1?ks[i+1]:null,prox=i>0?ks[i-1]:null;
     const act=tipo==='racha'?'statsRacha':tipo==='mes'?'statsMes':'statsAno';

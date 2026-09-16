@@ -645,3 +645,15 @@ dizem nada. Os dois títulos eram óbvios e, um em cima do outro com o Momento, 
 **Onde:** `linhaNivel`, `nivelHtml` e o bloco dos grupos em `viewStats` (`index.html`) ·
 `scripts/smoke.py` (passos "D-185" e "D-188") · [Stats §2](../produto/stats.md).
 
+<a id="d-192"></a>
+### D-192 · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas
+**Quando:** 2026-09-15.
+**O quê:** a linha do período abaixo do filtro (‹ racha › / ‹ mês › / ‹ ano ›, D-149) passa a aparecer
+mesmo quando só existe um período daquele tipo — só some quando não há nenhum. As duas setas ficam
+apagadas (`disabled`) até haver outro racha, mês ou ano para onde ir.
+**Por quê:** "em ano, só tem 2026 por enquanto: em vez de não mostrar o ano, mostre, sem a opção de
+mudar" — sem a linha, a aba não dizia qual ano estava aberto.
+**Descartado:** mostrar só o nome sem as setas (a linha mudaria de forma quando chegasse o segundo).
+**Onde:** `navPer` em `viewStats` (`index.html`) · `scripts/smoke.py` (passo "D-149") ·
+[Stats §2](../produto/stats.md).
+

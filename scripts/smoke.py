@@ -1119,6 +1119,8 @@ step('periodo por mes e por ano: setas escolhem outro, o botao volta ao atual, g
     /* um grupo só é o próprio período: no ano com um mês de partidas o "mês a mês" não aparece */
     A.statsPer({dataset:{v:'ano'}});
     if(/Mês a mês/.test(els['#app'].innerHTML))throw new Error('ano com um mes so nao devia ter o mes a mes');
+    /* D-192: um ano só ainda mostra a linha ‹ 2026 › com as duas setas apagadas */
+    {const h3=els['#app'].innerHTML,ks=chavesPer(l,'ano');if(ks.length===1&&(!/class="pernav"/.test(h3)||(h3.match(/data-a="statsAno"[^>]*disabled/g)||[]).length!==2))throw new Error('um ano so: a linha do periodo devia aparecer com as setas apagadas')}
     /* tocar num ano da lista abre o ano */
     A.statsPer({dataset:{v:'sempre'}});A.statsAno({dataset:{v:String(ano0)}});
     if(statsPeriodo(l)!==ano0)throw new Error('a linha do ano a ano devia abrir o ano');
