@@ -532,7 +532,8 @@ mudança.
 **Quando:** 2026-09-15.
 **O quê:** duas leituras, nenhuma mexe no motor. (1) Na folha *"Opiniões que Fulano deu"* (D-124,
 só admin), a nota que fica a **4 divisões ou mais da entrada** da pessoa avaliada ganha fundo
-dourado e a distância ("6 divisões da entrada"). A régua é a entrada (média aparada), não o Elo de
+dourado e o texto "muito abaixo (ou acima) do que os outros deram" — a tela não fala em divisões:
+"X divisões da entrada" só era claro para quem pediu a régua. A régua é a entrada (média aparada), não o Elo de
 hoje; 4 divisões = 267 pontos, mais de uma patente e um terço. (2) Na ficha, abaixo de "7 opiniões",
 o **consolidado sem nome**: quantas de cada patente ("Ferro 1 · Bronze 2 · Prata 4"), com a cor de
 cada uma — para **qualquer papel**, onde as patentes estão abertas.
