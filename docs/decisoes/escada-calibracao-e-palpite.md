@@ -552,3 +552,19 @@ vingança".
 **Onde:** `destoa` em `A.opDe`, `.opcnt` em `A.pSheet` (`index.html`) · `scripts/smoke.py` bloco
 D-124 · [Patentes §8](../produto/patentes.md).
 
+<a id="d-196"></a>
+### D-196 · A ficha não tem mais "Sua opinião: X · mudar ›"
+**Quando:** 2026-09-15.
+**O quê:** sai da ficha o botão que dizia a sua nota e levava ao cartão da pessoa em Minhas
+opiniões ("Dar a minha opinião ›" / "Sua opinião: Ouro · mudar ›", D-127). O painel de nível fica
+com a entrada, a contagem e quantas de cada patente (D-194). Opinar, ou rever a própria nota, é só
+pelo card Minhas opiniões na aba Jogadores. O atalho `A.opIr` continua existindo para a folha do
+admin.
+**Por quê:** "isso induz e facilita a mudar a opinião baseada na opinião dos outros" — com o
+consolidado logo acima ("Prata 4 · Ouro 2"), o botão punha a sua nota ao lado da dos outros e um
+toque para alinhar. A régua da opinião é o que o time ganha com a pessoa, não a média da liga.
+**Descartado:** manter só "Dar a minha opinião ›" para quem ainda não deu (o consolidado ancora
+igual); esconder o consolidado de quem lança (a D-194 acabou de abri-lo para todo mundo).
+**Onde:** painel de nível em `A.pSheet` (`index.html`) · `scripts/smoke.py` (passos D-127 e D-125)
+· [Patentes §8](../produto/patentes.md) · [Contas e permissões](../produto/contas-e-permissoes.md).
+

@@ -6599,7 +6599,7 @@ const A={
         ${ops.length?`<div class="opcnt">${(()=>{const c=[0,0,0,0,0];ops.forEach(o=>c[patOf(stepOf(o.e))]++);
           return c.map((n,i)=>n?`<span title="${esc(l.cfg.patNames[i])}"><i class="swatch" style="--pc:${PATFILL[i]}"></i>${esc(l.cfg.patNames[i])} <b class="num">${n}</b></span>`:'').join('')})()}</div>`:''}${/* o "hoje" já está no cartão do topo (badge, partidas, V/E/D); opinião individual não aparece (D-125) */''}
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
-        ${podeOpinar(l)&&eu&&eu!==p.id&&!arq?`<button class="btn sm ghost" data-a="opIr" data-pid="${p.id}" data-r="${role}" style="margin-top:10px">${minha?(minha.e===null?'Você marcou "não sei"':'Sua opinião: '+esc(rankLabel(l,stepOf(minha.e)).split(' ')[0]))+' · mudar ›':'Dar a minha opinião ›'}</button>`:''}
+        ${/* sem o botão "Sua opinião: X · mudar ›" (D-196): ao lado do consolidado dos outros, ele induzia a mudar a nota pela dos outros; opina-se só em "Minhas opiniões" */''}
       </div>`})():''}
       <div class="stat four">
         ${l.cfg.matchMode==='unica'?`<div><b class="num ${j.pm>0?'up':j.pm<0?'dn':''}">${pmTxt(j.pm)}</b><span>+/−</span></div>`:''}
