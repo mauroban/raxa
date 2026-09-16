@@ -6677,7 +6677,7 @@ const A={
     const sec=r=>{const ops=todas.filter(o=>o.r===r).sort((a,b)=>(b.e===null?-1:b.e)-(a.e===null?-1:a.e)||a.nome.localeCompare(b.nome));
       if(!ops.length)return '';
       return `<div class="k" style="margin:12px 0 6px">${r==='G'?'🧤 Gol':'Linha'} · ${pl(ops.length,'opinião','opiniões')}</div>
-        ${ops.map(o=>{const d=destoa(o);return `<div class="oprow2 ${d?'destoa':''}"><div class="who tiny"><button class="lnk" data-a="pSheet" data-id="${o.pid}" data-r="${r}" style="text-decoration:none;color:inherit;font-weight:600">${esc(o.nome)}</button> <span class="muted">· ${data(o.ts)}</span>${d?`<small class="dst">muito ${d<0?'abaixo':'acima'} do que os outros deram</small>`:''}</div>${o.e===null?'<span class="pat none">não sabe</span>':patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`}).join('')}`};
+        ${ops.map(o=>{const d=destoa(o);return `<div class="oprow2 ${d?'destoa':''}"><div class="who tiny"><button class="lnk" data-a="pSheet" data-id="${o.pid}" data-r="${r}" style="text-decoration:none;color:inherit;font-weight:600">${esc(o.nome)}</button> <span class="muted">· ${data(o.ts)}</span>${d?`<small class="dst">${Math.abs(d)} divisões ${d<0?'abaixo':'acima'} da opinião média</small>`:''}</div>${o.e===null?'<span class="pat none">não sabe</span>':patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`}).join('')}`};
     openSheet(`<h2>Opiniões que ${esc(p.name.split(' ')[0])} deu</h2>
       <div class="tiny muted" style="margin-bottom:4px">${PAPEL[p.role]||'Jogador'}${vale?' · valem na entrada de cada um':' · <b>não valem</b>: hoje é Jogador (D-121) — voltam a valer se for promovido'}${todas.length?'':' · ainda não opinou sobre ninguém'}</div>
       ${sec('L')}${sec('G')}
