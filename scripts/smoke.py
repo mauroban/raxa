@@ -1633,6 +1633,16 @@ step('ficha: admin ve o botao com a contagem; a folha lista por posicao; nao-adm
   A.opDe({dataset:{id:eu}});h=$('#sheet').innerHTML;
   if(!h.includes(alvo.name)||!h.includes(alvo2.name)||!h.includes('não sabe')||!h.includes('🧤 Gol')||!h.includes('Linha'))throw new Error('a folha devia listar as duas opinioes por posicao');
   if(!h.includes('valem na entrada'))throw new Error('admin: as opinioes valem');
+  /* D-194: nota a 4+ divisões da entrada da pessoa fica marcada; e a ficha mostra quantas de cada patente, para qualquer papel */
+  {const outros=l.players.filter(p=>p.id!==eu&&p.id!==alvo.id).slice(0,3);
+   alvo.L.op=outros.map(o=>({e:1500,by:o.id,ts:Date.now()})).concat([{e:1100,by:eu,ts:Date.now()}]);outros.forEach(o=>o.role='lancador');
+   rebuildAll(l);A.opDe({dataset:{id:eu}});const h2=$('#sheet').innerHTML;
+   if(!/oprow2 destoa/.test(h2)||!/divisões da entrada/.test(h2))throw new Error('Ferro contra três Prata devia estar marcado como destoante');
+   A.opDe({dataset:{id:outros[0].id}});if(/oprow2 destoa/.test($('#sheet').innerHTML))throw new Error('Prata igual à entrada não destoa');
+   me.role='lancador';A.pSheet({dataset:{id:alvo.id}});const h3=$('#sheet').innerHTML;   // não-admin: vê o consolidado; a nota dele ainda vale
+   if(!/class="opcnt"/.test(h3)||!/Prata <b class="num">3<\/b>/.test(h3)||!/Ferro <b class="num">1<\/b>/.test(h3))throw new Error('a ficha devia dizer quantas de cada patente, para jogador comum');
+   if(outros.some(o=>h3.indexOf(o.name)>=0&&h3.indexOf(o.name)>h3.indexOf('opcnt')))throw new Error('o consolidado não leva nome');
+   me.role='admin';}
   me.role='jogador';A.opDe({dataset:{id:eu}});h=$('#sheet').innerHTML;
   if(h.includes('não valem'))throw new Error('quem nao e admin nao abre a folha');
   me.role='admin';const outro=alvo;outro.role='jogador';A.opDe({dataset:{id:outro.id}});h=$('#sheet').innerHTML;

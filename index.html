@@ -850,6 +850,13 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .oprow2 .pat{flex:0 0 96px;width:96px;justify-content:center;box-sizing:border-box}
 .oprow2 .pat.none{background:var(--fill);color:var(--mute);box-shadow:none;font-size:11px}
 .oprow2 .x,.oprow2 .xs{flex:0 0 32px;width:32px}
+/* nota que destoa (D-194): fundo dourado suave e a distância em divisões */
+.oprow2.destoa{background:color-mix(in srgb,var(--gold) 12%,transparent);border-radius:8px;padding-left:6px;padding-right:6px;margin:0 -6px}
+.oprow2 .dst{display:block;color:var(--gold);font-weight:600;font-size:11px}
+/* quantas opiniões de cada patente (D-194): chips pequenos, sem nome */
+.opcnt{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12px;color:var(--mute)}
+.opcnt span{display:inline-flex;align-items:center;gap:5px}
+.opcnt b{color:var(--chalk)}
 /* "Minhas opiniões" (D-95): uma pessoa por vez num cartão; as cinco patentes
    são opções grandes com o badge de metal e o que significam; a lista de
    todos fica embaixo, para conferir e voltar.                              */
@@ -6587,7 +6594,10 @@ const A={
         <div class="lvedit">
           <div class="lbl">ENTRADA</div>
           <div class="ctl">${t.def?patBadge(l,stepOf(t.base)):'<span class="muted">sem nível</span>'}<span class="sub">${ops.length?pl(ops.length,'opinião','opiniões'):'sem opinião'}</span></div>
-        </div>${/* o "hoje" já está no cartão do topo (badge, partidas, V/E/D); opinião individual não aparece (D-125) */''}
+        </div>
+        ${/* quantas de cada patente (D-194): o consolidado, sem nome — para qualquer papel */''}
+        ${ops.length?`<div class="opcnt">${(()=>{const c=[0,0,0,0,0];ops.forEach(o=>c[patOf(stepOf(o.e))]++);
+          return c.map((n,i)=>n?`<span title="${esc(l.cfg.patNames[i])}"><i class="swatch" style="--pc:${PATFILL[i]}"></i>${esc(l.cfg.patNames[i])} <b class="num">${n}</b></span>`:'').join('')})()}</div>`:''}${/* o "hoje" já está no cartão do topo (badge, partidas, V/E/D); opinião individual não aparece (D-125) */''}
         ${t.dv?`<div class="tiny" style="color:var(--gold);margin-top:8px">⚠️ Opiniões muito diferentes (${extremos}): as partidas mandam mais.</div>`:''}
         ${podeOpinar(l)&&eu&&eu!==p.id&&!arq?`<button class="btn sm ghost" data-a="opIr" data-pid="${p.id}" data-r="${role}" style="margin-top:10px">${minha?(minha.e===null?'Você marcou "não sei"':'Sua opinião: '+esc(rankLabel(l,stepOf(minha.e)).split(' ')[0]))+' · mudar ›':'Dar a minha opinião ›'}</button>`:''}
       </div>`})():''}
@@ -6661,10 +6671,13 @@ const A={
     if(!souAdmin(l))return toast('Só o admin vê as opiniões de um membro');
     const todas=opinioesDadas(l,p.id),vale=PODE_OPINAR.includes(p.role||'jogador');
     const data=ts=>ts?new Date(ts).toLocaleDateString('pt-BR'):'';
+    /* nota que destoa (D-194): a 4+ divisões da ENTRADA da pessoa avaliada — quem recebe
+       Ouro e Prata de todo mundo e Bronze de um só tem esse Bronze marcado; só leitura */
+    const destoa=o=>{const q=P(l,o.pid);if(o.e===null||!q||!q[o.r]||!q[o.r].def)return 0;const d=Math.round(Math.abs(o.e-q[o.r].base)/STEP);return d>=4?d:0};
     const sec=r=>{const ops=todas.filter(o=>o.r===r).sort((a,b)=>(b.e===null?-1:b.e)-(a.e===null?-1:a.e)||a.nome.localeCompare(b.nome));
       if(!ops.length)return '';
       return `<div class="k" style="margin:12px 0 6px">${r==='G'?'🧤 Gol':'Linha'} · ${pl(ops.length,'opinião','opiniões')}</div>
-        ${ops.map(o=>`<div class="oprow2"><div class="who tiny"><button class="lnk" data-a="pSheet" data-id="${o.pid}" data-r="${r}" style="text-decoration:none;color:inherit;font-weight:600">${esc(o.nome)}</button> <span class="muted">· ${data(o.ts)}</span></div>${o.e===null?'<span class="pat none">não sabe</span>':patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`).join('')}`};
+        ${ops.map(o=>{const d=destoa(o);return `<div class="oprow2 ${d?'destoa':''}"><div class="who tiny"><button class="lnk" data-a="pSheet" data-id="${o.pid}" data-r="${r}" style="text-decoration:none;color:inherit;font-weight:600">${esc(o.nome)}</button> <span class="muted">· ${data(o.ts)}</span>${d?`<small class="dst">${d} divisões da entrada</small>`:''}</div>${o.e===null?'<span class="pat none">não sabe</span>':patBadgePat(l,stepOf(o.e))}<span class="xs"></span></div>`}).join('')}`};
     openSheet(`<h2>Opiniões que ${esc(p.name.split(' ')[0])} deu</h2>
       <div class="tiny muted" style="margin-bottom:4px">${PAPEL[p.role]||'Jogador'}${vale?' · valem na entrada de cada um':' · <b>não valem</b>: hoje é Jogador (D-121) — voltam a valer se for promovido'}${todas.length?'':' · ainda não opinou sobre ninguém'}</div>
       ${sec('L')}${sec('G')}

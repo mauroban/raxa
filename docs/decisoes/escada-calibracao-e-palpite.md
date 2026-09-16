@@ -527,3 +527,27 @@ mudança.
 **Onde:** `juntaOpinioes` em `index.html` · `scripts/test.py` ("nove opinioes", "oito opinioes",
 "doze opinioes") · [Patentes §"A entrada é feita de opiniões"](../produto/patentes.md).
 
+<a id="d-194"></a>
+### D-194 · Nota que destoa marcada na folha do admin; a ficha diz quantas de cada patente
+**Quando:** 2026-09-15.
+**O quê:** duas leituras, nenhuma mexe no motor. (1) Na folha *"Opiniões que Fulano deu"* (D-124,
+só admin), a nota que fica a **4 divisões ou mais da entrada** da pessoa avaliada ganha fundo
+dourado e a distância ("6 divisões da entrada"). A régua é a entrada (média aparada), não o Elo de
+hoje; 4 divisões = 267 pontos, mais de uma patente e um terço. (2) Na ficha, abaixo de "7 opiniões",
+o **consolidado sem nome**: quantas de cada patente ("Ferro 1 · Bronze 2 · Prata 4"), com a cor de
+cada uma — para **qualquer papel**, onde as patentes estão abertas.
+**Por quê:** olhando os dados reais de uma liga, um avaliador preciso (erro médio de 31 pontos em 17
+notas) deu Ferro a alguém que todos os outros puseram em Prata, dez dias depois das outras notas dele
+e no meio de uma discussão pessoal. A média aparada cortou a nota sozinha — o motor fez o certo sem
+saber o motivo — mas quem administra precisa enxergar isso para conversar, e o consolidado deixa a
+pessoa avaliada ver que a entrada dela é sólida ("4 de 7 me deram Prata"). "Duas patentes" como
+régua era pouco: Bronze de um contra Ouro e Prata dos outros é distorção clara, e passaria.
+**Descartado:** descontar o viés de cada avaliador antes da média (o caso real não era viés, era
+uma nota isolada de quem não tem viés; e a média aparada já segura Marcelo/Serginho); flag de
+divergência mais sensível (jogaria quem recebeu uma nota de vingança para o K de "sem palpite");
+marcar a partir de 2 patentes. E a D-125 tinha descartado "notas sem os nomes" por dedução com 2–3
+opiniões — fica desfeito de propósito: "todo mundo pode ter acesso a esses números, não leva a
+vingança".
+**Onde:** `destoa` em `A.opDe`, `.opcnt` em `A.pSheet` (`index.html`) · `scripts/smoke.py` bloco
+D-124 · [Patentes §8](../produto/patentes.md).
+
