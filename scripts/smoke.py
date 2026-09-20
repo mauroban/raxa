@@ -1426,6 +1426,15 @@ step('partida curta com troca de goleiro: o goleiro de largada e o que comecou, 
     A.editEsc({dataset:{id:m.id}});
     const h=els['#sheet'].innerHTML;
     if(h.indexOf('🧤 '+esc(nameOf(l,leley)))<0)throw new Error('quem comecou no gol nao aparece com a luva em Começaram');
+    /* caminho "nao jogou": tirar quem comecou no gol e por quem entrou pela troca como titular */
+    A.escDel({dataset:{id:m.id,s:'1',pid:leley}});
+    A.escAdd({dataset:{id:m.id,s:'1'}});
+    if(els['#sheet'].innerHTML.indexOf('data-pid="'+jpx+'"')<0)throw new Error('depois de tirar quem comecou no gol, quem entrou pela troca nao aparece em "por alguem"');
+    A.escAddDo({dataset:{id:m.id,s:'1',pid:jpx}});A.escGk({dataset:{id:m.id,s:'1',pid:jpx}});
+    if(!ESC.m.startLineups[1].includes(jpx)||gksIni(ESC.m)[1]!==jpx||matchStints(l,ESC.m)[0].lineups[1].filter(id=>id===jpx).length!==1)throw new Error('por alguem + luva nao deixou quem entrou como titular no gol');
+    A.escDescartar({dataset:{id:m.id}});
+    /* caminho "era outra pessoa" */
+    A.editEsc({dataset:{id:m.id}});
     A.escPick({dataset:{id:m.id,s:'1',pid:leley}});
     if(els['#sheet'].innerHTML.indexOf('data-por="'+jpx+'"')<0)throw new Error('quem entrou pela troca nao e oferecido em "era outra pessoa"');
     A.escSwap({dataset:{id:m.id,s:'1',pid:leley,por:jpx}});
