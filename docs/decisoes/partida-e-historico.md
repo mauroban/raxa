@@ -516,5 +516,10 @@ tinha jogado no gol. Sem o segundo ajuste, trocar Leley por JPx exigiria antes a
 **Descartado:** gravar a largada no trecho único (mudaria o que a ficha e o +/− mostram para partida
 curta: ali a formação final é a certa, todo mundo que pisou em quadra conta); deixar "pôr alguém"
 aceitar quem entrou por troca (a pessoa ficaria duas vezes na escalação).
-**Onde:** `gksIni`, `largadaDaPartida`, `candidatos`, `escSwap` em `index.html` · `scripts/smoke.py`
-(partida curta com troca de goleiro) · [Contestação e correção](../produto/contestacao-e-correcao.md).
+**Complemento (mesmo dia):** partida já gravada com goleiro de largada fora da escalação de largada
+(o que a versão anterior deixava ao tirar quem começou no gol) é consertada ao abrir a correção:
+`normalizaLargada` põe o goleiro na escalação ("estava no gol desde o começo") ou, se ele só chegou
+por uma troca, tira a luva da largada — como mudança do rascunho, para o Salvar gravar.
+**Onde:** `gksIni`, `largadaDaPartida`, `candidatos`, `escSwap`, `normalizaLargada` em `index.html` ·
+`scripts/smoke.py` (partida curta com troca de goleiro; goleiro gravado fora da escalação) ·
+[Contestação e correção](../produto/contestacao-e-correcao.md).

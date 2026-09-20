@@ -1671,9 +1671,23 @@ const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+'
    liga a cada toque — e para desistir sem deixar rastro. Vive fora de `S`:
    rascunho não vai para o disco.                                            */
 let ESC=null;
+/* Goleiro de largada que não está na escalação de largada é um fantasma:
+   aparece na luva de ninguém e some de "pôr alguém" (já está "na partida").
+   Quem estava no gol desde o apito começou a partida — entra na escalação;
+   quem só chegou por uma troca não era o goleiro de largada. Vira mudança
+   do rascunho, para o Salvar gravar (D-200).                                */
+function normalizaLargada(m){
+  const ini=(m.startLineups||m.lineups||[[],[]]).map(x=>(x||[]).slice()),gks=gksIni(m),mud=[];
+  [0,1].forEach(sd=>{const g=gks[sd];if(!g||ini[sd].includes(g))return;
+    if((m.events||[]).some(e=>e.type==='sub'&&e.in===g)){gks[sd]=null;mud.push(m.names[sd]+' começou sem goleiro fixo')}
+    else{ini[sd].push(g);mud.push(nameOf(L(),g)+' estava no gol desde o começo: entrou na escalação de largada')}
+  });
+  if(mud.length){m.startLineups=ini;m.startGks=gks}
+  return mud;
+}
 function rascunhoEsc(m){
   if(!m||!podeCorrigirEsc(m))return null;
-  if(!ESC||ESC.mid!==m.id){ESC={mid:m.id,m:JSON.parse(JSON.stringify(m)),mud:[],nt:null,ng:null};ESC.m.events=eventosComGols(ESC.m)}
+  if(!ESC||ESC.mid!==m.id){ESC={mid:m.id,m:JSON.parse(JSON.stringify(m)),mud:[],nt:null,ng:null};ESC.m.events=eventosComGols(ESC.m);ESC.mud=normalizaLargada(ESC.m)}
   return ESC;
 }
 /* Uma mudança no rascunho: anota o que foi feito, refaz os trechos da cópia

@@ -1449,6 +1449,29 @@ step('partida curta com troca de goleiro: o goleiro de largada e o que comecou, 
     if(m.startGks[1]!==jpx||m.events.some(e=>e.type==='sub'))throw new Error('o Salvar nao gravou');
   }finally{l.matches=l.matches.filter(x=>x.id!=='curta1');rebuildAll(l)}
 });
+step('goleiro de largada gravado fora da escalacao entra nela ao abrir a correcao (D-200)',()=>{
+  const l=L(),ids=ativos(l).map(p=>p.id);
+  const A0=ids.slice(0,5),B0=ids.slice(5,9),jpx=ids[10],ini=Date.now()-7200000;
+  const m={id:'fant1',ts:ini+37000,startedAt:ini,endedAt:ini+37000,sessionId:null,mode:'curtas',names:['A','B'],teamIdx:[0,1],
+    startLineups:[A0.slice(),B0.slice()],startGks:[A0[4],jpx],lineups:[A0.slice(),B0.slice()],gks:[A0[4],jpx],
+    events:[{t:ini+20000,type:'goal',side:0,pid:A0[0],own:false}],goals:[{pid:A0[0],side:0,own:false,t:ini+20000,min:20000}],score:[1,0],result:0,disputes:[],voided:false,
+    stints:[{from:ini,to:ini+37000,dur:37000,w:1,counted:true,lineups:[A0.slice(),B0.slice()],gks:[A0[4],jpx],score:[1,0],result:0,ended:'apito'}]};
+  l.matches.push(m);rebuildAll(l);
+  try{
+    A.editEsc({dataset:{id:m.id}});
+    const h=els['#sheet'].innerHTML;
+    if(!ESC.mud.length||!/estava no gol desde o começo/.test(ESC.mud[0]))throw new Error('o fantasma nao virou mudanca do rascunho');
+    if(h.indexOf('🧤 '+esc(nameOf(l,jpx)))<0||!/Salvar 1 mudança/.test(h))throw new Error('o goleiro nao apareceu em Começaram com a luva e o Salvar');
+    if(ESC.m.startLineups[1].length!==5)throw new Error('o time deveria ter 5 na largada');
+    A.escSalvar({dataset:{id:m.id}});
+    if(!m.startLineups[1].includes(jpx)||m.startGks[1]!==jpx||matchStints(l,m)[0].lineups[1].filter(id=>id===jpx).length!==1)throw new Error('o Salvar nao gravou o goleiro na escalacao');
+    /* e quem chegou por uma troca nao era o goleiro de largada */
+    m.startLineups[1]=B0.slice();m.events.push({t:ini+8000,type:'sub',side:1,out:B0[0],in:jpx,gks:[A0[4],jpx]});m.events.sort((a,b)=>a.t-b.t);
+    A.editEsc({dataset:{id:m.id}});
+    if(gksIni(ESC.m)[1]!==null||!/sem goleiro fixo/.test(ESC.mud[0]))throw new Error('quem entrou por troca nao devia virar titular');
+    A.escDescartar({dataset:{id:m.id}});
+  }finally{l.matches=l.matches.filter(x=>x.id!=='fant1');rebuildAll(l)}
+});
 step('partida antiga nao aceita correcao de escalacao',()=>{
   const l=L(),m={id:'velha',ts:Date.now(),names:['A','B'],score:[1,0],result:0,lineups:[[],[]]};
   l.matches.push(m);
