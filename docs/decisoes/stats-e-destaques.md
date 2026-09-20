@@ -696,3 +696,21 @@ reversível com outro toque — um toque salva); edição durante o racha em and
 **Onde:** `viewSessTimes`, `ondeNaSessao`, `sessTimes`/`sessPick`/`sessAdd`/`sessSet`, `rachaTime`,
 `LOG_TXT.sessTeams` em `index.html` · `scripts/smoke.py` (corrigir os times do racha) ·
 `scripts/visual.py` (tela 27) · [Stats](../produto/stats.md) · [Interface §4](../produto/interface.md).
+
+<a id="d-202"></a>
+### D-202 · Sequência de vitórias zera no empate; sequência de derrotas na ficha
+**Quando:** 2026-09-20.
+**O quê:** em `statsLiga`, empate passa a zerar a sequência de vitórias (`seq`/`best`), como a
+derrota já fazia. Entram `seqD`/`bestD`, a sequência de derrotas atual e a maior do período, zeradas
+por vitória ou empate. A ficha mostra "N vitórias seguidas agora" (verde) ou "N derrotas seguidas
+agora" (vermelho) a partir de 2, e "melhor sequência: N vitórias" / "pior sequência: N derrotas" a
+partir de 3. O ranking Maior sequência continua só de vitórias.
+**Por quê:** a ficha dizia "melhor sequência: 4 vitórias" para uma série V E V V V — o empate era
+transparente por um comentário no código, sem decisão registrada. Quem lê "seguidas" espera sem
+nada no meio, e o dono da ficha não achou as quatro. A sequência de derrotas foi pedida junto: é o
+mesmo número lido do outro lado, e cabe na mesma linha.
+**Descartado:** manter o empate transparente e chamar de "invencibilidade" (é outro número, e não
+foi pedido); ranking de derrotas seguidas (é lista de vergonha, não destaque — fica na ficha de
+quem quiser olhar).
+**Onde:** `statsLiga` (`seq`, `best`, `seqD`, `bestD`), ficha do jogador em `viewStats` em
+`index.html` · `scripts/smoke.py` (V E V V V D D D → 3V, 3D) · [Stats](../produto/stats.md).

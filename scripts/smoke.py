@@ -1027,6 +1027,32 @@ step('ficha da partida conta tempo e gols de quem jogou',()=>{
 });
 step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('reativar partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
+step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a parte (D-202)',()=>{
+  const l=L(),ids=ativos(l).map(p=>p.id),ini=Date.now()-86400000*3;
+  /* uma pessoa nova, sem historico: o que ela tem e so esta serie */
+  const eu='seqp';l.players.push({id:eu,name:'Seq Teste',gk:false,role:'jogador'});
+  const A0=[eu].concat(ids.slice(0,4)),B0=ids.slice(5,10);
+  const feitas=[];
+  /* V E V V V D D D — sem o empate zerar, viraria 4V; com ele, 3V e 3D */
+  'VEVVVDDD'.split('').forEach((r,i)=>{
+    const t0=ini+i*600000,sc=r==='V'?[1,0]:r==='D'?[0,1]:[0,0];
+    const m={id:'seq'+i,ts:t0+300000,startedAt:t0,endedAt:t0+300000,sessionId:'sess-seq',mode:'curtas',names:['A','B'],teamIdx:[0,1],
+      startLineups:[A0.slice(),B0.slice()],startGks:[A0[4],B0[4]],lineups:[A0.slice(),B0.slice()],gks:[A0[4],B0[4]],
+      events:[],goals:[],score:sc,result:stintResult(sc),disputes:[],voided:false,
+      stints:[{from:t0,to:t0+300000,dur:300000,w:1,counted:true,lineups:[A0.slice(),B0.slice()],gks:[A0[4],B0[4]],score:sc,result:stintResult(sc),ended:'apito'}]};
+    l.matches.push(m);feitas.push(m.id)});
+  rebuildAll(l);
+  try{
+    const x=statsLiga(l,'sempre').J[eu];
+    if(x.best!==3)throw new Error('maior sequencia de vitorias deveria ser 3 (o empate zera), deu '+x.best);
+    if(x.seq!==0||x.seqD!==3||x.bestD!==3)throw new Error('sequencia de derrotas errada: seq '+x.seq+' seqD '+x.seqD+' bestD '+x.bestD);
+    const ui0=JSON.stringify(S.ui);
+    S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();   // "trocar jogador": a ficha da pessoa nova
+    const h=els['#app'].innerHTML;
+    S.ui=JSON.parse(ui0);
+    if(!/3 derrotas seguidas agora/.test(h)||!/melhor sequência: 3 vitórias/.test(h)||!/pior sequência: 3 derrotas/.test(h))throw new Error('a ficha nao mostra as sequencias de vitoria e de derrota');
+  }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
+});
 step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que andou no periodo (D-188)',()=>{
   const l=L(),eu=euId(l)||(l.players.find(x=>x.L.games>0)||l.players[0]).id,p=P(l,eu);
   const vis0=l.cfg.rankVisibility,who0=S.ui.statsWho,tab0=S.ui.tab;

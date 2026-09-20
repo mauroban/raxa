@@ -2246,10 +2246,11 @@ function statsLiga(liga,periodo,papel){
   const so=papel===true?'L':(papel==='L'||papel==='G')?papel:null;
   const semGk=papel===true;   // só o interruptor tira o goleiro das parcerias e duelos DOS OUTROS
   const J={},DU={},PA={};
-  /* seq: sequência atual de vitórias (zera em derrota; empate não zera nem soma)
-     best: maior sequência do período · ultimos: últimos 5 resultados, do mais
-     novo para o mais velho · sofridos: gols levados enquanto estava no gol      */
-  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,ultimos:[],min:0,minGk:0,pm:0,over:0});
+  /* seq/best: sequência atual e maior sequência de VITÓRIAS seguidas — empate
+     ou derrota zera (D-202: "seguidas" é sem nada no meio) · seqD/bestD: o
+     mesmo para derrotas · ultimos: últimos 5 resultados, do mais novo para o
+     mais velho · sofridos: gols levados enquanto estava no gol                */
+  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,seqD:0,bestD:0,ultimos:[],min:0,minGk:0,pm:0,over:0});
   const par=(o,a,b)=>{const m=o[a]||(o[a]={});return m[b]||(m[b]={n:0,v:0,e:0,d:0})};
   [...(liga.matches||[])].sort((a,b)=>a.ts-b.ts).forEach(m=>{   // em ordem: sequência depende dela
     if(m.voided||!noPeriodo(m,periodo))return;
@@ -2288,7 +2289,9 @@ function statsLiga(liga,periodo,papel){
       const e=em[pid];if(!contaPartida(liga,m,e.dur,totalDur))continue;
       const x=j(pid),res=m.result==='draw'?'e':(m.result===e.side?'v':'d');
       x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
-      if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq)}else if(res==='d')x.seq=0;
+      if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq);x.seqD=0}
+      else if(res==='d'){x.seqD++;x.bestD=Math.max(x.bestD,x.seqD);x.seq=0}
+      else{x.seq=0;x.seqD=0}
       x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
       if(e.gk)x.gk++;
       if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
@@ -4238,7 +4241,7 @@ function viewStats(liga){
   if(!liga.matches.length)return `${seg}<div class="empty"><div class="big">Nada para contar ainda</div>
     Os números aparecem depois da primeira partida registrada.</div>`;
   const p=who?P(liga,who):null;
-  const me=who&&JP[who]?JP[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,seq:0,best:0,ultimos:[],sofridos:0,min:0,minGk:0,pm:0};
+  const me=who&&JP[who]?JP[who]:{nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,seq:0,best:0,seqD:0,bestD:0,ultimos:[],sofridos:0,min:0,minGk:0,pm:0};
   const av=pid=>`<span class="av">${esc(iniciais(nameOf(liga,pid)))}</span>`;
 
   /* --- a liga no período --- */
@@ -4431,7 +4434,13 @@ function viewStats(liga){
       </div>
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
-    ${me.seq>=2||me.best>=3?`<div class="tiny" style="margin:8px 0 2px">${me.seq>=2?`<span style="color:var(--ok)">${ic('flame')} ${me.seq} vitórias seguidas agora</span>`:''}${me.seq>=2&&me.best>=3?' · ':''}${me.best>=3?`<span class="muted">melhor sequência: ${me.best} vitórias</span>`:''}</div>`:''}
+    ${(()=>{/* sequências (D-202): a de agora (vitórias em verde, derrotas em vermelho) e as maiores do período */
+      const t=[];
+      if(me.seq>=2)t.push(`<span style="color:var(--ok)">${ic('flame')} ${me.seq} vitórias seguidas agora</span>`);
+      else if(me.seqD>=2)t.push(`<span style="color:var(--bad)">${me.seqD} derrotas seguidas agora</span>`);
+      if(me.best>=3)t.push(`<span class="muted">melhor sequência: ${me.best} vitórias</span>`);
+      if(me.bestD>=3)t.push(`<span class="muted">pior sequência: ${me.bestD} derrotas</span>`);
+      return t.length?`<div class="tiny" style="margin:8px 0 2px">${t.join(' · ')}</div>`:''})()}
     <div class="tiles ${longa?'five':'four'}" style="margin-top:16px">
       ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
       <div class="tile" style="--tc:var(--lime)"><b class="num">${me.nR}</b><span>racha${me.nR===1?'':'s'}</span></div>
