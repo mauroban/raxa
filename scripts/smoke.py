@@ -65,7 +65,7 @@ step('toda acao tem classificacao de papel',()=>{
      Acao nova cai aqui ate alguem classifica-la de proposito. */
   const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk','statsPapel',
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
-    'novaTroca','ntSet','ntOk','escSalvar','escDescartar','golPick','novoGol','ngSet','ngOk','ngDel','voidMatch',
+    'novaTroca','ntSet','ntOk','escSalvar','escDescartar','golPick','novoGol','ngSet','ngOk','ngDel','quando','qdSet','qdOk','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
@@ -1362,6 +1362,55 @@ step('corrigir escalacao e trocas: rascunho ate o Salvar',()=>{
   if(ESC)throw new Error('descartar deveria apagar o rascunho');
   if(real()!==salvo)throw new Error('descartar mexeu na partida');
   l.matches=l.matches.filter(x=>x.id!=='edit1');rebuildAll(l);   // o teste nao deixa resto
+});
+step('relogio da partida: mover e esticar sem atropelar outra partida (D-199)',()=>{
+  const l=L(),ms=[...l.matches].filter(podeCorrigirEsc).sort((a,b)=>a.ts-b.ts);
+  if(ms.length<2)return;
+  const m=ms[ms.length-1],outra=ms[0],jogo0=gameTime(m,m.endedAt);
+  const fracs=m.events.map(e=>gameTime(m,e.t)/Math.max(1,jogo0));
+  A.editEsc({dataset:{id:m.id}});
+  if(!/Começou às/.test(els['#sheet'].innerHTML))throw new Error('tela de correcao sem a linha do relogio');
+  A.quando({dataset:{id:m.id}});
+  if(!ESC.qd||!/Quando foi/.test(els['#sheet'].innerHTML))throw new Error('folha do relogio nao abriu');
+  /* em cima de outra partida: a folha avisa e o Aplicar recusa */
+  ESC.qd.ini=outra.startedAt-1000;ESC.qd.dur=Math.max(jogo0,60000);
+  openSheet(viewQuando(l,ESC.m,ESC.qd));
+  if(!/Em cima de outra partida/.test(els['#sheet'].innerHTML))throw new Error('a folha nao avisou o choque de horario');
+  A.qdOk({dataset:{id:m.id}});
+  if(ESC.mud.length||ESC.m.startedAt!==m.startedAt)throw new Error('aplicou um horario em cima de outra partida');
+  /* janela livre: 30 min antes da primeira partida, 7 min de jogo */
+  const ini=ms[0].startedAt-1800000,dur=420000;
+  ESC.qd={ini,dur};openSheet(viewQuando(l,ESC.m,ESC.qd));
+  if(/Em cima de outra partida/.test(els['#sheet'].innerHTML)||!/livre/.test(els['#sheet'].innerHTML))throw new Error('janela livre nao reconhecida');
+  A.qdOk({dataset:{id:m.id}});
+  const d=ESC.m;
+  if(ESC.mud.length!==1||d.startedAt!==ini||Math.abs(gameTime(d,d.endedAt)-dur)>1000)throw new Error('o relogio do rascunho nao mudou: '+ESC.mud.join(';'));
+  d.events.forEach((e,i)=>{if(Math.abs(gameTime(d,e.t)/dur-fracs[i])>0.01)throw new Error('evento '+i+' nao guardou a fracao do jogo')});
+  if(d.goals.some(g=>g.min<0||g.min>dur))throw new Error('gol fora da partida depois de mover');
+  if(d.ts!==d.endedAt)throw new Error('ts nao acompanhou o fim');
+  if(m.startedAt===ini)throw new Error('a partida real mudou antes do Salvar');
+  A.escSalvar({dataset:{id:m.id}});
+  if(m.startedAt!==ini||m.ts!==m.endedAt)throw new Error('o Salvar nao gravou o relogio');
+  if(partidaNoMesmoRelogio(l,m.id,m.startedAt,m.endedAt))throw new Error('a partida salva atropela outra');
+  if([...l.matches].sort((a,b)=>a.ts-b.ts)[0].id!==m.id)throw new Error('a partida movida nao virou a primeira na ordem do recalculo');
+  const elos=l.players.map(p=>p.L.elo).join(',');rebuildAll(l);
+  if(elos!==l.players.map(p=>p.L.elo).join(','))throw new Error('o nivel nao bate com o recalculo do zero');
+  if(!l.log.some(e=>e.a==='esc'&&/Relógio/.test(e.txt||'')))throw new Error('mover o relogio sem registro');
+});
+step('por alguem / era outra pessoa: quem estava no racha vem primeiro (D-199)',()=>{
+  const l=L(),m=[...l.matches].reverse().find(x=>podeCorrigirEsc(x)&&x.sessionId&&(l.sessions||[]).some(s=>s.id===x.sessionId&&(s.presentIds||[]).length));
+  if(!m)return;
+  const c=candidatos(l,m),racha=genteDoRacha(l,m),naPartida=genteDaPartida(m);
+  if(c.racha.some(p=>!racha.has(p.id)||naPartida.has(p.id)))throw new Error('lista do racha com gente errada');
+  if(c.fora.some(p=>racha.has(p.id)))throw new Error('gente do racha caiu na lista de fora');
+  A.editEsc({dataset:{id:m.id}});
+  A.escAdd({dataset:{id:m.id,s:'0'}});
+  const h=els['#sheet'].innerHTML;
+  if(c.racha.length&&(!/Estava no racha/.test(h)||h.indexOf(esc(c.racha[0].name))<0))throw new Error('por alguem nao lista quem estava no racha primeiro');
+  if(c.racha.length&&c.fora.length&&h.indexOf('Estava no racha')>h.indexOf('Não estava no racha'))throw new Error('quem estava no racha deveria vir antes');
+  const t=tDoMinuto(m,1000),fq=foraDeQuadra(l,ESC.m,t),iR=fq.findIndex(id=>c.racha.some(p=>p.id===id)),iF=fq.findIndex(id=>c.fora.some(p=>p.id===id));
+  if(iR>=0&&iF>=0&&iF<iR)throw new Error('na troca, quem estava no racha deveria vir antes de quem nao estava');
+  A.escDescartar({dataset:{id:m.id}});
 });
 step('partida antiga nao aceita correcao de escalacao',()=>{
   const l=L(),m={id:'velha',ts:Date.now(),names:['A','B'],score:[1,0],result:0,lineups:[[],[]]};

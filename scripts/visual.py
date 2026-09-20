@@ -62,6 +62,7 @@ TELAS = {
     23: 'quem sou',
     24: 'corrigir partida',
     25: 'corrigir gol',
+    26: 'quando foi',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -96,11 +97,11 @@ DRIVER = r"""
       const g=L().live.cur.events.find(e=>e.type==='goal');
       A.setGoalScorer({dataset:{t:String(g.t),id:L().live.cur.lineups[0][0]}});closeSheet();}
     if(step>=4&&step!==15&&step!==17){A.goal({dataset:{s:'0'}});A.endMatch();closeSheet();}
-    if(step>=5&&step!==15&&step!==16&&step!==17&&step!==24&&step!==25){          /* assume um perfil: e o que marca "VOCE" no historico */
+    if(step>=5&&step!==15&&step!==16&&step!==17&&step!==24&&step!==25&&step!==26){          /* assume um perfil: e o que marca "VOCE" no historico */
       const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';
     }
     if(step===11||step===12||step===13)S.ui.tab='ranking';
-    if(step===16||step===24||step===25){const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';}
+    if(step===16||step===24||step===25||step===26){const p=L().players[1];p.owner='Mauro';S.me.name='Mauro';}
     if(step===7){const eu=L().players[1];eu.role='admin';L().cfg.chamada=Object.assign(chamadaDef(5),{on:true,dias:[{dow:4,hora:'19:00'},{dow:6,hora:'10:00'}]});}   /* ajustes: a tela cheia e a do admin, com a chamada ligada (D-165) */
     if(step===5)S.ui.tab='ranking';
     if(step===6)S.ui.tab='hist';
@@ -125,7 +126,7 @@ DRIVER = r"""
       A.endMatch();closeSheet();}
     A.endRacha();
   }
-  if(step===16||step===24||step===25){   /* revisar partida: a partida inteira numa folha; corrigir partida e corrigir gol (D-198) */
+  if(step===16||step===24||step===25||step===26){   /* revisar partida: a partida inteira numa folha; corrigir partida e corrigir gol (D-198) */
     const l=L(),eu=l.players[1];eu.role='admin';
     A.startMatch();const c=l.live.cur;const y=c.lineups[1][1],f=filaDe(l.live)[0];
     A.doSub({dataset:{s:'1',out:y,id:f}});A.goal({dataset:{s:'1'}});A.endMatch();closeSheet();
@@ -133,6 +134,7 @@ DRIVER = r"""
     A.review({dataset:{id:m.id}});
     if(step===24){A.editEsc({dataset:{id:m.id}});A.novoGol({dataset:{id:m.id}});A.ngSet({dataset:{k:'side',v:'1'}});A.ngOk({dataset:{id:m.id}});}
     if(step===25){A.golPick({dataset:{id:m.id,i:String(m.events.findIndex(e=>e.type==='goal'))}});}
+    if(step===26){A.editEsc({dataset:{id:m.id}});A.quando({dataset:{id:m.id}});}
   }
   if(step===18){                   /* momento (D-150): a ficha em "Ano", mes a mes, com gols em barra e % acima do esperado em linha */
     const l=L(),ult=l.matches[l.matches.length-1];

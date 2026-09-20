@@ -107,11 +107,16 @@ do racha: cabeçalho, *Destaques do racha ›*, bloco Chamada (quando há), part
 tempo (aberta; gol é botão) · Trechos · Efeito no nível · *Corrigir gols, escalação e trocas* ·
 **Manter · Anular · Apagar**. Sem botões de resultado: o placar define (D-198).
 
-**Corrigir partida** (folha, rascunho) — placar · "venceu X · mexa à vontade" · mudanças para salvar
-(quando há) · Começaram A / B (chips, *+ pôr alguém*) · Gols e trocas (uma linha por evento, gol com
+**Corrigir partida** (folha, rascunho) — placar · "venceu X · mexa à vontade" · linha do relógio
+(*Começou às 11:03 · durou 0'06 ›*) · mudanças para salvar (quando há) · Começaram A / B (chips,
+*+ pôr alguém*) · Gols e trocas (uma linha por evento, gol com
 placar corrido, tudo toca) · *+ gol · + troca* (meia largura cada) · Como fica · **Salvar N · Descartar**.
 Folha do gol: Gol do (segmentado A/B) · Quando (−30s · mm:ss · +30s) · Quem fez (do time / contra +
 chips de quem estava em quadra, *sem autor*) · **Adicionar / Salvar gol** · Apagar este gol · Cancelar.
+Folha Quando foi: Começou às (−10 min · −1 · campo de hora · +1 · +10 min) · janela livre ou aviso
+vermelho "Em cima de outra partida" · Durou (−1 min · −10s · mm:ss · +10s · +1 min) · "termina às" ·
+**Aplicar** (apagado quando há choque) · Cancelar. Pôr alguém / era outra pessoa: chips em dois blocos,
+*Estava no racha* e *Não estava no racha*.
 
 **Ajustes** (D-189) — um card por assunto, e dentro dele **uma linha por ajuste**: rótulo (com a
 nota pequena embaixo, quando precisa) à esquerda e o controle à direita — interruptor para sim/não,

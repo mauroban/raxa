@@ -1498,14 +1498,40 @@ function genteDaPartida(m){
   gksIni(m).forEach(id=>{if(id)s.add(id)});
   return s;
 }
+/* Quem estava NO RACHA da partida: a presença da sessão e, por garantia, quem
+   aparece em qualquer partida dela. É quem a correção lista primeiro — quem
+   faltou naquele dia raramente é a resposta (D-199).                        */
+function genteDoRacha(liga,m){
+  const s=new Set();
+  if(m.sessionId){
+    const ses=(liga.sessions||[]).find(x=>x.id===m.sessionId);
+    ((ses&&ses.presentIds)||[]).forEach(id=>s.add(id));
+    (liga.matches||[]).filter(o=>o.sessionId===m.sessionId).forEach(o=>genteDaPartida(o).forEach(id=>s.add(id)));
+  }
+  return s;
+}
+/* Cadastro dividido para a correção: quem estava no racha (sem quem já está
+   na partida) e o resto, cada lista em ordem de nome.                      */
+function candidatos(liga,m){
+  const naPartida=genteDaPartida(m),racha=genteDoRacha(liga,m),nome=(a,b)=>a.name.localeCompare(b.name);
+  const todos=ativos(liga).filter(p=>!naPartida.has(p.id));
+  return {racha:todos.filter(p=>racha.has(p.id)).sort(nome),fora:todos.filter(p=>!racha.has(p.id)).sort(nome)};
+}
 /* Quem pode ENTRAR numa troca naquele instante: quem não está em quadra de
-   nenhum dos dois lados — primeiro quem já é da partida, depois o cadastro. */
+   nenhum dos dois lados — primeiro quem já é da partida, depois quem estava
+   no racha, depois o resto do cadastro.                                    */
 function foraDeQuadra(liga,m,t){
   const ocup=new Set([...escalaEm(liga,m,t,0),...escalaEm(liga,m,t,1)]);
-  const gente=genteDaPartida(m);
-  const resto=ativos(liga).filter(p=>!gente.has(p.id)).map(p=>p.id)
-    .sort((a,b)=>nameOf(liga,a).localeCompare(nameOf(liga,b)));
-  return [...gente].filter(id=>!ocup.has(id)).concat(resto);
+  const gente=genteDaPartida(m),c=candidatos(liga,m);
+  return [...gente].filter(id=>!ocup.has(id)).concat(c.racha.map(p=>p.id),c.fora.map(p=>p.id));
+}
+/* Chips de quem pode entrar na partida: quem estava no racha primeiro, o
+   resto do cadastro abaixo, com o próprio título.                          */
+function chipsCandidatos(liga,m,c,attrs){
+  const chip=p=>`<button class="tp big" ${attrs(p)}>${esc(p.name)}</button>`;
+  if(!c.racha.length&&!c.fora.length)return '<span class="tiny muted">Todo mundo do cadastro já está nesta partida.</span>';
+  return `${c.racha.length?`<div class="k" style="margin-bottom:6px">Estava no racha</div><div class="chips" style="margin-bottom:12px">${c.racha.map(chip).join('')}</div>`:''}
+    ${c.fora.length?`<div class="k" style="margin-bottom:6px">${c.racha.length?'Não estava no racha':'Cadastro'}</div><div class="chips">${c.fora.map(chip).join('')}</div>`:''}`;
 }
 /* Instantâneo de goleiro nos eventos: a partida gravou `gks` em cada evento.
    Mudar um goleiro na revisão precisa corrigir esses instantâneos até o
@@ -1575,6 +1601,45 @@ function recalcPartida(liga,m){
   const fim=sts[sts.length-1];
   if(fim){m.lineups=[(fim.lineups[0]||[]).slice(),(fim.lineups[1]||[]).slice()];m.gks=(fim.gks||[null,null]).slice()}
 }
+/* Mover a partida no relógio (D-199): novo início e nova duração de JOGO.
+   Cada evento guarda a mesma fração do jogo que tinha — gol aos 0'02 de uma
+   partida de 6 s vira gol aos 2'20 de uma de 7 min. Pausas escalam junto
+   (é o tempo de parede que se estica). `ts` acompanha o fim: é por ele que a
+   liga é recalculada em ordem.                                              */
+function reposiciona(m,ini,durJogo){
+  const wall0=m.endedAt-m.startedAt,jogo0=gameTime(m,m.endedAt),evs=m.events||[];
+  if(jogo0>0){
+    const k=durJogo/jogo0;
+    evs.forEach(e=>{e.t=Math.round(ini+(e.t-m.startedAt)*k)});
+    m.endedAt=Math.round(ini+wall0*k);
+  }else{
+    evs.forEach((e,i)=>{e.t=Math.round(ini+durJogo*(i+1)/(evs.length+1))});
+    m.endedAt=ini+durJogo;
+  }
+  m.startedAt=ini;m.ts=m.endedAt;
+}
+/* A outra partida que ocupa o mesmo relógio, se houver — duas partidas não
+   acontecem ao mesmo tempo (a que está rolando conta, até agora).        */
+function partidaNoMesmoRelogio(liga,mid,ini,fim){
+  const outra=(liga.matches||[]).find(o=>o.id!==mid&&o.startedAt&&o.endedAt&&ini<o.endedAt&&fim>o.startedAt);
+  if(outra)return outra;
+  const c=liga.live&&liga.live.cur;
+  if(c&&c.startedAt&&ini<Date.now()&&fim>c.startedAt)return {id:null,names:['a partida','em andamento'],startedAt:c.startedAt,endedAt:Date.now(),viva:true};
+  return null;
+}
+/* A janela livre em volta de um instante: do fim da partida anterior ao
+   começo da seguinte.                                                       */
+function janelaLivre(liga,mid,ini){
+  let de=null,ate=null;
+  (liga.matches||[]).forEach(o=>{if(o.id===mid||!o.startedAt||!o.endedAt)return;
+    if(o.endedAt<=ini&&(de===null||o.endedAt>de))de=o.endedAt;
+    if(o.startedAt>=ini&&(ate===null||o.startedAt<ate))ate=o.startedAt;});
+  return {de,ate};
+}
+/* onde a partida termina se começar em `ini` com `dur` de jogo: o tempo de
+   parede estica na mesma proporção (partida sem jogo medido: ini + dur)  */
+const fimNovo=(m,ini,dur)=>{const j=gameTime(m,m.endedAt);return j>0?ini+Math.round((m.endedAt-m.startedAt)*dur/j):ini+dur};
+const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 /* Rascunho da correção: as mudanças acontecem numa CÓPIA da partida e só
    valem no Salvar. É por isso que dá para mexer à vontade sem recalcular a
    liga a cada toque — e para desistir sem deixar rastro. Vive fora de `S`:
@@ -4849,6 +4914,10 @@ function viewEditEsc(liga,m,r){
       <div class="tm r" style="color:${corTime(m,1)}">${esc(m.names[1])}</div></div>
     <div class="tiny muted" style="margin-bottom:12px">${m.result==='draw'?'empate':'venceu '+esc(m.names[m.result])} ·
       mexa à vontade: nada muda de verdade até você salvar.</div>
+    <button class="evr one" data-a="quando" data-id="${m.id}" style="margin-bottom:12px;border:1px solid var(--line);border-radius:12px">
+      <span class="num tiny muted t">${bi('clock')}</span>
+      <div class="d"><div class="nm">Começou às ${hhmm(m.startedAt)} · durou ${mmss(gameTime(m,m.endedAt))}</div></div>
+      <div style="color:var(--mute);font-size:18px">›</div></button>
     ${n?`<div class="card" style="background:var(--panel2);border:1px solid var(--gold);margin-bottom:12px">
       <div class="k" style="margin-bottom:6px;color:var(--gold)">${pl(n,'mudança','mudanças')} para salvar</div>
       <div class="tiny" style="line-height:1.6">${r.mud.map(t=>'• '+esc(t)).join('<br>')}</div></div>`:''}
@@ -4926,6 +4995,32 @@ function viewGol(liga,m,ng){
       ${chip('',!ng.pid,'sem autor')}</div>
     <button class="btn wide pri" data-a="ngOk" data-id="${m.id}">${novo?'Adicionar':'Salvar gol'}</button>
     ${novo?'':`<div style="height:8px"></div><button class="btn wide danger" data-a="ngDel" data-id="${m.id}" data-i="${ng.i}">✕ Apagar este gol</button>`}
+    <div style="height:8px"></div>
+    <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Cancelar</button>`;
+}
+/* Folha do relógio da partida (D-199): hora de início e duração de jogo. A
+   janela livre entre as partidas vizinhas fica à vista, e a folha recusa um
+   horário em cima de outra partida.                                         */
+function viewQuando(liga,m,qd){
+  const fim=fimNovo(m,qd.ini,qd.dur);
+  const outra=partidaNoMesmoRelogio(liga,m.id,qd.ini,fim),jan=janelaLivre(liga,m.id,qd.ini);
+  const step=(k,v,txt)=>`<button class="btn sm ghost" data-a="qdSet" data-k="${k}" data-v="${v}" style="min-width:0;padding:0 8px">${txt}</button>`;
+  return `<h2>Quando foi</h2>
+    <div class="k" style="margin-bottom:6px">Começou às</div>
+    <div class="row" style="gap:8px;margin-bottom:4px">
+      ${step('ini',-600000,'−10 min')}${step('ini',-60000,'−1')}
+      <input class="cfgt" type="time" value="${hhmm(qd.ini)}" data-qd="ini" aria-label="hora de início" style="flex:1;text-align:center;min-height:38px;font-family:var(--disp);font-weight:800;font-size:17px">
+      ${step('ini',60000,'+1')}${step('ini',600000,'+10 min')}</div>
+    <div class="tiny ${outra?'dn':'muted'}" style="margin-bottom:14px">${outra
+      ?`<b>Em cima de outra partida</b>: ${esc(outra.names[0])} ${outra.score?outra.score[0]+'-'+outra.score[1]+' ':''}${esc(outra.names[1])}, das ${hhmm(outra.startedAt)} às ${hhmm(outra.endedAt)}`
+      :`livre ${jan.de!==null?'das '+hhmm(jan.de):'desde o começo do dia'} ${jan.ate!==null?'até '+hhmm(jan.ate):'em diante'}`}</div>
+    <div class="k" style="margin-bottom:6px">Durou</div>
+    <div class="row" style="gap:8px;margin-bottom:4px">
+      ${step('dur',-60000,'−1 min')}${step('dur',-10000,'−10s')}
+      <div class="num" style="font-family:var(--disp);font-weight:800;font-size:22px;flex:1;text-align:center">${mmss(qd.dur)}</div>
+      ${step('dur',10000,'+10s')}${step('dur',60000,'+1 min')}</div>
+    <div class="tiny muted" style="margin-bottom:14px">tempo de jogo, sem as pausas · termina às ${hhmm(fim)}</div>
+    <button class="btn wide ${outra?'ghost':'pri'}" data-a="qdOk" data-id="${m.id}">Aplicar</button>
     <div style="height:8px"></div>
     <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Cancelar</button>`;
 }
@@ -6302,8 +6397,7 @@ const A={
   },
   escPick(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
-    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),noJogo=genteDaPartida(m);
-    const fora=ativos(l).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),c=candidatos(l,m);
     openSheet(`<h2>${esc(nameOf(l,pid))}</h2>
       <div class="tiny muted" style="margin-bottom:12px">Começou a partida no ${esc(m.names[s])}.</div>
       <div style="display:grid;gap:7px;margin-bottom:16px">
@@ -6311,8 +6405,7 @@ const A={
         <button class="btn wide danger" data-a="escDel" data-id="${m.id}" data-s="${s}" data-pid="${pid}">✕ Não jogou — tirar da escalação</button>
       </div>
       <div class="k" style="margin-bottom:6px">Na verdade era outra pessoa</div>
-      <div class="chips">${fora.length?fora.map(p=>`<button class="tp big" data-a="escSwap" data-id="${m.id}" data-s="${s}" data-pid="${pid}" data-por="${p.id}">${esc(p.name)}</button>`).join('')
-        :'<span class="tiny muted">Todo mundo do cadastro já está nesta partida.</span>'}</div>
+      ${chipsCandidatos(l,m,c,p=>`data-a="escSwap" data-id="${m.id}" data-s="${s}" data-pid="${pid}" data-por="${p.id}"`)}
       <div style="height:14px"></div><button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Voltar</button>`);
   },
   escGk(el){
@@ -6364,12 +6457,10 @@ const A={
   },
   escAdd(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
-    const m=r.m,s=+el.dataset.s,noJogo=genteDaPartida(m);
-    const fora=ativos(l).filter(p=>!noJogo.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    const m=r.m,s=+el.dataset.s,c=candidatos(l,m);
     openSheet(`<h2>Quem mais começou no ${esc(m.names[s])}?</h2>
       <div class="tiny muted" style="margin-bottom:12px">Quem entrou no meio da partida não entra aqui: isso é uma troca.</div>
-      <div class="chips">${fora.length?fora.map(p=>`<button class="tp big" data-a="escAddDo" data-id="${m.id}" data-s="${s}" data-pid="${p.id}">${esc(p.name)}</button>`).join('')
-        :'<span class="tiny muted">Todo mundo do cadastro já está nesta partida.</span>'}</div>
+      ${chipsCandidatos(l,m,c,p=>`data-a="escAddDo" data-id="${m.id}" data-s="${s}" data-pid="${p.id}"`)}
       <div style="height:14px"></div><button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Voltar</button>`);
   },
   escAddDo(el){
@@ -6471,7 +6562,7 @@ const A={
     const l=L(),r=ESC;if(!r||!souAdmin(l))return;
     const m=l.matches.find(x=>x.id===r.mid);if(!m)return;
     if(!r.mud.length){ESC=null;return A.review({dataset:{id:m.id}})}
-    ['startLineups','startGks','lineups','gks','events','goals','score','result','stints'].forEach(k=>{m[k]=r.m[k]});
+    ['startLineups','startGks','lineups','gks','events','goals','score','result','stints','startedAt','endedAt','ts'].forEach(k=>{m[k]=r.m[k]});
     recalcPartida(l,m);
     r.mud.forEach(txt=>logAdd(l,'esc',{mid:m.id,txt}));
     const n=r.mud.length;ESC=null;
@@ -6483,6 +6574,37 @@ const A={
     const id=(ESC&&ESC.mid)||el.dataset.id;
     if(ESC&&ESC.mud.length&&!confirm('Descartar '+pl(ESC.mud.length,'mudança','mudanças')+' que você ainda não salvou?'))return;
     ESC=null;A.review({dataset:{id}});
+  },
+  /* ----- relógio da partida no rascunho (D-199) ----- */
+  quando(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin da liga corrige partidas');
+    const r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r)return;
+    const m=r.m;
+    r.qd={ini:m.startedAt,dur:gameTime(m,m.endedAt)};
+    openSheet(viewQuando(l,m,r.qd));
+  },
+  qdSet(el){
+    const l=L(),r=ESC;if(!r||!r.qd)return;
+    const m=r.m,qd=r.qd,k=el.dataset.k,v=el.dataset.v;
+    if(k==='ini'){
+      if(/^\d{2}:\d{2}$/.test(v)){const d=new Date(qd.ini);d.setHours(+v.slice(0,2),+v.slice(3,5),0,0);qd.ini=d.getTime()}
+      else qd.ini+=(+v);
+    }else if(k==='dur')qd.dur=clamp(qd.dur+(+v),10000,6*3600000);
+    openSheet(viewQuando(l,m,qd));
+  },
+  qdOk(el){
+    const l=L(),r=ESC;if(!r||!r.qd||!souAdmin(l))return;
+    const m=r.m,qd=r.qd;
+    const jogo0=gameTime(m,m.endedAt);
+    if(qd.ini===m.startedAt&&qd.dur===jogo0){r.qd=null;return A.editEsc({dataset:{id:m.id}})}
+    const outra=partidaNoMesmoRelogio(l,m.id,qd.ini,fimNovo(m,qd.ini,qd.dur));
+    if(outra)return toast('Em cima de outra partida ('+hhmm(outra.startedAt)+'–'+hhmm(outra.endedAt)+'): escolha outro horário');
+    const mud=[];
+    if(qd.ini!==m.startedAt)mud.push('começou às '+hhmm(qd.ini)+' (era '+hhmm(m.startedAt)+')');
+    if(qd.dur!==jogo0)mud.push('durou '+mmss(qd.dur)+' (era '+mmss(jogo0)+')');
+    reposiciona(m,qd.ini,qd.dur);
+    r.qd=null;
+    mudaEsc(l,r,'Relógio: '+mud.join(', '));
   },
   /* ----- gols no rascunho -----
      Um gol é um evento do log como a troca: mudar o autor, o minuto, o time
@@ -7454,6 +7576,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target,l=L();if(!l)return;
+  if(el.dataset.qd){if(/^\d{2}:\d{2}$/.test(el.value))A.qdSet({dataset:{k:el.dataset.qd,v:el.value}});else toast('Hora inválida');return}
   const ajuste=el.dataset.cfg||el.dataset.ch||el.dataset.pat!==undefined;
   if(ajuste&&!souAdmin(l)){render();return toast('Só o admin mexe nos ajustes da liga')}
   if(ajuste&&travado()){render();return toast(msgTrava(),{ms:3500})}

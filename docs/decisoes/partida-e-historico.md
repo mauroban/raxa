@@ -468,3 +468,32 @@ foi alcançável (a revisão sempre foi do admin) e sai da tabela.
 adicionar e apagar gol reconta placar e resultado; lançador não abre a correção) · `scripts/visual.py`
 (telas 24 e 25) · [Contestação e correção](../produto/contestacao-e-correcao.md) ·
 [Interface §4](../produto/interface.md) · [Contas e permissões](../produto/contas-e-permissoes.md).
+
+<a id="d-199"></a>
+### D-199 · Relógio da partida na correção, sem atropelar outra; quem estava no racha vem primeiro
+**Quando:** 2026-09-20.
+**O quê:** a tela Corrigir partida ganha a linha "Começou às HH:MM · durou m'ss" que abre a folha
+**Quando foi**: hora de início (campo de hora, −10 min · −1 · +1 · +10 min) e duração de jogo (−1 min ·
+−10s · +10s · +1 min). `reposiciona` move todos os eventos guardando a fração do jogo em que cada um
+caiu, estica as pausas na mesma proporção e faz `ts` acompanhar o fim, para a partida entrar na ordem
+certa do recálculo. A folha mostra a janela livre entre as partidas vizinhas (`janelaLivre`) e o
+Aplicar recusa um intervalo que cruze qualquer outra partida — ou a que está rolando
+(`partidaNoMesmoRelogio`). Também: em **pôr alguém**, **era outra pessoa** e **quem entrou**, a lista
+vem em dois blocos — "Estava no racha" (presença da sessão + quem aparece em qualquer partida dela,
+`genteDoRacha`) e "Não estava no racha" (`candidatos`, `chipsCandidatos`).
+**Por quê:** um racha de 19/09 começou com os times errados; as seis primeiras partidas foram apagadas
+e recriadas de memória, e nasceram com 6 a 44 segundos entre 11:03 e 11:08 — os minutos em quadra
+de todo mundo ficaram zerados e o histórico fora de hora. Nível e V/E/D não sofrem (D-195), mas a
+estatística de tempo sim. Corrigir na mão o JSON e importar substitui a liga inteira no servidor;
+a correção pelo app é a ferramenta certa, e o caso vai se repetir. A recusa de horário sobreposto
+veio do próprio pedido: "tomar cuidado para não atropelar as outras partidas". E a lista de "pôr
+alguém" mostrava o cadastro inteiro em ordem de nome: quem estava no racha se perdia no meio de quem
+faltou.
+**Descartado:** aceitar sobreposição com aviso (duas partidas ao mesmo tempo não existem e quebrariam
+os minutos em quadra); mover só o início sem mexer na duração (a partida de 6 s continuaria com 0
+min); esconder quem não estava no racha (às vezes a pessoa não foi marcada na presença).
+**Onde:** `reposiciona`, `fimNovo`, `partidaNoMesmoRelogio`, `janelaLivre`, `viewQuando`,
+`quando`/`qdSet`/`qdOk`, `genteDoRacha`, `candidatos`, `chipsCandidatos`, `foraDeQuadra` em
+`index.html` · `scripts/smoke.py` (mover e esticar sem atropelar; quem estava no racha vem primeiro) ·
+`scripts/visual.py` (tela 26) · [Contestação e correção](../produto/contestacao-e-correcao.md) ·
+[Interface §4](../produto/interface.md).

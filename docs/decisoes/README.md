@@ -112,6 +112,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-118](partida-e-historico.md#d-118) · Elo de largada de todos os titulares; efeito no nível por papel
 - [D-195](partida-e-historico.md#d-195) · Partida de segundos continua contando inteira (marcação errada faz parte; os resultados valem)
 - [D-198](partida-e-historico.md#d-198) · Correção de partida: gol é evento editável (time, minuto, autor, adicionar, apagar); placar e resultado recontados dos gols; sem botões de vencedor
+- [D-199](partida-e-historico.md#d-199) · Relógio da partida na correção: início e duração, eventos na mesma fração, recusa horário em cima de outra partida; listas de correção com quem estava no racha primeiro
 
 ### [Stats e destaques](stats-e-destaques.md)
 
