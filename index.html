@@ -2366,6 +2366,7 @@ function listasRk(J,PA,minL,minR,liga){
     min:todos.filter(x=>x.min>0).sort((a,b)=>b.min-a.min||dp(a,b)),                     // tempo em quadra total: é volume, como a presença (D-148)
     ritmo:base.filter(x=>minL(x)>=MIN_RITMO&&x.gols).sort((a,b)=>b.gols/minL(b)-a.gols/minL(a)||dp(a,b)),
     seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||dp(a,b)||b.v-a.v),
+    seqD:base.filter(x=>x.bestD>=3).sort((a,b)=>b.bestD-a.bestD||dp(a,b)||b.d-a.d),   // pior sequência (D-202)
     gk:base.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||dp(a,b)||b.minGk-a.minGk),
     duplas};
 }
@@ -4277,7 +4278,7 @@ function viewStats(liga){
   const R=listasRk(J,PA,minL,minR,liga),RP=listasRk(JP,PAP,minLP,minR,liga);
   const todos=R.todos,todosP=RP.todos;
   const rkRachas=R.rachas,rkPm=R.pm,rkPct=R.pct,rkOver=R.over,rkGolsGk=R.golsGk,
-    rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkGk=R.gk,duplas=R.duplas;
+    rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkSeqD=R.seqD,rkGk=R.gk,duplas=R.duplas;
   const taxaFmt=(v,dec,suf)=>`<span class="num ${v>0?'up':v<0?'dn':''}">${(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(dec).replace('.',',')}${suf||''}</span>`;
   /* a história da pessoa no período, quebrada no passo abaixo dele (D-149):
      mês → racha a racha · ano → mês a mês · sempre → ano a ano              */
@@ -4436,10 +4437,10 @@ function viewStats(liga){
     </div>
     ${(()=>{/* sequências (D-202): a de agora (vitórias em verde, derrotas em vermelho) e as maiores do período */
       const t=[];
-      if(me.seq>=2)t.push(`<span style="color:var(--ok)">${ic('flame')} ${me.seq} vitórias seguidas agora</span>`);
-      else if(me.seqD>=2)t.push(`<span style="color:var(--bad)">${me.seqD} derrotas seguidas agora</span>`);
-      if(me.best>=3)t.push(`<span class="muted">melhor sequência: ${me.best} vitórias</span>`);
-      if(me.bestD>=3)t.push(`<span class="muted">pior sequência: ${me.bestD} derrotas</span>`);
+      if(me.seq>=2)t.push(`<span style="color:var(--ok)">${ic('flame')} ${me.seq}V seguidas agora</span>`);
+      else if(me.seqD>=2)t.push(`<span style="color:var(--bad)">${me.seqD}D seguidas agora</span>`);
+      if(me.best>=3)t.push(`<span class="muted">melhor sequência: ${me.best}V</span>`);
+      if(me.bestD>=3)t.push(`<span class="muted">pior sequência: ${me.bestD}D</span>`);
       return t.length?`<div class="tiny" style="margin:8px 0 2px">${t.join(' · ')}</div>`:''})()}
     <div class="tiles ${longa?'five':'four'}" style="margin-top:16px">
       ${longa?`<div class="tile" style="--tc:var(--chalk)"><b class="num ${me.pm>0?'up':me.pm<0?'dn':''}">${pmTxt(me.pm)}</b><span>+/−</span></div>`:''}
@@ -4700,14 +4701,15 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
         gk:rkSec('gk','shield','var(--cyan)','Menos vazado',`sofridos por hora · ${minTxt} · 1 h no gol`,rkGk,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk),x=>fmtMin(x.minGk)+' no gol',semPiso+' e 1 h no gol ainda.'),
         golsgk:rkGolsGk.length?rkSec('golsgk','shield','var(--gold)','Gols de goleiro por hora',`feitos de dentro do gol · ${minTxt} · 1 h no gol`,rkGolsGk,x=>x.golsGk/x.minGk,x=>porHora(x.golsGk,x.minGk),x=>pl(x.golsGk,'gol')+' em '+fmtMin(x.minGk)+' no gol'):'',
         seq:rkSec('seq','flame','var(--coral)','Maior sequência',`3 ou mais · ${minTxt}`,rkSeq,x=>x.best,x=>x.best+'V seguidas',x=>x.seq>=2?'em sequência agora: '+x.seq+'V':null,'Ninguém emendou 3 ainda.'),
+        seqd:rkSec('seqd','down','var(--bad)','Pior sequência',`3 ou mais derrotas · ${minTxt}`,rkSeqD,x=>x.bestD,x=>x.bestD+'D seguidas',x=>x.seqD>=2?'em sequência agora: '+x.seqD+'D':null,'Ninguém emendou 3 derrotas.'),
         pct:rkSec('pct','up','var(--ok)','Maior aproveitamento',`pontos (V=3, E=1) · ${minTxt}`,rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),semPiso+' ainda.'),
         /* o mesmo critério do racha e dos destaques do mês (D-13), em todo período (D-143), por partida (D-145): pontos % de vitória além do que o confronto indicava; nasce do nível, some com as patentes fechadas */
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
-      const ordem=tipo==='mes'?['pct','over','pm','ritmo','seq','pres','min','gk','golsgk','duplas']
-        :per==='sempre'?['pres','pct','over','ritmo','pm','seq','min','gk','golsgk','duplas']
-        :['pres','pct','over','ritmo','pm','seq','min','gk','golsgk','duplas'];
+      const ordem=tipo==='mes'?['pct','over','pm','ritmo','seq','seqd','pres','min','gk','golsgk','duplas']
+        :per==='sempre'?['pres','pct','over','ritmo','pm','seq','seqd','min','gk','golsgk','duplas']
+        :['pres','pct','over','ritmo','pm','seq','seqd','min','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`;

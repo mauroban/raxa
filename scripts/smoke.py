@@ -1050,7 +1050,13 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     S.ui.tab='stats';S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();   // "trocar jogador": a ficha da pessoa nova
     const h=els['#app'].innerHTML;
     S.ui=JSON.parse(ui0);
-    if(!/3 derrotas seguidas agora/.test(h)||!/melhor sequência: 3 vitórias/.test(h)||!/pior sequência: 3 derrotas/.test(h))throw new Error('a ficha nao mostra as sequencias de vitoria e de derrota');
+    if(!/3D seguidas agora/.test(h)||!/melhor sequência: 3V/.test(h)||!/pior sequência: 3D/.test(h))throw new Error('a ficha nao mostra as sequencias de vitoria e de derrota');
+    /* ranking Pior sequencia nos gerais do racha */
+    const st=statsLiga(l,'sempre'),rk=listasRk(st.J,st.PA,()=>0,1,l).seqD;
+    if(!rk.length||rk[0].pid!==eu&&!rk.some(x=>x.pid===eu&&x.bestD===3))throw new Error('a lista da pior sequencia nao tem a pessoa com 3D');
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
+    const hr=els['#app'].innerHTML;S.ui=JSON.parse(ui0);
+    if(!/Pior sequência/.test(hr))throw new Error('os gerais do racha nao tem o ranking Pior sequencia');
   }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
 });
 step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que andou no periodo (D-188)',()=>{

@@ -702,15 +702,18 @@ reversível com outro toque — um toque salva); edição durante o racha em and
 **Quando:** 2026-09-20.
 **O quê:** em `statsLiga`, empate passa a zerar a sequência de vitórias (`seq`/`best`), como a
 derrota já fazia. Entram `seqD`/`bestD`, a sequência de derrotas atual e a maior do período, zeradas
-por vitória ou empate. A ficha mostra "N vitórias seguidas agora" (verde) ou "N derrotas seguidas
-agora" (vermelho) a partir de 2, e "melhor sequência: N vitórias" / "pior sequência: N derrotas" a
-partir de 3. O ranking Maior sequência continua só de vitórias.
+por vitória ou empate. A ficha mostra "NV seguidas agora" (verde) ou "ND seguidas agora" (vermelho)
+a partir de 2, e "melhor sequência: NV" / "pior sequência: ND" a partir de 3 — V e D, não por
+extenso, como pediu o dono da liga. Nos gerais do racha, logo abaixo de Maior sequência, entra **Pior sequência** (3 ou mais
+derrotas seguidas, mesmo piso; desempate por patente e depois por mais derrotas) — pedido na mesma
+conversa, depois de a ficha só ter mostrado o número para o próprio.
 **Por quê:** a ficha dizia "melhor sequência: 4 vitórias" para uma série V E V V V — o empate era
 transparente por um comentário no código, sem decisão registrada. Quem lê "seguidas" espera sem
 nada no meio, e o dono da ficha não achou as quatro. A sequência de derrotas foi pedida junto: é o
 mesmo número lido do outro lado, e cabe na mesma linha.
 **Descartado:** manter o empate transparente e chamar de "invencibilidade" (é outro número, e não
-foi pedido); ranking de derrotas seguidas (é lista de vergonha, não destaque — fica na ficha de
-quem quiser olhar).
-**Onde:** `statsLiga` (`seq`, `best`, `seqD`, `bestD`), ficha do jogador em `viewStats` em
-`index.html` · `scripts/smoke.py` (V E V V V D D D → 3V, 3D) · [Stats](../produto/stats.md).
+foi pedido). A primeira versão deixou o ranking de derrotas de fora por parecer lista de vergonha;
+o dono da liga pediu, e o racha lê isso como brincadeira, não como exposição.
+**Onde:** `statsLiga` (`seq`, `best`, `seqD`, `bestD`), `listasRk` (`seqD`), ficha do jogador e o
+ranking `seqd` em `viewStats` em `index.html` · `scripts/smoke.py` (V E V V V D D D → 3V, 3D; ranking
+Pior sequência nos gerais) · [Stats](../produto/stats.md).
