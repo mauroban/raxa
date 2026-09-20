@@ -674,3 +674,25 @@ manter duas casas por hora (precisão que o dado não tem).
 **Onde:** `porHora`, `pmHora`, `listasRk`, cartões de ritmo e rankings em `viewStats`, ficha em
 `A.pSheet` (`index.html`) · `scripts/smoke.py` · [Stats §2](../produto/stats.md).
 
+<a id="d-201"></a>
+### D-201 · Corrigir os times do racha
+**Quando:** 2026-09-20.
+**O quê:** a folha de um time do racha (Stats → Times do racha → toque no time) ganha, para o admin,
+**"Corrigir os times do racha"**. Abre a montagem gravada na sessão (`sess.teams`, `sess.gkPool`):
+um bloco por time, o rodízio de goleiros e quem esteve no racha sem time (presença da sessão e quem
+aparece nas partidas dela), mais "+ alguém do cadastro". Toque num nome → "Era de que time?" com um
+botão por time, Rodízio de goleiros e Não era de time nenhum. Cada toque vale na hora (`sessSet`),
+tira a pessoa de onde estava, registra `sessTeams` (quem, de onde, para onde) e sincroniza a sessão.
+**Por quê:** a montagem gravada é o que as stats chamam de "time do racha" — o rótulo pelos primeiros
+nomes, a regra da maioria (D-59) e o V/E/D do time. No racha de 19/09 os times foram montados errado,
+o racha foi refeito, e a sessão gravada ficou com uma formação que nunca jogou junto aparecendo como
+o time oficial. Sem correção, o card do racha e a folha do time contam vitórias de um time que não
+existiu.
+**Descartado:** derivar os times das partidas ignorando a montagem (a montagem é o fato; a
+escalação da primeira partida já era o fallback de racha antigo e falha quando a primeira partida
+tem substituição); rascunho com Salvar (a correção não toca em partida nem em nível, cada toque é
+reversível com outro toque — um toque salva); edição durante o racha em andamento (ali a montagem
+é a tela de times, D-129).
+**Onde:** `viewSessTimes`, `ondeNaSessao`, `sessTimes`/`sessPick`/`sessAdd`/`sessSet`, `rachaTime`,
+`LOG_TXT.sessTeams` em `index.html` · `scripts/smoke.py` (corrigir os times do racha) ·
+`scripts/visual.py` (tela 27) · [Stats](../produto/stats.md) · [Interface §4](../produto/interface.md).

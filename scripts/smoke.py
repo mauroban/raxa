@@ -68,7 +68,7 @@ step('toda acao tem classificacao de papel',()=>{
     'novaTroca','ntSet','ntOk','escSalvar','escDescartar','golPick','novoGol','ngSet','ngOk','ngDel','quando','qdSet','qdOk','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
-    'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
+    'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','sessTimes','sessPick','sessAdd','sessSet','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
     'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk']);
@@ -1471,6 +1471,32 @@ step('goleiro de largada gravado fora da escalacao entra nela ao abrir a correca
     if(gksIni(ESC.m)[1]!==null||!/sem goleiro fixo/.test(ESC.mud[0]))throw new Error('quem entrou por troca nao devia virar titular');
     A.escDescartar({dataset:{id:m.id}});
   }finally{l.matches=l.matches.filter(x=>x.id!=='fant1');rebuildAll(l)}
+});
+step('corrigir os times do racha: toque no nome, escolha o time; vale nas stats e no registro (D-201)',()=>{
+  const l=L(),sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length>=2&&x.teams[0].ids.length);
+  if(!sess)return;
+  const pid=sess.teams[0].ids[0],ms=l.matches.filter(m=>m.sessionId===sess.id);
+  A.rachaTime({dataset:{sid:sess.id,n:sess.teams[0].name}});
+  if(!/Corrigir os times do racha/.test(els['#sheet'].innerHTML))throw new Error('folha do time sem o botao de corrigir');
+  A.sessTimes({dataset:{sid:sess.id}});
+  const h=els['#sheet'].innerHTML;
+  if(!/Times do racha/.test(h)||h.indexOf('data-pid="'+pid+'"')<0)throw new Error('folha dos times sem o jogador');
+  A.sessPick({dataset:{sid:sess.id,pid}});
+  if(!/Era de que time/.test(els['#sheet'].innerHTML))throw new Error('folha do jogador nao abriu');
+  const logAntes=(l.log||[]).length;
+  A.sessSet({dataset:{sid:sess.id,pid,t:'1'}});
+  if(sess.teams[0].ids.includes(pid)||!sess.teams[1].ids.includes(pid))throw new Error('o jogador nao mudou de time');
+  if(!timesDoRacha(l,ms,sess)[1].ids.includes(pid))throw new Error('as stats nao leem o time corrigido');
+  if((l.log||[]).length!==logAntes+1||l.log[l.log.length-1].a!=='sessTeams')throw new Error('sem registro da correcao');
+  A.sessSet({dataset:{sid:sess.id,pid,t:'gk'}});
+  if(!(sess.gkPool||[]).includes(pid)||sess.teams.some(t=>t.ids.includes(pid)))throw new Error('rodizio nao valeu');
+  A.sessSet({dataset:{sid:sess.id,pid,t:'0'}});
+  if(!sess.teams[0].ids.includes(pid)||(sess.gkPool||[]).includes(pid))throw new Error('voltar ao time nao valeu');
+  /* quem nao e admin nao mexe */
+  const eu=l.players[0],papel=eu.role;eu.role='lancador';l.players[1].owner='outro';l.players[1].role='admin';
+  try{A.sessSet({dataset:{sid:sess.id,pid,t:'1'}});if(sess.teams[1].ids.includes(pid))throw new Error('lancador corrigiu os times')}
+  finally{eu.role=papel;l.players[1].owner=null;l.players[1].role='lancador'}
+  closeSheet();
 });
 step('partida antiga nao aceita correcao de escalacao',()=>{
   const l=L(),m={id:'velha',ts:Date.now(),names:['A','B'],score:[1,0],result:0,lineups:[[],[]]};

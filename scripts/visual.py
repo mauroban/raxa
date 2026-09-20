@@ -63,6 +63,7 @@ TELAS = {
     24: 'corrigir partida',
     25: 'corrigir gol',
     26: 'quando foi',
+    27: 'times do racha',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -163,6 +164,12 @@ DRIVER = r"""
     A.toTimes();
     if(step===21){A.startJogo();}
     render();closeSheet();
+  }
+  if(step===27){                   /* corrigir os times do racha (D-201) */
+    const l=L(),eu=l.players[1];eu.role='admin';eu.owner='Mauro';S.me.name='Mauro';
+    if(l.live&&l.live.matchIds&&l.live.matchIds.length){A.endRacha();closeSheet();}
+    const sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length);
+    if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
   }
   if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
     const l=L(),ult=l.matches[l.matches.length-1];

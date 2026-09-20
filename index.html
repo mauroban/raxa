@@ -2918,7 +2918,7 @@ function logAdd(liga,a,extra){
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
   delPlayer:'apagou cadastro',arquivar:'arquivou jogador',reativar:'reativou jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',bio:'mudou a descrição',goal:'corrigiu autor de gol',
-  esc:'corrigiu a partida',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
+  esc:'corrigiu a partida',sessTeams:'corrigiu os times do racha',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
 /* moderador: edita jogador — não revisa nem corrige partida, não anula, não dá papel (D-198) */
 const souModerador=liga=>['admin','moderador'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
@@ -5063,6 +5063,34 @@ function viewQuando(liga,m,qd){
     <button class="btn wide ${outra?'ghost':'pri'}" data-a="qdOk" data-id="${m.id}">Aplicar</button>
     <div style="height:8px"></div>
     <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Cancelar</button>`;
+}
+/* Onde a pessoa está na montagem gravada da sessão: índice do time, 'gk'
+   (rodízio de goleiros) ou null (fora dos times).                          */
+function ondeNaSessao(sess,pid){
+  const i=(sess.teams||[]).findIndex(t=>(t.ids||[]).includes(pid));
+  if(i>=0)return i;
+  return (sess.gkPool||[]).includes(pid)?'gk':null;
+}
+/* Folha de correção dos times do racha (D-201): cada time com os seus, o
+   rodízio, e quem esteve no racha sem time. Toque no nome muda de time.   */
+function viewSessTimes(liga,sess){
+  const chip=id=>`<button class="tp big" data-a="sessPick" data-sid="${sess.id}" data-pid="${id}">${esc(nameOf(liga,id))}</button>`;
+  const nos=new Set(sess.teams.flatMap(t=>t.ids).concat(sess.gkPool||[]));
+  const noRacha=new Set(sess.presentIds||[]);
+  (liga.matches||[]).filter(m=>m.sessionId===sess.id).forEach(m=>genteDaPartida(m).forEach(id=>noRacha.add(id)));
+  const semTime=[...noRacha].filter(id=>!nos.has(id)&&P(liga,id)).sort((a,b)=>nameOf(liga,a).localeCompare(nameOf(liga,b)));
+  const dt=new Date(sess.ts);
+  return `<h2>Times do racha</h2>
+    <div class="tiny muted" style="margin-bottom:12px">${dt.toLocaleDateString('pt-BR')} · ${pl((liga.matches||[]).filter(m=>m.sessionId===sess.id&&!m.voided).length,'partida')}</div>
+    ${sess.teams.map((t,i)=>`<div class="sec"><div class="k2"><span style="color:${['var(--lime)','var(--coral)','var(--cyan)','var(--white)'][i%4]}">${esc(t.name)}</span><span class="tiny">${pl(t.ids.length,'jogador','jogadores')}</span></div>
+      <div class="chips">${t.ids.map(chip).join('')||'<span class="tiny muted">ninguém</span>'}</div></div>`).join('')}
+    <div class="sec"><div class="k2"><span>🧤 Rodízio de goleiros</span><span class="tiny">${pl((sess.gkPool||[]).length,'goleiro')}</span></div>
+      <div class="chips">${(sess.gkPool||[]).map(chip).join('')||'<span class="tiny muted">sem rodízio</span>'}</div></div>
+    ${semTime.length?`<div class="sec"><div class="k2"><span>Estava no racha, sem time</span><span class="tiny">${semTime.length}</span></div>
+      <div class="chips">${semTime.map(chip).join('')}</div></div>`:''}
+    <button class="more" data-a="sessAdd" data-sid="${sess.id}">＋ alguém do cadastro</button>
+    <div style="height:12px"></div>
+    <button class="btn wide ghost" data-a="closeSheet">Fechar</button>`;
 }
 /* O histórico é por RACHA, não por partida: uma noite de 12 partidas em uma
    linha só. Tocar no racha abre as partidas dele. Partida lançada solta (sem
@@ -7269,7 +7297,59 @@ const A={
         <div class="chips">${gks.map(id=>chip(id,'G',false)).join('')}</div>`:''}
       ${linhas.length?`<div class="row" style="margin:16px 0 4px"><div class="k">Partidas do time</div>
           <div class="sp tiny muted num">${rec.v}V ${rec.e}E ${rec.d}D${vePat(l)?' · % = prob. de vitória':''}</div></div>
-        ${linhas.join('')}`:'<div class="tiny muted" style="margin-top:12px">Nenhuma partida contou para este time.</div>'}`);
+        ${linhas.join('')}`:'<div class="tiny muted" style="margin-top:12px">Nenhuma partida contou para este time.</div>'}
+      ${souAdmin(l)&&daMontagem&&(l.sessions||[]).some(x=>x.id===sid)?`<div style="height:14px"></div>
+        <button class="btn wide ghost sm" data-a="sessTimes" data-sid="${sid}">${bi('arrows')} Corrigir os times do racha</button>`:''}`);
+  },
+  /* ----- corrigir os times do racha (D-201) -----
+     A montagem gravada na sessão é o que as stats chamam de "time do racha"
+     (rótulo, maioria, V/E/D do time). Montou errado, corrige aqui: toque no
+     nome, escolha o time. Vale na hora — não mexe em partida nem em nível. */
+  sessTimes(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin corrige os times do racha');
+    const sess=(l.sessions||[]).find(x=>x.id===el.dataset.sid);
+    if(!sess||!Array.isArray(sess.teams)||!sess.teams.length)return toast('Este racha não tem a montagem gravada');
+    openSheet(viewSessTimes(l,sess));
+  },
+  sessPick(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin corrige os times do racha');
+    const sess=(l.sessions||[]).find(x=>x.id===el.dataset.sid);if(!sess)return;
+    const pid=el.dataset.pid,onde=ondeNaSessao(sess,pid);
+    const b=(t,txt,sel)=>`<button class="btn wide ${sel?'pri':'ghost'}" data-a="sessSet" data-sid="${sess.id}" data-pid="${pid}" data-t="${t}">${txt}</button>`;
+    openSheet(`<h2>${esc(nameOf(l,pid))}</h2>
+      <div class="k" style="margin-bottom:6px">Era de que time?</div>
+      <div style="display:grid;gap:7px;margin-bottom:14px">
+        ${sess.teams.map((t,i)=>b(i,esc(t.name)+' <span class="tiny muted">('+t.ids.length+')</span>',onde===i)).join('')}
+        ${b('gk','🧤 Rodízio de goleiros',onde==='gk')}
+        ${b('fora','Não era de time nenhum',onde===null)}</div>
+      <button class="btn wide ghost" data-a="sessTimes" data-sid="${sess.id}">Voltar</button>`);
+  },
+  sessAdd(el){
+    const l=L();if(!souAdmin(l))return;
+    const sess=(l.sessions||[]).find(x=>x.id===el.dataset.sid);if(!sess)return;
+    const nos=new Set(sess.teams.flatMap(t=>t.ids).concat(sess.gkPool||[]));
+    const fora=ativos(l).filter(p=>!nos.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    openSheet(`<h2>Quem mais estava no racha?</h2>
+      <div class="chips">${fora.length?fora.map(p=>`<button class="tp big" data-a="sessPick" data-sid="${sess.id}" data-pid="${p.id}">${esc(p.name)}</button>`).join('')
+        :'<span class="tiny muted">Todo mundo do cadastro já está nos times.</span>'}</div>
+      <div style="height:14px"></div><button class="btn wide ghost" data-a="sessTimes" data-sid="${sess.id}">Voltar</button>`);
+  },
+  sessSet(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin corrige os times do racha');
+    const sess=(l.sessions||[]).find(x=>x.id===el.dataset.sid);if(!sess)return;
+    const pid=el.dataset.pid,t=el.dataset.t,para=t==='gk'?'gk':t==='fora'?null:+t;
+    const de=ondeNaSessao(sess,pid);
+    if(de===para)return openSheet(viewSessTimes(l,sess));
+    sess.teams.forEach(x=>{x.ids=x.ids.filter(id=>id!==pid)});
+    sess.gkPool=(sess.gkPool||[]).filter(id=>id!==pid);
+    if(para==='gk')sess.gkPool.push(pid);
+    else if(para!==null&&sess.teams[para])sess.teams[para].ids.push(pid);
+    if(!Array.isArray(sess.presentIds))sess.presentIds=[];
+    if(para!==null&&!sess.presentIds.includes(pid))sess.presentIds.push(pid);
+    const rot=x=>x==='gk'?'rodízio':x===null?'fora dos times':(sess.teams[x]||{}).name;
+    logAdd(l,'sessTeams',{sid:sess.id,pid,from:rot(de),to:rot(para)});
+    save();render();openSheet(viewSessTimes(l,sess));
+    toast(nameOf(l,pid)+' → '+rot(para));
   },
   /* folha de um ranking (D-112): lista inteira (até 10) com detalhe, e a ordem
      — do 1º ao último, ou lida do fim (a posição recomeça do 1: é outro pódio, D-89) */
@@ -8757,6 +8837,7 @@ function logCard(liga){
     else if(e.a==='rename')o+=`: ${esc(e.from)} → ${esc(e.to)}`;
     else if(e.a==='bio')o+=` de ${esc(nome(e.pid))}: "${esc(e.from||'')}" → "${esc(e.to||'')}"`;
     else if(e.a==='esc')o+=`: ${esc(e.txt||'')}`;
+    else if(e.a==='sessTeams')o+=`: ${esc(nome(e.pid))} ${esc(e.from||'?')} → ${esc(e.to||'?')}`;
     else if(e.a==='op'){const rl=x=>x===null||x===undefined?'sem opinião':x==='ns'?'não sabe':esc(patName(liga,clamp(x,0,TOP)));o+=` de ${esc(nome(e.pid))}${e.role==='G'?' (gol)':''}: ${rl(e.from)} → ${rl(e.to)}${e.adm?' (anulada pelo admin)':''}${e.by&&e.by!==e.pid?' — opinião de '+esc(nome(e.by)):''}`}
     else if(e.a==='opClear')o+=` de ${esc(nome(e.by))} (${pl(e.n||0,'opinião','opiniões')})`;
     else if(e.a==='merge')o+=`: ${esc(e.de&&e.de.name||'?')} → ${esc(e.intoName||nome(e.into))} (${pl((e.matches||[]).length,'partida')})`;

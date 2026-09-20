@@ -51,7 +51,7 @@
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
 - Editar nome, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar); **opiniões sobre o nível** de quem lança, um toque por pessoa, na ficha ou na tela "Minhas opiniões" (D-95)
 - **Juntar dois cadastros** da mesma pessoa (admin), reversível pela ficha ("Separar de novo")
-- **Corrigir partida** encerrada — gols (time, minuto, autor, contra; adicionar, apagar), escalação e trocas — reescrevendo o log e os trechos (D-61, D-198); placar e resultado recontados dos gols; **relógio da partida** (início e duração, eventos na mesma fração, sem atropelar outra partida, D-199); listas de correção com quem estava no racha primeiro; registro de correções por liga
+- **Corrigir partida** encerrada — gols (time, minuto, autor, contra; adicionar, apagar), escalação e trocas — reescrevendo o log e os trechos (D-61, D-198); placar e resultado recontados dos gols; **corrigir os times do racha** (a montagem gravada na sessão, D-201); **relógio da partida** (início e duração, eventos na mesma fração, sem atropelar outra partida, D-199); listas de correção com quem estava no racha primeiro; registro de correções por liga
 - Exportar/importar a liga inteira em JSON, com migração automática de ligas gravadas por versões anteriores
 - **Tudo no Supabase** (Postgres + Auth + Realtime): sync incremental por versão, só fatos no banco, tempo real entre os celulares do racha, com batida de rede de reserva e prazo de 12 s por pedido
 - **Cópia da liga no aparelho** (D-102): abre sem sinal, continua lançando, sobe o que ficou pendente quando a rede volta; a cópia é da conta (some ao sair)

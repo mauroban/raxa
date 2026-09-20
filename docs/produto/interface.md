@@ -99,6 +99,10 @@ só "⏳ 3/15" enquanto calibra (e o Elo cru para o admin) · *Sem nível ainda*
 Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
 
 **Stats** — filtro fixo: Jogador / Racha · Último / Mês / Ano / Sempre · ‹ período › + Linha / Gol · painel.
+Folha do time do racha: escalação · rodízio · partidas do time · *Corrigir os times do racha* (admin).
+Folha Times do racha: data e partidas · um bloco por time (chips) · Rodízio de goleiros · Estava no
+racha, sem time · *+ alguém do cadastro* · Fechar. Toque no nome: *Era de que time?* com um botão por
+time, Rodízio de goleiros, Não era de time nenhum · Voltar.
 
 **Jogos** — contestadas (quando há) · Todas / Só as minhas · lista de rachas (60 px cada); dentro
 do racha: cabeçalho, *Destaques do racha ›*, bloco Chamada (quando há), partidas.
