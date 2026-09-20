@@ -47,7 +47,7 @@ Toda ação de membro fica registrada: quem fez, em quem, quando.
 | Papel | Pode |
 |---|---|
 | **Admin** | Tudo: configurar a liga (os ajustes são só dele — os outros papéis veem o formato e a aparência, sem controles, D-128), revisar/corrigir/anular partidas, cadastrar e **arquivar** jogadores (apagar de vez só quem nunca jogou — D-128), juntar cadastros, dar papéis (rebaixar a Jogador é o que tira o peso das opiniões de alguém — D-121), ver na ficha tudo que um membro opinou sobre os outros (D-124) |
-| **Moderador** | O que o lançador faz, mais corrigir o resultado de partidas (anular, revisar contestação e apagar são só do admin) |
+| **Moderador** | O que o lançador faz; revisar e corrigir partida (gols, escalação, trocas), anular e apagar são só do admin (D-198) |
 | **Lançador** | Conduzir o racha: presença, times, partidas, gols, cadastrar jogador, **editar nome, descrição e hábito de gol** de qualquer jogador (D-128) — e **opinar sobre o nível** de entrada de qualquer um (como moderador e admin) |
 | **Jogador** | **Padrão de quem entra.** Vê ranking, histórico e as próprias estatísticas; vincula o próprio perfil; pode contestar; pode dar opinião sobre nível, mas ela **só passa a valer** quando for Lançador ou acima (D-121). Não lança nada |
 

@@ -1532,10 +1532,28 @@ function tDoMinuto(m,ms){
   for(let k=0;k<4;k++)t=m.startedAt+alvo+pausedUntil(m,t);
   return clamp(t,m.startedAt+1,m.endedAt-1);
 }
+/* O log de eventos em ordem, com os gols dentro. Partida gravada sem o log de
+   gols (versão antiga) ganha um evento por gol guardado antes de qualquer
+   conta — senão a correção os apagaria.                                    */
+function eventosComGols(m){
+  const evs=(m.events||[]).slice().sort((a,b)=>a.t-b.t);
+  if(!evs.some(e=>e.type==='goal')&&(m.goals||[]).length){
+    (m.goals||[]).forEach((g,i)=>evs.push({t:g.t||clamp(m.startedAt+(g.min||0)+i,m.startedAt+1,m.endedAt-1),type:'goal',side:g.side,pid:g.pid||null,own:!!g.own}));
+    evs.sort((a,b)=>a.t-b.t);
+  }
+  return evs;
+}
 function recalcPartida(liga,m){
   const ini=(m.startLineups||m.lineups||[[],[]]).map(x=>(x||[]).slice());
-  const c={startedAt:m.startedAt,score:(m.score||[0,0]).slice(),
-    events:(m.events||[]).slice().sort((a,b)=>a.t-b.t),
+  const evs=eventosComGols(m);
+  m.events=evs;
+  /* o placar é a contagem dos gols, e o resultado é o placar (D-198): não
+     existe vencedor lançado à parte                                         */
+  m.goals=evs.filter(e=>e.type==='goal').map(e=>({pid:e.pid||null,side:e.side,own:!!e.own,t:e.t,min:gameTime(m,e.t)}));
+  m.score=[0,0];m.goals.forEach(g=>m.score[g.side]++);
+  m.result=stintResult(m.score);
+  const c={startedAt:m.startedAt,score:m.score.slice(),
+    events:evs.slice(),
     lineups:(m.lineups||ini).map(x=>(x||[]).slice()),
     startLineups:ini,gks:(m.gks||[null,null]).slice(),startGks:gksIni(m)};
   const sts=splitStints(c,m.endedAt,liga.cfg,modoDe(liga,m));
@@ -1545,12 +1563,11 @@ function recalcPartida(liga,m){
     sts[0].lineups=[ini[0].slice(),ini[1].slice()];sts[0].gks=c.startGks.slice();
     delete sts[0].part;
   }
-  /* o resultado lançado à mão continua valendo: vale para o trecho que fechou
-     a partida, ou para o maior que conta se o final foi descartado (finish)  */
+  /* trecho final descartado: o resultado da partida vai para o maior que
+     conta — a mesma regra do apito final (finish)                          */
   if(sts.length){
     const ult=sts[sts.length-1];
-    const alvo=ult.counted?ult:sts.filter(x=>x.counted).sort((a,b)=>b.dur-a.dur)[0];
-    if(alvo&&(!ult.counted||m.result!==stintResult(m.score)))alvo.result=m.result;
+    if(!ult.counted){const alvo=sts.filter(x=>x.counted).sort((a,b)=>b.dur-a.dur)[0];if(alvo)alvo.result=m.result}
   }
   m.stints=sts;
   m.startLineups=ini;
@@ -1565,7 +1582,7 @@ function recalcPartida(liga,m){
 let ESC=null;
 function rascunhoEsc(m){
   if(!m||!podeCorrigirEsc(m))return null;
-  if(!ESC||ESC.mid!==m.id)ESC={mid:m.id,m:JSON.parse(JSON.stringify(m)),mud:[],nt:null};
+  if(!ESC||ESC.mid!==m.id){ESC={mid:m.id,m:JSON.parse(JSON.stringify(m)),mud:[],nt:null,ng:null};ESC.m.events=eventosComGols(ESC.m)}
   return ESC;
 }
 /* Uma mudança no rascunho: anota o que foi feito, refaz os trechos da cópia
@@ -2796,8 +2813,8 @@ function logAdd(liga,a,extra){
 const LOG_TXT={rank:'corrigiu nível',result:'corrigiu resultado',void:'anulou partida',unvoid:'reativou partida',
   keep:'manteve resultado',delMatch:'apagou partida',backMatch:'voltou a partida ao relógio',role:'mudou permissão',link:'vinculou conta',unlink:'desvinculou conta',
   delPlayer:'apagou cadastro',arquivar:'arquivou jogador',reativar:'reativou jogador',newPlayer:'cadastrou jogador',rename:'renomeou jogador',bio:'mudou a descrição',goal:'corrigiu autor de gol',
-  esc:'corrigiu escalação/trocas',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
-/* moderador: corrige resultado de partida, edita jogador — não anula, não revisa, não dá papel */
+  esc:'corrigiu a partida',merge:'juntou cadastros',unmerge:'separou cadastros',op:'opinou sobre o nível',opClear:'anulou as opiniões'};
+/* moderador: edita jogador — não revisa nem corrige partida, não anula, não dá papel (D-198) */
 const souModerador=liga=>['admin','moderador'].includes(meuPapel(liga));
 /* lançador (e acima): conduz o racha — presença, times, partidas, gols, cadastro.
    Jogador só olha, vincula o próprio perfil e contesta. */
@@ -4684,8 +4701,10 @@ function fichaLinha(liga,m,j){
 }
 /* Linha do tempo: o log bruto da partida em português. Gol é botão para o
    admin trocar o autor sem sair do contexto em que o gol aconteceu.         */
+/* o log bruto em ordem de tempo, cada evento com o índice que ele tem em
+   `m.events` — é por esse índice que a correção acha o evento no rascunho */
+const evsIdx=m=>(m.events||[]).map((e,i)=>({e,i})).sort((a,b)=>a.e.t-b.e.t);
 function revTempo(liga,m,podeEditar){
-  const evs=[...(m.events||[])].sort((a,b)=>a.t-b.t);
   /* depois de uma correção de escalação, o autor de um gol pode ter deixado de
      jogar naquele lado: o gol continua valendo, mas a revisão avisa.        */
   const jogou=[emQuadraNo(liga,m,0),emQuadraNo(liga,m,1)];
@@ -4695,16 +4714,17 @@ function revTempo(liga,m,podeEditar){
     <span class="num tiny muted t">${min}</span>
     <span class="swatch" style="background:${side===null?'var(--mute2)':corTime(m,side)}"></span>
     <div class="d"><div class="nm">${ic} ${txt}</div></div></div>`;
-  const sc=[0,0];let gi=-1;
-  const linhas=evs.map(ev=>{
+  const sc=[0,0];
+  podeEditar=podeEditar&&podeCorrigirEsc(m);
+  const linhas=evsIdx(m).map(({e:ev,i})=>{
     const min=minDe(ev.t);
     if(ev.type==='goal'){
-      gi++;sc[ev.side]++;
-      const g=(m.goals||[])[gi]||ev,i=gi,tag=podeEditar?'button':'div';
+      sc[ev.side]++;
+      const g=ev,tag=podeEditar?'button':'div';
       const quem=g.pid?esc(nameOf(liga,g.pid))+(g.own?' <span class="tiny muted">(contra)</span>':'')
         :'<span class="muted">sem autor</span>';
       const aviso=foraDaEscala(g);
-      return `<${tag} class="evr ${aviso?'':'one'}" ${podeEditar?`data-a="goalScorerM" data-id="${m.id}" data-i="${i}" title="toque para corrigir o autor"`:''}>
+      return `<${tag} class="evr ${aviso?'':'one'}" ${podeEditar?`data-a="golPick" data-id="${m.id}" data-i="${i}" title="toque para corrigir o gol"`:''}>
         <span class="num tiny muted t">${min}</span>
         <span class="swatch" style="background:${corTime(m,ev.side)}"></span>
         <div class="d"><div class="nm">⚽ ${quem}</div>${aviso?'<div class="meta"><b class="dn">⚠ o autor não estava em quadra</b></div>':''}</div>
@@ -4804,19 +4824,30 @@ function revDetalhe(liga,m){
    só então que a liga é recalculada.                                        */
 function viewEditEsc(liga,m,r){
   const ini=(m.startLineups||m.lineups||[[],[]]),gks=gksIni(m);
-  const evs=(m.events||[]).map((e,i)=>({e,i})).filter(x=>x.e.type==='sub'||x.e.type==='gk')
-    .sort((a,b)=>a.e.t-b.e.t);
-  const linha=x=>`<button class="evr" data-a="evPick" data-id="${m.id}" data-i="${x.i}">
-    <span class="num tiny muted t">${mmss(gameTime(m,x.e.t))}</span>
-    <span class="swatch" style="background:${corTime(m,x.e.side)}"></span>
-    <div class="d"><div class="nm">${x.e.type==='sub'
-      ?`⇄ Sai ${esc(nameOf(liga,x.e.out))}${x.e.in?' · entra '+esc(nameOf(liga,x.e.in)):' <span class="tiny muted">(sem substituto)</span>'}`
-      :`🧤 ${x.e.id?esc(nameOf(liga,x.e.id))+' foi para o gol':'sem goleiro fixo'}`}</div>
-      <div class="meta">${esc(m.names[x.e.side])} · toque para corrigir</div></div>
-    <div style="color:var(--mute);font-size:18px">›</div></button>`;
-  const n=r.mud.length;
-  return `<h2>Escalação e trocas</h2>
-    <div class="tiny muted" style="margin-bottom:12px">${esc(m.names[0])} ${m.score[0]}-${m.score[1]} ${esc(m.names[1])} ·
+  const evs=evsIdx(m).filter(x=>x.e.type==='sub'||x.e.type==='gk'||x.e.type==='goal');
+  const jogou=[emQuadraNo(liga,m,0),emQuadraNo(liga,m,1)];
+  const sc=[0,0];
+  const linha=x=>{
+    const e=x.e,gol=e.type==='goal';
+    if(gol)sc[e.side]++;
+    const aviso=gol&&e.pid&&!jogou[e.own?1-e.side:e.side].has(e.pid);
+    return `<button class="evr${gol&&!aviso?' one':''}" data-a="${gol?'golPick':'evPick'}" data-id="${m.id}" data-i="${x.i}">
+    <span class="num tiny muted t">${mmss(gameTime(m,e.t))}</span>
+    <span class="swatch" style="background:${corTime(m,e.side)}"></span>
+    <div class="d"><div class="nm">${gol
+      ?`⚽ ${e.pid?esc(nameOf(liga,e.pid))+(e.own?' <span class="tiny muted">(contra)</span>':''):'<span class="muted">sem autor</span>'}`
+      :e.type==='sub'
+      ?`⇄ Sai ${esc(nameOf(liga,e.out))}${e.in?' · entra '+esc(nameOf(liga,e.in)):' <span class="tiny muted">(sem substituto)</span>'}`
+      :`🧤 ${e.id?esc(nameOf(liga,e.id))+' foi para o gol':'sem goleiro fixo'}`}</div>
+      ${gol?(aviso?'<div class="meta"><b class="dn">⚠ o autor não estava em quadra</b></div>':''):`<div class="meta">${esc(m.names[e.side])}</div>`}</div>
+    ${gol?`<span class="plc num">${sc[0]}-${sc[1]}</span>`:'<div style="color:var(--mute);font-size:18px">›</div>'}</button>`};
+  const n=r.mud.length,gols=evs.filter(x=>x.e.type==='goal').length,trocas=evs.length-gols;
+  return `<h2>Corrigir partida</h2>
+    <div class="mini" style="margin:0 0 6px">
+      <div class="tm" style="color:${corTime(m,0)}">${esc(m.names[0])}</div>
+      <div class="sc num">${m.score[0]}<span class="muted">–</span>${m.score[1]}</div>
+      <div class="tm r" style="color:${corTime(m,1)}">${esc(m.names[1])}</div></div>
+    <div class="tiny muted" style="margin-bottom:12px">${m.result==='draw'?'empate':'venceu '+esc(m.names[m.result])} ·
       mexa à vontade: nada muda de verdade até você salvar.</div>
     ${n?`<div class="card" style="background:var(--panel2);border:1px solid var(--gold);margin-bottom:12px">
       <div class="k" style="margin-bottom:6px;color:var(--gold)">${pl(n,'mudança','mudanças')} para salvar</div>
@@ -4826,10 +4857,11 @@ function viewEditEsc(liga,m,r){
         <span class="tiny">${pl((ini[sd]||[]).length,'jogador','jogadores')}</span></div>
       <div class="chips">${(ini[sd]||[]).map(id=>`<button class="tp big" data-a="escPick" data-id="${m.id}" data-s="${sd}" data-pid="${id}">${gks[sd]===id?'🧤 ':''}${esc(nameOf(liga,id))}</button>`).join('')}
         <button class="tp big" data-a="escAdd" data-id="${m.id}" data-s="${sd}">＋ pôr alguém</button></div></div>`).join('')}
-    <div class="sec"><div class="k2"><span>Trocas durante a partida</span><span class="tiny">${pl(evs.length,'troca')}</span></div>
+    <div class="sec"><div class="k2"><span>Gols e trocas</span><span class="tiny">${pl(gols,'gol')} · ${pl(trocas,'troca')}</span></div>
       ${evs.length?`<div class="card" style="padding:0;overflow:hidden">${evs.map(linha).join('')}</div>`
-        :'<div class="tiny muted" style="padding:6px 2px">Nenhuma troca registrada nesta partida.</div>'}
-      <button class="more" data-a="novaTroca" data-id="${m.id}">＋ nova troca</button></div>
+        :'<div class="tiny muted" style="padding:6px 2px">Nenhum gol nem troca registrados nesta partida.</div>'}
+      <div class="row" style="gap:6px"><button class="more" style="flex:1" data-a="novoGol" data-id="${m.id}">＋ gol</button>
+        <button class="more" style="flex:1" data-a="novaTroca" data-id="${m.id}">＋ troca</button></div></div>
     <div class="sec"><div class="k2"><span>Como fica</span><span class="tiny">${pl(matchStints(liga,m).filter(s=>s.counted).length,'trecho')} que ${matchStints(liga,m).filter(s=>s.counted).length===1?'conta':'contam'} para o nível</span></div>
       ${revTrechos(liga,m)}</div>
     <div style="height:8px"></div>
@@ -4867,6 +4899,33 @@ function viewNovaTroca(liga,m,nt){
       <div class="chips" style="margin-bottom:14px">${emQuadra.map(id=>chip(id,'gk',nt.gk===id)).join('')}
         <button class="tp big ${nt.gk===''?'sel':''}" data-a="ntSet" data-k="gk" data-v="">ficou sem goleiro fixo</button></div>`}
     <button class="btn wide pri" data-a="ntOk" data-id="${m.id}">Adicionar</button>
+    <div style="height:8px"></div>
+    <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Cancelar</button>`;
+}
+/* Folha do gol (novo ou existente): time, minuto, autor entre quem estava em
+   quadra por aquele lado naquele instante — ou "contra", pelo outro lado.
+   O rascunho do gol vive junto com o da correção, até Adicionar/Salvar.   */
+function viewGol(liga,m,ng){
+  const t=tDoMinuto(m,ng.min),lado=ng.own?1-ng.side:ng.side;
+  const emQuadra=escalaEm(liga,m,t,lado),fim=gameTime(m,m.endedAt),novo=ng.i===null;
+  const chip=(id,sel,txt)=>`<button class="tp big ${sel?'sel':''}" data-a="ngSet" data-k="pid" data-v="${id}">${txt||esc(nameOf(liga,id))}</button>`;
+  return `<h2>${novo?'Gol':'Corrigir gol'}</h2>
+    <div class="k" style="margin-bottom:6px">Gol do</div>
+    <div class="seg" style="margin-bottom:12px">
+      ${[0,1].map(sd=>`<button class="${ng.side===sd?'on':''}" data-a="ngSet" data-k="side" data-v="${sd}">${esc(m.names[sd])}</button>`).join('')}</div>
+    <div class="k" style="margin-bottom:6px">Quando</div>
+    <div class="row" style="gap:8px;margin-bottom:4px">
+      <button class="btn sm ghost" data-a="ngSet" data-k="min" data-v="-30000">−30s</button>
+      <div class="num" style="font-family:var(--disp);font-weight:800;font-size:22px;flex:1;text-align:center">${mmss(ng.min)}</div>
+      <button class="btn sm ghost" data-a="ngSet" data-k="min" data-v="30000">+30s</button></div>
+    <div class="tiny muted" style="margin-bottom:12px">a partida durou ${mmss(fim)}</div>
+    <div class="row" style="margin-bottom:6px"><div class="k">Quem fez</div>
+      <span class="sp tiny" style="display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px">
+        ${[[0,'do time'],[1,'contra']].map(x=>`<button data-a="ngSet" data-k="own" data-v="${x[0]}" style="border:0;border-radius:6px;padding:3px 8px;font:inherit;cursor:pointer;background:${(ng.own?1:0)===x[0]?'var(--line2)':'transparent'};color:${(ng.own?1:0)===x[0]?'var(--chalk)':'var(--mute)'}">${x[1]}</button>`).join('')}</span></div>
+    <div class="chips" style="margin-bottom:14px">${emQuadra.map(id=>chip(id,ng.pid===id)).join('')||'<span class="tiny muted">ninguém em quadra nesse minuto</span>'}
+      ${chip('',!ng.pid,'sem autor')}</div>
+    <button class="btn wide pri" data-a="ngOk" data-id="${m.id}">${novo?'Adicionar':'Salvar gol'}</button>
+    ${novo?'':`<div style="height:8px"></div><button class="btn wide danger" data-a="ngDel" data-id="${m.id}" data-i="${ng.i}">✕ Apagar este gol</button>`}
     <div style="height:8px"></div>
     <button class="btn wide ghost" data-a="editEsc" data-id="${m.id}">Cancelar</button>`;
 }
@@ -6029,7 +6088,6 @@ const A={
   },
   /* alterna a barra / a folha entre os nomes do time que marcou e os do outro (gol contra) */
   scorerSide(el){
-    if(el.dataset.for==='goalScorerM'){const [id,i]=el.dataset.t.split('|');return A.goalScorerM({dataset:{id,i,own:el.dataset.own}})}
     const lv=L().live,c=lv&&lv.cur;if(!c)return;
     if(el.dataset.for==='goalScorer')return A.goalScorer({dataset:{t:el.dataset.t,own:el.dataset.own}});
     const g=c.events.slice().reverse().find(e=>e.type==='goal');
@@ -6218,12 +6276,7 @@ const A={
         <div class="tiny">${d.map(x=>esc(x.by)).join(', ')}</div></div>`:''}
       ${revDetalhe(l,m)}
       <div style="height:12px"></div>
-      <button class="btn wide ghost sm" data-a="editEsc" data-id="${m.id}">${bi('arrows')} Corrigir escalação e trocas</button>
-      <div class="k" style="margin:14px 0 6px">Resultado</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
-        ${[[0,esc(m.names[0])],['draw','Empate'],[1,esc(m.names[1])]]
-          .map(x=>`<button class="btn sm ${String(m.result)===String(x[0])?'pri':'ghost'}" data-a="fixResult" data-id="${m.id}" data-r="${x[0]}" style="min-width:0;padding:0 6px">${x[1]}</button>`).join('')}
-      </div>
+      ${podeCorrigirEsc(m)?`<button class="btn wide ghost sm" data-a="editEsc" data-id="${m.id}" style="margin-bottom:10px">${bi('arrows')} Corrigir gols, escalação e trocas</button>`:''}
       <div class="row" style="gap:6px">
         <button class="btn sm" data-a="clearDisputes" data-id="${m.id}">Manter</button>
         <button class="btn sm ${m.voided?'pri':'ghost'}" data-a="voidMatch" data-id="${m.id}">${m.voided?'Reativar':'Anular'}</button>
@@ -6243,7 +6296,7 @@ const A={
   editEsc(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
     if(!souAdmin(l))return toast('Só o admin da liga corrige a escalação');
-    if(!podeCorrigirEsc(m))return toast('Partida antiga: sem cronômetro gravado, a escalação não dá para corrigir');
+    if(!podeCorrigirEsc(m))return toast('Partida antiga: sem cronômetro gravado, não dá para corrigir');
     const r=rascunhoEsc(m);r.nt=null;
     openSheet(viewEditEsc(l,r.m,r));
   },
@@ -6418,7 +6471,7 @@ const A={
     const l=L(),r=ESC;if(!r||!souAdmin(l))return;
     const m=l.matches.find(x=>x.id===r.mid);if(!m)return;
     if(!r.mud.length){ESC=null;return A.review({dataset:{id:m.id}})}
-    ['startLineups','startGks','lineups','gks','events','goals','stints'].forEach(k=>{m[k]=r.m[k]});
+    ['startLineups','startGks','lineups','gks','events','goals','score','result','stints'].forEach(k=>{m[k]=r.m[k]});
     recalcPartida(l,m);
     r.mud.forEach(txt=>logAdd(l,'esc',{mid:m.id,txt}));
     const n=r.mud.length;ESC=null;
@@ -6431,47 +6484,62 @@ const A={
     if(ESC&&ESC.mud.length&&!confirm('Descartar '+pl(ESC.mud.length,'mudança','mudanças')+' que você ainda não salvou?'))return;
     ESC=null;A.review({dataset:{id}});
   },
-  /* autor de um gol numa partida já encerrada (revisão): a lista é quem esteve
-     em quadra pelo time que marcou; "contra" troca para o outro time         */
-  goalScorerM(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
-    if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
-    const i=+el.dataset.i,g=(m.goals||[])[i];if(!g)return;
-    const contra=el.dataset.own!==undefined?el.dataset.own==='1':!!g.own,lado=contra?1-g.side:g.side;
-    const em=new Set();matchStints(l,m).forEach(st=>(st.lineups[lado]||[]).forEach(id=>em.add(id)));
-    openSheet(`<h2>Quem fez esse gol?</h2>
-      <div class="row" style="margin-bottom:10px"><div class="tiny muted">gol do ${esc(m.names[g.side])}${g.min!==undefined?' · '+mmss(g.min):''}</div>
-        ${scorerTabs('goalScorerM',m.id+'|'+i,contra)}</div>
-      <div class="chips">${[...em].map(id=>`<button class="tp big ${g.pid===id&&!!g.own===contra?'sel':''}" data-a="setGoalScorerM" data-id="${m.id}" data-i="${i}" data-pid="${id}" data-own="${contra?1:0}">${esc(nameOf(l,id))}</button>`).join('')}
-        <button class="tp big" data-a="setGoalScorerM" data-id="${m.id}" data-i="${i}" data-pid="">sem autor</button></div>
-      <div style="height:12px"></div><button class="btn wide ghost" data-a="review" data-id="${m.id}">Voltar à revisão</button>`);
+  /* ----- gols no rascunho -----
+     Um gol é um evento do log como a troca: mudar o autor, o minuto, o time
+     ou apagar reescreve o log; o placar e o resultado são recontados dele. */
+  golPick(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin da liga corrige partidas');
+    const r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r)return;
+    const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev||ev.type!=='goal')return;
+    r.ng={i,side:ev.side,min:gameTime(m,ev.t),pid:ev.pid||null,own:!!ev.own};
+    openSheet(viewGol(l,m,r.ng));
   },
-  setGoalScorerM(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
-    if(!souAdmin(l))return toast('Só o admin da liga revisa partidas');
-    const i=+el.dataset.i,g=(m.goals||[])[i];if(!g)return;
-    const pid=el.dataset.pid||null,own=!!(pid&&el.dataset.own==='1');
-    if(g.pid===pid&&!!g.own===own)return A.review({dataset:{id:m.id}});
-    logAdd(l,'goal',{mid:m.id,i,from:g.pid,fromOwn:!!g.own,to:pid,toOwn:own});
-    g.pid=pid;g.own=own;
-    /* o log bruto da partida acompanha, para a estatística futura não divergir */
-    if(Array.isArray(m.events)&&g.t){const ev=m.events.find(e=>e.type==='goal'&&e.t===g.t);if(ev){ev.pid=pid;ev.own=own}}
-    rebuildAll(l);save();render();A.review({dataset:{id:m.id}});toast('Autor corrigido');
+  novoGol(el){
+    const l=L();if(!souAdmin(l))return toast('Só o admin da liga corrige partidas');
+    const r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r)return;
+    const m=r.m;
+    r.ng={i:null,side:0,min:Math.round(gameTime(m,m.endedAt)/2),pid:null,own:false};
+    openSheet(viewGol(l,m,r.ng));
   },
-  fixResult(el){
-    const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;
-    if(!souModerador(l))return toast('Só admin ou moderador corrige resultado');
-    const novo=el.dataset.r==='draw'?'draw':+el.dataset.r;
-    logAdd(l,'result',{mid:m.id,from:m.result,to:novo,voided:m.voided});
-    m.result=novo;
-    /* a correcao vale para o trecho que fechou a partida — os trechos anteriores
-       ja tinham vencedor proprio, cada um com o seu placar                     */
-    if(Array.isArray(m.stints)&&m.stints.length){
-      const cont=m.stints.filter(x=>x.counted);
-      (cont.length?cont[cont.length-1]:m.stints[m.stints.length-1]).result=m.result;
+  ngSet(el){
+    const l=L(),r=ESC;if(!r||!r.ng)return;
+    const m=r.m,ng=r.ng,k=el.dataset.k,v=el.dataset.v;
+    if(k==='min'){ng.min=clamp(ng.min+(+v),0,gameTime(m,m.endedAt));ng.pid=null}
+    else if(k==='side'){ng.side=+v;ng.pid=null}
+    else if(k==='own'){ng.own=v==='1';ng.pid=null}
+    else if(k==='pid')ng.pid=v||null;
+    openSheet(viewGol(l,m,ng));
+  },
+  ngOk(el){
+    const l=L(),r=ESC;if(!r||!r.ng||!souAdmin(l))return;
+    const m=r.m,ng=r.ng,quem=ng.pid?nameOf(l,ng.pid)+(ng.own?' (contra)':''):'sem autor';
+    m.events=(m.events||[]);
+    let txt;
+    if(ng.i===null){
+      m.events.push({t:tDoMinuto(m,ng.min),type:'goal',side:ng.side,pid:ng.pid,own:!!ng.own});
+      txt='Gol do '+m.names[ng.side]+' aos '+mmss(ng.min)+': '+quem;
+    }else{
+      const ev=m.events[ng.i];if(!ev)return;
+      const antes={side:ev.side,min:gameTime(m,ev.t),pid:ev.pid||null,own:!!ev.own};
+      if(antes.side===ng.side&&antes.min===ng.min&&antes.pid===ng.pid&&antes.own===!!ng.own){r.ng=null;return A.editEsc({dataset:{id:m.id}})}
+      if(antes.min!==ng.min)ev.t=tDoMinuto(m,ng.min);
+      ev.side=ng.side;ev.pid=ng.pid;ev.own=!!ng.own;
+      const mud=[];
+      if(antes.side!==ng.side)mud.push('era do '+m.names[ng.side]);
+      if(antes.min!==ng.min)mud.push('foi aos '+mmss(ng.min));
+      if(antes.pid!==ng.pid||antes.own!==!!ng.own)mud.push('autor '+quem);
+      txt='Gol aos '+mmss(antes.min)+': '+mud.join(', ');
     }
-    m.disputes=[];m.voided=false;rebuildAll(l);
-    closeSheet();save();render();toast('Corrigido, níveis recalculados');
+    m.events.sort((a,b)=>a.t-b.t);
+    r.ng=null;
+    mudaEsc(l,r,txt);
+  },
+  ngDel(el){
+    const l=L(),r=ESC;if(!r||!souAdmin(l))return;
+    const m=r.m,i=+el.dataset.i,ev=(m.events||[])[i];if(!ev||ev.type!=='goal')return;
+    m.events=m.events.filter((e,k)=>k!==i);
+    r.ng=null;
+    mudaEsc(l,r,'Gol do '+m.names[ev.side]+' aos '+mmss(gameTime(m,ev.t))+' apagado');
   },
   voidMatch(el){
     const l=L(),m=l.matches.find(x=>x.id===el.dataset.id);if(!m)return;

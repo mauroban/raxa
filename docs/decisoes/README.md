@@ -111,6 +111,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-117](partida-e-historico.md#d-117) · O 🧤 é um slot como os outros: goleiro entra pela substituição, improvisar não encurta o time
 - [D-118](partida-e-historico.md#d-118) · Elo de largada de todos os titulares; efeito no nível por papel
 - [D-195](partida-e-historico.md#d-195) · Partida de segundos continua contando inteira (marcação errada faz parte; os resultados valem)
+- [D-198](partida-e-historico.md#d-198) · Correção de partida: gol é evento editável (time, minuto, autor, adicionar, apagar); placar e resultado recontados dos gols; sem botões de vencedor
 
 ### [Stats e destaques](stats-e-destaques.md)
 

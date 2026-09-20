@@ -441,3 +441,30 @@ peso proporcional à duração (mudaria a régua de toda partida curta por causa
 **Onde:** `splitStints` em `index.html` (sem mudança) · [Ideias futuras §5](../produto/ideias-futuras.md)
 para o cansaço, anotado na mesma conversa.
 
+<a id="d-198"></a>
+### D-198 · Correção de partida: o gol é editável e o placar define o resultado
+**Quando:** 2026-09-20.
+**O quê:** a revisão perde os três botões de resultado (Time A · Empate · Time B). A correção de
+escalação e trocas vira **"Corrigir partida"**: a mesma tela de rascunho ganha a linha do tempo
+inteira ("Gols e trocas"), e cada gol é um evento como a troca — tocar corrige time, minuto (passo de
+30 s), autor (quem estava em quadra por aquele lado naquele minuto; *contra* lista o outro lado) ou
+apaga; **＋ gol** adiciona. Tocar num gol na revisão abre a mesma folha, já no rascunho. A cada
+mudança `recalcPartida` reconta `goals`, `score` e `result` dos eventos de gol e refaz os trechos;
+o Salvar grava tudo, registra cada mudança ("corrigiu a partida") e recalcula a liga do zero.
+Partida gravada sem o log de gols (versão antiga) ganha um evento por gol guardado antes de qualquer
+conta (`eventosComGols`), para a correção não apagá-los.
+**Por quê:** o vencedor à parte do placar era um campo a mais para errar e contradizia o próprio
+placar na tela (nos dados reais nunca divergiram: o fim ao vivo já deriva o resultado do placar).
+E não dava para adicionar nem apagar gol: um gol marcado no time errado, ou um "Fim" apertado antes
+do gol, só se consertava apagando a partida. Editar o gol no lugar em que ele aconteceu, com o placar
+recontado na hora, é uma ferramenta só para todos os erros de lançamento.
+**Descartado:** manter o resultado manual como exceção "para decisão por pênaltis" (a liga não tem
+isso); campo numérico de placar sem gols (o placar sem gol deixaria artilharia e +/− fora de
+sincronia com o resultado); correção de autor com um toque fora do rascunho, como era (duas
+gramáticas para a mesma tela). A capacidade "moderador corrige resultado" da tabela de papéis nunca
+foi alcançável (a revisão sempre foi do admin) e sai da tabela.
+**Onde:** `recalcPartida`, `eventosComGols`, `viewEditEsc`, `viewGol`, `golPick`/`novoGol`/`ngSet`/
+`ngOk`/`ngDel`, `review`, `revTempo` em `index.html` · `scripts/smoke.py` (corrigir autor no rascunho;
+adicionar e apagar gol reconta placar e resultado; lançador não abre a correção) · `scripts/visual.py`
+(telas 24 e 25) · [Contestação e correção](../produto/contestacao-e-correcao.md) ·
+[Interface §4](../produto/interface.md) · [Contas e permissões](../produto/contas-e-permissoes.md).

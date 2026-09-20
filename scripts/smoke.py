@@ -61,11 +61,11 @@ const setMatchMode=v=>{const l=L();l.cfg.matchMode=v;if(l.live)l.live.mode=v;
 step('toda acao tem classificacao de papel',()=>{
   /* acoes fora dos dois conjuntos rodam para qualquer membro; as LIVRES sao
      as que (a) so olham/preferencia, (b) tem checagem interna de papel
-     (fixResult, voidMatch, escSalvar, pdSave, acc*...), ou (c) sao de conta.
+     (ngOk, voidMatch, escSalvar, pdSave, acc*...), ou (c) sao de conta.
      Acao nova cai aqui ate alguem classifica-la de proposito. */
   const LIVRES=new Set(['home','openLiga','tab','closeSheet','newLiga','novaSheet','novaOpt','pickPat','togGk','statsPapel',
     'contest','review','revSec','editEsc','escPick','escGk','escDel','escSwap','escAdd','escAddDo','evPick','evSet','evDel',
-    'novaTroca','ntSet','ntOk','escSalvar','escDescartar','goalScorerM','setGoalScorerM','fixResult','voidMatch',
+    'novaTroca','ntSet','ntOk','escSalvar','escDescartar','golPick','novoGol','ngSet','ngOk','ngDel','voidMatch',
     'clearDisputes','delMatch','pSheet','pdGk','pdRole','pdOwner','pdCancel','pdSave','rankRole',
     'mergeSheet','mergePick','mergeDo','unmerge','opSet','opDel','opSheet','opRole','opNav','opIr',
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
@@ -817,8 +817,8 @@ step('quem nao e admin nao revisa nem corrige patente',()=>{
   {const h=viewEscada(l);if(/\d+V \d+E \d+D/.test(h))throw new Error('a escada nao mostra V/E/D (D-175)');
    if(!/class="rank um"/.test(h)||/class="meta"/.test(h))throw new Error('linha da escada devia ser de uma linha so');
    if(/⏳ \d+\/\d+ partidas/.test(h))throw new Error('na escada o calibrando e so o numero, sem "partidas" (D-175)')}
-  const antes=m.result;A.fixResult({dataset:{id:m.id,r:antes==='draw'?'0':'draw'}});
-  if(m.result!==antes)throw new Error('lancador corrigiu resultado');
+  const antes=JSON.stringify([m.score,m.result,m.events]);A.golPick({dataset:{id:m.id,i:'0'}});A.novoGol({dataset:{id:m.id}});
+  if(ESC||JSON.stringify([m.score,m.result,m.events])!==antes)throw new Error('lancador abriu a correcao da partida');
   const r0=eu.L.rank;A.opSet({dataset:{pid:eu.id,r:'L',s:'13',back:'ficha'}});
   if(eu.L.rank!==r0||(eu.L.op||[]).some(o=>o.by===eu.id))throw new Error('lancador opinou sobre si mesmo');
   A.pdCancel();
@@ -858,19 +858,60 @@ step('numeros: ultimo racha e ultimo mes',()=>{
   if(!/class="on" data-a="statsPer" data-v="mes"/.test(els['#app'].innerHTML)||statsPeriodo(L()).slice(0,4)!=='mes:')throw new Error('periodo do mes nao aplicou (o botao aceso e o filtro fixo dizem o periodo; os titulos nao, D-185)');
   A.statsPer({dataset:{v:'ano'}});A.statsTab({dataset:{v:'jogador'}});
 });
-step('revisao: corrigir autor de gol de partida encerrada',()=>{
-  const l=L(),m=[...l.matches].reverse().find(x=>(x.goals||[]).length);
+step('revisao: corrigir autor de gol de partida encerrada (rascunho + salvar)',()=>{
+  const l=L(),m=[...l.matches].reverse().find(x=>(x.goals||[]).length&&podeCorrigirEsc(x));
   if(!m)return;
   A.review({dataset:{id:m.id}});
-  if(!/corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('revisao sem a lista de gols');
-  A.goalScorerM({dataset:{id:m.id,i:'0'}});
-  const em=new Set();matchStints(l,m).forEach(st=>(st.lineups[m.goals[0].side]||[]).forEach(id=>em.add(id)));
-  const novo=[...em].find(id=>id!==m.goals[0].pid);
-  const antes=P(l,novo).goals;
-  A.setGoalScorerM({dataset:{id:m.id,i:'0',pid:novo,own:'0'}});
-  if(m.goals[0].pid!==novo)throw new Error('autor nao mudou');
+  const h=els['#sheet'].innerHTML;
+  if(!/corrigir o gol/.test(h))throw new Error('revisao sem a lista de gols');
+  if(/data-a="fixResult"/.test(h)||/>Empate</.test(h))throw new Error('a revisao nao define vencedor: o placar define (D-198)');
+  const i=m.events.findIndex(e=>e.type==='goal'),g=m.events[i];
+  A.golPick({dataset:{id:m.id,i:String(i)}});
+  if(!ESC||!/Corrigir gol/.test(els['#sheet'].innerHTML))throw new Error('o gol nao abriu no rascunho');
+  const em=escalaEm(l,ESC.m,g.t,g.side);
+  const novo=em.find(id=>id!==g.pid);if(!novo)throw new Error('sem outro autor possivel');
+  const antes=P(l,novo).goals,antesDe=(g.pid&&P(l,g.pid))?P(l,g.pid).goals:null;
+  A.ngSet({dataset:{k:'pid',v:novo}});A.ngOk({dataset:{id:m.id}});
+  if(m.goals[0].pid===novo||ESC.mud.length!==1)throw new Error('a correcao devia ficar no rascunho');
+  A.escSalvar({dataset:{id:m.id}});
+  if(m.goals.find(x=>x.t===g.t).pid!==novo)throw new Error('autor nao mudou');
   if(P(l,novo).goals!==antes+1)throw new Error('o gol nao foi recontado para o novo autor');
-  if(!l.log.some(e=>e.a==='goal'))throw new Error('correcao de autor sem registro no log');
+  if(antesDe!==null&&P(l,g.pid).goals!==antesDe-1)throw new Error('o autor antigo continuou com o gol');
+  if(!l.log.some(e=>e.a==='esc'&&/autor/.test(e.txt||'')))throw new Error('correcao de autor sem registro no log');
+});
+step('revisao: adicionar e apagar gol reconta placar e resultado (D-198)',()=>{
+  const l=L(),m=[...l.matches].reverse().find(x=>podeCorrigirEsc(x)&&x.result!=='draw');
+  if(!m)return;
+  const sc0=m.score.slice(),perde=m.result===0?1:0,elos=()=>l.players.map(p=>p.L.elo).join(',');
+  A.editEsc({dataset:{id:m.id}});
+  if(!/Corrigir partida/.test(els['#sheet'].innerHTML)||!/＋ gol/.test(els['#sheet'].innerHTML))throw new Error('tela de correcao sem "+ gol"');
+  /* gol contra do lado que venceu conta para o outro lado */
+  A.novoGol({dataset:{id:m.id}});
+  A.ngSet({dataset:{k:'side',v:String(perde)}});
+  A.ngSet({dataset:{k:'own',v:'1'}});
+  const t=tDoMinuto(ESC.m,ESC.ng.min),contra=escalaEm(l,ESC.m,t,m.result)[0];
+  if(!contra)throw new Error('ninguem em quadra para o gol contra');
+  A.ngSet({dataset:{k:'pid',v:contra}});
+  A.ngOk({dataset:{id:m.id}});
+  const d=ESC.m;
+  if(d.score[perde]!==sc0[perde]+1||d.score[m.result]!==sc0[m.result])throw new Error('o placar do rascunho nao recontou o gol novo');
+  if(d.result!==stintResult(d.score))throw new Error('o resultado do rascunho nao segue o placar');
+  const gNovo=d.goals.find(g=>g.own&&g.pid===contra);
+  if(!gNovo||gNovo.side!==perde)throw new Error('o gol contra nao ficou do lado certo');
+  if(JSON.stringify(m.score)!==JSON.stringify(sc0))throw new Error('a partida real mudou antes do Salvar');
+  /* apagar um gol de quem venceu */
+  const iV=d.events.findIndex(e=>e.type==='goal'&&e.side===m.result);
+  A.golPick({dataset:{id:m.id,i:String(iV)}});
+  if(!/Apagar este gol/.test(els['#sheet'].innerHTML))throw new Error('gol existente sem botao de apagar');
+  A.ngDel({dataset:{id:m.id,i:String(iV)}});
+  if(d.score[m.result]!==sc0[m.result]-1||ESC.mud.length!==2)throw new Error('apagar o gol nao recontou o placar');
+  const salvo=d.result,antesElo=elos();
+  A.escSalvar({dataset:{id:m.id}});
+  if(m.result!==salvo||m.result!==stintResult(m.score))throw new Error('o resultado salvo nao e o do placar');
+  if(m.goals.length!==m.events.filter(e=>e.type==='goal').length)throw new Error('m.goals nao bate com os eventos de gol');
+  if(matchStints(l,m).reduce((a,st)=>a+st.score[0]+st.score[1],0)!==m.score[0]+m.score[1])throw new Error('os trechos nao somam o placar');
+  if(elos()===antesElo)throw new Error('mudar o resultado devia mexer no nivel');
+  rebuildAll(l);if(elos()!==l.players.map(p=>p.L.elo).join(','))throw new Error('o nivel nao bate com o recalculo do zero');
 });
 step('numeros: abas jogador/racha e listas compactas',()=>{
   A.statsTab({dataset:{v:'racha'}});
@@ -968,7 +1009,7 @@ step('revisar partida mostra a partida inteira',()=>{
     }finally{rebuildAll(l)}                          // a partida sintetica nao entra no historico: desfaz o efeito dela
   }
   A.revSec({dataset:{k:'tempo',id:m.id}});
-  if(/toque para corrigir o autor/.test(els['#sheet'].innerHTML))throw new Error('linha do tempo nao fechou');
+  if(/toque para corrigir o gol/.test(els['#sheet'].innerHTML))throw new Error('linha do tempo nao fechou');
   A.revSec({dataset:{k:'tempo',id:m.id}});
 });
 step('ficha da partida conta tempo e gols de quem jogou',()=>{
@@ -984,7 +1025,6 @@ step('ficha da partida conta tempo e gols de quem jogou',()=>{
   const quemJogou=els['#sheet'].innerHTML.split('Linha do tempo')[0];
   if(/class="val/.test(quemJogou))throw new Error('voltou numero sem rotulo na ficha de quem jogou');
 });
-step('corrigir resultado',()=>A.fixResult({dataset:{id:L().matches[0].id,r:'draw'}}));
 step('anular partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('reativar partida',()=>A.voidMatch({dataset:{id:L().matches[0].id}}));
 step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que andou no periodo (D-188)',()=>{
@@ -1264,7 +1304,7 @@ step('corrigir escalacao e trocas: rascunho ate o Salvar',()=>{
   const antesDeTudo=real();
   A.editEsc({dataset:{id:m.id}});
   const h=els['#sheet'].innerHTML;
-  if(!/Começaram/.test(h)||!/nova troca/.test(h)||!/Como fica/.test(h))throw new Error('tela de escalacao incompleta');
+  if(!/Começaram/.test(h)||!/＋ troca/.test(h)||!/＋ gol/.test(h)||!/Como fica/.test(h))throw new Error('tela de escalacao incompleta');
   if(/Salvar/.test(h))throw new Error('sem mudanca nenhuma nao deveria ter botao de salvar');
   /* era outra pessoa: some da partida inteira, mas so no rascunho */
   const alvo=A0[0],novo=l.players.find(p=>!genteDaPartida(m).has(p.id));
@@ -1328,7 +1368,7 @@ step('partida antiga nao aceita correcao de escalacao',()=>{
   l.matches.push(m);
   openSheet('<h2>outra folha</h2>');
   A.editEsc({dataset:{id:'velha'}});
-  if(/Escalação e trocas/.test(els['#sheet'].innerHTML))throw new Error('abriu a tela para partida sem cronometro');
+  if(/Corrigir partida/.test(els['#sheet'].innerHTML))throw new Error('abriu a tela para partida sem cronometro');
   l.matches.pop();
 });
 step('voltar para home',()=>A.home());
