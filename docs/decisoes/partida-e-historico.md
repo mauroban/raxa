@@ -497,3 +497,24 @@ min); esconder quem não estava no racha (às vezes a pessoa não foi marcada na
 `index.html` · `scripts/smoke.py` (mover e esticar sem atropelar; quem estava no racha vem primeiro) ·
 `scripts/visual.py` (tela 26) · [Contestação e correção](../produto/contestacao-e-correcao.md) ·
 [Interface §4](../produto/interface.md).
+
+<a id="d-200"></a>
+### D-200 · Partida curta com troca de goleiro: quem começou no gol é o goleiro de largada
+**Quando:** 2026-09-20.
+**O quê:** `gksIni` (goleiros de largada de uma partida sem `startGks` gravado) só usa o primeiro trecho
+quando há trechos de verdade. Com um trecho só — partida abaixo de 45 s, em que `splitStints` guarda
+a formação FINAL — as trocas de goleiro são desfeitas de trás para a frente a partir do goleiro
+final: substituição em que quem entrou virou goleiro devolve quem saiu; evento de goleiro devolve o
+instantâneo anterior. Na correção, "na verdade era outra pessoa" passa a listar também quem só entrou
+por uma troca (`candidatos(…, soLargada)`, `largadaDaPartida`), e `escSwap` apaga a troca que vira
+"sai X, entra X", avisando na lista de mudanças.
+**Por quê:** no racha de 19/09, uma partida recriada de memória em 37 s teve troca Leley → JPx no gol.
+O único trecho guardou a formação final (JPx no gol), `gksIni` leu esse trecho como largada, e JPx
+virou "goleiro de largada" sem estar na escalação de largada: não aparecia em "Começaram" (a luva
+sumia) e, por já "estar na partida", também não aparecia em "pôr alguém". O admin não achava quem
+tinha jogado no gol. Sem o segundo ajuste, trocar Leley por JPx exigiria antes apagar a troca à mão.
+**Descartado:** gravar a largada no trecho único (mudaria o que a ficha e o +/− mostram para partida
+curta: ali a formação final é a certa, todo mundo que pisou em quadra conta); deixar "pôr alguém"
+aceitar quem entrou por troca (a pessoa ficaria duas vezes na escalação).
+**Onde:** `gksIni`, `largadaDaPartida`, `candidatos`, `escSwap` em `index.html` · `scripts/smoke.py`
+(partida curta com troca de goleiro) · [Contestação e correção](../produto/contestacao-e-correcao.md).

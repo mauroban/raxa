@@ -1478,7 +1478,23 @@ function roleNoGol(liga,m,g){
    O que a partida gravou (escalação de largada + log de eventos) é o que gera
    os trechos. Corrigir qualquer um dos dois é reescrever os trechos com a
    MESMA conta do apito final (`splitStints`) e mandar recalcular a liga.    */
-const gksIni=m=>((m.startGks||((m.stints||[])[0]||{}).gks||m.gks||[null,null])).slice();
+/* Goleiros de LARGADA. Partida sem `startGks` gravado: com trechos de verdade
+   o primeiro trecho é a largada; com um trecho só (curta demais para o
+   cronômetro) o trecho guarda a formação FINAL, então as trocas de goleiro
+   são desfeitas de trás para a frente — senão o goleiro que entrou no meio
+   vira "de largada" sem estar na escalação de largada e some da correção
+   (D-200).                                                                  */
+const gksIni=m=>{
+  if(Array.isArray(m.startGks))return m.startGks.slice();
+  const st0=(m.stints||[])[0],gks=((st0&&st0.gks)||m.gks||[null,null]).slice();
+  const evs=(m.events||[]).slice().sort((a,b)=>a.t-b.t);
+  if((m.stints||[]).length>1||!evs.length)return gks;
+  for(let i=evs.length-1;i>=0;i--){const ev=evs[i];
+    if(ev.type==='sub'&&Array.isArray(ev.gks)&&ev.in&&ev.gks[ev.side]===ev.in)gks[ev.side]=ev.out||null;
+    else if(ev.type==='gk'){const prev=evs.slice(0,i).reverse().find(e=>Array.isArray(e.gks));gks[ev.side]=prev?(prev.gks[ev.side]||null):null}
+  }
+  return gks;
+};
 const podeCorrigirEsc=m=>!!(m&&m.startedAt&&m.endedAt&&(m.endedAt-m.startedAt)>0);
 /* Quem esteve em quadra naquele instante, daquele lado — é a lista de quem
    pode sair numa troca ou ir para o gol.                                    */
@@ -1510,10 +1526,20 @@ function genteDoRacha(liga,m){
   }
   return s;
 }
+/* Quem COMEÇOU a partida (os dois lados, com os goleiros de largada). Quem
+   entrou depois por uma troca não está aqui — e por isso pode ser a resposta
+   de "na verdade era outra pessoa" (D-200).                                 */
+function largadaDaPartida(m){
+  const s=new Set();
+  (m.startLineups||m.lineups||[[],[]]).forEach(l=>(l||[]).forEach(id=>s.add(id)));
+  gksIni(m).forEach(id=>{if(id)s.add(id)});
+  return s;
+}
 /* Cadastro dividido para a correção: quem estava no racha (sem quem já está
-   na partida) e o resto, cada lista em ordem de nome.                      */
-function candidatos(liga,m){
-  const naPartida=genteDaPartida(m),racha=genteDoRacha(liga,m),nome=(a,b)=>a.name.localeCompare(b.name);
+   na partida — ou, com `soLargada`, sem quem começou) e o resto, cada lista
+   em ordem de nome.                                                         */
+function candidatos(liga,m,soLargada){
+  const naPartida=soLargada?largadaDaPartida(m):genteDaPartida(m),racha=genteDoRacha(liga,m),nome=(a,b)=>a.name.localeCompare(b.name);
   const todos=ativos(liga).filter(p=>!naPartida.has(p.id));
   return {racha:todos.filter(p=>racha.has(p.id)).sort(nome),fora:todos.filter(p=>!racha.has(p.id)).sort(nome)};
 }
@@ -6397,7 +6423,7 @@ const A={
   },
   escPick(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;
-    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),c=candidatos(l,m);
+    const m=r.m,s=+el.dataset.s,pid=el.dataset.pid,gks=gksIni(m),c=candidatos(l,m,true);
     openSheet(`<h2>${esc(nameOf(l,pid))}</h2>
       <div class="tiny muted" style="margin-bottom:12px">Começou a partida no ${esc(m.names[s])}.</div>
       <div style="display:grid;gap:7px;margin-bottom:16px">
@@ -6453,7 +6479,12 @@ const A={
       if(Array.isArray(e.mv))e.mv.forEach(x=>{if(x.id===pid)x.id=por});
     });
     (m.goals||[]).forEach(g=>{if(g.pid===pid)g.pid=por});
-    mudaEsc(l,r,'Quem jogou era '+nameOf(l,por)+', não '+nameOf(l,pid));
+    /* se quem entrou no lugar já estava na partida por uma troca, a troca virou
+       "sai X, entra X": some (D-200)                                        */
+    const antes=(m.events||[]).length;
+    m.events=(m.events||[]).filter(e=>!(e.type==='sub'&&e.out&&e.out===e.in));
+    const n=antes-m.events.length;
+    mudaEsc(l,r,'Quem jogou era '+nameOf(l,por)+', não '+nameOf(l,pid)+(n?' · '+pl(n,'troca')+' sem efeito apagada'+(n===1?'':'s'):''));
   },
   escAdd(el){
     const l=L(),r=rascunhoEsc(l.matches.find(x=>x.id===el.dataset.id));if(!r||!souAdmin(l))return;

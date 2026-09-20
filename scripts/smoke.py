@@ -1412,6 +1412,34 @@ step('por alguem / era outra pessoa: quem estava no racha vem primeiro (D-199)',
   if(iR>=0&&iF>=0&&iF<iR)throw new Error('na troca, quem estava no racha deveria vir antes de quem nao estava');
   A.escDescartar({dataset:{id:m.id}});
 });
+step('partida curta com troca de goleiro: o goleiro de largada e o que comecou, e quem entrou pela troca pode ser "era outra pessoa" (D-200)',()=>{
+  const l=L(),ids=ativos(l).map(p=>p.id);
+  const A0=ids.slice(0,5),B0=ids.slice(5,10),leley=B0[4],jpx=ids[10],ini=Date.now()-3600000;
+  const m={id:'curta1',ts:ini+37000,startedAt:ini,endedAt:ini+37000,sessionId:null,mode:'curtas',names:['A','B'],teamIdx:[0,1],
+    startLineups:[A0.slice(),B0.slice()],lineups:[A0.slice(),B0.slice(0,4).concat([jpx])],gks:[A0[4],jpx],
+    events:[{t:ini+8000,type:'sub',side:1,out:leley,in:jpx,gks:[A0[4],jpx]},{t:ini+20000,type:'goal',side:0,pid:A0[0],own:false}],
+    goals:[{pid:A0[0],side:0,own:false,t:ini+20000,min:20000}],score:[1,0],result:0,disputes:[],voided:false,
+    stints:[{from:ini,to:ini+37000,dur:37000,w:1,counted:true,lineups:[A0.slice(),B0.slice(0,4).concat([jpx])],gks:[A0[4],jpx],score:[1,0],result:0,ended:'apito'}]};
+  l.matches.push(m);rebuildAll(l);
+  try{
+    if(gksIni(m)[1]!==leley)throw new Error('o goleiro de largada deveria ser quem comecou no gol, nao quem entrou pela troca');
+    A.editEsc({dataset:{id:m.id}});
+    const h=els['#sheet'].innerHTML;
+    if(h.indexOf('🧤 '+esc(nameOf(l,leley)))<0)throw new Error('quem comecou no gol nao aparece com a luva em Começaram');
+    A.escPick({dataset:{id:m.id,s:'1',pid:leley}});
+    if(els['#sheet'].innerHTML.indexOf('data-por="'+jpx+'"')<0)throw new Error('quem entrou pela troca nao e oferecido em "era outra pessoa"');
+    A.escSwap({dataset:{id:m.id,s:'1',pid:leley,por:jpx}});
+    const d=ESC.m;
+    if(!d.startLineups[1].includes(jpx)||d.startLineups[1].includes(leley))throw new Error('a troca de pessoa nao valeu na largada');
+    if(gksIni(d)[1]!==jpx)throw new Error('a luva nao foi junto');
+    if(d.events.some(e=>e.type==='sub'))throw new Error('a troca "sai X, entra X" deveria sumir');
+    const st=matchStints(l,d)[0];
+    if(st.lineups[1].filter(id=>id===jpx).length!==1||st.lineups[1].includes(leley))throw new Error('o trecho ficou com gente repetida ou com quem nao jogou');
+    if(!/troca sem efeito apagada/.test(ESC.mud[0]))throw new Error('a mudanca nao avisou que a troca sumiu');
+    A.escSalvar({dataset:{id:m.id}});
+    if(m.startGks[1]!==jpx||m.events.some(e=>e.type==='sub'))throw new Error('o Salvar nao gravou');
+  }finally{l.matches=l.matches.filter(x=>x.id!=='curta1');rebuildAll(l)}
+});
 step('partida antiga nao aceita correcao de escalacao',()=>{
   const l=L(),m={id:'velha',ts:Date.now(),names:['A','B'],score:[1,0],result:0,lineups:[[],[]]};
   l.matches.push(m);
