@@ -722,9 +722,10 @@ Pior sequência nos gerais) · [Stats](../produto/stats.md).
 ### D-203 · Acima do esperado com um pouco mais de destaque
 **Quando:** 2026-09-20.
 **O quê:** (1) na ficha do jogador, logo abaixo do anel de aproveitamento e da barra V/E/D, uma
-linha com o número em destaque — "+12% acima do esperado" em verde, "−8% abaixo do esperado" em
-vermelho, "0% dentro do esperado" — e a explicação curta ao lado ("vitórias reais − esperadas pelo
-confronto, por partida"); (2) nos gerais do racha, o ranking Rendeu acima do esperado passa a abrir
+linha com o número em destaque — "+12% acima do aproveitamento esperado" em verde, "−8% abaixo do
+aproveitamento esperado" em vermelho, "0% dentro do aproveitamento esperado" — e nada mais (a
+primeira versão trazia "vitórias reais − esperadas pelo confronto, por partida" ao lado; era texto
+demais, e "aproveitamento esperado" já diz o que é); (2) nos gerais do racha, o ranking Rendeu acima do esperado passa a abrir
 a lista em Mês, Ano e Sempre (era o segundo, atrás de aproveitamento ou presenças); (3) na faixa
 Posição nos rankings da ficha, "acima do esp." vem antes de "aproveit.". Só com as patentes abertas,
 como já era o ranking (D-143). Anel, tiles, ordem dos outros rankings e o momento não mudam.
