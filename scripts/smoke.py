@@ -1052,7 +1052,7 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     S.ui=JSON.parse(ui0);
     if(!/3D seguidas agora/.test(h)||!/melhor sequência: 3V/.test(h)||!/pior sequência: 3D/.test(h))throw new Error('a ficha nao mostra as sequencias de vitoria e de derrota');
     /* acima do esperado na ficha (D-203): so com as patentes abertas */
-    if(vePat(l)&&!/do esperado/.test(h))throw new Error('a ficha nao mostra o acima/abaixo do esperado');
+    if(vePat(l)&&!/aproveitamento esperado/.test(h))throw new Error('a ficha nao mostra o acima/abaixo do esperado');
     /* ranking Pior sequencia nos gerais do racha */
     const st=statsLiga(l,'sempre'),rk=listasRk(st.J,st.PA,()=>0,1,l).seqD;
     if(!rk.length||rk[0].pid!==eu&&!rk.some(x=>x.pid===eu&&x.bestD===3))throw new Error('a lista da pior sequencia nao tem a pessoa com 3D');
