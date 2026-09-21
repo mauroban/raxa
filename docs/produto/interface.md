@@ -23,7 +23,11 @@ De baixo para cima, o que não sai do lugar:
 | **Filtro de Stats** (só na aba Stats) | 36 px por seletor + 6 px entre eles: 2 a 3 linhas (Jogador/Racha, período, e setas ‹ › com Linha/Gol na mesma linha) | Fixo no topo da aba enquanto o conteúdo rola (D-185). Por isso nenhum título repete o período: "Rankings", não "Rankings em 2026". |
 
 Não existe cabeçalho fixo em cima: o nome da liga mora em Ajustes (D-137). O primeiro pixel da
-tela é conteúdo.
+tela é conteúdo. A exceção é a **lista de ligas** (e as telas de erro e de setup, que não têm
+liga): ali fica um topo de 56 px com a marca, "Raxa" e "Níveis de quadra", com 4 px de folga até
+o primeiro cartão (D-204). Cada liga é um cartão: inicial em bloco, nome em uma linha (reticências
+se não cabe), "N jogadores · N rachas · N partidas" e, se o racha está rolando, o selo "● ao vivo"
+/ "● montando" numa linha própria abaixo dos números — em 360 px ele não cabe na mesma linha.
 
 **Sobre o conteúdo, quando preciso:**
 

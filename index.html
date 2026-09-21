@@ -71,7 +71,10 @@ button{font-family:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 /* ---------- topo compacto ---------- */
-.hdr{display:flex;align-items:center;gap:10px;height:var(--toph);padding:0 2px;position:sticky;top:0;z-index:40;
+/* Só a lista de ligas, o erro e o setup têm este topo (as telas da liga não têm
+   cabeçalho, D-137). A altura é própria: --toph é 0 para as telas da liga e,
+   herdada aqui, esmagava a marca atrás do primeiro cartão (D-204).          */
+.hdr{display:flex;align-items:center;gap:10px;height:56px;padding:0 2px;position:sticky;top:0;z-index:40;
   background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   margin:0 -12px;padding-left:12px;padding-right:12px}
 .hdr h1{font-size:22px;letter-spacing:.01em}
@@ -2867,12 +2870,13 @@ function drawApp(){
 function renderHome(){
   $('#app').innerHTML=`
   <div class="hdr"><div class="brandmark">R</div><div><h1>Raxa</h1><div class="sub">Níveis de quadra</div></div></div>
+  <div style="height:4px"></div>
   ${S.ligas.length?S.ligas.map(l=>`
     <button class="card ligacard" data-a="openLiga" data-id="${l.id}">
       <div class="dot">${esc(l.name.slice(0,1).toUpperCase())}</div>
       <div style="min-width:0;flex:1">
         <h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.name)}</h3>
-        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}${l.live?' · '+seloVivo(l.live.stage==='jogo'?'ao vivo':'montando'):''}</div>
+        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}</div>${l.live?'<div class="tiny" style="margin-top:2px">'+seloVivo(l.live.stage==='jogo'?'ao vivo':'montando')+'</div>':''}
       </div><div style="color:var(--mute);font-size:20px">›</div>
     </button>`).join(''):`
     <div class="empty" style="padding-bottom:18px"><div class="big">Nenhuma liga ainda</div>

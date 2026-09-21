@@ -517,3 +517,18 @@ em aberto. Interruptor de 32 px de altura (mudaria a trilha em toda folha).
 `.patnames`, `.sw` em `index.html` · `scripts/smoke.py` (passos "D-165" e "D-188") ·
 `scripts/visual.py` (tela 7) · [Interface §3–4](../produto/interface.md).
 
+<a id="d-204"></a>
+### D-204 · Lista de ligas com o topo de volta e o selo "ao vivo" em linha própria
+**Quando:** 2026-09-21.
+**O quê:** a lista de ligas (e as telas de erro e de setup, que usam o mesmo `.hdr`) volta a ter um
+topo de 56 px com a marca, "Raxa" e "Níveis de quadra", e 4 px de folga até o primeiro cartão. No
+cartão da liga, o selo "● ao vivo" / "● montando" sai da linha dos números e ganha uma linha própria.
+**Por quê:** "a página inicial onde a gente escolhe qual liga abrir está com o visual um pouco
+bugado". D-137 zerou `--toph` para as telas da liga, mas `.hdr` media a altura por essa variável e
+ficou com 0 px: a marca e o "Raxa" ficavam esmagados atrás do primeiro cartão. E em 360 px
+"19 jogadores · 0 rachas · 0 partidas · ● ao vivo" não cabe: quebrava no meio, com um "·" solto.
+**Descartado:** reaproveitar `--toph` (é das telas da liga, onde a barra de seleção gruda no topo de
+verdade); tirar o topo da lista também (sem liga aberta, a tela precisa dizer que app é este);
+segurar o selo com a última palavra (`nowrap`) — o "0 partidas" ainda descia sozinho.
+**Onde:** CSS `.hdr` e `renderHome` em `index.html` · `scripts/visual.py` (tela 0, só o estado
+vazio) · [Interface §1](../produto/interface.md).
