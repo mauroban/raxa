@@ -167,3 +167,10 @@ Tudo acima é regra. Isto é medida: o motor real posto para rodar em ligas simu
 **O que a patente garante, medido (D-113).** Com o motor real em simulação (`scripts/confianca.py`), quem já calibrou está a **±2 divisões** da verdade em 97% dos casos (palpites bons) ou 92% (palpites mistos); a ±1 divisão, 80% / 69%; na patente exata, 71% / 66%. Nenhum sinal observável — volume de partidas, estabilidade, circulação na patente — separa quem está certo de quem não está, por isso **não existe símbolo de "confiança"** além do "calibrando": calibrou é o sinal. Entre duas pessoas, **3 divisões de diferença mostrada** dizem que a de cima é mais forte em 91–96% dos pares (1 divisão: 66–72%, quase cara ou coroa), mas a diferença real só é de uma patente inteira em um terço deles.
 
 **Diferença que se sustenta no tempo (D-115).** A régua acima é um retrato. Se a diferença **se mantém** — ao longo de um trimestre inteiro de racha, a menor diferença mostrada entre A e B foi de X divisões (`scripts/consistencia.py`, 3 meses de racha seguidos de mais 3) — ela vale mais: **1 divisão mantida** diz "mais forte" em 80–88% dos pares (palpites mistos / bons), contra 68–72% do retrato; **2 divisões mantidas**, 90–96% (retrato 81–87%); **3 divisões mantidas**, 95–99% (retrato 91–96%). Ou seja: um trimestre de consistência vale mais ou menos uma divisão a mais no retrato. "Uma patente inteira melhor" continua **não** garantida: com 3 divisões mantidas, a diferença real é de uma patente em 48–55% dos pares (retrato: 32–33%); só a partir de 5 divisões mantidas passa de 90%. Meio ano de consistência acrescenta 3–5 pontos, não mais.
+
+## Onde o seu nível aparece fora da liga
+
+Na **lista de ligas** cada cartão traz o seu nível naquela liga (D-205): o badge da patente do
+perfil vinculado à sua conta, lido na função do cadastro (quem é goleiro vê a escada de gol), ou
+"⏳ 3/15" enquanto calibra. Não aparece quando não há perfil vinculado nem quando o admin fechou os
+níveis (mesma regra de "quem vê").

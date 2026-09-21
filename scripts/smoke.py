@@ -1542,6 +1542,21 @@ step('partida antiga nao aceita correcao de escalacao',()=>{
   l.matches.pop();
 });
 step('voltar para home',()=>A.home());
+step('lista de ligas: o meu nivel em cada cartao (D-205)',()=>{
+  const l=L()||S.ligas[0];
+  const eu=l.players.find(p=>p.owner&&p.owner===S.me.name)||l.players[0];
+  eu.owner=eu.owner||'eu';S.me.name=eu.owner;
+  const vis=l.cfg.rankVisibility,def=eu.L.def,g=eu.L.games;
+  eu.L.def=true;eu.L.rank=Math.max(eu.L.rank||0,0);eu.gk=false;
+  l.cfg.rankVisibility='todos';S.active=null;render();
+  let h=els['#app'].innerHTML;
+  if(!/class="pat /.test(h)||h.indexOf(l.cfg.patNames[Math.floor(eu.L.rank/3)])<0)throw new Error('cartao da liga sem a minha patente');
+  eu.L.def=false;eu.L.games=0;eu.L.sessions=0;render();
+  if(!/⏳ 0\//.test(els['#app'].innerHTML))throw new Error('calibrando: cartao sem o ⏳ com a contagem');
+  l.cfg.rankVisibility='admin';eu.role='jogador';l.players.forEach(p=>{if(p!==eu&&!p.owner)p.owner='outro'});render();
+  if(/class="pat |⏳/.test(els['#app'].innerHTML))throw new Error('niveis so para o admin: o cartao nao pode mostrar o meu');
+  l.cfg.rankVisibility=vis;eu.L.def=def;eu.L.games=g;l.players.forEach(p=>{if(p.owner==='outro')delete p.owner});
+});
 
 /* estado salvo pela versao antiga (schema v1) sendo lido pela versao nova */
 console.log('\n[smoke] de proximo: fila, vencedor fica, completar');

@@ -532,3 +532,21 @@ verdade); tirar o topo da lista também (sem liga aberta, a tela precisa dizer q
 segurar o selo com a última palavra (`nowrap`) — o "0 partidas" ainda descia sozinho.
 **Onde:** CSS `.hdr` e `renderHome` em `index.html` · `scripts/visual.py` (tela 0, só o estado
 vazio) · [Interface §1](../produto/interface.md).
+
+<a id="d-205"></a>
+### D-205 · O seu nível em cada liga, na lista de ligas
+**Quando:** 2026-09-21.
+**O quê:** cada cartão da lista de ligas mostra o nível do perfil vinculado a você naquela liga:
+o badge da patente (`patBadge`) na função do cadastro (goleiro lê a escada de gol, o resto a de
+linha), ou "⏳ 3/15" com a contagem enquanto calibra. Nada aparece sem perfil vinculado, nem quando
+a liga deixa os níveis só para o admin (`vePat`). Vai numa linha própria abaixo dos números, junto
+do selo ao vivo; a linha só existe quando tem algo a dizer.
+**Por quê:** "o usuário logado ver o rank dele em cada liga na página inicial também é
+interessante". O nível é a identidade do app; quem joga em duas ligas quer ver de relance onde
+está em cada uma, sem abrir.
+**Descartado:** badge à direita do cartão, antes da seta (em 360 px espremia "N jogadores · N
+rachas · N partidas" em duas linhas); posição numérica na escada (a escada não numera — a divisão
+com histerese é o rótulo público, D-57/D-80); ler a função pelo tempo jogado (`papelJogador`
+precisa das estatísticas do período; o cadastro basta para um cartão).
+**Onde:** `meuNivelHome` e `renderHome` em `index.html` · `scripts/smoke.py` (passo "D-205") ·
+[Patentes](../produto/patentes.md) · [Interface §1](../produto/interface.md).

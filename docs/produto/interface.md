@@ -26,8 +26,11 @@ Não existe cabeçalho fixo em cima: o nome da liga mora em Ajustes (D-137). O p
 tela é conteúdo. A exceção é a **lista de ligas** (e as telas de erro e de setup, que não têm
 liga): ali fica um topo de 56 px com a marca, "Raxa" e "Níveis de quadra", com 4 px de folga até
 o primeiro cartão (D-204). Cada liga é um cartão: inicial em bloco, nome em uma linha (reticências
-se não cabe), "N jogadores · N rachas · N partidas" e, se o racha está rolando, o selo "● ao vivo"
-/ "● montando" numa linha própria abaixo dos números — em 360 px ele não cabe na mesma linha.
+se não cabe), "N jogadores · N rachas · N partidas" e, abaixo, uma linha com **o seu nível
+naquela liga** (badge da patente do perfil vinculado a você, ou "⏳ 3/15" enquanto calibra; nada
+se não há perfil vinculado ou a liga fecha os níveis, D-205) e, se o racha está rolando, o selo
+"● ao vivo" / "● montando". Essa linha só existe quando tem algo a dizer — em 360 px nem o selo nem o
+badge cabem ao lado dos números (D-204).
 
 **Sobre o conteúdo, quando preciso:**
 

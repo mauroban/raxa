@@ -2867,6 +2867,19 @@ function drawApp(){
   tickClock();
   if(typeof cuidaWake==='function')cuidaWake();
 }
+/* O seu nível em cada liga, no cartão da lista (D-205): a patente do perfil
+   vinculado a você, na função do cadastro (goleiro lê a escada de gol); quem
+   ainda calibra vê o ⏳ com a contagem. Sem perfil vinculado, ou liga com
+   níveis só para o admin, não mostra nada. Vai numa linha própria, junto do
+   selo ao vivo: à direita do cartão, em 360 px, espremia a linha dos números. */
+function meuNivelHome(l){
+  const id=euId(l),p=id&&l.players.find(x=>x.id===id);
+  if(!p||!vePat(l))return '';
+  const role=p.gk?'G':'L',tr=rt(p,role);
+  if(!tr||typeof tr.rank!=='number')return '';
+  return temPatente(l,p,role)?patBadge(l,tr.rank)
+    :`<span class="prov" title="calibrando: ${calTxt(l,tr)}">⏳ ${calNum(l,tr)}</span>`;
+}
 function renderHome(){
   $('#app').innerHTML=`
   <div class="hdr"><div class="brandmark">R</div><div><h1>Raxa</h1><div class="sub">Níveis de quadra</div></div></div>
@@ -2876,7 +2889,7 @@ function renderHome(){
       <div class="dot">${esc(l.name.slice(0,1).toUpperCase())}</div>
       <div style="min-width:0;flex:1">
         <h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.name)}</h3>
-        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}</div>${l.live?'<div class="tiny" style="margin-top:2px">'+seloVivo(l.live.stage==='jogo'?'ao vivo':'montando')+'</div>':''}
+        <div class="tiny muted">${l.players.length} jogadores · ${nRachas(l)} racha${nRachas(l)===1?'':'s'} · ${l.matches.length} partida${l.matches.length===1?'':'s'}</div>${meuNivelHome(l)||l.live?'<div class="row" style="gap:8px;margin-top:5px">'+meuNivelHome(l)+(l.live?seloVivo(l.live.stage==='jogo'?'ao vivo':'montando'):'')+'</div>':''}
       </div><div style="color:var(--mute);font-size:20px">›</div>
     </button>`).join(''):`
     <div class="empty" style="padding-bottom:18px"><div class="big">Nenhuma liga ainda</div>
