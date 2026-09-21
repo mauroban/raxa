@@ -2426,8 +2426,13 @@ step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido pr
   const n0=l.rsvps.length;A.vou({dataset:{p:'L'}});if(l.rsvps.length!==n0)throw new Error('vou sem perfil');
   const chq=proximaChamada(l),p=l.players.find(x=>!x.owner&&!x.arq&&!minhaChamada(l,chq.dia,x.id));   // um perfil livre e fora da lista de hoje
   A.euSou({dataset:{id:p.id}});if(!/Sou eu/.test(els['#sheet'].innerHTML))throw new Error('folha de confirmar quem sou');
+  const outroAdmin=l.players.some(x=>x!==p&&x.owner&&x.role==='admin');
   A.euSouOk({dataset:{id:p.id}});
   if(p.owner!=='tester'||euId(l)!==p.id)throw new Error('sou eu nao vinculou');
+  /* D-207: o primeiro vinculado vira admin, senao a liga fica sem admin */
+  if(!outroAdmin&&p.role!=='admin')throw new Error('primeiro vinculado devia virar admin');
+  if(!souAdmin(l)&&!outroAdmin)throw new Error('vinculou e perdeu o admin');
+  p.role='jogador';
   h=els['#app'].innerHTML;if(/Quem é você/.test(h)||!/data-a="vou"/.test(h))throw new Error('com perfil, o card some e o Vou aparece');
   p.owner=null;render();
   ['#pn','#pg'].forEach(k=>els[k]=new El(k));
@@ -2436,7 +2441,7 @@ step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido pr
   if(euId(l))throw new Error('nome repetido devia recusar');
   const n=l.players.length;els['#pn'].value='  Mauro Bernardes  ';els['#pg'].value='1';A.euNovoOk();
   const novo=l.players[l.players.length-1];
-  if(l.players.length!==n+1||novo.name!=='Mauro Bernardes'||novo.owner!=='tester'||!novo.gk||novo.L.def||novo.role!=='jogador')throw new Error('criar meu jogador: '+JSON.stringify({n:novo.name,o:novo.owner,gk:novo.gk,def:novo.L.def}));
+  if(l.players.length!==n+1||novo.name!=='Mauro Bernardes'||novo.owner!=='tester'||!novo.gk||novo.L.def||novo.role!==(l.players.some(x=>x!==novo&&x.owner&&x.role==='admin')?'jogador':'admin'))throw new Error('criar meu jogador: '+JSON.stringify({n:novo.name,o:novo.owner,gk:novo.gk,def:novo.L.def}));
   if(!l.log.some(e=>e.a==='newPlayer'&&e.pid===novo.id))throw new Error('sem registro no log');
   if(!/data-a="vou"/.test(els['#app'].innerHTML))throw new Error('criado: ja pode confirmar');
   ['#pn','#pg'].forEach(k=>delete els[k]);

@@ -229,3 +229,24 @@ ruído — e rotula gente ("ele é lançador, ele é só jogador") sem o grupo t
 qualquer membro precisa saber para o "Sou eu").
 **Onde:** `papelMarca(liga,p)` e `A.pSheet` em `index.html` ·
 [Contas e permissões §5](../produto/contas-e-permissoes.md).
+
+<a id="d-207"></a>
+### D-207 · Vincular conta é um caminho só — e "Sou eu" também aplica a regra do primeiro admin
+**Quando:** 2026-09-21.
+**O quê:** `vinculaConta(l,p,user)` é o único lugar que liga uma conta a um perfil: tira a conta de
+qualquer outro perfil (uma conta, um jogador), grava `owner` e aplica D-22 — se não há nenhum perfil
+vinculado com papel admin, este vira admin; se quem se vincula é o **dono da liga**, vira admin sempre.
+Chamado por "Sou eu" e "criar meu jogador" (D-166), pela ficha e por Pendências (vincular e criar
+jogador para conta). O toast avisa quando o papel virou admin.
+**Por quê:** a regra do primeiro admin vivia só na ficha. O cartão "Quem é você nesta liga?" (D-166)
+gravava o `owner` e deixava o papel em Jogador. Numa liga real o criador se vinculou por ali: no
+mesmo toque, "ninguém vinculou, todo mundo é admin" deixou de valer e a liga ficou sem nenhum admin —
+o fundador virou jogador e ninguém conseguia administrar. Sem entrada `role` no log, porque nunca
+houve mudança de papel: ele nasceu jogador.
+**Descartado:** avisar "você vai virar admin" antes de confirmar (é o que a pessoa espera ao criar a
+liga e se vincular); bloquear o vínculo de quem não é admin enquanto o dono não se vincula (travaria
+a chamada, que foi o motivo de D-166).
+**Onde:** `vinculaConta`, `A.euSouOk`, `A.euNovoOk`, `A.accLink`, `A.accCreate`, `A.pdSave` em
+`index.html` · teste "o criador que se vincula por Sou eu vira admin" em `scripts/sync.py` e o passo
+D-166 em `scripts/smoke.py` · [Contas e permissões §2](../produto/contas-e-permissoes.md) ·
+[Confirmação de presença §5](../produto/confirmacao-de-presenca.md).

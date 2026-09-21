@@ -2918,6 +2918,18 @@ function renderHome(){
    O admin da liga pode deixar os níveis visíveis para todo mundo (padrão)
    ou só para ele. A checagem aqui decide o que a tela mostra; nas ações de
    conta o servidor faz a checagem dele (is_league_admin, D-62).             */
+/* Vincular uma conta a um perfil — o único caminho, seja "Sou eu", "criar meu
+   jogador", a ficha ou Pendências. Uma conta, um jogador (D-19); e a regra de
+   D-22, que só a ficha aplicava (D-207): o primeiro perfil vinculado vira
+   admin (senão todo mundo vira jogador na hora e a liga fica sem admin), e o
+   dono da liga vira admin ao se vincular. Devolve true se o papel virou admin. */
+function vinculaConta(l,p,user){
+  l.players.forEach(x=>{if(x!==p&&x.owner===user)x.owner=null});
+  p.owner=user;
+  const temAdmin=l.players.some(x=>x!==p&&x.owner&&x.role==='admin');
+  if(p.role!=='admin'&&(!temAdmin||(user===S.me.name&&DONO[l.id]))){p.role='admin';return true}
+  return false;
+}
 function meuPapel(liga){
   /* quem criou a liga é admin sempre, mesmo que o perfil dele tenha sido
      desvinculado, rebaixado ou juntado a outro: é a mesma regra do servidor
@@ -5854,9 +5866,8 @@ const A={
   euSouOk(el){
     const l=L(),p=P(l,el.dataset.id);if(!p||!S.me.name)return;
     if(p.owner)return toast('Esse perfil já tem dono');
-    l.players.forEach(x=>{if(x.owner===S.me.name)x.owner=null});   // uma conta, um jogador
-    p.owner=S.me.name;logAdd(l,'link',{pid:p.id,user:S.me.name});
-    closeSheet();save();render();toast('Você é '+p.name);
+    const adm=vinculaConta(l,p,S.me.name);logAdd(l,'link',{pid:p.id,user:S.me.name,self:true});
+    closeSheet();save();render();toast('Você é '+p.name+(adm?' — e o admin da liga':''));
   },
   euNovo(){
     if(euId(L()))return;
@@ -5875,8 +5886,8 @@ const A={
     if(l.players.some(x=>x.name.toLowerCase()===n.toLowerCase()))return toast('Já existe alguém com esse nome — toque nele na lista');
     const gk=!!($('#pg')&&$('#pg').value==='1');
     const p=mkPlayer(l,n,null,gk,null);            // sem opinião: fica sem nível até calibrar
-    p.owner=S.me.name;l.players.push(p);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:S.me.name});
-    closeSheet();save();render();toast(n+' criado — é você');
+    l.players.push(p);const adm=vinculaConta(l,p,S.me.name);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:S.me.name});
+    closeSheet();save();render();toast(n+' criado — é você'+(adm?', e o admin da liga':''));
   },
 
   /* marca de uma vez quem está DENTRO das listas da chamada; a espera continua a um toque (D-172) */
@@ -7242,11 +7253,9 @@ const A={
     let msg='Salvo';
     if(d.owner!==(p.owner||null)){
       if(d.owner){
-        const temAdmin=l.players.some(x=>x.owner&&x.role==='admin');
-        if(!temAdmin){p.role='admin';msg='Perfil vinculado — você é o admin da liga'}
+        if(vinculaConta(l,p,d.owner))msg=d.owner===S.me.name?'Perfil vinculado — você é o admin da liga':'Perfil vinculado — '+p.name+' é admin';
         logAdd(l,'link',{pid:p.id,user:d.owner,self:d.owner===S.me.name});
-      }else logAdd(l,'unlink',{pid:p.id,user:p.owner});
-      p.owner=d.owner;
+      }else{logAdd(l,'unlink',{pid:p.id,user:p.owner});p.owner=null}
     }
     /* Mudar de papel não apaga opinião nenhuma (D-121): as que ele deu
        deixam de valer como Jogador e voltam a valer se subir de novo —
@@ -8795,9 +8804,8 @@ Object.assign(A,{
     const l=L(),a=(ACC[l.id].lista||[]).find(x=>x.user_id===el.dataset.u),p=P(l,el.dataset.id);
     if(!a||!p)return;
     if(!souAdmin(l))return toast('Só o admin vincula contas');
-    l.players.forEach(x=>{if(x.owner===a.username)x.owner=null});   // uma conta, um jogador
-    p.owner=a.username;logAdd(l,'link',{pid:p.id,user:a.username});
-    closeSheet();save();render();toast(p.name+' agora é @'+a.username);
+    const adm=vinculaConta(l,p,a.username);logAdd(l,'link',{pid:p.id,user:a.username});
+    closeSheet();save();render();toast(p.name+' agora é @'+a.username+(adm?' — e admin':''));
   },
   accUnlink(el){
     const l=L(),p=P(l,el.dataset.id);if(!p)return;
@@ -8811,7 +8819,7 @@ Object.assign(A,{
     if(!souAdmin(l))return toast('Só o admin cria jogador para conta');
     const p=mkPlayer(l,a.username,l.cfg.startElo,false);
     p.L.def=false;                                   // ninguém deu palpite: fica sem nível até calibrar
-    p.owner=a.username;l.players.push(p);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:a.username});
+    l.players.push(p);vinculaConta(l,p,a.username);logAdd(l,'newPlayer',{pid:p.id,name:p.name,user:a.username});
     closeSheet();save();render();A.pSheet({dataset:{id:p.id}});toast('Jogador criado — ajuste o nível na ficha');
   },
   async accApprove(el){

@@ -15,6 +15,8 @@ Quando alguém cadastra "Bruninho" na tela de presença, nasce um **perfil sem d
 
 Quando o Bruninho entra na Liga, a aba Racha abre com **Quem é você nesta liga?** (D-166): ele toca no próprio nome entre os perfis sem dono e **assume o seu**, já com todo o histórico anterior — ou, se não está na lista, **cria o seu jogador** com o apelido que usa nesta liga (o apelido é da liga: "Bruninho" numa, "Bruno Costa" na outra). O caminho antigo continua valendo: "Este perfil sou eu" na ficha, e o admin vinculando em Pendências. Detalhes em [Confirmação de presença §5](confirmacao-de-presenca.md). A partir daí acompanha as próprias patentes em todas as Ligas dele num lugar só. Se alguém assumir o perfil errado, o admin desfaz o vínculo com um toque e o perfil volta a ficar sem dono.
 
+Vincular é sempre a mesma coisa, por qualquer caminho ("Sou eu", "criar meu jogador", a ficha, Pendências): a conta sai de qualquer outro perfil, e **o primeiro perfil vinculado da liga vira admin** — assim como o dono da liga, sempre que se vincula (D-22, D-207). O aviso na tela diz quando isso aconteceu.
+
 ## 3. Entrar numa Liga: três caminhos, uma regra
 
 | Caminho | Como é | Quando serve |

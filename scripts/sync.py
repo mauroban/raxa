@@ -726,6 +726,19 @@ await step('o dono continua admin mesmo rebaixado ou desvinculado (D-206)',async
   meu.owner='mauro';meu.role='admin';
 });
 
+await step('o criador que se vincula por "Sou eu" vira admin no cadastro (D-207)',async()=>{
+  S.active=ligaId;const l=L();
+  const meu=l.players.find(p=>p.owner==='mauro');
+  meu.owner=null;meu.role='jogador';
+  A.euSouOk({dataset:{id:meu.id}});
+  ok('vinculou',meu.owner==='mauro');
+  ok('e o cadastro dele diz admin',meu.role==='admin');
+  ok('o log registra o vinculo',l.log.some(e=>e.a==='link'&&e.pid===meu.id&&e.self));
+  await flush();
+  const srvP=DB.players.find(p=>p.league_id===ligaId&&p.id===meu.id);
+  ok('o servidor recebeu o papel admin',srvP&&srvP.data.role==='admin');
+});
+
 await step('quem nao e dono so sai',async()=>{
   await A.logout();
   val('#au','luis');val('#ap','segredo2');authMode='entrar';

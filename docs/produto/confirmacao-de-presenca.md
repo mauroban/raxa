@@ -97,7 +97,7 @@ ordem de quem mais joga. Toca no nome, confirma "É você? · Sou eu", e o perfi
 histórico. Não achou o nome? **Não estou na lista — criar meu jogador**: escolhe o **apelido** que
 usa nesta liga (vem preenchido com o usuário da conta, mas é livre — "Bruninho" numa liga, "Bruno
 Costa" na outra) e diz se costuma ir ao gol. O jogador nasce sem nível (o app descobre calibrando),
-como qualquer cadastro sem palpite.
+como qualquer cadastro sem palpite. Se ainda não há nenhum perfil vinculado com admin na liga, ou se quem se vincula é o dono da liga, o perfil já nasce **admin** (D-207) — é o caso do criador da liga assumindo o próprio nome.
 
 Nome repetido é recusado com a dica de tocar nele na lista. O admin continua podendo desfazer um
 vínculo errado na ficha ou em Pendências.
