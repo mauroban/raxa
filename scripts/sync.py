@@ -714,6 +714,18 @@ await step('o dono nao apaga enquanto ha outro membro',async()=>{
   ok('o DELETE direto no banco tambem nao apaga',!!srv(ligaId));
 });
 
+await step('o dono continua admin mesmo rebaixado ou desvinculado (D-206)',async()=>{
+  S.active=ligaId;const l=L();
+  ok('mauro e admin',souAdmin(l));
+  const meu=l.players.find(p=>p.owner==='mauro');
+  ok('mauro tem perfil vinculado',!!meu);
+  meu.role='jogador';
+  ok('rebaixado no cadastro, o dono segue admin',souAdmin(l));
+  meu.owner=null;
+  ok('desvinculado, o dono segue admin',souAdmin(l));
+  meu.owner='mauro';meu.role='admin';
+});
+
 await step('quem nao e dono so sai',async()=>{
   await A.logout();
   val('#au','luis');val('#ap','segredo2');authMode='entrar';

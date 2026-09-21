@@ -2919,6 +2919,10 @@ function renderHome(){
    ou só para ele. A checagem aqui decide o que a tela mostra; nas ações de
    conta o servidor faz a checagem dele (is_league_admin, D-62).             */
 function meuPapel(liga){
+  /* quem criou a liga é admin sempre, mesmo que o perfil dele tenha sido
+     desvinculado, rebaixado ou juntado a outro: é a mesma regra do servidor
+     (is_league_admin, D-62) — antes só o cliente rebaixava o dono (D-206). */
+  if(DONO[liga.id])return 'admin';
   const meu=liga.players.find(p=>p.owner&&p.owner===S.me.name);
   if(meu)return meu.role||'jogador';
   /* conta sem perfil vinculado só olha; o admin vincula e dá o papel. Enquanto
