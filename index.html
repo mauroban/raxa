@@ -4382,9 +4382,9 @@ function viewStats(liga){
   const posDe=(lista,num)=>{const i=lista.findIndex(x=>x.pid===who);return i<0?null:posEmpate(lista,num)[i]};
   const posicoes=(!me.jogos?[]:papel==='G'
       ? [['gk',RP.gk,x=>1/(1+x.sofridos/x.minGk),'menos vazado'],['golsgk',RP.golsGk,x=>x.golsGk/x.minGk,'gols do gol'],
-         ['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,
+         vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],
          ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol']]
-      : [longa?['pm',RP.pm,pmHora,'+/−']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,
+      : [longa?['pm',RP.pm,pmHora,'+/−']:null,vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
@@ -4435,6 +4435,10 @@ function viewStats(liga){
       </div>
       <div class="ved">${vedRow('Vitórias',me.v,'var(--ok)')}${vedRow('Empates',me.e,'var(--mute2)')}${vedRow('Derrotas',me.d,'var(--bad)')}</div>
     </div>
+    ${vePat(liga)&&me.jogos?(()=>{/* a métrica que sobrevive a time desequilibrado (D-203): % de vitória real − esperada, por partida */
+      const o=overPct(me),r=Math.round(o);
+      return `<div style="margin:10px 0 0;font-size:13px"><b class="num ${r>0?'up':r<0?'dn':''}" style="font-family:var(--disp);font-size:20px;font-weight:800">${r>0?'+':r<0?'−':''}${Math.abs(r)}%</b>
+        <span style="margin-left:6px">${r>0?'acima':r<0?'abaixo':'dentro'} do esperado</span> <span class="tiny muted">· vitórias reais − esperadas pelo confronto, por partida</span></div>`})():''}
     ${(()=>{/* sequências (D-202): a de agora (vitórias em verde, derrotas em vermelho) e as maiores do período */
       const t=[];
       if(me.seq>=2)t.push(`<span style="color:var(--ok)">${ic('flame')} ${me.seq}V seguidas agora</span>`);
@@ -4707,9 +4711,11 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
       };
-      const ordem=tipo==='mes'?['pct','over','pm','ritmo','seq','seqd','pres','min','gk','golsgk','duplas']
-        :per==='sempre'?['pres','pct','over','ritmo','pm','seq','seqd','min','gk','golsgk','duplas']
-        :['pres','pct','over','ritmo','pm','seq','seqd','min','gk','golsgk','duplas'];
+      /* rendeu acima do esperado abre a lista em todo período (D-203): é a
+         régua que não depende de o racha ter sido montado equilibrado      */
+      const ordem=tipo==='mes'?['over','pct','pm','ritmo','seq','seqd','pres','min','gk','golsgk','duplas']
+        :per==='sempre'?['over','pres','pct','ritmo','pm','seq','seqd','min','gk','golsgk','duplas']
+        :['over','pres','pct','ritmo','pm','seq','seqd','min','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`;

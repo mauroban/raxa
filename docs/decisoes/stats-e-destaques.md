@@ -717,3 +717,26 @@ o dono da liga pediu, e o racha lê isso como brincadeira, não como exposição
 **Onde:** `statsLiga` (`seq`, `best`, `seqD`, `bestD`), `listasRk` (`seqD`), ficha do jogador e o
 ranking `seqd` em `viewStats` em `index.html` · `scripts/smoke.py` (V E V V V D D D → 3V, 3D; ranking
 Pior sequência nos gerais) · [Stats](../produto/stats.md).
+
+<a id="d-203"></a>
+### D-203 · Acima do esperado com um pouco mais de destaque
+**Quando:** 2026-09-20.
+**O quê:** (1) na ficha do jogador, logo abaixo do anel de aproveitamento e da barra V/E/D, uma
+linha com o número em destaque — "+12% acima do esperado" em verde, "−8% abaixo do esperado" em
+vermelho, "0% dentro do esperado" — e a explicação curta ao lado ("vitórias reais − esperadas pelo
+confronto, por partida"); (2) nos gerais do racha, o ranking Rendeu acima do esperado passa a abrir
+a lista em Mês, Ano e Sempre (era o segundo, atrás de aproveitamento ou presenças); (3) na faixa
+Posição nos rankings da ficha, "acima do esp." vem antes de "aproveit.". Só com as patentes abertas,
+como já era o ranking (D-143). Anel, tiles, ordem dos outros rankings e o momento não mudam.
+**Por quê:** pedido do dono da liga: "como nem sempre as pessoas montam rachas equilibrados, a
+métrica mais importante é o desempenho em relação ao esperado — um pouco mais de destaque, nada
+exagerado". O aproveitamento premia quem caiu no time forte; o acima do esperado desconta o
+confronto e é o que o motor de nível usa. Ele já existia como ranking e no gráfico do momento, mas
+não aparecia na ficha como número.
+**Descartado:** trocar o anel de aproveitamento pelo acima do esperado (o aproveitamento é a
+leitura que todo mundo entende de cara; o pedido foi "nada exagerado"); tile na fileira (a
+fileira já tem cinco no modo longo); mostrar com patentes fechadas (o número nasce do nível, que a
+liga escolheu esconder).
+**Onde:** ficha e ordem dos rankings em `viewStats`, `overPct` em `index.html` · `scripts/smoke.py`
+(ficha com "do esperado"; Rendeu acima do esperado antes de Maior aproveitamento) ·
+[Stats](../produto/stats.md).
