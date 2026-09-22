@@ -30,7 +30,7 @@
   /* coletes: A verde · B vermelho · C azul · D amarelo (nomes antigos mantidos) */
   --lime:#1C7A3A; --lime2:#14602D; --coral:#D2381F; --cyan:#1E5BC6; --white:#B08400;
   --bibA:#1C7A3A; --bibB:#D2381F; --bibC:#1E5BC6; --bibD:#F2C21B;
-  --gold:#A06E00; --prata:#77837D; --bronze:#A0602E;   /* pódio (D-211) */
+  --gold:#A06E00;
   --ok:#1C7A3A; --bad:#C62828;
   --glow:none;
   --r:14px;
@@ -47,7 +47,7 @@
   --onink:#0B1410;
   --lime:#4ADE80; --lime2:#22C55E; --coral:#FF6B4A; --cyan:#6AB0FF; --white:#FFD23F;
   --bibA:#22A354; --bibB:#E0492F; --bibC:#2F6FE0; --bibD:#F2C21B;
-  --gold:#FFC53D; --prata:#B9C4BE; --bronze:#DC9A62;
+  --gold:#FFC53D;
   --ok:#4ADE80; --bad:#FF5F5F;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -617,35 +617,18 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .chip>b{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--chalk)}
 .chip>b.ok{color:var(--ok)}.chip>b.bad{color:var(--bad)}
 .chip.lv{background:transparent;border:1px solid var(--line);padding:3px 8px}
-/* craque e artilheiro do período, no topo da aba Racha (D-210), em pódio (D-211):
-   o 1º no meio, largo e alto, com a coroa; 2º e 3º estreitos dos lados */
-.dest{padding:14px 14px 0;overflow:hidden}
-.dest .dh{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
-.dest .dh.cq{color:var(--gold)}
-.dest .dh .ic{width:16px;height:16px}
-.dest .dh i{font-style:normal;font-size:14px;line-height:1}
-.dest .dh small{margin-left:auto;font-weight:500;letter-spacing:0;text-transform:none;font-size:11px}
-.podio{display:grid;grid-template-columns:1fr 1.7fr 1fr;gap:6px;align-items:end;margin:8px -14px 0;padding:0 14px;
-  background:linear-gradient(to top,var(--line2) 0 2px,transparent 2px)}
-.podio+.dh{margin-top:16px}
-.podio .pc{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
-.podio .pn{display:block;width:100%;background:none;border:0;padding:6px 0 0;margin:0;font:inherit;font-weight:700;font-size:13px;line-height:1.15;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;min-height:32px}
-.podio .p1 .pn{font-family:var(--disp);font-weight:900;font-size:30px;line-height:1;text-transform:uppercase;padding-top:2px;min-height:34px}
-.podio .p1 .pn.v{font-size:22px}
-.podio .p1 .cr{display:block;color:var(--gold);line-height:0;margin-bottom:-2px}
-.podio .p1 .cr .ic{width:30px;height:30px;stroke-width:1.8}
-.podio .pv{font-family:var(--disp);font-weight:800;font-size:15px;line-height:1.1;margin:1px 0 6px;color:var(--mute)}
-.podio .p1 .pv{font-size:24px;color:var(--chalk);margin-bottom:8px}
-.podio .pv.up{color:var(--ok)}.podio .pv.dn{color:var(--bad)}
-.podio .pv small{font-family:var(--body);font-size:11px;font-weight:600;color:var(--mute);margin-left:3px}
-.podio .mais{font-size:11px;color:var(--mute);margin-top:-2px}
-.podio .deg{width:100%;border-radius:9px 9px 0 0;display:flex;justify-content:center;padding-top:5px;font-family:var(--disp);font-weight:900;font-size:17px;line-height:1}
-.podio .p1 .deg{height:74px;font-size:30px;padding-top:9px;color:var(--gold);background:linear-gradient(color-mix(in srgb,var(--gold) 34%,var(--fill)),color-mix(in srgb,var(--gold) 12%,var(--fill)))}
-.podio .p2 .deg{height:38px;color:var(--prata);background:color-mix(in srgb,var(--prata) 22%,var(--fill))}
-.podio .p3 .deg{height:24px;color:var(--bronze);background:color-mix(in srgb,var(--bronze) 20%,var(--fill))}
-.podio .vazio .deg{opacity:.45}
-.podio.sm .p1 .pn{font-size:22px}.podio.sm .p1 .pv{font-size:19px}
-.podio.sm .p1 .deg{height:40px;font-size:22px;padding-top:6px}.podio.sm .p2 .deg{height:24px;font-size:14px;padding-top:4px}.podio.sm .p3 .deg{height:15px;font-size:0}
+/* o craque do período, no topo da aba Racha (D-210, D-212): um nome grande, o número e, numa linha, 2º e 3º */
+.dest{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,var(--panel)),var(--panel) 70%)}
+.dest .dh{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}
+.dest .dh .ic{width:18px;height:18px}
+.dest .dnm{display:block;width:100%;background:none;border:0;padding:4px 0;margin:2px 0 0;font-family:var(--disp);font-weight:900;font-size:32px;line-height:1;text-transform:uppercase;color:var(--chalk);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.dest .dnm.v{font-size:24px;padding:5px 0;margin:0}
+.dest .dval{margin-top:4px;font-size:13px;color:var(--mute)}
+.dest .dval b{font-family:var(--disp);font-weight:900;font-size:22px;color:var(--chalk);margin-right:2px}
+.dest .dval b.up{color:var(--ok)}.dest .dval b.dn{color:var(--bad)}
+.dest .dpod{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 14px}
+.dest .dpod b{color:var(--chalk);font-weight:700}
+.dest .dpod em{font-style:normal;font-weight:700}
 /* distribuição das patentes hoje (D-153): faixa proporcional, uma cor por patente */
 .patbar{display:flex;height:36px;border-radius:8px;overflow:hidden;gap:2px;margin:8px 0 6px;background:transparent;border:0;width:100%;padding:0;cursor:pointer}
 .patbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:13px;min-width:26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
@@ -2432,7 +2415,7 @@ function destaquesPer(liga,per,J){
   const topo=(lista,val)=>{if(!lista.length)return null;
     const ord=[...lista].sort((a,b)=>val(b)-val(a)||patDe(liga,b)-patDe(liga,a));
     const v=val(ord[0]),pos=posEmpate(ord,val);
-    /* pódio (D-211): quem ficou em 1º, 2º e 3º, empate dividindo a posição (D-89) */
+    /* quem ficou em 1º, 2º e 3º, empate dividindo a posição (D-89); o card mostra 2º e 3º numa linha (D-212) */
     const podio=ord.map((x,i)=>({x,pos:pos[i],v:val(x)})).filter(y=>y.pos<=3);
     return {lista:ord.filter(x=>val(x)===v),v,podio}};
   return {verPat,minRg,minJ,
@@ -4798,26 +4781,23 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
      esperado — não a maior patente; empate mostra todo mundo.             */
   const cardDest=(()=>{
     if(tab!=='racha'||tipo==='sempre'||!ms.length)return '';
-    const dq=destaquesPer(liga,per,J),doQ=soRacha?'do racha':tipo==='mes'?'do mês':'do ano';
-    const c=dq.craque,a=dq.art;if(!c&&!a)return '';
+    const c=destaquesPer(liga,per,J).craque,verPat=vePat(liga);if(!c)return '';
+    const doQ=soRacha?'do racha':tipo==='mes'?'do mês':'do ano';
+    const cls=v=>verPat?(v>0?'up':v<0?'dn':''):'';
+    const num=v=>verPat?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':v+'%';
+    /* empate no 1º: até 3 nomes, e "e mais N" (D-212) */
+    const l=c.lista,mx=l.length>3?2:l.length;
+    const nomes=l.slice(0,mx).map(x=>`<button class="dnm${l.length>1?' v':''}" data-a="pSheet" data-id="${x.pid}">${esc(nameOf(liga,x.pid).split(' ').slice(0,2).join(' '))}</button>`).join('')
+      +(l.length>mx?`<div class="tiny muted">e mais ${l.length-mx}</div>`:'');
+    /* 2º e 3º numa linha só, pequenos; empate divide a posição (D-89) */
     const ids=Object.keys(J),cur={};nomesCurtos(liga,ids).forEach((n,i)=>cur[ids[i]]=n);
-    /* pódio (D-211): 2º | 1º | 3º; empate divide o degrau (até 3 nomes no 1º, 2 nos outros, e "e mais N") */
-    const podio=(t,fmt,cls,sm)=>{
-      const col=k=>{const ys=t.podio.filter(y=>y.pos===k),cab=k===1?3:2,mx=ys.length>cab?cab-1:ys.length;
-        if(!ys.length)return `<div class="pc p${k} vazio"><div class="deg">${k}</div></div>`;
-        const nm=ys.slice(0,mx).map(y=>`<button class="pn${k===1&&ys.length>1?' v':''}" data-a="pSheet" data-id="${y.x.pid}">${esc(k===1?nameOf(liga,y.x.pid).split(' ').slice(0,2).join(' '):cur[y.x.pid]||nameOf(liga,y.x.pid))}</button>`).join('');
-        return `<div class="pc p${k}">${k===1&&!sm?`<span class="cr">${ic('crown')}</span>`:''}${nm}${ys.length>mx?`<div class="mais">e mais ${ys.length-mx}</div>`:''}<div class="pv ${cls(ys[0].v)}">${fmt(ys[0].v)}</div><div class="deg">${k}</div></div>`};
-      return `<div class="podio${sm?' sm':''}">${col(2)}${col(1)}${col(3)}</div>`};
-    const pct=v=>(v>0?'+':v<0?'−':'')+Math.abs(v)+'%';
-    const cq=c?podio(c,dq.verPat?pct:v=>v+'%',v=>dq.verPat?(v>0?'up':v<0?'dn':''):'')
-      :`<div class="tiny muted" style="padding:10px 0 12px">Ninguém com ${soRacha?'3 partidas':pl(dq.minRg,'racha')} ainda.</div>`;
-    const ar=a?podio(a,v=>v+`<small>gol${v===1?'':'s'}</small>`,()=>'',true)
-      :'<div class="tiny muted" style="padding:10px 0 12px">Nenhum gol com dono.</div>';
+    const pods=[2,3].map(k=>{const ys=c.podio.filter(y=>y.pos===k);if(!ys.length)return '';
+      return `<span>${k}º <b>${ys.map(y=>esc(cur[y.x.pid]||nameOf(liga,y.x.pid))).join(', ')}</b> <em class="${cls(ys[0].v)}">${num(ys[0].v)}</em></span>`}).join('');
     return `<div class="card dest">
-      <div class="dh cq">${ic('crown')}${c&&c.lista.length>1?'Craques':'Craque'} ${doQ}<small class="muted">${dq.verPat?'acima do esperado':'aproveitamento'}</small></div>
-      ${cq}
-      <div class="dh"><i>⚽</i>${a&&a.lista.length>1?'Artilheiros':'Artilheiro'} ${doQ}</div>
-      ${ar}
+      <div class="dh">${ic('crown')}${l.length>1?'Craques':'Craque'} ${doQ}</div>
+      ${nomes}
+      <div class="dval"><b class="${cls(c.v)}">${num(c.v)}</b> ${verPat?(c.v<0?'abaixo':'acima')+' do esperado':'de aproveitamento'}</div>
+      ${pods?`<div class="dpod">${pods}</div>`:''}
     </div>`})();
   const cardsRacha=cardDest+(soRacha?cardsUmRacha:`
   <div class="card">

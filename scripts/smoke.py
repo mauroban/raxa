@@ -1062,13 +1062,13 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     if(vePat(l)&&hr.indexOf('Rendeu acima do esperado')>hr.indexOf('Maior aproveitamento'))throw new Error('rendeu acima do esperado deveria abrir os rankings (D-203)');
   }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
 });
-step('craque e artilheiro do periodo em destaque no topo da aba Racha, empate traz todos (D-210)',()=>{
+step('craque do periodo em destaque no topo da aba Racha, 2o e 3o numa linha, empate traz todos (D-210, D-212)',()=>{
   const l=L(),ui0=JSON.stringify(S.ui);
   try{
     const ult=ultimoRachaId(l),ano=ANO(l.matches.filter(m=>!m.voided).sort((a,b)=>b.ts-a.ts)[0].ts);
     S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='racha';S.ui.statsRacha=ult;render();
     let h=els['#app'].innerHTML;
-    if(!/Craques? do racha/.test(h)||!/Artilheiros?/.test(h))throw new Error('o racha nao mostra craque e artilheiro em destaque');
+    if(!/Craques? do racha/.test(h))throw new Error('o racha nao mostra o craque em destaque');
     const dq=destaquesPer(l,'racha:'+ult);
     if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid)))>h.indexOf('presentes<'))throw new Error('o craque do racha devia vir antes do resto');
     S.ui.statsPer='ano';S.ui.statsAno=ano;render();h=els['#app'].innerHTML;

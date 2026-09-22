@@ -818,7 +818,7 @@ coroa; nada em Sempre; empate traz os dois) · `scripts/visual.py` (tela 28, cra
 
 <a id="d-211"></a>
 ### D-211 · Craque e artilheiro em pódio, com o 1º em muito mais destaque
-**Quando:** 2026-09-22.
+**Quando:** 2026-09-22. **Desfeito no mesmo dia pelo D-212** (pódio de degraus era demais).
 **O quê:** o card do D-210 vira dois pódios empilhados (craque em cima, artilheiro embaixo, menor):
 **2º | 1º | 3º**, degraus de ouro, prata e bronze (`--prata` e `--bronze` nos dois temas). O 1º tem
 1,7× a largura dos outros, degrau de 74 px (38 e 24 px nos outros), nome em 30 px com a coroa em
@@ -836,3 +836,24 @@ dividida é a regra de todo ranking, D-89).
 `--bronze`, tudo em `index.html` · `scripts/smoke.py` (o mesmo passo do D-210) · `scripts/visual.py`
 (tela 28 com 9 partidas no ano, também no tema escuro) · [Stats](../produto/stats.md) ·
 [Interface](../produto/interface.md).
+
+<a id="d-212"></a>
+### D-212 · Destaque simples: só o craque, com 2º e 3º numa linha
+**Quando:** 2026-09-22.
+**O quê:** o card do topo da aba Racha (Último, Mês, Ano) deixa os dois pódios de degraus do D-211
+e fica: título "Craque do racha/mês/ano" com a coroa, nome grande (32 px, 24 px no empate, até 3
+nomes), "+18% acima do esperado" e, abaixo de um fio, uma linha com 2º e 3º ("2º Luis, Marlon +11%
+3º JPx +6%"; empate divide a posição, D-89). Fundo com um leve dourado. O artilheiro sai do card
+(continua no chip do racha a racha / mês a mês e nos rankings). Ninguém no piso: sem card. A conta é
+a mesma (`destaquesPer`, com o `podio` até a 3ª posição).
+**Por quê:** pedido do dono da liga: "tem que ser simples. Só quero um destaque pra quem desempenhou
+bem no racha. Todo critério de ordenação sempre prioriza o maior nível" — aproveitamento, vitórias e
+gols acabam favorecendo quem tem nível alto, e o destaque é para o acima do esperado, que desconta
+isso. Escolheu, entre três desenhos, o craque com 2º e 3º pequenos. O desempate por patente
+(D-159) fica.
+**Descartado:** pódio de degraus (D-211); só o craque sem 2º e 3º; craque e artilheiro lado a lado
+(D-210); tirar o desempate por patente (o dono disse que não).
+**Onde:** `cardDest` em `viewStats`, CSS `.dest`, `destaquesPer` em `index.html` ·
+`scripts/smoke.py` (card no racha e no ano, antes dos tiles, com a coroa; nada em Sempre; empate
+traz todos) · `scripts/visual.py` (tela 28, com o craque fixado em 1º, 2º empatado e 3º porque o
+elenco de teste empata) · [Stats](../produto/stats.md) · [Interface](../produto/interface.md).

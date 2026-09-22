@@ -172,14 +172,21 @@ DRIVER = r"""
     const sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length);
     if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
   }
-  if(step===28){                   /* craque e artilheiro do ano no topo da aba Racha (D-210) */
+  if(step===28){                   /* craque do ano no topo da aba Racha (D-210, D-212) */
     const l=L(),ult=l.matches[l.matches.length-1];l.cfg.rankVisibility='todos';
-    /* mais partidas no ano, resultados e artilheiros variados, para o pódio ter 1º, 2º e 3º (D-211) */
+    /* mais partidas no ano, resultados e artilheiros variados, para o craque ter 2º e 3º (D-212) */
     for(let i=1;i<=8;i++){const c=JSON.parse(JSON.stringify(ult));c.id='cq'+i;c.sessionId=ult.sessionId||ult.id;c.ts=ult.ts-i*720000;
       if(c.startedAt)c.startedAt=c.ts;if(c.endedAt)c.endedAt=c.ts+600000;if(i%3===0)c.result=1-c.result;
+      [c.lineups,c.startLineups].forEach(lu=>{if(!lu||!lu[0]||!lu[1])return;const k=i%lu[0].length,t=lu[0][k];lu[0][k]=lu[1][k];lu[1][k]=t});delete c.stints;
       const lu=(c.lineups||[[],[]])[c.result===1?1:0]||[];c.goals=(c.goals||[]).concat(lu.slice(0,1+i%3).map(pid=>({pid,side:c.result===1?1:0,t:c.ts})));
       delete c.deltas;delete c.moves;delete c.over;l.matches.push(c)}
-    rebuildAll(l);S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='ano';render();
+    rebuildAll(l);
+    /* o elenco de teste é todo do mesmo nível e empata no acima do esperado: aqui os números
+       do craque são fixados (1º, 2º empatado, 3º) só para ver o card como ele fica de verdade */
+    const orig=destaquesPer,ps=l.players.slice(0,4);
+    destaquesPer=(lg,pr,J)=>{const d=orig(lg,pr,J);d.craque={v:18,lista:[J[ps[0].id]||{pid:ps[0].id}],
+      podio:[{x:{pid:ps[0].id},pos:1,v:18},{x:{pid:ps[1].id},pos:2,v:11},{x:{pid:ps[2].id},pos:2,v:11},{x:{pid:ps[3].id},pos:3,v:6}]};return d};
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='ano';render();destaquesPer=orig;
   }
   if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
     const l=L(),ult=l.matches[l.matches.length-1];
