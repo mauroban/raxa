@@ -752,9 +752,9 @@ trechos que contaram por pessoa e olha a média de quem está no primeiro trecho
 partidas (`fim`); o resto é o total menos isso (`restoDe`). O **Leão** é `leaoDif`: gols por hora
 de linha no fim − gols por hora de linha no resto. Ranking nos gerais de Mês, Ano e Sempre, logo
 depois de Gols por hora, com a diferença e as duas taxas embaixo; **sem o piso de rachas** dos
-outros rankings (`todos`, não `base`) — o piso é 20 min de linha de cada lado (`FIM_MINL`) e gol no
-fim (`ehLeao`). No racha aberto (período Último), o Leão daquele racha com a mesma conta dentro
-dele (tempo de linha dos dois lados e gol no fim). Na ficha, "fim do racha" na faixa Posição nos
+outros rankings (`todos`, não `base`) — o piso é só 20 min de linha de cada lado (`FIM_MINL`,
+`ehLeao`); quem não cresceu aparece negativo. No racha aberto (período Último), o Leão daquele racha
+com a mesma conta dentro dele (tempo de linha dos dois lados). Na ficha, "fim do racha" na faixa Posição nos
 rankings, só na leitura de linha.
 **Por quê:** pedido do dono da liga: "no último racha todo mundo está muito cansado; seria
 interessante uma métrica de Leão que mostra quem acaba fazendo muitos gols ou rendendo acima no
@@ -767,13 +767,21 @@ daquele confronto. (2) Havia dois rankings, o de resultado (acima do esperado no
 "você focou em resultados, vamos focar em gols". (3) Ficou gols por hora no fim; "está faltando
 comparar com o resto do racha: quem fez 1 no fim mas 5 no resto não é leão; o leão é quem só faz no
 final — e essa não precisa do piso de rachas, nem todo racha tem fim". Diferença de taxas, e não
-razão, porque zero gol no resto é justamente o caso do leão e a razão explodiria.
+razão, porque zero gol no resto é justamente o caso do leão e a razão explodiria. (4) O piso de gol
+no fim saiu: "deixa todo mundo aparecer negativo" — a lista é de todo mundo, e o vermelho de quem
+some no fim é informação. **Medido nos três rachas reais (29/08, 12/09, 19/09 de 2026):** a média
+de tempo de jogo de quem começa a partida nunca passou de 45 min (3 times revezando em ~75 min de
+jogo), então com `FIM_MIN` = 50 min **nenhum racha real tem fim** ainda; com 30 min de jogo seriam
+2–4 partidas por racha, e com 50 min de relógio desde a primeira partida, 2–3. O limiar é uma
+constante e a escolha é do dono da liga.
 **Descartado:** último terço das partidas; relógio de parede (pausa e espera não cansam); só o
 tempo de quem está lendo, sem média; ranking de resultado no fim; gols por hora no fim sem comparar
 com o resto (premiava o artilheiro de sempre); razão fim/resto (divisão por zero no caso que
-importa); piso de metade dos rachas (nem todo racha tem fim); mexer no K ou no rating (D-83, D-195).
+importa); piso de metade dos rachas (nem todo racha tem fim); piso de gol no fim (escondia o
+negativo); mexer no K ou no rating (D-83, D-195).
 **Onde:** `FIM_MIN`, `FIM_MINL`, `fimDoRacha`, `restoDe`, `leaoDif`, `ehLeao`, campo `fim` em
 `statsLiga`, `leao` em `listasRk`, rankings `leao`/`rleao` e a faixa de posições em `viewStats`,
 ícone `hourglass` em `SICO`, tudo em `index.html` · `scripts/smoke.py` (12 partidas de 10 min, todo
 mundo sempre em quadra: da 7ª em diante 60 min nas pernas; a pessoa só marca nas 6 do fim → +6/h e
-abre a lista; o companheiro marca em todas → 0, não é leão) · [Stats](../produto/stats.md).
+abre a lista; o companheiro marca em todas → 0; quem só marcou no resto → negativo) ·
+[Stats](../produto/stats.md).

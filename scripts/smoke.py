@@ -1089,7 +1089,8 @@ step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas
     const st=statsLiga(l,'sempre'),R=listasRk(st.J,st.PA,y=>y.min-y.minGk,1,l);
     /* eu: 6/h no fim, 0/h no resto → +6. O companheiro A0[1] fez 1 em cada partida (6/h no fim, 6/h no resto → 0): nao e leao */
     if(!R.leao.length||R.leao[0].pid!==eu||Math.abs(leaoDif(R.leao[0])-6)>1e-9)throw new Error('leao: quem so faz no fim (6/h no fim, 0 no resto) deveria abrir a lista com +6');
-    const par=R.leao.find(y=>y.pid===A0[1]);if(par&&leaoDif(par)>1e-9)throw new Error('quem faz gol o racha inteiro nao e leao do fim');
+    const par=R.leao.find(y=>y.pid===A0[1]);if(!par||leaoDif(par)>1e-9)throw new Error('quem faz gol o racha inteiro aparece, mas com 0');
+    const zero=R.leao.find(y=>y.pid===B0[1]);if(!zero||!(leaoDif(zero)<0))throw new Error('quem so fez gol no resto aparece negativo (sem piso de gol no fim)');
     if(!R.leao[0].fim||statsLiga(l,'sempre').J[A0[1]].fim.gols!==6)throw new Error('o companheiro devia ter 6 gols no fim');
     const ui0=JSON.stringify(S.ui);
     S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
