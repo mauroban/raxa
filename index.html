@@ -2407,7 +2407,7 @@ function listasRk(J,PA,minL,minR,liga){
     seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||dp(a,b)||b.v-a.v),
     seqD:base.filter(x=>x.bestD>=3).sort((a,b)=>b.bestD-a.bestD||dp(a,b)||b.d-a.d),   // pior sequência (D-202)
     gk:base.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||dp(a,b)||b.minGk-a.minGk),
-    /* Leão do fim do racha (D-208): quanto a pessoa faz a mais por hora de
+    /* Leão de fim do racha (D-208): quanto a pessoa faz a mais por hora de
        linha nas partidas do fim (quem começa com 50+ min nas pernas) do que
        no resto do racha. Sem o piso de rachas: nem todo racha tem fim.     */
     leao:todos.filter(ehLeao).sort((a,b)=>leaoDif(b)-leaoDif(a)||dp(a,b)||b.fim.gols-a.fim.gols),
@@ -4630,7 +4630,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
     const rendeu=Object.keys(over).map(pid=>({pid,over:over[pid],j:(J[pid]||{}).jogos||0})).filter(x=>x.j>=3).sort((a,b)=>b.over-a.over);
     const gks=todos.filter(x=>x.minGk>=20*60000).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk);
-    /* Leão do fim do racha (D-208): gols por hora de linha nas partidas DESTE
+    /* Leão de fim do racha (D-208): gols por hora de linha nas partidas DESTE
        racha em que quem começou já tinha 50+ min nas pernas, menos no resto
        dele — quem cresceu no fim; quem não, negativo. Com tempo de linha dos dois lados. */
     const FIMR=fimDoRacha(liga),nFim=ms.filter(m=>FIMR.has(m.id)).length;
@@ -4660,7 +4660,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     ${art.length?rkSec('rart','⚽',null,'Artilheiro','',art,x=>x.gols,x=>pl(x.gols,'gol')):''}
     ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
     ${rendeu.length?rkSec('rrendeu','up','var(--ok)','Rendeu acima do esperado','mín. 3 partidas',rendeu,x=>x.over,x=>(x.over>0?'+':'')+x.over.toFixed(1),x=>(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j):''}
-    ${leao.length?rkSec('rleao','hourglass','var(--gold)','Leão do fim do racha',`gols por hora nas ${pl(nFim,'partida')} com 50+ min nas pernas − no resto`,leao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${pl(x.fim.gols,'gol')} em ${fmtMin(x.fim.minL)} no fim · ${pl(r.gols,'gol')} em ${fmtMin(r.minL)} no resto`}):''}
+    ${leao.length?rkSec('rleao','hourglass','var(--gold)','Leão de fim do racha',`gols por hora nas ${pl(nFim,'partida')} com 50+ min nas pernas − no resto`,leao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${pl(x.fim.gols,'gol')} em ${fmtMin(x.fim.minL)} no fim · ${pl(r.gols,'gol')} em ${fmtMin(r.minL)} no resto`}):''}
     ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
     ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk)+'<small>/h</small>',x=>fmtMin(x.minGk)+' no gol'):''}
     ${gc.length?rkSec('rgc','<i class="gball own">⚽</i>',null,'Gol contra','',gc,x=>x.gc,x=>pl(x.gc,'gol')+' contra'):''}
@@ -4792,7 +4792,7 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`),
         /* fim do racha (D-208): gols por hora de linha no fim (quem começa com 50+ min nas pernas) menos no resto do racha; sem piso de rachas */
-        leao:rkSec('leao','hourglass','var(--gold)','Leão do fim do racha','gols por hora no fim (50+ min nas pernas) − no resto do racha · 10 min de linha em cada',rkLeao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${porHora(x.fim.gols,x.fim.minL)}/h no fim · ${porHora(r.gols,r.minL)}/h no resto`},'Ninguém com 10 min de linha no fim do racha e no resto ainda.')
+        leao:rkSec('leao','hourglass','var(--gold)','Leão de fim do racha','gols por hora no fim (50+ min nas pernas) − no resto do racha · 10 min de linha em cada',rkLeao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${porHora(x.fim.gols,x.fim.minL)}/h no fim · ${porHora(r.gols,r.minL)}/h no resto`},'Ninguém com 10 min de linha no fim do racha e no resto ainda.')
       };
       /* rendeu acima do esperado abre a lista em todo período (D-203): é a
          régua que não depende de o racha ter sido montado equilibrado      */

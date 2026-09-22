@@ -158,7 +158,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-201](stats-e-destaques.md#d-201) · Corrigir os times do racha: a montagem gravada na sessão é editável pelo admin (toque no nome, escolha o time); vale nas stats, não em partida nem nível
 - [D-202](stats-e-destaques.md#d-202) · Sequência de vitórias zera no empate; sequência de derrotas na ficha (agora e pior do período) e no ranking Pior sequência
 - [D-203](stats-e-destaques.md#d-203) · Acima do esperado ganha destaque discreto: linha na ficha abaixo do aproveitamento e primeiro ranking dos gerais em todo período
-- [D-208](stats-e-destaques.md#d-208) · Leão do fim do racha: gols por hora de linha no fim (quem começa com 50+ min nas pernas) menos no resto do racha, sem piso de rachas; também no racha aberto e na ficha
+- [D-208](stats-e-destaques.md#d-208) · Leão de fim do racha: gols por hora de linha no fim (quem começa com 50+ min nas pernas) menos no resto do racha, sem piso de rachas; também no racha aberto e na ficha
 - [D-204](interface.md#d-204) · Lista de ligas: o topo de 56 px volta (D-137 zerou `--toph` e esmagava a marca) e o selo ao vivo ganha linha própria
 - [D-205](interface.md#d-205) · Lista de ligas: cada cartão mostra a sua patente (ou ⏳ calibrando) naquela liga, respeitando quem vê os níveis
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas

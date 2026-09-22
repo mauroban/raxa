@@ -1062,7 +1062,7 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     if(vePat(l)&&hr.indexOf('Rendeu acima do esperado')>hr.indexOf('Maior aproveitamento'))throw new Error('rendeu acima do esperado deveria abrir os rankings (D-203)');
   }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
 });
-step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas pernas contam (D-208)',()=>{
+step('leao de fim do racha: so as partidas em que quem comeca ja tem 50+ min nas pernas contam (D-208)',()=>{
   const l=L(),ids=ativos(l).map(p=>p.id),ini=Date.now()-86400000*2;
   const eu='leaop';l.players.push({id:eu,name:'Leao Teste',gk:false,role:'jogador'});
   const A0=[eu].concat(ids.slice(0,4)),B0=ids.slice(5,10);
@@ -1095,10 +1095,10 @@ step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas
     const ui0=JSON.stringify(S.ui);
     S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
     let h=els['#app'].innerHTML;
-    if(!/Leão do fim do racha/.test(h))throw new Error('os gerais do racha nao tem o Leao do fim do racha');
+    if(!/Leão de fim do racha/.test(h))throw new Error('os gerais do racha nao tem o Leao de fim do racha');
     S.ui.statsPer='racha';S.ui.statsRacha='sess-leao';render();h=els['#app'].innerHTML;
     /* a dica mora na folha quando ha "Ver todos" (D-112); a lista abre com quem fez os 6 do fim */
-    if(!/Leão do fim do racha[\s\S]{0,600}Leao Teste/.test(h))throw new Error('o racha aberto nao tem o leao do fim daquele racha com a pessoa no topo');
+    if(!/Leão de fim do racha[\s\S]{0,600}Leao Teste/.test(h))throw new Error('o racha aberto nao tem o leao do fim daquele racha com a pessoa no topo');
     if(!RK.rleao||!/gols por hora nas 6 partidas com 50\+ min nas pernas − no resto/.test(RK.rleao.hint))throw new Error('a dica do leao do racha diz quantas partidas sao o fim');
     S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();h=els['#app'].innerHTML;
     if(!/fim do racha/.test(h))throw new Error('a ficha nao tem a posicao no ranking do fim do racha');

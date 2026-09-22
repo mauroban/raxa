@@ -743,7 +743,7 @@ liga escolheu esconder).
 [Stats](../produto/stats.md).
 
 <a id="d-208"></a>
-### D-208 · Leão do fim do racha: quem faz mais gol por hora no fim do que no resto do racha
+### D-208 · Leão de fim do racha: quem faz mais gol por hora no fim do que no resto do racha
 **Quando:** 2026-09-21 (quatro versões no mesmo dia — abaixo).
 **O quê:** uma partida é **do fim do racha** quando quem começa em quadra nela já tem, em média,
 **mais de 50 min de jogo naquele racha** (`fimDoRacha`: por sessão, em ordem, soma o tempo dos
