@@ -2440,9 +2440,11 @@ step('no dia: iniciar racha ja marca quem esta dentro, goleiro com a luva; a esp
   A.cancelRacha();
   /* racha encerrado: o resumo e o historico dizem quem confirmou e nao veio, e quem saiu em cima da hora (D-171) */
   c.dias[0].dow=new Date().getDay();c.dias[0].hora='23:59';const ch3=proximaChamada(l);
-  confirmar(l,ch3.dia,euId(l),'L','tester',ch3.ts-10*3600000-5000);   // eu, confirmado por mim: 1o da linha
-  l.players.filter(p=>!p.gk&&p.id!==euId(l)&&!p.owner).slice(0,10).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'L','tester',ch3.ts-10*3600000+i*1000));
-  l.players.filter(p=>p.gk&&p.id!==euId(l)).slice(0,2).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'G','tester',ch3.ts-9*3600000+i*1000));
+  /* as confirmacoes ficam ANTES de agora: o apito e agora, e a lista do racha so le o que veio antes dele (de madrugada, "hoje 13:59" e futuro) */
+  const base=Math.min(ch3.ts-10*3600000,Date.now()-2*3600000);
+  confirmar(l,ch3.dia,euId(l),'L','tester',base-5000);   // eu, confirmado por mim: 1o da linha
+  l.players.filter(p=>!p.gk&&p.id!==euId(l)&&!p.owner).slice(0,10).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'L','tester',base+i*1000));
+  l.players.filter(p=>p.gk&&p.id!==euId(l)).slice(0,2).forEach((p,i)=>confirmar(l,ch3.dia,p.id,'G','tester',base+3600000+i*1000));
   const X3=listaChamada(l,ch3.dia),fujao=X3.L.dentro[0].pid,tardio=X3.L.dentro[1].pid,posto=X3.L.dentro[2].pid;
   if(fujao!==euId(l)||P(l,posto).owner)throw new Error('o teste conta comigo em 1o (confirmei a mim mesmo) e dentro[2] sem dono (posto por outro)');
   desconfirmar(l,ch3.dia,tardio,'tester',ch3.ts-30*60000);
