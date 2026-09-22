@@ -741,3 +741,32 @@ liga escolheu esconder).
 **Onde:** ficha e ordem dos rankings em `viewStats`, `overPct` em `index.html` · `scripts/smoke.py`
 (ficha com "do esperado"; Rendeu acima do esperado antes de Maior aproveitamento) ·
 [Stats](../produto/stats.md).
+
+<a id="d-208"></a>
+### D-208 · Leão do fim do racha: quem rende no último terço das partidas
+**Quando:** 2026-09-21.
+**O quê:** o **fim do racha** é o último terço das partidas de cada racha (`fimDoRacha`: por sessão,
+`ceil(n/3)` partidas, só com 3 ou mais). `statsLiga` guarda, por pessoa, o mesmo de sempre só nesse
+terço (`fim`: partidas, V/E/D, saldo acima do esperado, gols de linha, minutos de linha). Dois
+rankings novos nos gerais de Mês, Ano e Sempre, logo depois de Gols por hora: **Leão do fim do
+racha** (% de vitória real − esperada por partida no fim; com as patentes fechadas, o aproveitamento
+no fim; piso: metade dos rachas e 3 partidas no fim) e **Gols por hora no fim do racha** (gols de
+linha por hora de linha no fim; 20 min de linha lá). No racha aberto (período Último), o card
+Destaques do racha ganha o Leão daquele racha (saldo acima do esperado nas últimas partidas; a dica
+diz quantas; 2 partidas no fim; desempate por gols ali). Na ficha, "fim do racha" entra na faixa
+Posição nos rankings, só na leitura de linha.
+**Por quê:** pedido do dono da liga: "no último racha todo mundo está muito cansado; seria
+interessante uma métrica de Leão que mostra quem acaba fazendo muitos gols ou rendendo acima no
+fim". O acima do esperado já desconta o confronto; recortado no fim ele mostra quem aguenta o
+cansaço — e aguentar é mérito de quem aguenta ([Ideias futuras §5](../produto/ideias-futuras.md):
+o cansaço médio é o que se desconta do rating, um dia; o individual é leitura). Terço, e não
+"últimas N partidas", porque racha tem de 6 a 15 partidas e a proporção é o que faz o fim ser o
+fim. A régua é a mesma dos outros rankings (taxa, piso de presença, patente no desempate).
+**Descartado:** contar o fim por relógio (últimos 30 min) — racha de 1 h e de 2 h teriam fins
+desproporcionais; ranking de gols totais no fim (D-145: tudo é taxa); mexer no K ou no rating
+(D-83, D-195: só com ~100 partidas, e nunca por pessoa); mostrar com 1 partida no fim (ruído
+virando manchete).
+**Onde:** `fimDoRacha`, `fimPct`, `fimApr`, campo `fim` em `statsLiga`, `leao` e `leaoGols` em
+`listasRk`, rankings `leao`/`leaogols`/`rleao` e a faixa de posições em `viewStats`, ícone
+`hourglass` em `SICO`, tudo em `index.html` · `scripts/smoke.py` (12 partidas, 8D + 4V no fim: só as 4
+contam; rankings nos gerais e no racha aberto; posição na ficha) · [Stats](../produto/stats.md).

@@ -2242,6 +2242,25 @@ function pctDe(v,n){return n?Math.round(v/n*100):0}
    pura tratava empate como derrota, e racha empata muito.                   */
 function aprDe(v,e,n){return n?Math.round((3*v+(e||0))/(3*n)*100):0}
 
+/* ---------- fim do racha (D-208) ----------
+   No fim do racha todo mundo está cansado — e quem rende ali rende de
+   verdade. "Fim" é o ÚLTIMO TERÇO das partidas de cada racha (arredondado
+   para cima; racha com menos de 3 partidas não tem fim). Devolve o conjunto
+   de ids de partida que estão nesse terço, olhando a liga inteira: o racha
+   é o mesmo em qualquer período.                                            */
+function fimDoRacha(liga){
+  const por={};
+  (liga.matches||[]).forEach(m=>{if(m.voided)return;const sid=m.sessionId||m.id;(por[sid]||(por[sid]=[])).push(m)});
+  const fim=new Set();
+  Object.values(por).forEach(ms=>{
+    if(ms.length<3)return;
+    ms.sort((a,b)=>a.ts-b.ts).slice(-Math.ceil(ms.length/3)).forEach(m=>fim.add(m.id));
+  });
+  return fim;
+}
+const fimPct=x=>x.fim&&x.fim.jogos?x.fim.over/x.fim.jogos*100:0;   // acima do esperado por partida, só no fim do racha
+const fimApr=x=>x.fim&&x.fim.jogos?aprDe(x.fim.v,x.fim.e,x.fim.jogos):0;
+
 /* `papel` diz QUAL leitura sai: `null` tudo junto, `'L'` só o que a pessoa
    fez de linha, `'G'` só o que fez no gol. `true` continua valendo por `'L'`
    — é o interruptor "Sem goleiros" dos rankings (D-51).                    */
@@ -2253,11 +2272,13 @@ function statsLiga(liga,periodo,papel){
      ou derrota zera (D-202: "seguidas" é sem nada no meio) · seqD/bestD: o
      mesmo para derrotas · ultimos: últimos 5 resultados, do mais novo para o
      mais velho · sofridos: gols levados enquanto estava no gol                */
-  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,seqD:0,bestD:0,ultimos:[],min:0,minGk:0,pm:0,over:0});
+  const j=pid=>J[pid]||(J[pid]={pid,rachas:{},nR:0,jogos:0,v:0,e:0,d:0,gols:0,golsGk:0,gk:0,sofridos:0,ultimo:0,seq:0,best:0,seqD:0,bestD:0,ultimos:[],min:0,minGk:0,pm:0,over:0,
+    fim:{jogos:0,v:0,e:0,d:0,over:0,gols:0,minL:0}});   // o mesmo, só no último terço de cada racha (D-208)
   const par=(o,a,b)=>{const m=o[a]||(o[a]={});return m[b]||(m[b]={n:0,v:0,e:0,d:0})};
+  const FIM=fimDoRacha(liga);
   [...(liga.matches||[])].sort((a,b)=>a.ts-b.ts).forEach(m=>{   // em ordem: sequência depende dela
     if(m.voided||!noPeriodo(m,periodo))return;
-    const sid=m.sessionId||m.id;
+    const sid=m.sessionId||m.id,noFim=FIM.has(m.id);
     /* por partida: quem esteve em algum trecho que conta recebe o resultado
        final uma vez; tempo, gols sofridos e tempo no gol saem dos trechos */
     const em={};                                   // pid -> {side, gk, com:{}, contra:{}}
@@ -2279,6 +2300,7 @@ function statsLiga(liga,periodo,papel){
           const e=em[pid]||(em[pid]={side:s,gk:false,com:{},contra:{},dur:0});
           e.side=s;e.dur+=st.dur||0;
           x.min+=st.dur||0;                                        // tempo de jogo (ms), pausas já descontadas
+          if(noFim&&!ehG)x.fim.minL+=st.dur||0;
           if(ehG)e.gk=true;
           /* duelo e parceria são de time: no gol não existem (o goleiro do
              rodízio troca de lado sem escolher com quem joga)              */
@@ -2292,6 +2314,7 @@ function statsLiga(liga,periodo,papel){
       const e=em[pid];if(!contaPartida(liga,m,e.dur,totalDur))continue;
       const x=j(pid),res=m.result==='draw'?'e':(m.result===e.side?'v':'d');
       x.jogos++;x[res]++;x.ultimo=Math.max(x.ultimo,m.ts);
+      if(noFim){x.fim.jogos++;x.fim[res]++}
       if(res==='v'){x.seq++;x.best=Math.max(x.best,x.seq);x.seqD=0}
       else if(res==='d'){x.seqD++;x.bestD=Math.max(x.bestD,x.seqD);x.seq=0}
       else{x.seq=0;x.seqD=0}
@@ -2304,10 +2327,10 @@ function statsLiga(liga,periodo,papel){
     plusMinus(liga,m,(pid,d,role)=>{if(so&&(role==='G'?so!=='G':so!=='L'))return;j(pid).pm+=d});
     /* saldo acima do esperado da pessoa na partida (D-13/D-143): é da pessoa,
        não da função — sai igual nas leituras de linha e de gol            */
-    for(const pid in (m.over||{}))if(J[pid])J[pid].over+=m.over[pid];
+    for(const pid in (m.over||{}))if(J[pid]){J[pid].over+=m.over[pid];if(noFim)J[pid].fim.over+=m.over[pid]}
     /* gols: de linha e de goleiro em contas separadas (D-110) — fazer gol do
        gol é outra façanha, e misturar inflava a artilharia de quem reveza  */
-    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else j(g.pid).gols++}});
+    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else{j(g.pid).gols++;if(noFim)j(g.pid).fim.gols++}}});
   });
   return{J,DU,PA};
 }
@@ -2371,6 +2394,13 @@ function listasRk(J,PA,minL,minR,liga){
     seq:base.filter(x=>x.best>=3).sort((a,b)=>b.best-a.best||dp(a,b)||b.v-a.v),
     seqD:base.filter(x=>x.bestD>=3).sort((a,b)=>b.bestD-a.bestD||dp(a,b)||b.d-a.d),   // pior sequência (D-202)
     gk:base.filter(x=>x.minGk>=MIN_RITMO).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk||dp(a,b)||b.minGk-a.minGk),
+    /* Leão do fim do racha (D-208): quem rende no último terço, quando todo
+       mundo está cansado. Com as patentes abertas é o acima do esperado
+       por partida ali; fechadas, o aproveitamento ali. Piso: 3 partidas no
+       fim. Gols no fim: por hora de linha no fim, com 20 min lá (um terço
+       da 1 h dos outros ritmos).                                           */
+    leao:base.filter(x=>x.fim&&x.fim.jogos>=3).sort((a,b)=>(vePat(liga)?Math.round(fimPct(b))-Math.round(fimPct(a)):fimApr(b)-fimApr(a))||dp(a,b)||b.fim.gols-a.fim.gols||b.fim.jogos-a.fim.jogos),
+    leaoGols:base.filter(x=>x.fim&&x.fim.gols&&x.fim.minL>=MIN_RITMO/3).sort((a,b)=>b.fim.gols/b.fim.minL-a.fim.gols/a.fim.minL||dp(a,b)||b.fim.gols-a.fim.gols),
     duplas};
 }
 
@@ -2831,6 +2861,7 @@ const SICO={
   flame:'<path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.2 1.5 1 2 2 2.5 0-3-1-5 .5-7.5z"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
   bars:'<path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/>',
+  hourglass:'<path d="M6 3h12M6 21h12M8 3v3l4 5 4-5V3M8 21v-3l4-5 4 5v3"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.6"/><path d="M16 14.3c3 .3 5.5 2.5 5.5 5.7"/>',
   swords:'<path d="M4 4l11 11M20 4L9 15M14 16l4 4M10 16l-4 4M15 15l3 3M9 15l-3 3"/>',
   smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.5 1.7 5.5 1.7 7 0M9 10h.01M15 10h.01"/>',
@@ -4311,7 +4342,9 @@ function viewStats(liga){
   const R=listasRk(J,PA,minL,minR,liga),RP=listasRk(JP,PAP,minLP,minR,liga);
   const todos=R.todos,todosP=RP.todos;
   const rkRachas=R.rachas,rkPm=R.pm,rkPct=R.pct,rkOver=R.over,rkGolsGk=R.golsGk,
-    rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkSeqD=R.seqD,rkGk=R.gk,duplas=R.duplas;
+    rkMin=R.min,rkRitmo=R.ritmo,rkSeq=R.seq,rkSeqD=R.seqD,rkGk=R.gk,duplas=R.duplas,rkLeao=R.leao,rkLeaoGols=R.leaoGols;
+  /* o que a pessoa fez no fim do racha (D-208): V/E/D ali e os gols ali */
+  const fimTxt=x=>`${vedTxt(x.fim)} no fim · ${pl(x.fim.gols,'gol')}`;
   const taxaFmt=(v,dec,suf)=>`<span class="num ${v>0?'up':v<0?'dn':''}">${(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(dec).replace('.',',')}${suf||''}</span>`;
   /* a história da pessoa no período, quebrada no passo abaixo dele (D-149):
      mês → racha a racha · ano → mês a mês · sempre → ano a ano              */
@@ -4419,6 +4452,7 @@ function viewStats(liga){
          ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol']]
       : [longa?['pm',RP.pm,pmHora,'+/−']:null,vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],
          ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
+         ['leao',RP.leao,vePat(liga)?fimPct:fimApr,'fim do racha'],
          ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
   /* --- o nível da pessoa no período (D-188): a linha do tempo com entrada,
@@ -4588,6 +4622,10 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const over={};ms.forEach(m=>{for(const pid in (m.over||{}))over[pid]=(over[pid]||0)+m.over[pid]});
     const rendeu=Object.keys(over).map(pid=>({pid,over:over[pid],j:(J[pid]||{}).jogos||0})).filter(x=>x.j>=3).sort((a,b)=>b.over-a.over);
     const gks=todos.filter(x=>x.minGk>=20*60000).sort((a,b)=>a.sofridos/a.minGk-b.sofridos/b.minGk);
+    /* Leão do fim do racha (D-208): o último terço DESTE racha — saldo acima do
+       esperado ali (patentes fechadas: aproveitamento ali), com 2 partidas no fim */
+    const nFim=ms.length>=3?Math.ceil(ms.length/3):0;
+    const leao=nFim?todos.filter(x=>x.fim.jogos>=2).sort((a,b)=>(vePat(liga)?b.fim.over-a.fim.over:fimApr(b)-fimApr(a))||b.fim.gols-a.fim.gols||b.fim.v-a.fim.v):[];
     const movsR=movimentos(liga,ms);   // de onde saiu → onde chegou NO RACHA (D-155)
     const gcN={};ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.own&&g.pid)gcN[g.pid]=(gcN[g.pid]||0)+1}));
     const gc=Object.keys(gcN).map(pid=>({pid,gc:gcN[pid]})).sort((a,b)=>b.gc-a.gc);   // um por pessoa, com a contagem (D-112)
@@ -4613,6 +4651,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     ${art.length?rkSec('rart','⚽',null,'Artilheiro','',art,x=>x.gols,x=>pl(x.gols,'gol')):''}
     ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
     ${rendeu.length?rkSec('rrendeu','up','var(--ok)','Rendeu acima do esperado','mín. 3 partidas',rendeu,x=>x.over,x=>(x.over>0?'+':'')+x.over.toFixed(1),x=>(J[x.pid]||{}).v+'V '+(J[x.pid]||{}).d+'D em '+x.j):''}
+    ${leao.length?rkSec('rleao','hourglass','var(--gold)','Leão do fim do racha',`${pl(nFim,'última partida','últimas partidas')} · mín. 2`,leao,vePat(liga)?x=>x.fim.over:fimApr,vePat(liga)?x=>(x.fim.over>0?'+':'')+x.fim.over.toFixed(1):x=>fimApr(x)+'%',x=>`${vedTxt(x.fim)} · ${pl(x.fim.gols,'gol')}`):''}
     ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
     ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk)+'<small>/h</small>',x=>fmtMin(x.minGk)+' no gol'):''}
     ${gc.length?rkSec('rgc','<i class="gball own">⚽</i>',null,'Gol contra','',gc,x=>x.gc,x=>pl(x.gc,'gol')+' contra'):''}
@@ -4742,13 +4781,18 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
         pct:rkSec('pct','up','var(--ok)','Maior aproveitamento',`pontos (V=3, E=1) · ${minTxt}`,rkPct,x=>aprDe(x.v,x.e,x.jogos),x=>aprDe(x.v,x.e,x.jogos)+'%',x=>vedTxt(x),semPiso+' ainda.'),
         /* o mesmo critério do racha e dos destaques do mês (D-13), em todo período (D-143), por partida (D-145): pontos % de vitória além do que o confronto indicava; nasce do nível, some com as patentes fechadas */
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
-        duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`)
+        duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`),
+        /* fim do racha (D-208): o último terço das partidas de cada racha, quando todo mundo está cansado */
+        leao:vePat(liga)
+          ?rkSec('leao','hourglass','var(--gold)','Leão do fim do racha',`% de vitória real − esperada no último terço de cada racha · ${minTxt} · 3 partidas no fim`,rkLeao,fimPct,x=>taxaFmt(fimPct(x),0,'%'),fimTxt,semPiso+' e 3 partidas no fim do racha ainda.')
+          :rkSec('leao','hourglass','var(--gold)','Leão do fim do racha',`aproveitamento no último terço de cada racha · ${minTxt} · 3 partidas no fim`,rkLeao,fimApr,x=>fimApr(x)+'%',fimTxt,semPiso+' e 3 partidas no fim do racha ainda.'),
+        leaogols:rkSec('leaogols','hourglass','var(--white)','Gols por hora no fim do racha',`de linha, no último terço de cada racha · ${minTxt} · 20 min no fim`,rkLeaoGols,x=>x.fim.gols/x.fim.minL,x=>porHora(x.fim.gols,x.fim.minL),x=>x.fim.gols+' gols em '+fmtMin(x.fim.minL)+' de linha no fim',semPiso+', 20 min de linha no fim do racha e gol marcado ali ainda.')
       };
       /* rendeu acima do esperado abre a lista em todo período (D-203): é a
          régua que não depende de o racha ter sido montado equilibrado      */
-      const ordem=tipo==='mes'?['over','pct','pm','ritmo','seq','seqd','pres','min','gk','golsgk','duplas']
-        :per==='sempre'?['over','pres','pct','ritmo','pm','seq','seqd','min','gk','golsgk','duplas']
-        :['over','pres','pct','ritmo','pm','seq','seqd','min','gk','golsgk','duplas'];
+      const ordem=tipo==='mes'?['over','pct','pm','ritmo','leao','leaogols','seq','seqd','pres','min','gk','golsgk','duplas']
+        :per==='sempre'?['over','pres','pct','ritmo','pm','leao','leaogols','seq','seqd','min','gk','golsgk','duplas']
+        :['over','pres','pct','ritmo','pm','leao','leaogols','seq','seqd','min','gk','golsgk','duplas'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`;

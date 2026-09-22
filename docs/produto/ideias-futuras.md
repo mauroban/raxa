@@ -94,4 +94,6 @@ o `converge.py`. E a régua para quando chegar lá: o cansaço **impacta uns mai
 aguentar melhor é mérito de quem aguenta** — o ajuste, se vier, desconta o cansaço *médio* do lado
 que ficou, nunca o de cada pessoa; quem rende acima disso continua ganhando por isso. Os trechos já
 gravam tudo que a medição precisa (quem estava, quanto tempo, resultado, chance de largada).
+Enquanto isso, o cansaço individual já é **leitura**: o Leão do fim do racha ([Stats](stats.md),
+D-208) mostra quem rende acima do esperado no último terço das partidas.
 

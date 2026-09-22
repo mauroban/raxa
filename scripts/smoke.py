@@ -1062,6 +1062,46 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     if(vePat(l)&&hr.indexOf('Rendeu acima do esperado')>hr.indexOf('Maior aproveitamento'))throw new Error('rendeu acima do esperado deveria abrir os rankings (D-203)');
   }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
 });
+step('leao do fim do racha: so o ultimo terco das partidas de cada racha conta (D-208)',()=>{
+  const l=L(),ids=ativos(l).map(p=>p.id),ini=Date.now()-86400000*2;
+  const eu='leaop';l.players.push({id:eu,name:'Leao Teste',gk:false,role:'jogador'});
+  const A0=[eu].concat(ids.slice(0,4)),B0=ids.slice(5,10);
+  const feitas=[];
+  /* 12 partidas num racha: perde as 8 primeiras, ganha as 4 do fim (o ultimo terco), com 1 gol em cada */
+  'DDDDDDDDVVVV'.split('').forEach((r,i)=>{
+    const t0=ini+i*600000,sc=r==='V'?[2,0]:[0,1];
+    const goals=r==='V'?[{pid:eu,side:0,t:t0+60000},{pid:A0[1],side:0,t:t0+120000}]:[{pid:B0[0],side:1,t:t0+60000}];
+    const m={id:'leao'+i,ts:t0+300000,startedAt:t0,endedAt:t0+300000,sessionId:'sess-leao',mode:'curtas',names:['A','B'],teamIdx:[0,1],
+      startLineups:[A0.slice(),B0.slice()],startGks:[A0[4],B0[4]],lineups:[A0.slice(),B0.slice()],gks:[A0[4],B0[4]],
+      events:[],goals,score:sc,result:stintResult(sc),disputes:[],voided:false,
+      stints:[{from:t0,to:t0+300000,dur:300000,w:1,counted:true,lineups:[A0.slice(),B0.slice()],gks:[A0[4],B0[4]],score:sc,result:stintResult(sc),ended:'apito'}]};
+    l.matches.push(m);feitas.push(m.id)});
+  rebuildAll(l);
+  try{
+    const fim=fimDoRacha(l);
+    if(!fim.has('leao11')||!fim.has('leao8')||fim.has('leao7'))throw new Error('o fim do racha de 12 partidas sao as 4 ultimas');
+    const x=statsLiga(l,'sempre').J[eu];
+    if(x.fim.jogos!==4||x.fim.v!==4||x.fim.d!==0)throw new Error('no fim do racha a pessoa tem 4V, deu '+JSON.stringify(x.fim));
+    if(x.fim.gols!==4||x.fim.minL!==1200000)throw new Error('gols e minutos de linha no fim errados: '+JSON.stringify(x.fim));
+    if(x.jogos!==12||x.d!==8)throw new Error('o total continua contando tudo');
+    if(vePat(l)&&!(x.fim.over>0))throw new Error('ganhar as 4 do fim tem que render acima do esperado ali');
+    const st=statsLiga(l,'sempre'),R=listasRk(st.J,st.PA,y=>y.min-y.minGk,1,l);
+    if(!R.leao.some(y=>y.pid===eu))throw new Error('a lista do leao nao tem quem jogou 4 no fim');
+    /* o companheiro A0[1] tambem fez 4 em 20 min: empata, e a patente desempata (D-159) */
+    if(!R.leaoGols.some(y=>y.pid===eu)||R.leaoGols[0].fim.gols/R.leaoGols[0].fim.minL!==4/1200000)throw new Error('gols por hora no fim: 4 gols em 20 min de linha deveria estar no topo da lista');
+    const ui0=JSON.stringify(S.ui);
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
+    let h=els['#app'].innerHTML;
+    if(!/Leão do fim do racha/.test(h)||!/Gols por hora no fim do racha/.test(h))throw new Error('os gerais do racha nao tem os rankings do fim do racha');
+    S.ui.statsPer='racha';S.ui.statsRacha='sess-leao';render();h=els['#app'].innerHTML;
+    /* a dica "4 últimas partidas · mín. 2" mora na folha quando há "Ver todos" (D-112); a lista abre com quem ganhou as 4 do fim */
+    if(!/Leão do fim do racha/.test(h)||!/Leão do fim do racha[\s\S]{0,600}Leao Teste/.test(h))throw new Error('o racha aberto nao tem o leao do fim daquele racha com a pessoa no topo');
+    if(!RK.rleao||!/4 últimas partidas · mín\. 2/.test(RK.rleao.hint))throw new Error('a dica do leao do racha diz quantas partidas sao o fim');
+    S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();h=els['#app'].innerHTML;
+    if(!/fim do racha/.test(h))throw new Error('a ficha nao tem a posicao no ranking do fim do racha');
+    S.ui=JSON.parse(ui0);
+  }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
+});
 step('stats: a aba Jogador fala do nivel — hoje, melhor/calibrando, e o que andou no periodo (D-188)',()=>{
   const l=L(),eu=euId(l)||(l.players.find(x=>x.L.games>0)||l.players[0]).id,p=P(l,eu);
   const vis0=l.cfg.rankVisibility,who0=S.ui.statsWho,tab0=S.ui.tab;
