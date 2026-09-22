@@ -49,7 +49,7 @@
 - Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)
 - Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
-- **Leão do fim do racha** (D-208): rankings do último terço das partidas de cada racha — acima do esperado ali e gols por hora ali — nos gerais, no racha aberto e na faixa de posições da ficha
+- **Leão do fim do racha** (D-208): gols por hora de linha nas partidas em que quem começa já tem, em média, 50+ min de jogo no racha — nos gerais, no racha aberto (total) e na faixa de posições da ficha
 - Editar nome, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar); **opiniões sobre o nível** de quem lança, um toque por pessoa, na ficha ou na tela "Minhas opiniões" (D-95)
 - **Juntar dois cadastros** da mesma pessoa (admin), reversível pela ficha ("Separar de novo")
 - **Corrigir partida** encerrada — gols (time, minuto, autor, contra; adicionar, apagar), escalação e trocas — reescrevendo o log e os trechos (D-61, D-198); placar e resultado recontados dos gols; **corrigir os times do racha** (a montagem gravada na sessão, D-201); **relógio da partida** (início e duração, eventos na mesma fração, sem atropelar outra partida, D-199); listas de correção com quem estava no racha primeiro; registro de correções por liga
