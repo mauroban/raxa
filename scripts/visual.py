@@ -64,6 +64,7 @@ TELAS = {
     25: 'corrigir gol',
     26: 'quando foi',
     27: 'times do racha',
+    28: 'craque do ano',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -170,6 +171,10 @@ DRIVER = r"""
     if(l.live&&l.live.matchIds&&l.live.matchIds.length){A.endRacha();closeSheet();}
     const sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length);
     if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
+  }
+  if(step===28){                   /* craque e artilheiro do ano no topo da aba Racha (D-210) */
+    const l=L();l.cfg.rankVisibility='todos';rebuildAll(l);
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='ano';render();
   }
   if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
     const l=L(),ult=l.matches[l.matches.length-1];

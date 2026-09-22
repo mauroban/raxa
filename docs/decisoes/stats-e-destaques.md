@@ -786,3 +786,32 @@ negativo); 20 min de linha no fim (maior que o próprio fim); mexer no K ou no r
 mundo sempre em quadra: da 7ª em diante 60 min nas pernas; a pessoa só marca nas 6 do fim → +6/h e
 abre a lista; o companheiro marca em todas → 0; quem só marcou no resto → negativo) ·
 [Stats](../produto/stats.md).
+
+<a id="d-210"></a>
+### D-210 · Craque e artilheiro do período em destaque; craque é acima do esperado, com coroa
+**Quando:** 2026-09-22.
+**O quê:** (1) card no topo da aba Racha de Stats no Último, Mês e Ano com **Craque do racha/mês/ano**
+(coroa, fundo dourado) e **Artilheiro** lado a lado; empate mostra todos ("Craques", até 3 nomes,
+de 4 para cima 2 e "e mais N"); nome toca na ficha. (2) Uma função só, `destaquesPer`, para o card e
+para o chip de cada linha do racha a racha / mês a mês / ano a ano — craque = maior acima do esperado
+por partida (arredondado, como é mostrado), piso de 3 partidas num racha e metade dos rachas num mês
+ou ano; patentes fechadas, maior aproveitamento; artilheiro = gols de linha + do gol. (3) O ícone do
+critério trocou do raio verde (`zap`, que também é o de Gols por hora) para uma **coroa dourada**
+(`crown`) no chip, no card e nos dois rankings Rendeu acima do esperado. (4) No racha (Último), o
+ranking Rendeu acima do esperado passou do saldo somado para **% por partida**, como no mês e no ano,
+e some com as patentes fechadas (D-143).
+**Por quê:** pedido do dono da liga: "o desempenho acima do esperado é o que eu considero quem jogou
+melhor — senão o craque seria sempre o de patente mais alta. No mês já está destacado o craque de cada
+racha e o artilheiro; no ano, o de cada mês. Quero mais destaque no próprio racha/mês/ano. Essa
+métrica é pra mim a mais importante; o símbolo talvez não esteja representando bem." O raio dizia
+"rápido", e era o mesmo ícone de Gols por hora; a coroa diz "o melhor". O chip do racha e o ranking
+do racha usavam contas diferentes (por partida × saldo), e o craque do chip podia não ser o primeiro
+quando se abria o racha.
+**Descartado:** card também em Sempre (carreira não se fecha; os rankings já contam); mostrar só um
+no empate com "+N" como no chip (D-159) — no card cabe todo mundo e o pedido foi "pode haver empate";
+renomear o ranking para "Craque" (o nome explica a conta; a coroa liga os dois); estrela (já é da
+Melhor dupla) e troféu (é de Quem mais ganhou).
+**Onde:** `destaquesPer`, `cardDest` e o chip de `cardGrupos` em `viewStats`, `SICO.crown`, CSS
+`.dest`, tudo em `index.html` · `scripts/smoke.py` (card no racha e no ano, antes dos tiles, com a
+coroa; nada em Sempre; empate traz os dois) · `scripts/visual.py` (tela 28, craque do ano) ·
+[Stats](../produto/stats.md) · [Interface](../produto/interface.md).

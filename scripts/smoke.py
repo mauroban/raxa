@@ -1062,6 +1062,26 @@ step('sequencia: empate zera as vitorias seguidas; derrotas seguidas contam a pa
     if(vePat(l)&&hr.indexOf('Rendeu acima do esperado')>hr.indexOf('Maior aproveitamento'))throw new Error('rendeu acima do esperado deveria abrir os rankings (D-203)');
   }finally{l.matches=l.matches.filter(m=>!feitas.includes(m.id));l.players=l.players.filter(p=>p.id!==eu);rebuildAll(l)}
 });
+step('craque e artilheiro do periodo em destaque no topo da aba Racha, empate traz todos (D-210)',()=>{
+  const l=L(),ui0=JSON.stringify(S.ui);
+  try{
+    const ult=ultimoRachaId(l),ano=ANO(l.matches.filter(m=>!m.voided).sort((a,b)=>b.ts-a.ts)[0].ts);
+    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='racha';S.ui.statsRacha=ult;render();
+    let h=els['#app'].innerHTML;
+    if(!/Craques? do racha/.test(h)||!/Artilheiros?/.test(h))throw new Error('o racha nao mostra craque e artilheiro em destaque');
+    const dq=destaquesPer(l,'racha:'+ult);
+    if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid)))>h.indexOf('presentes<'))throw new Error('o craque do racha devia vir antes do resto');
+    S.ui.statsPer='ano';S.ui.statsAno=ano;render();h=els['#app'].innerHTML;
+    if(!/Craques? do ano/.test(h))throw new Error('o ano nao mostra o craque em destaque');
+    if(/Craque/.test(h)&&!/M4 17.5L3 7.5/.test(h))throw new Error('o craque devia vir com a coroa');
+    S.ui.statsPer='sempre';render();
+    if(/Craques? de/.test(els['#app'].innerHTML))throw new Error('Sempre nao tem card de craque');
+    /* empate: os dois aparecem */
+    const J={a:{pid:'a',jogos:5,nR:1,v:3,e:0,d:2,over:1,gols:2,golsGk:0},b:{pid:'b',jogos:5,nR:1,v:3,e:0,d:2,over:1,gols:2,golsGk:0},c:{pid:'c',jogos:5,nR:1,v:1,e:0,d:4,over:-1,gols:1,golsGk:0}};
+    const t=destaquesPer(l,'racha:'+ult,J);
+    if(t.craque.lista.length!==2||t.art.lista.length!==2)throw new Error('empate devia trazer os dois: '+JSON.stringify(t));
+  }finally{S.ui=JSON.parse(ui0)}
+});
 step('leao de fim do racha: so as partidas em que quem comeca ja tem 50+ min nas pernas contam (D-208)',()=>{
   const l=L(),ids=ativos(l).map(p=>p.id),ini=Date.now()-86400000*2;
   const eu='leaop';l.players.push({id:eu,name:'Leao Teste',gk:false,role:'jogador'});
