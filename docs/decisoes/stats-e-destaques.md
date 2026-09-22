@@ -752,7 +752,7 @@ trechos que contaram por pessoa e olha a média de quem está no primeiro trecho
 partidas (`fim`); o resto é o total menos isso (`restoDe`). O **Leão** é `leaoDif`: gols por hora
 de linha no fim − gols por hora de linha no resto. Ranking nos gerais de Mês, Ano e Sempre, logo
 depois de Gols por hora, com a diferença e as duas taxas embaixo; **sem o piso de rachas** dos
-outros rankings (`todos`, não `base`) — o piso é só 20 min de linha de cada lado (`FIM_MINL`,
+outros rankings (`todos`, não `base`) — o piso é só 10 min de linha de cada lado (`FIM_MINL`,
 `ehLeao`); quem não cresceu aparece negativo. No racha aberto (período Último), o Leão daquele racha
 com a mesma conta dentro dele (tempo de linha dos dois lados). Na ficha, "fim do racha" na faixa Posição nos
 rankings, só na leitura de linha.
@@ -769,16 +769,17 @@ comparar com o resto do racha: quem fez 1 no fim mas 5 no resto não é leão; o
 final — e essa não precisa do piso de rachas, nem todo racha tem fim". Diferença de taxas, e não
 razão, porque zero gol no resto é justamente o caso do leão e a razão explodiria. (4) O piso de gol
 no fim saiu: "deixa todo mundo aparecer negativo" — a lista é de todo mundo, e o vermelho de quem
-some no fim é informação. **Medido nos três rachas reais (29/08, 12/09, 19/09 de 2026):** a média
-de tempo de jogo de quem começa a partida nunca passou de 45 min (3 times revezando em ~75 min de
-jogo), então com `FIM_MIN` = 50 min **nenhum racha real tem fim** ainda; com 30 min de jogo seriam
-2–4 partidas por racha, e com 50 min de relógio desde a primeira partida, 2–3. O limiar é uma
-constante e a escolha é do dono da liga.
+some no fim é informação. (5) O piso de tempo no fim caiu de 20 para 10 min de linha: medido nos
+três rachas reais (29/08, 12/09 e 19/09 de 2026, arquivo corrigido), só o 19/09 passa dos 50 min,
+nas 3 últimas partidas; quem liderava esse racha (4 gols no fim) tinha 19,8 min de linha ali e
+sumia do mês. O fim rende ~3 partidas por racha e a pessoa joga 2 delas, então 10 min é o tamanho
+de um fim. Rachas de 12 e 14 partidas com ~65 min de jogo não chegam aos 50 min de média — é o
+esperado: racha curto não tem fim.
 **Descartado:** último terço das partidas; relógio de parede (pausa e espera não cansam); só o
 tempo de quem está lendo, sem média; ranking de resultado no fim; gols por hora no fim sem comparar
 com o resto (premiava o artilheiro de sempre); razão fim/resto (divisão por zero no caso que
 importa); piso de metade dos rachas (nem todo racha tem fim); piso de gol no fim (escondia o
-negativo); mexer no K ou no rating (D-83, D-195).
+negativo); 20 min de linha no fim (maior que o próprio fim); mexer no K ou no rating (D-83, D-195).
 **Onde:** `FIM_MIN`, `FIM_MINL`, `fimDoRacha`, `restoDe`, `leaoDif`, `ehLeao`, campo `fim` em
 `statsLiga`, `leao` em `listasRk`, rankings `leao`/`rleao` e a faixa de posições em `viewStats`,
 ícone `hourglass` em `SICO`, tudo em `index.html` · `scripts/smoke.py` (12 partidas de 10 min, todo

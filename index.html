@@ -2267,9 +2267,9 @@ function fimDoRacha(liga){
 }
 /* Leão = gols por hora de linha NO FIM menos gols por hora de linha NO RESTO
    do racha. Quem faz 1 no fim e 5 no resto não é leão; leão é quem só faz no
-   final. Só compara com 20 min de linha de cada lado; quem não cresceu
+   final. Só compara com 10 min de linha de cada lado; quem não cresceu
    aparece negativo — a lista é de todo mundo, não só dos leões.            */
-const FIM_MINL=20*60000;
+const FIM_MINL=10*60000;   // 10 min de linha de cada lado: o fim rende ~3 partidas por racha, e a pessoa joga 2 delas
 const hora=(n,ms)=>ms>0?n/(ms/3600000):0;
 const restoDe=x=>({gols:Math.max(0,x.gols-x.fim.gols),minL:Math.max(0,x.min-x.minGk-x.fim.minL)});
 const leaoDif=x=>{const r=restoDe(x);return hora(x.fim.gols,x.fim.minL)-hora(r.gols,r.minL)};
@@ -4792,7 +4792,7 @@ ${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
         over:vePat(liga)?rkSec('over','zap','var(--ok)','Rendeu acima do esperado',`% de vitória real − esperada, por partida · ${minTxt}`,rkOver,overPct,x=>taxaFmt(overPct(x),0,'%'),x=>vedTxt(x)+' · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',','),semPiso+' ainda.'):'',
         duplas:rkSec('duplas','star','var(--gold)','Melhor dupla',`aproveitamento juntos · mín. ${MIN_JOGOS} partidas`,duplas,x=>x.pct,x=>`${x.pct}%<small>${x.n} partidas</small>`,x=>`${x.v}V ${x.e}E em ${pl(x.n,'partida')}`,`Nenhuma dupla com ${MIN_JOGOS} partidas juntos ainda.`,x=>`${esc(nameOf(liga,x.a))} <span class="muted">&amp;</span> ${esc(nameOf(liga,x.b))}`),
         /* fim do racha (D-208): gols por hora de linha no fim (quem começa com 50+ min nas pernas) menos no resto do racha; sem piso de rachas */
-        leao:rkSec('leao','hourglass','var(--gold)','Leão do fim do racha','gols por hora no fim (50+ min nas pernas) − no resto do racha · 20 min de linha em cada',rkLeao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${porHora(x.fim.gols,x.fim.minL)}/h no fim · ${porHora(r.gols,r.minL)}/h no resto`},'Ninguém com 20 min de linha no fim do racha e no resto ainda.')
+        leao:rkSec('leao','hourglass','var(--gold)','Leão do fim do racha','gols por hora no fim (50+ min nas pernas) − no resto do racha · 10 min de linha em cada',rkLeao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${porHora(x.fim.gols,x.fim.minL)}/h no fim · ${porHora(r.gols,r.minL)}/h no resto`},'Ninguém com 10 min de linha no fim do racha e no resto ainda.')
       };
       /* rendeu acima do esperado abre a lista em todo período (D-203): é a
          régua que não depende de o racha ter sido montado equilibrado      */
