@@ -1071,8 +1071,9 @@ step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas
      cada um tem 60 min nas pernas (>50) — as 6 ultimas sao o fim. So marca
      nas 6 do fim, 1 gol em cada                                            */
   'DDDDDDVVVVVV'.split('').forEach((r,i)=>{
-    const t0=ini+i*600000,sc=r==='V'?[2,0]:[0,1];
-    const goals=r==='V'?[{pid:eu,side:0,t:t0+60000},{pid:A0[1],side:0,t:t0+120000}]:[{pid:B0[0],side:1,t:t0+60000}];
+    const t0=ini+i*600000,sc=r==='V'?[2,0]:[1,2];
+    /* eu so marca no fim; A0[1] marca em todas — gol por gol o mesmo volume no fim, mas ele nao cresce */
+    const goals=r==='V'?[{pid:eu,side:0,t:t0+60000},{pid:A0[1],side:0,t:t0+120000}]:[{pid:A0[1],side:0,t:t0+60000},{pid:B0[0],side:1,t:t0+90000},{pid:B0[1],side:1,t:t0+120000}];
     const m={id:'leao'+i,ts:t0+300000,startedAt:t0,endedAt:t0+600000,sessionId:'sess-leao',mode:'curtas',names:['A','B'],teamIdx:[0,1],
       startLineups:[A0.slice(),B0.slice()],startGks:[A0[4],B0[4]],lineups:[A0.slice(),B0.slice()],gks:[A0[4],B0[4]],
       events:[],goals,score:sc,result:stintResult(sc),disputes:[],voided:false,
@@ -1084,10 +1085,12 @@ step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas
     if(!fim.has('leao11')||!fim.has('leao6')||fim.has('leao5')||fim.has('leao4'))throw new Error('o fim sao as partidas que comecam com mais de 50 min nas pernas (da 7ª em diante)');
     const x=statsLiga(l,'sempre').J[eu];
     if(x.fim.gols!==6||x.fim.minL!==3600000)throw new Error('gols e minutos de linha no fim errados: '+JSON.stringify(x.fim));
-    if(x.jogos!==12||x.gols!==6)throw new Error('o total continua contando tudo');
+    if(x.jogos!==12||x.gols!==6||restoDe(x).minL!==3600000||restoDe(x).gols!==0)throw new Error('o resto do racha e o que nao e fim: 60 min sem gol');
     const st=statsLiga(l,'sempre'),R=listasRk(st.J,st.PA,y=>y.min-y.minGk,1,l);
-    /* o companheiro A0[1] tambem fez 6 em 60 min: empata, e a patente desempata (D-159) */
-    if(!R.leao.some(y=>y.pid===eu)||R.leao[0].fim.gols/R.leao[0].fim.minL!==6/3600000)throw new Error('leao: 6 gols em 60 min de linha no fim deveria estar no topo da lista');
+    /* eu: 6/h no fim, 0/h no resto → +6. O companheiro A0[1] fez 1 em cada partida (6/h no fim, 6/h no resto → 0): nao e leao */
+    if(!R.leao.length||R.leao[0].pid!==eu||Math.abs(leaoDif(R.leao[0])-6)>1e-9)throw new Error('leao: quem so faz no fim (6/h no fim, 0 no resto) deveria abrir a lista com +6');
+    const par=R.leao.find(y=>y.pid===A0[1]);if(par&&leaoDif(par)>1e-9)throw new Error('quem faz gol o racha inteiro nao e leao do fim');
+    if(!R.leao[0].fim||statsLiga(l,'sempre').J[A0[1]].fim.gols!==6)throw new Error('o companheiro devia ter 6 gols no fim');
     const ui0=JSON.stringify(S.ui);
     S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();
     let h=els['#app'].innerHTML;
@@ -1095,7 +1098,7 @@ step('leao do fim do racha: so as partidas em que quem comeca ja tem 50+ min nas
     S.ui.statsPer='racha';S.ui.statsRacha='sess-leao';render();h=els['#app'].innerHTML;
     /* a dica mora na folha quando ha "Ver todos" (D-112); a lista abre com quem fez os 6 do fim */
     if(!/Leão do fim do racha[\s\S]{0,600}Leao Teste/.test(h))throw new Error('o racha aberto nao tem o leao do fim daquele racha com a pessoa no topo');
-    if(!RK.rleao||!/gols nas 6 partidas com 50\+ min nas pernas/.test(RK.rleao.hint))throw new Error('a dica do leao do racha diz quantas partidas sao o fim');
+    if(!RK.rleao||!/gols por hora nas 6 partidas com 50\+ min nas pernas − no resto/.test(RK.rleao.hint))throw new Error('a dica do leao do racha diz quantas partidas sao o fim');
     S.ui.statsTab='jogador';S.ui.statsPer='sempre';S.ui.statsWho=eu;render();h=els['#app'].innerHTML;
     if(!/fim do racha/.test(h))throw new Error('a ficha nao tem a posicao no ranking do fim do racha');
     S.ui=JSON.parse(ui0);
