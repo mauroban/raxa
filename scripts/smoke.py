@@ -829,7 +829,7 @@ step('aba numeros',()=>{S.ui.tab='stats';render()});
 step('numeros: trocar de periodo',()=>{A.statsPer({dataset:{v:'sempre'}});A.statsPer({dataset:{v:String(new Date().getFullYear())}});A.statsPer({dataset:{v:'2019'}});A.statsPer({dataset:{v:'ano'}})});
 step('abrir a folha de um ranking e inverter a ordem (D-112)',()=>{
   S.ui.statsTab='racha';A.statsPer({dataset:{v:'sempre'}});
-  if(document.querySelector('#app').innerHTML.indexOf('Ver ')<0)throw new Error('faltou o "Ver os 10" nos rankings');
+  if(document.querySelector('#app').innerHTML.indexOf('Ver ')<0)throw new Error('faltou o "Ver mais" nos rankings');
   A.rkSheet({dataset:{k:'pct'}});
   if(!/Do 1º ao último/.test($('#sheet').innerHTML))throw new Error('folha do ranking nao abriu com a ordem');
   A.rkInv({dataset:{k:'pct',v:'1'}});
@@ -1381,6 +1381,10 @@ step('aba Jogador: quem ja pegou no gol escolhe entre Linha e Gol (D-135)',()=>{
   if(!new RegExp('<b class="num">'+(JL[gk.id].jogos||0)+'</b><span>partidas</span>').test(h2))
     throw new Error('a leitura de linha conta so as partidas de linha');
   if(h2.indexOf('Duelos')<0)throw new Error('na linha os duelos voltam');
+  /* acima do esperado por funcao (D-214): linha + gol = total, e o gol nao vaza para a linha */
+  const JT=statsLiga(l,'sempre',null).J,dif=(JL[gk.id].over||0)+(JG[gk.id].over||0)-(JT[gk.id].over||0);
+  if(Math.abs(dif)>1e-6)throw new Error('over de linha + over do gol devia dar o total: '+dif);
+  if(JG[gk.id].jogos&&JG[gk.id].over!==0&&JL[gk.id].over===JT[gk.id].over)throw new Error('a leitura de linha esta somando o que a pessoa rendeu no gol');
 });
 step('corrigir escalacao e trocas: rascunho ate o Salvar',()=>{
   const l=L(),ps=l.players.map(p=>p.id);

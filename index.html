@@ -736,7 +736,7 @@ button.rk2{cursor:pointer;min-height:44px} button.rk2:active{opacity:.65}
 .rk3.time .val .tiny{font-size:10.5px}
 .rk3 .val{font-family:var(--disp);font-weight:800;font-size:15px;white-space:nowrap}
 .rk3 .val small{font-weight:500;color:var(--mute);margin-left:3px;font-size:10px;font-family:var(--body)}
-/* "Ver os 10 ›": abre a folha com a lista inteira e a ordem (D-112) */
+/* "Ver mais ›": abre a folha com a lista inteira e a ordem (D-112) */
 .more{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;color:var(--mute);font:inherit;font-size:12.5px;font-weight:600;padding:8px 2px 2px;cursor:pointer;text-align:left;min-height:36px}
 .more .chev{font-size:17px;line-height:1;color:var(--mute2);margin-left:3px}
 .k2 .more{width:auto;flex:0 0 auto;padding:0 0 0 10px;min-height:32px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--chalk)}
@@ -2351,14 +2351,15 @@ function statsLiga(liga,periodo,papel){
       else{x.seq=0;x.seqD=0}
       x.ultimos.unshift(res.toUpperCase());if(x.ultimos.length>5)x.ultimos.pop();
       if(e.gk)x.gk++;
+      /* saldo acima do esperado (D-13/D-143) só das partidas que contaram NA
+         FUNÇÃO lida (D-214): na leitura de linha, o que a pessoa rendeu no gol
+         não entra — antes somava tudo em qualquer leitura                 */
+      if(m.over&&typeof m.over[pid]==='number')x.over+=m.over[pid];
       if(!x.rachas[sid]){x.rachas[sid]=1;x.nR++}
       for(const o in e.com){const y=par(PA,pid,o);y.n++;y[res]++}
       for(const o in e.contra){const y=par(DU,pid,o);y.n++;y[res]++}
     }
     plusMinus(liga,m,(pid,d,role)=>{if(so&&(role==='G'?so!=='G':so!=='L'))return;j(pid).pm+=d});
-    /* saldo acima do esperado da pessoa na partida (D-13/D-143): é da pessoa,
-       não da função — sai igual nas leituras de linha e de gol            */
-    for(const pid in (m.over||{}))if(J[pid])J[pid].over+=m.over[pid];
     /* gols: de linha e de goleiro em contas separadas (D-110) — fazer gol do
        gol é outra façanha, e misturar inflava a artilharia de quem reveza  */
     (m.goals||[]).forEach(g=>{if(g.pid&&!g.own){if(roleNoGol(liga,m,g)==='G')j(g.pid).golsGk++;else{j(g.pid).gols++;if(noFim)j(g.pid).fim.gols++}}});
@@ -4281,7 +4282,7 @@ function statsWhoId(liga,J){
   return top||(liga.players[0]&&liga.players[0].id)||null;
 }
 /* Rankings da Stats (D-112): a página mostra só o top 3 de cada um, sem
-   barra nem setinha; "Ver os 10 ›" abre uma folha com a lista inteira e a
+   barra nem setinha; "Ver mais ›" abre uma folha com a lista inteira e a
    ordem (do 1º ao último / invertida). RK guarda o que a última renderização
    precisou para montar a folha — funções vivas, só em memória.            */
 let RK={};
@@ -4403,12 +4404,12 @@ function viewStats(liga){
   const grupos=naFicha&&grupoDe?statsGrupos(liga,who,papel,per,grupoDe):[];
   const labG=g=>grupoDe==='racha'?new Date(g.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):grupoDe==='mes'?MESES_CURTOS[+g.k.slice(5)-1]:g.k;
 
-  /* Seção de ranking (D-112): título com ícone, top 3 e "Ver os 10 ›". Sem
+  /* Seção de ranking (D-112): título com ícone, top 3 e "Ver mais ›". Sem
      setinha e sem barra — a lista inteira, com detalhe e ordem, é da folha. */
   const rkSec=(key,icone,cor,titulo,hint,itens,num,fmt,sub,vazio,nome,ordem)=>{
     RK[key]={titulo,hint,itens,num,fmt,sub,nome,ordem};
-    /* o "Ver os 10 ›" mora na linha do título: é dele que a lista é */
-    const ver=itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${itens.length>RK_MAX?'os '+RK_MAX:'todos'}<span class="chev">›</span></button>`:'';
+    /* o "Ver mais ›" mora na linha do título: é dele que a lista é */
+    const ver=itens.length>3?`<button class="more" data-a="rkSheet" data-k="${key}">Ver mais<span class="chev">›</span></button>`:'';
     /* a dica (mínimo, unidade) só cabe na linha do título quando não há "Ver"; com ele, fica na folha */
     /* a dica (mínimo, unidade) vai numa linha própria, abaixo do título: na linha do título não cabia no celular (D-153) */
     const head=`<div class="k2"><span>${icone?(SICO[icone]?ic(icone,cor):icone+' '):''}${titulo}</span>${ver}</div>${hint&&!ver?`<div class="tiny muted" style="margin:-3px 0 5px">${hint}</div>`:''}`;
@@ -4428,7 +4429,7 @@ function viewStats(liga){
         <div class="sub">${pl(x.n,m?'partida':'confronto')}${m?' juntos':''} · ${aprDe(x.v,x.e,x.n)}% de aproveitamento</div></div>
       <span class="val num">${x.v}<small>V</small> ${x.e}<small>E</small> ${x.d}<small>D</small></span></button>`;
   const duelList=(arr,m,key,titulo)=>{RK[key]={titulo,itens:arr,num:x=>x.n,row:duelRow(m),ordem:m?['Mais partidas juntos','Menos partidas juntos']:['Mais confrontos','Menos confrontos']};
-    return arr.slice(0,5).map(duelRow(m)).join('')+(arr.length>5?`<button class="more" data-a="rkSheet" data-k="${key}">Ver ${m?'todas as':'todos os'} ${arr.length}<span class="chev">›</span></button>`:'')};
+    return arr.slice(0,5).map(duelRow(m)).join('')+(arr.length>5?`<button class="more" data-a="rkSheet" data-k="${key}">Ver mais<span class="chev">›</span></button>`:'')};
   const quem=who===eu?'você':(p?p.name.split(' ')[0]:'');
 
   /* --- partida a partida: a historia da pessoa no periodo, uma linha por

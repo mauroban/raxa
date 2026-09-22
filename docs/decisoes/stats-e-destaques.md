@@ -872,3 +872,20 @@ os visuais". O contexto (quantas partidas, quantos gols) vem antes do herói.
 **Onde:** `cardDest` (definido antes de `cardsUmRacha`) em `viewStats`, CSS `.dest` em `index.html`
 · `scripts/smoke.py` (tiles antes do craque; craque antes de Destaques do racha) · `scripts/visual.py`
 (tela 28) · [Stats](../produto/stats.md) · [Interface](../produto/interface.md).
+
+<a id="d-214"></a>
+### D-214 · Acima do esperado por função; "Ver mais" em todo ranking
+**Quando:** 2026-09-22.
+**O quê:** (1) em `statsLiga`, o saldo acima do esperado (`over`) de uma partida entra só quando a
+partida contou na função que se está lendo — o mesmo `contaPartida` que conta `jogos`. Na leitura
+de linha da ficha, o que a pessoa rendeu no gol não entra (e vice-versa); linha + gol = total, e
+`overPct` (over/jogos) fica coerente, porque numerador e denominador vêm das mesmas partidas.
+(2) Os botões "Ver os 10 ›" / "Ver todos ›" dos rankings, duelos e parcerias viram **"Ver mais ›"**.
+**Por quê:** pedido do dono da liga: "o rendeu acima do esperado não está separando gol e linha;
+troque ver os 10 ou ver todos por ver mais". O comentário antigo dizia "é da pessoa, não da função",
+mas a ficha por função (D-135) lê tudo por função — o over era o único número que vazava. "Ver mais"
+é mais curto e não muda de texto conforme o tamanho da lista.
+**Descartado:** manter o over da pessoa inteira nas duas leituras (ficava incoerente com jogos).
+**Onde:** `statsLiga` (over dentro do laço de partidas contadas), `rkSec` e `duelList` em
+`viewStats`, em `index.html` · `scripts/smoke.py` (over de linha + over do gol = total; a leitura de
+linha não soma o do gol; "Ver mais") · [Stats](../produto/stats.md).
