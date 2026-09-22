@@ -173,8 +173,13 @@ DRIVER = r"""
     if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
   }
   if(step===28){                   /* craque e artilheiro do ano no topo da aba Racha (D-210) */
-    const l=L();l.cfg.rankVisibility='todos';rebuildAll(l);
-    S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='ano';render();
+    const l=L(),ult=l.matches[l.matches.length-1];l.cfg.rankVisibility='todos';
+    /* mais partidas no ano, resultados e artilheiros variados, para o pódio ter 1º, 2º e 3º (D-211) */
+    for(let i=1;i<=8;i++){const c=JSON.parse(JSON.stringify(ult));c.id='cq'+i;c.sessionId=ult.sessionId||ult.id;c.ts=ult.ts-i*720000;
+      if(c.startedAt)c.startedAt=c.ts;if(c.endedAt)c.endedAt=c.ts+600000;if(i%3===0)c.result=1-c.result;
+      const lu=(c.lineups||[[],[]])[c.result===1?1:0]||[];c.goals=(c.goals||[]).concat(lu.slice(0,1+i%3).map(pid=>({pid,side:c.result===1?1:0,t:c.ts})));
+      delete c.deltas;delete c.moves;delete c.over;l.matches.push(c)}
+    rebuildAll(l);S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='ano';render();
   }
   if(step===19){                   /* painel da liga em "Sempre" (D-153): ano a ano com destaques, níveis, rankings */
     const l=L(),ult=l.matches[l.matches.length-1];
@@ -240,7 +245,7 @@ io.open(alvo, 'w', encoding='utf-8').write(fonte.replace('</body>', DRIVER + '</
 url = 'file:///' + alvo.replace('\\', '/')
 
 # (largura, tema, telas): o claro roda nas telas onde a cor decide leitura
-PASSES = [(l, 'claro', sorted(TELAS)) for l in LARGURAS] + [(500, 'escuro', [1, 2, 3, 5, 9])]
+PASSES = [(l, 'claro', sorted(TELAS)) for l in LARGURAS] + [(500, 'escuro', [1, 2, 3, 5, 9, 28])]
 
 falhas = 0
 for larg, tema, steps in PASSES:

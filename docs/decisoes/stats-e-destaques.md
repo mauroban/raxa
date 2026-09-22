@@ -815,3 +815,24 @@ Melhor dupla) e troféu (é de Quem mais ganhou).
 `.dest`, tudo em `index.html` · `scripts/smoke.py` (card no racha e no ano, antes dos tiles, com a
 coroa; nada em Sempre; empate traz os dois) · `scripts/visual.py` (tela 28, craque do ano) ·
 [Stats](../produto/stats.md) · [Interface](../produto/interface.md).
+
+<a id="d-211"></a>
+### D-211 · Craque e artilheiro em pódio, com o 1º em muito mais destaque
+**Quando:** 2026-09-22.
+**O quê:** o card do D-210 vira dois pódios empilhados (craque em cima, artilheiro embaixo, menor):
+**2º | 1º | 3º**, degraus de ouro, prata e bronze (`--prata` e `--bronze` nos dois temas). O 1º tem
+1,7× a largura dos outros, degrau de 74 px (38 e 24 px nos outros), nome em 30 px com a coroa em
+cima e o número em 24 px; 2º e 3º com o nome curto (`nomesCurtos`) em 13 px. Empate divide o degrau
+como nos rankings (1, 1, 3 — D-89): até 3 nomes no 1º e 2 nos outros, e "e mais N"; degrau vazio fica
+apagado. `destaquesPer` passa a devolver o `podio` (quem ficou até a 3ª posição).
+**Por quê:** pedido do dono da liga, depois do D-210: "melhore um pouco o design e pense uma forma
+de incluir o pódio — mas com bastante destaque pro primeiro ainda". O pódio conta quem chegou perto
+sem tirar o 1º do centro; o tamanho diz a hierarquia sem precisar de texto.
+**Descartado:** três linhas de ranking (já existem logo abaixo, nos rankings); pódio com os três do
+mesmo tamanho (o 1º perdia o destaque); craque e artilheiro lado a lado em dois pódios (em 360 px o
+nome do 1º não cabia grande); pular a posição no empate para não deixar degrau vazio (a posição
+dividida é a regra de todo ranking, D-89).
+**Onde:** `destaquesPer` (`podio`), `cardDest` em `viewStats`, CSS `.dest`/`.podio`, `--prata`,
+`--bronze`, tudo em `index.html` · `scripts/smoke.py` (o mesmo passo do D-210) · `scripts/visual.py`
+(tela 28 com 9 partidas no ano, também no tema escuro) · [Stats](../produto/stats.md) ·
+[Interface](../produto/interface.md).
