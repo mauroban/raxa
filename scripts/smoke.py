@@ -2492,6 +2492,19 @@ step('quem e voce: membro sem perfil escolhe o nome ou cria o seu com apelido pr
   ['#pn','#pg'].forEach(k=>delete els[k]);
 });
 
+console.log('\n[smoke] login com convite pendente');
+step('convidado sem conta abre em criar, mas consegue ir para entrar',()=>{
+  delete store['raxa_last_user'];localStorage.setItem(CONVITE_KEY,'abc123');
+  authAberto=false;authMode='entrar';renderAuth();
+  if(!/class="on" data-a="authMode" data-v="criar"/.test(els['#app'].innerHTML))throw new Error('convidado sem conta devia abrir em criar');
+  A.authMode({dataset:{v:'entrar'}});
+  if(!/class="on" data-a="authMode" data-v="entrar"/.test(els['#app'].innerHTML))throw new Error('clicar em Entrar nao trocou a aba (voltou para criar)');
+  if(!/data-a="doLogin"/.test(els['#app'].innerHTML))throw new Error('botao devia ser Entrar');
+  renderAuth('Senha errada.');
+  if(!/class="on" data-a="authMode" data-v="entrar"/.test(els['#app'].innerHTML))throw new Error('erro de login devolveu para criar');
+  delete store[CONVITE_KEY];authAberto=false;authMode='entrar';
+});
+
 console.log('\n[smoke] dados antigos no localStorage');
 const antigo={v:1,me:{id:'x',name:''},active:'old',ui:{tab:'racha'},ligas:[{id:'old',name:'Antiga',
   cfg:{startElo:1500,kNew:40,kBase:24,placement:5,tiers:[1700,1600,1450,1350],tierNames:['a','b','c','d','e'],

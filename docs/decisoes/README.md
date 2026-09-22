@@ -218,6 +218,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-132](contas-e-permissoes.md#d-132) · Link de convite (?c=CODIGO): quem abre entra ou cria a conta e o pedido vai sozinho
 - [D-141](contas-e-permissoes.md#d-141) · O papel de cada membro (Admin/Moderador/Lançador) só aparece para moderador ou acima
 - [D-207](contas-e-permissoes.md#d-207) · Vincular conta é um caminho só (`vinculaConta`): "Sou eu" e "criar meu jogador" também fazem o primeiro vinculado (e o dono) virar admin
+- [D-209](contas-e-permissoes.md#d-209) · Convite pendente abre em Criar conta só na primeira vez; tocar em Entrar vale (antes voltava para Criar e quem já tinha conta não entrava)
 - D-164 · *(desfeita em 2026-09-14, no mesmo dia)* senha redefinida pelo dono da liga — o dono de qualquer liga passaria a entrar na conta pessoal de um membro; conta é pessoal, não da liga
 
 ### [Chamada e confirmação de presença](chamada-e-confirmacao.md)

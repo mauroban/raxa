@@ -250,3 +250,18 @@ a chamada, que foi o motivo de D-166).
 `index.html` · teste "o criador que se vincula por Sou eu vira admin" em `scripts/sync.py` e o passo
 D-166 em `scripts/smoke.py` · [Contas e permissões §2](../produto/contas-e-permissoes.md) ·
 [Confirmação de presença §5](../produto/confirmacao-de-presenca.md).
+
+<a id="d-209"></a>
+### D-209 · Convite pendente abre em "Criar conta" só na primeira vez; a aba que a pessoa escolhe vale
+**Quando:** 2026-09-22.
+**O quê:** `renderAuth` força a aba *Criar conta* para quem abre pelo link de convite sem conta
+lembrada no aparelho (D-132) **apenas na primeira renderização** da tela (`authAberto`). Depois disso a
+aba que a pessoa tocou (`authMode`) manda, inclusive quando a tela re-renderiza por erro de login.
+**Por quê:** a regra rodava em toda renderização e sem erro. Tocar em *Entrar* chama `renderAuth()`
+sem erro, que devolvia para *Criar conta*: quem já tinha conta e abriu o convite num aparelho novo (ou
+no mesmo, com o navegador limpo) **não conseguia entrar** — vários usuários relataram que "o botão
+Entrar não funciona".
+**Descartado:** abrir sempre em *Entrar* (quem nunca teve conta continua sendo o caso mais comum do
+link de convite); decidir pela existência do usuário no servidor (não dá para saber antes de digitar).
+**Onde:** `authAberto`, `renderAuth` e `A.authMode` em `index.html` · passo "convidado sem conta abre
+em criar, mas consegue ir para entrar" em `scripts/smoke.py`.

@@ -8445,10 +8445,11 @@ function renderSetup(){
   $('#bar').innerHTML='';setNav('');
 }
 
-let authMode='entrar';
+let authMode='entrar',authAberto=false;
 function renderAuth(erro){
   const conv=convitePendente();
-  if(conv&&!localStorage.getItem('raxa_last_user')&&!erro)authMode='criar';   // convidado sem conta: já abre em "criar"
+  if(conv&&!authAberto&&!localStorage.getItem('raxa_last_user'))authMode='criar';   // convidado sem conta: já abre em "criar" — só na primeira abertura; a aba escolhida depois vale
+  authAberto=true;
   const criar=authMode==='criar';
   $('#app').innerHTML=topo('níveis de quadra')+`
     ${conv?`<div class="card" style="box-shadow:inset 5px 0 0 var(--ok);margin-bottom:10px"><b>Você recebeu um convite para uma liga.</b><div class="tiny muted" style="margin-top:3px">Entre ou crie a conta: o pedido de entrada vai sozinho.</div></div>`:''}
