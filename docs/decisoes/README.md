@@ -162,6 +162,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-210](stats-e-destaques.md#d-210) · Craque (acima do esperado por partida, coroa dourada) e artilheiro do racha/mês/ano num card no topo da aba Racha; empate mostra todos; mesma conta do chip do racha a racha
 - [D-211](stats-e-destaques.md#d-211) · Craque e artilheiro em pódio (2º | 1º | 3º), o 1º largo, alto e com coroa; empate divide o degrau (desfeito pelo D-212)
 - [D-212](stats-e-destaques.md#d-212) · Destaque simples: só o craque (nome grande, +X% acima do esperado) e 2º e 3º numa linha; artilheiro sai do card
+- [D-213](stats-e-destaques.md#d-213) · Números gerais antes do card do craque; selo de coroa à esquerda e chips de 2º/3º
 - [D-204](interface.md#d-204) · Lista de ligas: o topo de 56 px volta (D-137 zerou `--toph` e esmagava a marca) e o selo ao vivo ganha linha própria
 - [D-205](interface.md#d-205) · Lista de ligas: cada cartão mostra a sua patente (ou ⏳ calibrando) naquela liga, respeitando quem vê os níveis
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas

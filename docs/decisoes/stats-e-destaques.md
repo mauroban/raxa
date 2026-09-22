@@ -857,3 +857,18 @@ isso. Escolheu, entre três desenhos, o craque com 2º e 3º pequenos. O desempa
 `scripts/smoke.py` (card no racha e no ano, antes dos tiles, com a coroa; nada em Sempre; empate
 traz todos) · `scripts/visual.py` (tela 28, com o craque fixado em 1º, 2º empatado e 3º porque o
 elenco de teste empata) · [Stats](../produto/stats.md) · [Interface](../produto/interface.md).
+
+<a id="d-213"></a>
+### D-213 · Números gerais antes do craque; card do craque com selo de coroa e chips de 2º/3º
+**Quando:** 2026-09-22.
+**O quê:** o card do craque (D-212) desce para **depois dos números gerais** — no racha, depois do
+card "Racha de dd/mm" (tiles + times do racha) e antes de Destaques do racha; no mês e no ano,
+depois dos tiles e antes do racha a racha / mês a mês. Visual: coroa num selo redondo dourado à
+esquerda (46 px), título, nome (30 px) e número ao lado dele; 2º e 3º como chips com a posição num
+círculo; fundo em degradê dourado com fio interno dourado.
+**Por quê:** pedido do dono da liga: "deixe os números gerais acima de craque do período, e melhore
+os visuais". O contexto (quantas partidas, quantos gols) vem antes do herói.
+**Descartado:** nada relevante.
+**Onde:** `cardDest` (definido antes de `cardsUmRacha`) em `viewStats`, CSS `.dest` em `index.html`
+· `scripts/smoke.py` (tiles antes do craque; craque antes de Destaques do racha) · `scripts/visual.py`
+(tela 28) · [Stats](../produto/stats.md) · [Interface](../produto/interface.md).

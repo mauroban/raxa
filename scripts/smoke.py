@@ -1070,7 +1070,8 @@ step('craque do periodo em destaque no topo da aba Racha, 2o e 3o numa linha, em
     let h=els['#app'].innerHTML;
     if(!/Craques? do racha/.test(h))throw new Error('o racha nao mostra o craque em destaque');
     const dq=destaquesPer(l,'racha:'+ult);
-    if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid)))>h.indexOf('presentes<'))throw new Error('o craque do racha devia vir antes do resto');
+    if(dq.craque&&h.indexOf('Craque')<h.indexOf('presentes<'))throw new Error('os numeros gerais vem antes do craque (D-213)');
+    if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid)))>h.indexOf('Destaques do racha'))throw new Error('o craque do racha devia vir antes dos destaques');
     S.ui.statsPer='ano';S.ui.statsAno=ano;render();h=els['#app'].innerHTML;
     if(!/Craques? do ano/.test(h))throw new Error('o ano nao mostra o craque em destaque');
     if(/Craque/.test(h)&&!/M4 17.5L3 7.5/.test(h))throw new Error('o craque devia vir com a coroa');

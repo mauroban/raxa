@@ -106,7 +106,7 @@ só "⏳ 3/15" enquanto calibra (e o Elo cru para o admin) · *Sem nível ainda*
 Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
 
 **Stats** — filtro fixo: Jogador / Racha · Último / Mês / Ano / Sempre · ‹ período › + Linha / Gol · painel.
-Na aba Racha (Último, Mês, Ano), o painel abre com o card do **Craque** (coroa e título dourados, nome em 32 px — 24 px no empate —, o número em 22 px e, abaixo de um fio, 2º e 3º numa linha de 13 px; D-212), depois os tiles, o racha a racha / mês a mês, Níveis e os rankings.
+Na aba Racha (Último, Mês, Ano), o painel abre com os números gerais (tiles) e logo abaixo o card do **Craque** (selo redondo de 46 px com a coroa à esquerda; título dourado, nome em 30 px — 22 px no empate —, o número em 21 px e, abaixo de um fio, 2º e 3º em chips de 13 px; D-213), depois o racha a racha / mês a mês, Níveis e os rankings.
 Folha do time do racha: escalação · rodízio · partidas do time · *Corrigir os times do racha* (admin).
 Folha Times do racha: data e partidas · um bloco por time (chips) · Rodízio de goleiros · Estava no
 racha, sem time · *+ alguém do cadastro* · Fechar. Toque no nome: *Era de que time?* com um botão por

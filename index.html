@@ -617,18 +617,24 @@ button.evr{cursor:pointer;min-height:44px} button.evr:active{background:var(--pa
 .chip>b{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--chalk)}
 .chip>b.ok{color:var(--ok)}.chip>b.bad{color:var(--bad)}
 .chip.lv{background:transparent;border:1px solid var(--line);padding:3px 8px}
-/* o craque do período, no topo da aba Racha (D-210, D-212): um nome grande, o número e, numa linha, 2º e 3º */
-.dest{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,var(--panel)),var(--panel) 70%)}
-.dest .dh{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}
-.dest .dh .ic{width:18px;height:18px}
-.dest .dnm{display:block;width:100%;background:none;border:0;padding:4px 0;margin:2px 0 0;font-family:var(--disp);font-weight:900;font-size:32px;line-height:1;text-transform:uppercase;color:var(--chalk);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
-.dest .dnm.v{font-size:24px;padding:5px 0;margin:0}
-.dest .dval{margin-top:4px;font-size:13px;color:var(--mute)}
-.dest .dval b{font-family:var(--disp);font-weight:900;font-size:22px;color:var(--chalk);margin-right:2px}
+/* o craque do período (D-210, D-212, D-213): coroa num selo dourado à esquerda, nome grande, o número e, embaixo, 2º e 3º */
+.dest{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 18%,var(--panel)),var(--panel) 62%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent)}
+.dest .dtop{display:flex;align-items:center;gap:12px}
+.dest .dcr{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);background:color-mix(in srgb,var(--gold) 22%,var(--panel));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,transparent)}
+.dest .dcr .ic{width:26px;height:26px;stroke-width:1.9}
+.dest .dbody{min-width:0;flex:1}
+.dest .dh{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.dest .dnm{display:block;width:100%;background:none;border:0;padding:3px 0;margin:0;font-family:var(--disp);font-weight:900;font-size:30px;line-height:1;text-transform:uppercase;color:var(--chalk);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.dest .dnm.v{font-size:22px;padding:4px 0}
+.dest .dval{font-size:13px;color:var(--mute);margin-top:1px}
+.dest .dval b{font-family:var(--disp);font-weight:900;font-size:21px;color:var(--chalk);margin-right:3px}
 .dest .dval b.up{color:var(--ok)}.dest .dval b.dn{color:var(--bad)}
-.dest .dpod{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 14px}
-.dest .dpod b{color:var(--chalk);font-weight:700}
-.dest .dpod em{font-style:normal;font-weight:700}
+.dest .dpod{margin-top:12px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--gold) 28%,var(--line));display:flex;flex-wrap:wrap;gap:6px 8px}
+.dest .dpod span{display:inline-flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--panel) 70%,transparent);border-radius:999px;padding:4px 10px 4px 4px;font-size:12.5px;color:var(--chalk);font-weight:600;max-width:100%;min-width:0}
+.dest .dpod i{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:900;font-size:13px;background:var(--fill);color:var(--mute)}
+.dest .dpod b{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.dest .dpod em{font-style:normal;font-weight:800;font-family:var(--disp);font-size:14px;color:var(--mute)}
+.dest .dpod em.up{color:var(--ok)}.dest .dpod em.dn{color:var(--bad)}
 /* distribuição das patentes hoje (D-153): faixa proporcional, uma cor por patente */
 .patbar{display:flex;height:36px;border-radius:8px;overflow:hidden;gap:2px;margin:8px 0 6px;background:transparent;border:0;width:100%;padding:0;cursor:pointer}
 .patbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--disp);font-weight:800;font-size:13px;min-width:26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
@@ -4620,6 +4626,30 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
   </div>`:'';
   /* Um racha só pede outra leitura: quem estava, como foi a noite, quem se
      destacou nela. Nada de ranking de temporada.                            */
+  /* Craque e artilheiro do período em destaque (D-210): a primeira coisa da
+     aba Racha no racha, no mês e no ano. Craque é quem rendeu mais acima do
+     esperado — não a maior patente; empate mostra todo mundo.             */
+  const cardDest=(()=>{
+    if(tab!=='racha'||tipo==='sempre'||!ms.length)return '';
+    const c=destaquesPer(liga,per,J).craque,verPat=vePat(liga);if(!c)return '';
+    const doQ=soRacha?'do racha':tipo==='mes'?'do mês':'do ano';
+    const cls=v=>verPat?(v>0?'up':v<0?'dn':''):'';
+    const num=v=>verPat?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':v+'%';
+    /* empate no 1º: até 3 nomes, e "e mais N" (D-212) */
+    const l=c.lista,mx=l.length>3?2:l.length;
+    const nomes=l.slice(0,mx).map(x=>`<button class="dnm${l.length>1?' v':''}" data-a="pSheet" data-id="${x.pid}">${esc(nameOf(liga,x.pid).split(' ').slice(0,2).join(' '))}</button>`).join('')
+      +(l.length>mx?`<div class="tiny muted">e mais ${l.length-mx}</div>`:'');
+    /* 2º e 3º numa linha só, pequenos; empate divide a posição (D-89) */
+    const ids=Object.keys(J),cur={};nomesCurtos(liga,ids).forEach((n,i)=>cur[ids[i]]=n);
+    const pods=[2,3].map(k=>{const ys=c.podio.filter(y=>y.pos===k);if(!ys.length)return '';
+      return `<span><i>${k}º</i><b>${ys.map(y=>esc(cur[y.x.pid]||nameOf(liga,y.x.pid))).join(', ')}</b><em class="${cls(ys[0].v)}">${num(ys[0].v)}</em></span>`}).join('');
+    return `<div class="card dest">
+      <div class="dtop"><span class="dcr">${ic('crown')}</span>
+        <div class="dbody"><div class="dh">${l.length>1?'Craques':'Craque'} ${doQ}</div>
+          ${nomes}
+          <div class="dval"><b class="${cls(c.v)}">${num(c.v)}</b>${verPat?(c.v<0?'abaixo':'acima')+' do esperado':'de aproveitamento'}</div></div></div>
+      ${pods?`<div class="dpod">${pods}</div>`:''}
+    </div>`})();
   const cardsUmRacha=(()=>{
     if(!soRacha)return '';
     if(!ms.length)return `<div class="card"><div class="k">Último racha</div><div class="tiny muted">Nenhum racha registrado ainda.</div></div>`;
@@ -4689,6 +4719,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       ${(()=>{const pos=posEmpate(times,t=>t.v*1e6+(t.gp-t.gc));return times.map((t,i)=>`<div class="rk3 time ${i===0?'top':''}" data-a="rachaTime" data-sid="${sid}" data-n="${esc(t.n)}"><span class="pos">${pos[i]}</span><div class="nm">${rotuloTime(t)}<small>${esc(t.n)} · <b class="up num">${t.gp}</b>/<b class="dn num">${t.gc}</b> G</small></div><span class="val num" style="text-align:right">${t.v}<small>V</small> ${t.e}<small>E</small> ${t.d}<small>D</small>${(t.v+t.e+t.d)?`<span class="tiny muted" style="display:block;font-weight:400;letter-spacing:0" title="resultado do racha (empate vale meio) · probabilidade média de vitória no apito — mesma base: a chance do Elo já é o placar esperado, com empate valendo meio">${Math.round((t.v+t.e/2)/(t.v+t.e+t.d)*100)}% <small>real</small>${t.jE?' <span style="opacity:.75">(esp. '+Math.round(t.esp/t.jE*100)+'%)</span>':''}</span>`:''}</span></div>`).join('')})()}
       ${semDono?`<div class="tiny muted" style="margin-top:7px">${pl(semDono,'formação','formações')} não ${semDono===1?'contou':'contaram'} para nenhum time: mais da metade do time original não estava em quadra.</div>`:''}</div>`:''}
   </div>
+  ${cardDest}
   <div class="card">
     <div class="k" style="margin-bottom:2px">Destaques do racha</div>
     ${pm.length&&longa?secPmRacha:''}
@@ -4776,30 +4807,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       ${rkSec('nsubiu','up','var(--ok)','Quem mais subiu','',subiu,x=>x.n,setas,subTxt,'Ninguém subiu de nível no período.')}
       ${rkSec('ncaiu','down','var(--bad)','Quem mais caiu','',caiu,x=>-x.n,setas,subTxt,'Ninguém caiu de nível no período.')}
     </div>`})();
-  /* Craque e artilheiro do período em destaque (D-210): a primeira coisa da
-     aba Racha no racha, no mês e no ano. Craque é quem rendeu mais acima do
-     esperado — não a maior patente; empate mostra todo mundo.             */
-  const cardDest=(()=>{
-    if(tab!=='racha'||tipo==='sempre'||!ms.length)return '';
-    const c=destaquesPer(liga,per,J).craque,verPat=vePat(liga);if(!c)return '';
-    const doQ=soRacha?'do racha':tipo==='mes'?'do mês':'do ano';
-    const cls=v=>verPat?(v>0?'up':v<0?'dn':''):'';
-    const num=v=>verPat?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':v+'%';
-    /* empate no 1º: até 3 nomes, e "e mais N" (D-212) */
-    const l=c.lista,mx=l.length>3?2:l.length;
-    const nomes=l.slice(0,mx).map(x=>`<button class="dnm${l.length>1?' v':''}" data-a="pSheet" data-id="${x.pid}">${esc(nameOf(liga,x.pid).split(' ').slice(0,2).join(' '))}</button>`).join('')
-      +(l.length>mx?`<div class="tiny muted">e mais ${l.length-mx}</div>`:'');
-    /* 2º e 3º numa linha só, pequenos; empate divide a posição (D-89) */
-    const ids=Object.keys(J),cur={};nomesCurtos(liga,ids).forEach((n,i)=>cur[ids[i]]=n);
-    const pods=[2,3].map(k=>{const ys=c.podio.filter(y=>y.pos===k);if(!ys.length)return '';
-      return `<span>${k}º <b>${ys.map(y=>esc(cur[y.x.pid]||nameOf(liga,y.x.pid))).join(', ')}</b> <em class="${cls(ys[0].v)}">${num(ys[0].v)}</em></span>`}).join('');
-    return `<div class="card dest">
-      <div class="dh">${ic('crown')}${l.length>1?'Craques':'Craque'} ${doQ}</div>
-      ${nomes}
-      <div class="dval"><b class="${cls(c.v)}">${num(c.v)}</b> ${verPat?(c.v<0?'abaixo':'acima')+' do esperado':'de aproveitamento'}</div>
-      ${pods?`<div class="dpod">${pods}</div>`:''}
-    </div>`})();
-  const cardsRacha=cardDest+(soRacha?cardsUmRacha:`
+  const cardsRacha=(soRacha?cardsUmRacha:`
   <div class="card">
     <div class="tiles">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer}</b><span>racha${nRachasPer===1?'':'s'}</span></div>
@@ -4824,7 +4832,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       <div class="legend"><span><i class="avg"></i>média de gols por racha</span><span><i style="background:var(--lime)"></i>último racha</span></div>`})()}
   </div>
 
-${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
+${cardDest}${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
     ${(()=>{
       /* Cada filtro faz uma pergunta, e a ordem dos rankings responde a ela:
          30 dias pergunta FORMA (campanha recente primeiro), um ano pergunta
