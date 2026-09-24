@@ -5466,13 +5466,26 @@ function resumoRacha(liga,sess,ms,passado){
   const sec=(titulo,html)=>html?`<div class="sec"><div class="k2">${titulo}</div>${html}</div>`:'';
   /* o mesmo resumo em texto, para o grupo do WhatsApp (D-215); quem subiu e
      caiu de nível fica só na folha — nível não vai para o grupo (D-220)   */
-  const nm=pid=>nameOf(liga,pid);
-  RESUMO_TXT=[`*${liga.name} · racha de ${quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}*`,
-    `${pl(ms.length,'partida')} · ${pl(totGols,'gol')} · ${pl(pres,'pessoa')} · ${MINS(totMs)} min`,
-    dq?`\n👑 ${dq.lista.length>1?'Craques':'Craque'} do racha: ${dq.lista.map(x=>nm(x.pid)).join(', ')} (${vePat(liga)?(dq.v>0?'+':dq.v<0?'−':'')+Math.abs(dq.v)+'% '+(dq.v<0?'abaixo':'acima')+' do esperado':dq.v+'% de aproveitamento'})`
-      +[2,3].map(k=>{const ys=dq.podio.filter(y=>y.pos===k);return ys.length?`\n${k}º ${ys.map(y=>nm(y.x.pid)).join(', ')}`:''}).join(''):'',
-    T.length?'\n🏆 Times\n'+T.map((t,i)=>`${pos[i]}. ${(liga.cfg.format<=5&&(t.ids||[]).length)?nomesCurtos(liga,t.ids).join(', '):t.name} — ${t.v}V ${t.e}E ${t.d}D`).join('\n'):'',
-    venc.length?'\n🔥 Quem mais ganhou\n'+vencG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${x.v}V ${x.d}D`).join('\n'):'',
+  /* Linhas curtas (D-222): no WhatsApp do celular cabem ~40 caracteres por
+     linha, e o que passa disso quebra no meio. Nome curto (primeiro nome,
+     desempatado), V/E/D na frente do time, no máximo 3 nomes por linha.   */
+  const curto={};{const ids=Object.keys(J);nomesCurtos(liga,ids).forEach((n,i)=>curto[ids[i]]=n)}
+  const nm=pid=>curto[pid]||nameOf(liga,pid).split(' ')[0];
+  const ate3=ids=>ids.slice(0,3).map(nm).join(', ')+(ids.length>3?` +${ids.length-3}`:'');
+  const ved=(v,e,d)=>`${v}V${e?' '+e+'E':''} ${d}D`;
+  const dia=quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).replace('.','').replace(',','');
+  const taxa=dq?(vePat(liga)?(dq.v>0?'+':dq.v<0?'−':'')+Math.abs(dq.v)+'% '+(dq.v<0?'abaixo':'acima')+' do esperado':dq.v+'% de aproveitamento'):'';
+  const pods=dq?[2,3].map(k=>{const ys=dq.podio.filter(y=>y.pos===k);return ys.length?`${k}º ${ate3(ys.map(y=>y.x.pid))}`:''}).filter(Boolean).join(' · '):'';
+  RESUMO_TXT=[`*${liga.name}*`,
+    `${dia} · ${pl(ms.length,'partida')} · ${pl(totGols,'gol')}`,
+    dq?['',`👑 *${dq.lista.length>1?'Craques':'Craque'}: ${ate3(dq.lista.map(x=>x.pid))}*`,taxa,pods].filter(x=>x!==null).join('\n').replace(/\n$/,''):'',
+    T.length?(()=>{const quem=t=>(liga.cfg.format<=5&&(t.ids||[]).length)?t.ids.map(nm).join(', '):t.name;
+      /* cabe numa linha: "*3V 2D* nomes"; senão, o time inteiro vai em duas (o placar e o nome do
+         time em cima, os nomes embaixo) — igual para todos, para a lista não ficar torta */
+      const uma=T.every(t=>(ved(t.v,t.e,t.d)+' '+quem(t)).length<=34);
+      return ['','🏆 *Times*',...T.map(t=>uma?`*${ved(t.v,t.e,t.d)}* ${quem(t)}`
+        :`*${ved(t.v,t.e,t.d)}*${quem(t)!==t.name?' · '+t.name:''}\n${quem(t)}`)].join('\n')})():'',
+    venc.length?['','🔥 *Quem mais ganhou*',...vencG.map(x=>`*${x.v}V* ${ate3(x.ids)}`)].join('\n'):''
   ].filter(Boolean).join('\n');
   return `<h2>${passado?'Racha de '+quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}):'Racha encerrado'}</h2>
     <div class="tiny muted" style="margin:2px 0 12px">${passado?'':quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})+' · '}${fmtMin(totMs)} de bola rolando</div>

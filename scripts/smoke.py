@@ -1083,7 +1083,7 @@ step('craque do periodo em destaque no topo da aba Racha, 2o e 3o numa linha, em
     if(!/Craques? do racha/.test(h))throw new Error('o racha nao mostra o craque em destaque');
     const dq=destaquesPer(l,'racha:'+ult);
     if(dq.craque&&h.indexOf('Craque')<h.indexOf('presentes<'))throw new Error('os numeros gerais vem antes do craque (D-213)');
-    if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid)))>h.indexOf('Destaques do racha'))throw new Error('o craque do racha devia vir antes dos destaques');
+    if(dq.craque&&h.indexOf(esc(nameOf(l,dq.craque.lista[0].pid).split(' ').slice(0,2).join(' ')))>h.indexOf('Destaques do racha'))throw new Error('o craque do racha devia vir antes dos destaques');
     S.ui.statsPer='ano';S.ui.statsAno=ano;render();h=els['#app'].innerHTML;
     if(!/Craques? do ano/.test(h))throw new Error('o ano nao mostra o craque em destaque');
     if(/Craque/.test(h)&&!/M4 17.5L3 7.5/.test(h))throw new Error('o craque devia vir com a coroa');
@@ -1192,6 +1192,9 @@ step('resumo do fim: Compartilhar leva o mesmo resumo em texto (D-215)',()=>{
   if(/<|undefined|NaN/.test(RESUMO_TXT))throw new Error('texto do resumo com lixo: '+RESUMO_TXT);
   if(/Subiu|Caiu|→/.test(RESUMO_TXT))throw new Error('quem subiu/caiu nao vai para o texto compartilhado (D-220)');
   if(/Artilheir/.test(h)||/Artilheir/.test(RESUMO_TXT))throw new Error('o resumo nao destaca artilheiro (D-221)');
+  /* linhas curtas para o WhatsApp (D-222): nenhuma passa de 40 caracteres */
+  {const longa=RESUMO_TXT.split(String.fromCharCode(10)).find(x=>[...x.replace(/\*/g,'')].length>40);
+   if(longa)throw new Error('linha longa demais no texto compartilhado: '+longa)}
 });
 step('resumo de um racha que ja passou: pela aba Jogos, com Compartilhar e o craque (D-219)',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],txt0=RESUMO_TXT;closeSheet();

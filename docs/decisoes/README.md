@@ -171,6 +171,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-219](partida-e-historico.md#d-219) · Resumo do racha com o craque e empates numa linha; resumo e Compartilhar de qualquer racha passado (aba Jogos)
 - [D-220](partida-e-historico.md#d-220) · Quem subiu e caiu fica na folha do resumo, fora do texto compartilhado
 - [D-221](stats-e-destaques.md#d-221) · Artilheiro sem destaque em lugar nenhum: sai do resumo, do texto, dos chips e do cabeçalho do racha; rankings de gol por último (princípio 25)
+- [D-222](partida-e-historico.md#d-222) · Texto do resumo com linhas curtas para o WhatsApp: primeiro nome, V/E/D na frente, até 3 nomes por linha
 - [D-204](interface.md#d-204) · Lista de ligas: o topo de 56 px volta (D-137 zerou `--toph` e esmagava a marca) e o selo ao vivo ganha linha própria
 - [D-205](interface.md#d-205) · Lista de ligas: cada cartão mostra a sua patente (ou ⏳ calibrando) naquela liga, respeitando quem vê os níveis
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas

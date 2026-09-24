@@ -560,3 +560,38 @@ exposição, e é justamente o que "cair não pode ser humilhação" (princípio
 **Descartado:** mandar só quem subiu (metade da história puxa a pergunta sobre a outra metade).
 **Onde:** `resumoRacha` (`RESUMO_TXT`) em `index.html` · `scripts/smoke.py` (passo "resumo do
 fim") · [Fluxo do racha §4](../produto/fluxo-do-racha.md).
+
+<a id="d-222"></a>
+### D-222 · Texto do resumo com linhas curtas, para o WhatsApp
+**Quando:** 2026-09-24.
+**O quê:** o texto do Compartilhar é montado para a tela do celular:
+```
+*Racha de sábado*
+qui 24/09 · 8 partidas · 11 gols
+
+👑 *Craque: JPx*
++24% acima do esperado
+2º S10 · 3º Mauro, Igor
+
+🏆 *Times*
+*3V 2D* · Time A
+Gleik, Maike, Matheus, Vinashow
+…
+
+🔥 *Quem mais ganhou*
+*4V* Alex
+*3V* JPx, S10, Mauro +1
+```
+Nome curto (primeiro nome, desempatado por `nomesCurtos`); V/E/D em negrito na frente (o E some
+quando é 0); até 3 nomes por linha e "+N"; o time vai numa linha só ("*3V 2D* nomes") quando todos
+cabem em ~34 caracteres, senão todos em duas linhas. Saem do texto as pessoas e os minutos (ficam
+na folha).
+**Por quê:** "a mensagem compartilhada no WhatsApp está quebrando muita linha, não está muito
+legível". No WhatsApp do celular cabem ~40 caracteres por linha; "Juliano, Guilherme, Pedro,
+Vinashow — 0V 0E 1D" quebrava no meio, e o craque com "(+24% acima do esperado)" ia para três
+linhas tortas.
+**Descartado:** tabela alinhada com espaços (o WhatsApp usa fonte proporcional; só alinha dentro de
+bloco de código, que fica com cara de sistema); nome do time em vez dos nomes (até o 5v5 o time é
+quem jogou, D-60).
+**Onde:** `resumoRacha` (`RESUMO_TXT`) em `index.html` · `scripts/smoke.py` (passo "resumo do
+fim": nenhuma linha passa de 40 caracteres) · [Fluxo do racha §4](../produto/fluxo-do-racha.md).
