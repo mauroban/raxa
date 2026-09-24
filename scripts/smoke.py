@@ -1207,6 +1207,11 @@ step('resumo de um racha que ja passou: pela aba Jogos, com Compartilhar e o cra
   if(RESUMO_TXT.split('\n').slice(1).join()!==txt0.split('\n').slice(1).join())throw new Error('o texto do resumo passado difere do resumo do fim');
   closeSheet();S.ui.histRacha=null;S.ui.tab='racha';render();
 });
+step('sem grafico de gols por racha no mes (D-224)',()=>{
+  S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='mes';render();
+  if(/Gols por racha/.test(els['#app'].innerHTML))throw new Error('o grafico de gols por racha devia ter saido');
+  S.ui.tab='racha';render();
+});
 step('quantos jogaram: tiles do periodo, linhas do racha a racha e aba Jogos (D-223)',()=>{
   const l=L(),ms=l.matches.filter(m=>!m.voided),n=jogadoresDe(l,ms);
   if(!n)throw new Error('jogadoresDe nao contou ninguem');

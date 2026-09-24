@@ -4570,7 +4570,6 @@ function viewStats(liga){
   const posHtml=posicoes.length?`<div class="k2" style="margin:14px 0 0">Posição nos rankings</div>
     <div class="posrow">${posicoes.map(x=>`<div class="posc"><b class="${x.pos<=3?'pod':''}">${x.pos}º</b><span>${x.lab}</span></div>`).join('')}</div>`:'';
   const dd=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-  const eixoX=arr=>`<div class="chartx">${arr.map((r,i)=>`<span>${arr.length<=8||i%2===(arr.length-1)%2?dd(r.ts):''}</span>`).join('')}</div>`;
 
 
   const cardsJogador=`
@@ -4856,16 +4855,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       <div class="tile" style="--tc:var(--gold)"><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${fmtMin(ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.dur||0),0),0))}</b><span>de bola rolando</span></div>
     </div>`})()}
-    ${tipo!=='mes'?'':(()=>{ /* gols por racha (D-108), só no mês: coluna por racha, o último em verde, média tracejada. Os gráficos por mês/ano saíram (D-158): o racha a racha / mês a mês / ano a ano já conta isso */
-      const M={},ord=[];[...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>{const sid=m.sessionId||m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:m.ts,gols:0,n:0};ord.push(r)}
-        r.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];r.n++});
-      const arr=ord.slice(-12);if(arr.length<2)return '';
-      const max=Math.max(1,...arr.map(r=>r.gols)),media=ord.reduce((a,r)=>a+r.gols,0)/ord.length;
-      return `<div class="k2" style="margin:16px 0 0">Gols por racha <span class="tiny muted" style="text-transform:none;letter-spacing:0;font-weight:500">${arr.length<ord.length?'últimos '+arr.length+' · ':''}média ${media.toFixed(1).replace('.',',')}</span></div>
-      <div class="chart"><div class="avg" style="bottom:${(media/max*100).toFixed(1)}%"></div>
-        ${arr.map((r,i)=>`<div class="col ${i===arr.length-1?'cur':''}"><em>${r.gols}</em><i class="g" style="height:${(r.gols/max*100).toFixed(1)}%"></i></div>`).join('')}</div>
-      ${eixoX(arr)}
-      <div class="legend"><span><i class="avg"></i>média de gols por racha</span><span><i style="background:var(--lime)"></i>último racha</span></div>`})()}
+    ${/* o gráfico de gols por racha do mês saiu (D-224) */''}
   </div>
 
 ${cardDest}${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">

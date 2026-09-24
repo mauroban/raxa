@@ -173,6 +173,7 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-221](stats-e-destaques.md#d-221) · Artilheiro sem destaque em lugar nenhum: sai do resumo, do texto, dos chips e do cabeçalho do racha; rankings de gol por último (princípio 25)
 - [D-222](partida-e-historico.md#d-222) · Texto do resumo com linhas curtas para o WhatsApp: primeiro nome, V/E/D na frente, até 3 nomes por linha
 - [D-223](stats-e-destaques.md#d-223) · Quantas pessoas jogaram: tiles do período (total e por racha), linhas do racha a racha e aba Jogos
+- [D-224](stats-e-destaques.md#d-224) · Sai o gráfico de gols por racha do mês; nenhum período tem gráfico de colunas
 - [D-204](interface.md#d-204) · Lista de ligas: o topo de 56 px volta (D-137 zerou `--toph` e esmagava a marca) e o selo ao vivo ganha linha própria
 - [D-205](interface.md#d-205) · Lista de ligas: cada cartão mostra a sua patente (ou ⏳ calibrando) naquela liga, respeitando quem vê os níveis
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas

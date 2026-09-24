@@ -931,3 +931,16 @@ de cada racha/mês/ano". Diz se o racha está crescendo ou esvaziando, e quantos
 não tem presença); gravar o número (é derivado, princípio 17).
 **Onde:** `jogadoresDe`, tiles do período e linhas de grupo em `viewStats`, `viewHist` em
 `index.html` · `scripts/smoke.py` (passo "D-223") · [Stats](../produto/stats.md).
+
+<a id="d-224"></a>
+### D-224 · Sai o gráfico de gols por racha do mês
+**Quando:** 2026-09-24.
+**O quê:** a aba Racha do Stats, no Mês, deixa de mostrar o gráfico de colunas "Gols por racha"
+(D-108). Nenhum período tem mais gráfico de colunas; o que ele contava fica no "racha a racha"
+logo abaixo e nos tiles (gols, gols por partida).
+**Por quê:** pedido direto ("pode remover o gráfico de gols por racha"). Era o único gráfico que
+sobrou depois do D-158, e punha gol em evidência no meio dos números do período (D-221).
+**Descartado:** trocar por um gráfico de jogadores por racha (o número já está nos tiles e em
+cada linha do racha a racha, D-223).
+**Onde:** tiles do período em `viewStats` (`index.html`) · `scripts/smoke.py` (passo "D-224") ·
+[Stats](../produto/stats.md).
