@@ -1207,6 +1207,18 @@ step('resumo de um racha que ja passou: pela aba Jogos, com Compartilhar e o cra
   if(RESUMO_TXT.split('\n').slice(1).join()!==txt0.split('\n').slice(1).join())throw new Error('o texto do resumo passado difere do resumo do fim');
   closeSheet();S.ui.histRacha=null;S.ui.tab='racha';render();
 });
+step('quantos jogaram: tiles do periodo, linhas do racha a racha e aba Jogos (D-223)',()=>{
+  const l=L(),ms=l.matches.filter(m=>!m.voided),n=jogadoresDe(l,ms);
+  if(!n)throw new Error('jogadoresDe nao contou ninguem');
+  const ids=new Set();ms.forEach(m=>(m.lineups||[[],[]]).forEach(ld=>ld.forEach(id=>ids.add(id))));
+  if(n<ids.size)throw new Error('jogadoresDe contou menos que as escalacoes: '+n+' < '+ids.size);
+  S.ui.tab='stats';S.ui.statsTab='racha';S.ui.statsPer='sempre';render();let h=els['#app'].innerHTML;
+  if(!h.includes('<b class="num">'+n+'</b><span>jogador'))throw new Error('tile de jogadores do periodo');
+  if(!/jogadores por racha/.test(h))throw new Error('tile de jogadores por racha');
+  S.ui.tab='hist';S.ui.histRacha=null;render();h=els['#app'].innerHTML;
+  if(!/\d+ jogador/.test(h))throw new Error('linha do racha na aba Jogos sem jogadores');
+  S.ui.tab='racha';render();
+});
 step('sessao guarda presenca desde o comeco e os times como montados',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1];
   if(!sess)throw new Error('sessao nao gravada');

@@ -913,3 +913,21 @@ os gols da ficha.
 ordem dos rankings em `index.html` · `scripts/smoke.py` (passo "resumo do fim") ·
 [Princípios](../produto/principios.md) · [Stats](../produto/stats.md) ·
 [Fluxo do racha §4](../produto/fluxo-do-racha.md).
+
+<a id="d-223"></a>
+### D-223 · Quantas pessoas jogaram, em cada racha, mês e ano
+**Quando:** 2026-09-24.
+**O quê:** `jogadoresDe(liga, ms)` conta quem esteve em quadra em algum trecho das partidas
+(goleiro incluído, cada pessoa uma vez). Aparece:
+- na aba Racha do Stats (mês, ano, sempre): os tiles viram três linhas de três — rachas ·
+  **jogadores** · partidas / **jogadores por racha** (média) · partidas por racha · empates / gols ·
+  gols por partida · bola rolando. No Último já existia "presentes";
+- em cada linha do racha a racha / mês a mês / ano a ano: "3 rachas · 22 jogadores · 24
+  partidas" (o total de gols sai da linha: fica nos tiles, D-221);
+- em cada racha da aba Jogos: "19 jogadores · 8 partidas · 11 gols".
+**Por quê:** "um número interessante que não aparece em lugar nenhum é a quantidade de jogadores
+de cada racha/mês/ano". Diz se o racha está crescendo ou esvaziando, e quantos giraram no mês.
+**Descartado:** contar pela presença marcada (quem foi embora sem jogar entraria; partida avulsa
+não tem presença); gravar o número (é derivado, princípio 17).
+**Onde:** `jogadoresDe`, tiles do período e linhas de grupo em `viewStats`, `viewHist` em
+`index.html` · `scripts/smoke.py` (passo "D-223") · [Stats](../produto/stats.md).

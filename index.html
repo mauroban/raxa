@@ -2256,6 +2256,13 @@ const statsPeriodo=liga=>{const v=S.ui.statsPer;
   /* sem período guardado (primeira vez na aba) vale o ano atual — devolver a
      string 'ano' deixava a linha ‹ › escrita "NaN" (D-215)                */
   return /^\d{4}$/.test(String(v))?+v:ANO_ATUAL()};
+/* quantas pessoas jogaram nestas partidas (D-223): quem esteve em quadra em
+   algum trecho, goleiro incluído — contado uma vez só                     */
+function jogadoresDe(liga,ms){
+  const q=new Set();
+  (ms||[]).forEach(m=>{if(m.voided)return;matchStints(liga,m).forEach(st=>{[0,1].forEach(sd=>{((st.lineups||[])[sd]||[]).forEach(id=>q.add(id));const g=(st.gks||[])[sd];if(g)q.add(g)})})});
+  return q.size;
+}
 function noPeriodo(m,p){
   if(!p||p==='sempre')return true;
   if(p==='mes')return m.ts>=Date.now()-30*86400000;                 // legado: últimos 30 dias
@@ -4791,7 +4798,7 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
       const mv=movimentos(liga,g.ms),subiu=mv.filter(x=>x.n>0).length,caiu=mv.filter(x=>x.n<0).length;
       const cv=craque?(verPat?overPct(craque.x):aprDe(craque.x.v,craque.x.e,craque.x.jogos)):0;
       return `<button class="grow" data-a="${act}" data-id="${esc(g.k)}" data-v="${esc(g.k)}">
-        <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(g.ms.length,'partida')} · ${pl(g.gols,'gol')}</span><span class="chev">›</span></div>
+        <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(jogadoresDe(liga,g.ms),'jogador','jogadores')} · ${pl(g.ms.length,'partida')}</span><span class="chev">›</span></div>
         <div class="gd">
           ${craque?`<span class="chip" title="craque: ${verPat?'rendeu acima do esperado':'maior aproveitamento'}${craque.mais?' · empate com mais '+craque.mais:''}"><i>${ic('crown','var(--gold)')}</i><span>${esc(nameOf(liga,craque.x.pid))}</span>${mais(craque)}<b class="${verPat?(cv>0?'ok':cv<0?'bad':''):''}">${verPat?(cv>0?'+':cv<0?'−':'')+Math.abs(Math.round(cv))+'%':cv+'%'}</b></span>`:''}
           ${verPat&&(subiu||caiu)?`<span class="chip lv" title="mudanças de nível"><b class="ok">▲${subiu}</b><b class="bad">▼${caiu}</b></span>`:''}
@@ -4828,17 +4835,27 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     </div>`})();
   const cardsRacha=(soRacha?cardsUmRacha:`
   <div class="card">
-    <div class="tiles">
+    ${/* quantos jogaram no período e quantos por racha, em média (D-223) */''}
+    ${(()=>{const nJog=jogadoresDe(liga,ms);
+      const porR={};ms.forEach(m=>{const k=m.sessionId||m.id;(porR[k]=porR[k]||[]).push(m)});
+      const ks=Object.keys(porR),mediaJ=ks.length?Math.round(ks.reduce((a,k)=>a+jogadoresDe(liga,porR[k]),0)/ks.length):0;
+      return `<div class="tiles">
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer}</b><span>racha${nRachasPer===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${nJog}</b><span>jogador${nJog===1?'':'es'}</span></div>
       <div class="tile" style="--tc:var(--cyan)"><b class="num">${ms.length}</b><span>partida${ms.length===1?'':'s'}</span></div>
-      <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
     </div>
     <div style="height:8px"></div>
     <div class="tiles">
-      <div class="tile" style="--tc:var(--gold)"><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
-      <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
+      <div class="tile" style="--tc:var(--coral)"><b class="num">${ks.length?mediaJ:'—'}</b><span>jogadores por racha</span></div>
       <div class="tile" style="--tc:var(--lime)"><b class="num">${nRachasPer?Math.round(ms.length/nRachasPer):'—'}</b><span>partidas por racha</span></div>
+      <div class="tile" style="--tc:var(--mute2)"><b class="num">${pctDe(empates,ms.length)}%</b><span>empates</span></div>
     </div>
+    <div style="height:8px"></div>
+    <div class="tiles">
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${golsTot}</b><span>gol${golsTot===1?'':'s'}</span></div>
+      <div class="tile" style="--tc:var(--gold)"><b class="num">${ms.length?(golsTot/ms.length).toFixed(1).replace('.',','):'—'}</b><span>gols por partida</span></div>
+      <div class="tile" style="--tc:var(--cyan)"><b class="num">${fmtMin(ms.reduce((a,m)=>a+matchStints(liga,m).reduce((b,st)=>b+(st.dur||0),0),0))}</b><span>de bola rolando</span></div>
+    </div>`})()}
     ${tipo!=='mes'?'':(()=>{ /* gols por racha (D-108), só no mês: coluna por racha, o último em verde, média tracejada. Os gráficos por mês/ano saíram (D-158): o racha a racha / mês a mês / ano a ano já conta isso */
       const M={},ord=[];[...ms].sort((a,b)=>a.ts-b.ts).forEach(m=>{const sid=m.sessionId||m.id;let r=M[sid];if(!r){r=M[sid]={sid,ts:m.ts,gols:0,n:0};ord.push(r)}
         r.gols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];r.n++});
@@ -5331,7 +5348,8 @@ function viewHist(liga){
       return `<button class="rachaRow ${meus?'eu':''}" data-a="histRacha" data-id="${esc(r.id)}">
         <div style="min-width:0;flex:1">
           <div class="nm">${r.avulso?'Partidas avulsas':DIA(r.ts)}${liga.live&&r.id===liga.live.id?' '+seloVivo():''}</div>
-          <div class="meta"><span class="num">${v} partida${v===1?'':'s'}</span>
+          <div class="meta"><span class="num">${pl(jogadoresDe(liga,r.ms),'jogador','jogadores')}</span>
+            <span class="num">${v} partida${v===1?'':'s'}</span>
             <span class="num">${r.gols} gol${r.gols===1?'':'s'}</span>
             ${meus?`<span class="mine" style="color:var(--lime)">VOCÊ ${meus}</span>`:''}
             ${r.dis?`<span style="color:var(--gold)">⛑ ${r.dis}</span>`:''}</div>
