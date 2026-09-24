@@ -889,3 +889,27 @@ mas a ficha por função (D-135) lê tudo por função — o over era o único n
 **Onde:** `statsLiga` (over dentro do laço de partidas contadas), `rkSec` e `duelList` em
 `viewStats`, em `index.html` · `scripts/smoke.py` (over de linha + over do gol = total; a leitura de
 linha não soma o do gol; "Ver mais") · [Stats](../produto/stats.md).
+
+<a id="d-221"></a>
+### D-221 · Artilheiro não tem destaque em lugar nenhum
+**Quando:** 2026-09-24.
+**O quê:** gol continua sendo número (ficha, placar, gols por time, rankings de ritmo e de gol
+de goleiro), mas o artilheiro sai de todo lugar de destaque:
+- resumo do racha: sai a seção **Artilheiros**, na folha e no texto compartilhado;
+- racha a racha / mês a mês no Stats: sai o chip ⚽ do artilheiro (fica o craque e ▲▼);
+- aba Jogos, dentro do racha: sai "artilheiro do racha: X" do cabeçalho;
+- Destaques do racha (Stats): Artilheiro, Gol de goleiro e Leão de fim do racha descem para o
+  fim da lista, antes de Gol contra;
+- rankings do período e "Posição nos rankings" da pessoa: os de gol (ritmo, leão, gols do gol)
+  vêm por último.
+**Por quê:** "artilheiro não pode ter muito destaque em lugar nenhum. É interessante ter os
+números, mas as pessoas podem começar a mudar como jogam para aparecer como artilheiros. Todos
+precisam entender que o mais importante é vencer, não fazer gols." É o mesmo motivo do princípio
+6 (gol não move patente) levado para a vitrine: o que o app celebra vira o que se busca em quadra.
+Virou o princípio 25.
+**Descartado:** tirar os rankings de gol (o número é interessante, só não é destaque); esconder
+os gols da ficha.
+**Onde:** `resumoRacha`, `statsGrupos`/chips do racha a racha, `viewHist`, destaques do racha e
+ordem dos rankings em `index.html` · `scripts/smoke.py` (passo "resumo do fim") ·
+[Princípios](../produto/principios.md) · [Stats](../produto/stats.md) ·
+[Fluxo do racha §4](../produto/fluxo-do-racha.md).

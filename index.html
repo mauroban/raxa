@@ -4537,13 +4537,12 @@ function viewStats(liga){
      "onde eu estou" sem rolar até a aba Racha; pódio em dourado          */
   const posDe=(lista,num)=>{const i=lista.findIndex(x=>x.pid===who);return i<0?null:posEmpate(lista,num)[i]};
   const posicoes=(!me.jogos?[]:papel==='G'
-      ? [['gk',RP.gk,x=>1/(1+x.sofridos/x.minGk),'menos vazado'],['golsgk',RP.golsGk,x=>x.golsGk/x.minGk,'gols do gol'],
+      ? [['gk',RP.gk,x=>1/(1+x.sofridos/x.minGk),'menos vazado'],
          vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],
-         ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol']]
+         ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo no gol'],['golsgk',RP.golsGk,x=>x.golsGk/x.minGk,'gols do gol']]
       : [longa?['pm',RP.pm,pmHora,'+/−']:null,vePat(liga)?['over',RP.over,overPct,'acima do esp.']:null,['pct',RP.pct,x=>aprDe(x.v,x.e,x.jogos),'aproveit.'],
-         ['pres',RP.rachas,x=>x.nR,'presenças'],['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],
-         ['leao',RP.leao,leaoDif,'fim do racha'],
-         ['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência']])
+         ['pres',RP.rachas,x=>x.nR,'presenças'],['min',RP.min,x=>x.min,'tempo'],['seq',RP.seq,x=>x.best,'sequência'],
+         ['ritmo',RP.ritmo,x=>x.gols/minLP(x),'ritmo'],['leao',RP.leao,leaoDif,'fim do racha']])   // gol por último (D-221)
     .filter(Boolean).map(([k,l,num,lab])=>({k,lab,pos:posDe(l,num)})).filter(x=>x.pos);   // sem "de N": o N variava por ranking e confundia (D-108)
   /* --- o nível da pessoa no período (D-188): a linha do tempo com entrada,
      mínimo, máximo e hoje — o de hoje já está no cabeçalho. O título diz
@@ -4745,12 +4744,13 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     ${pm.length&&longa?secPmRacha:''}
     ${venc.length?rkSec('rvenc','trophy','var(--gold)','Quem mais ganhou','',venc,x=>x.v,x=>`${x.v}<small>V</small>`,x=>`${x.e}E ${x.d}D · ${aprDe(x.v,x.e,x.jogos)}% de aproveitamento`):''}
     ${pm.length&&!longa?secPmRacha:''}
-    ${art.length?rkSec('rart','⚽',null,'Artilheiro','',art,x=>x.gols,x=>pl(x.gols,'gol')):''}
-    ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
     ${rendeu.length&&vePat(liga)?rkSec('rrendeu','crown','var(--gold)','Rendeu acima do esperado','% de vitória real − esperada, por partida · mín. 3 partidas',rendeu,x=>Math.round(overPct(x)),x=>taxaFmt(overPct(x),0,'%'),x=>x.v+'V '+x.e+'E '+x.d+'D · saldo '+(x.over>0?'+':'')+x.over.toFixed(1).replace('.',',')):''}
-    ${leao.length?rkSec('rleao','hourglass','var(--gold)','Leão de fim do racha',`gols por hora nas ${pl(nFim,'partida')} com 50+ min nas pernas − no resto`,leao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${pl(x.fim.gols,'gol')} em ${fmtMin(x.fim.minL)} no fim · ${pl(r.gols,'gol')} em ${fmtMin(r.minL)} no resto`}):''}
     ${tempo.length?rkSec('rtempo','clock','var(--coral)','Mais tempo em quadra','',tempo,x=>x.min,x=>fmtMin(x.min),x=>pl(x.jogos,'partida')):''}
     ${gks.length?rkSec('rgk','shield','var(--cyan)','Menos vazado','mín. 20 min no gol',gks,x=>1/(1+x.sofridos/x.minGk),x=>porHora(x.sofridos,x.minGk)+'<small>/h</small>',x=>fmtMin(x.minGk)+' no gol'):''}
+    ${/* gol é número, não destaque (D-221): artilharia e afins no fim da lista */''}
+    ${art.length?rkSec('rart','⚽',null,'Artilheiro','',art,x=>x.gols,x=>pl(x.gols,'gol')):''}
+    ${artGk.length?rkSec('rartgk','shield','var(--gold)','Gol de goleiro','feito de dentro do gol',artGk,x=>x.golsGk,x=>pl(x.golsGk,'gol'),x=>fmtMin(x.minGk)+' no gol'):''}
+    ${leao.length?rkSec('rleao','hourglass','var(--gold)','Leão de fim do racha',`gols por hora nas ${pl(nFim,'partida')} com 50+ min nas pernas − no resto`,leao,leaoDif,x=>taxaFmt(leaoDif(x),1),x=>{const r=restoDe(x);return `${pl(x.fim.gols,'gol')} em ${fmtMin(x.fim.minL)} no fim · ${pl(r.gols,'gol')} em ${fmtMin(r.minL)} no resto`}):''}
     ${gc.length?rkSec('rgc','<i class="gball own">⚽</i>',null,'Gol contra','',gc,x=>x.gc,x=>pl(x.gc,'gol')+' contra'):''}
     ${(()=>{ /* variação de nível da noite: seta VERDE/VERMELHA (os emojis
          🔺🔻 eram ambos vermelhos), uma seta por divisão, e o caminho
@@ -4783,10 +4783,10 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
     const label=g=>grupoDe==='racha'?DIA(g.ts):grupoDe==='mes'?MESES[+g.k.slice(5)-1]:g.k;
     const linhas=arr.map(g=>{
       const per2=grupoDe==='racha'?'racha:'+g.k:grupoDe==='mes'?'mes:'+g.k:+g.k;
-      /* craque e artilheiro: a mesma conta do card do período (D-210); no chip, o de maior patente e um "+N" (D-159) */
+      /* o craque: a mesma conta do card do período (D-210); no chip, o de maior patente e um "+N" (D-159).
+         O artilheiro não tem chip (D-221): gol não é o destaque de ninguém.  */
       const dq=destaquesPer(liga,per2);
       const craque=dq.craque&&{x:dq.craque.lista[0],mais:dq.craque.lista.length-1};
-      const art=dq.art&&{x:dq.art.lista[0],mais:dq.art.lista.length-1};
       const mais=t=>t.mais?`<small class="muted" style="font-weight:600">+${t.mais}</small>`:'';
       const mv=movimentos(liga,g.ms),subiu=mv.filter(x=>x.n>0).length,caiu=mv.filter(x=>x.n<0).length;
       const cv=craque?(verPat?overPct(craque.x):aprDe(craque.x.v,craque.x.e,craque.x.jogos)):0;
@@ -4794,7 +4794,6 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
         <div class="gh"><span class="gl">${label(g)}</span><span class="gm">${grupoDe==='racha'?'':pl(g.nR,'racha')+' · '}${pl(g.ms.length,'partida')} · ${pl(g.gols,'gol')}</span><span class="chev">›</span></div>
         <div class="gd">
           ${craque?`<span class="chip" title="craque: ${verPat?'rendeu acima do esperado':'maior aproveitamento'}${craque.mais?' · empate com mais '+craque.mais:''}"><i>${ic('crown','var(--gold)')}</i><span>${esc(nameOf(liga,craque.x.pid))}</span>${mais(craque)}<b class="${verPat?(cv>0?'ok':cv<0?'bad':''):''}">${verPat?(cv>0?'+':cv<0?'−':'')+Math.abs(Math.round(cv))+'%':cv+'%'}</b></span>`:''}
-          ${art?`<span class="chip" title="artilheiro${art.mais?' · empate com mais '+art.mais:''}"><i>⚽</i><span>${esc(nameOf(liga,art.x.pid))}</span>${mais(art)}<b>${art.x.gols+art.x.golsGk}</b></span>`:''}
           ${verPat&&(subiu||caiu)?`<span class="chip lv" title="mudanças de nível"><b class="ok">▲${subiu}</b><b class="bad">▼${caiu}</b></span>`:''}
         </div></button>`}).join('');
     return `<div class="card" style="padding-bottom:4px">
@@ -4878,9 +4877,10 @@ ${cardDest}${cardGrupos}${cardNiveis}${cardJuntos}  <div class="card">
       };
       /* rendeu acima do esperado abre a lista em todo período (D-203): é a
          régua que não depende de o racha ter sido montado equilibrado      */
-      const ordem=tipo==='mes'?['over','pct','pm','ritmo','leao','seq','seqd','pres','min','gk','golsgk','duplas']
-        :per==='sempre'?['over','pres','pct','ritmo','pm','leao','seq','seqd','min','gk','golsgk','duplas']
-        :['over','pres','pct','ritmo','pm','leao','seq','seqd','min','gk','golsgk','duplas'];
+      /* os rankings de gol (ritmo, leão, gol de goleiro) vêm por último (D-221) */
+      const ordem=tipo==='mes'?['over','pct','pm','seq','seqd','pres','min','gk','duplas','ritmo','leao','golsgk']
+        :per==='sempre'?['over','pres','pct','pm','seq','seqd','min','gk','duplas','ritmo','leao','golsgk']
+        :['over','pres','pct','pm','seq','seqd','min','gk','duplas','ritmo','leao','golsgk'];
       return (longa?['pm',...ordem.filter(k=>k!=='pm')]:ordem).map(k=>SECS[k]).join('');
     })()}
   </div>`);
@@ -5309,16 +5309,13 @@ function viewHist(liga){
   /* --- dentro de um racha --- */
   if(aberto){
     const ms=aberto.ms.slice().sort((a,b)=>b.ts-a.ts);
-    const art=(()=>{const c={};aberto.ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.pid&&!g.own)c[g.pid]=(c[g.pid]||0)+1}));
-      const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];
-      return top?esc(nameOf(liga,top))+' '+c[top]+' gol'+(c[top]===1?'':'s'):null})();
     return topo+`
     <button class="btn sm ghost" data-a="histRacha" data-id="" style="margin-bottom:10px">‹ Todos os rachas</button>
     <div class="card" style="margin-bottom:10px">
       <div class="row"><div class="k">${aberto.avulso?'Partidas avulsas':'Racha'}${liga.live&&aberto.id===liga.live.id?' '+seloVivo():''}</div>
         <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
-      <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
+      <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
       ${aberto.avulso?'':`<div class="row" style="gap:6px;margin-top:10px">
         ${liga.live&&aberto.id===liga.live.id?'':`<button class="btn sm ghost" data-a="resumoPassado" data-id="${esc(aberto.id)}" style="flex:1">Resumo do racha</button>`}
         <button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" data-tab="racha" style="flex:1">Destaques do racha ›</button></div>`}
@@ -5428,16 +5425,15 @@ function viewCfgBody(liga){
 
 /* ---------- resumo do fim do racha (D-99) ----------
    É a tela que vai para o grupo: a noite inteira num relance — times com
-   V/E/D, gols e realizado × esperado; artilheiros; quem mais ganhou; quem
+   V/E/D, gols e realizado × esperado; quem mais ganhou (sem artilheiros, D-221); quem
    subiu (verde) e quem caiu (vermelho) de nível, de onde para onde. É o
    único lugar em que o app fala de nível durante um racha (D-18/§4.4).   */
 function resumoRacha(liga,sess,ms,passado){
   ms=(ms||(sess.matchIds||[]).map(id=>liga.matches.find(m=>m.id===id)).filter(Boolean)).filter(m=>!m.voided);
   const ver=vePat(liga);
-  const gols={},J={};
+  const J={};
   let totGols=0,totMs=0;
   ms.forEach(m=>{
-    (m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1});
     totGols+=(m.score||[0,0])[0]+(m.score||[0,0])[1];
     const part={};matchStints(liga,m).forEach(st=>{totMs+=0;[0,1].forEach(sd=>(st.lineups[sd]||[]).forEach(id=>part[id]=sd))});
     totMs+=matchStints(liga,m).reduce((a,st)=>a+(st.dur||0),0);
@@ -5450,15 +5446,13 @@ function resumoRacha(liga,sess,ms,passado){
     t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++;
     const c2=chanceHist(liga,m);if(c2){t.esp+=c2[s];t.jE++}}));
   T.sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
-  /* empate divide a posição (D-89): dois com 2 gols são os dois 1º (D-219) */
-  const artT=Object.entries(gols).map(([pid,g])=>({pid,g})).sort((a,b)=>b.g-a.g),artP=posEmpate(artT,x=>x.g);
-  const art=artT.map((x,i)=>Object.assign({pos:artP[i]},x)).filter(x=>x.pos<=3);
+  /* empate divide a posição (D-89) e a linha (D-219) */
   const vencT=Object.entries(J).map(([pid,j])=>Object.assign({pid,n:j.v+j.e+j.d},j)).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v||a.d-b.d||b.n-a.n);
   const vencP=posEmpate(vencT,x=>x.v*1e3-x.d);
   const venc=vencT.map((x,i)=>Object.assign({pos:vencP[i]},x)).filter(x=>x.pos<=3);
   /* uma linha por colocação: empatados dividem a linha, nome atrás de nome */
   const porPos=l=>{const g=[];l.forEach(x=>{const u=g[g.length-1];if(u&&u.pos===x.pos)u.ids.push(x.pid);else g.push(Object.assign({ids:[x.pid]},x))});return g};
-  const artG=porPos(art),vencG=porPos(venc);
+  const vencG=porPos(venc);
   /* craque do racha (D-219): o mesmo card da aba Racha do Stats, em cima dos times */
   const sid=ms.length?(ms[0].sessionId||ms[0].id):null,perR=sid?'racha:'+sid:null;
   const dq=perR?destaquesPer(liga,perR).craque:null;
@@ -5478,7 +5472,6 @@ function resumoRacha(liga,sess,ms,passado){
     dq?`\n👑 ${dq.lista.length>1?'Craques':'Craque'} do racha: ${dq.lista.map(x=>nm(x.pid)).join(', ')} (${vePat(liga)?(dq.v>0?'+':dq.v<0?'−':'')+Math.abs(dq.v)+'% '+(dq.v<0?'abaixo':'acima')+' do esperado':dq.v+'% de aproveitamento'})`
       +[2,3].map(k=>{const ys=dq.podio.filter(y=>y.pos===k);return ys.length?`\n${k}º ${ys.map(y=>nm(y.x.pid)).join(', ')}`:''}).join(''):'',
     T.length?'\n🏆 Times\n'+T.map((t,i)=>`${pos[i]}. ${(liga.cfg.format<=5&&(t.ids||[]).length)?nomesCurtos(liga,t.ids).join(', '):t.name} — ${t.v}V ${t.e}E ${t.d}D`).join('\n'):'',
-    art.length?'\n⚽ Artilheiros\n'+artG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${pl(x.g,'gol')}`).join('\n'):'',
     venc.length?'\n🔥 Quem mais ganhou\n'+vencG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${x.v}V ${x.d}D`).join('\n'):'',
   ].filter(Boolean).join('\n');
   return `<h2>${passado?'Racha de '+quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}):'Racha encerrado'}</h2>
@@ -5493,7 +5486,7 @@ function resumoRacha(liga,sess,ms,passado){
     ${sec('🏆 Times do racha',T.length?T.map((t,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${pos[i]}</span>
         <div class="nm">${rotulo(t)}<small>${esc(t.name)}${ver&&t.jE?` · ${Math.round((t.v+t.e/2)/Math.max(1,t.v+t.e+t.d)*100)}% real, ${Math.round(t.esp/t.jE*100)}% esperado`:''}</small></div>
         <div class="val"><span class="vedx"><b class="v">${t.v}</b>V <b>${t.e}</b>E <b class="d">${t.d}</b>D</span><small class="gols">${t.gp}·${t.gc} gols</small></div></div>`).join(''):'')}
-    ${sec('⚽ Artilheiros',artG.map((x,i)=>`<div class="sumrow ${x.pos===1?'top':''}"><span class="pos">${x.pos}</span><div class="nm">${x.ids.map(nome).join(', ')}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
+    ${/* sem seção de artilheiros (D-221): o destaque do racha é vencer, não fazer gol */''}
     ${sec('🔥 Quem mais ganhou',vencG.map((x,i)=>`<div class="sumrow ${x.pos===1?'top':''}"><span class="pos">${x.pos}</span><div class="nm">${x.ids.map(nome).join(', ')}<small>${x.ids.length>1?`${x.d} derrota${x.d===1?'':'s'} cada`:`${x.v}V ${x.e}E ${x.d}D em ${pl(x.n,'partida')}`}</small></div><div class="val">${x.v}<small>vitória${x.v===1?'':'s'}</small></div></div>`).join(''))}
     ${sec(ic('up')+' Subiu de nível',subiu.map(x=>`<div class="sumrow"><span class="arr up">▲</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
     ${sec(ic('down')+' Caiu de nível',caiu.map(x=>`<div class="sumrow"><span class="arr dn">▼</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
@@ -7004,9 +6997,6 @@ const A={
     if(!confirm(msg))return;
     const ms=lv.matchIds.map(id=>l.matches.find(m=>m.id===id)).filter(Boolean);
     if(!ms.length){l.live=null;save();render();return}
-    const gols={};
-    ms.forEach(m=>(m.goals||[]).forEach(g=>{if(g.pid&&!g.own)gols[g.pid]=(gols[g.pid]||0)+1}));
-    const top=Object.entries(gols).sort((a,b)=>b[1]-a[1])[0];
     /* a presença da sessão é quem ESTEVE no racha (inclui quem foi embora antes
        do fim); os times ficam guardados como foram montados, para consulta */
     l.sessions.push({id:lv.id||uid(),ts:Date.now(),matchIds:[...lv.matchIds],
