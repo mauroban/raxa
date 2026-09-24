@@ -402,6 +402,10 @@ body.painting{touch-action:none}   /* a rolagem nativa morre no preventDefault; 
 .esc2 .col .teamtag{margin-bottom:6px;display:block}
 .esc2.vs3{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;margin-top:10px}
 .esc2.vs3 .vs{display:none}
+/* trocar lado (D-218): espelho da tela, do aparelho — só a ordem das colunas
+   muda; lado 0/1, quem fica, goleiro e fila continuam os mesmos          */
+.esc2.inv,.foragrid.inv{direction:rtl}
+.esc2.inv>*,.foragrid.inv>*{direction:ltr}
 .esc2 .col>.slot{display:block;width:100%;margin-bottom:6px}
 /* Coluna do time (D-133): cabeçalho e jogadores são uma peça só, na cor do
    time — fica claro quem está em quadra por qual lado; a fila fica fora   */
@@ -2435,6 +2439,28 @@ function destaquesPer(liga,per,J){
     craque:topo(gente.filter(x=>x.jogos>=minJ&&x.nR>=minRg),verPat?x=>Math.round(overPct(x)):x=>aprDe(x.v,x.e,x.jogos)),
     art:topo(gente.filter(x=>x.gols+x.golsGk>0),x=>x.gols+x.golsGk)};
 }
+/* o card do craque (D-210, D-212, D-213): na aba Racha do Stats e no resumo
+   do racha (D-219) — a mesma conta e o mesmo desenho nos dois lugares     */
+function cardCraque(liga,per,J,doQ){
+    J=J||statsLiga(liga,per,null).J;
+    const c=destaquesPer(liga,per,J).craque,verPat=vePat(liga);if(!c)return '';
+    const cls=v=>verPat?(v>0?'up':v<0?'dn':''):'';
+    const num=v=>verPat?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':v+'%';
+    /* empate no 1º: até 3 nomes, e "e mais N" (D-212) */
+    const l=c.lista,mx=l.length>3?2:l.length;
+    const nomes=l.slice(0,mx).map(x=>`<button class="dnm${l.length>1?' v':''}" data-a="pSheet" data-id="${x.pid}">${esc(nameOf(liga,x.pid).split(' ').slice(0,2).join(' '))}</button>`).join('')
+      +(l.length>mx?`<div class="tiny muted">e mais ${l.length-mx}</div>`:'');
+    /* 2º e 3º numa linha só, pequenos; empate divide a posição (D-89) */
+    const ids=Object.keys(J),cur={};nomesCurtos(liga,ids).forEach((n,i)=>cur[ids[i]]=n);
+    const pods=[2,3].map(k=>{const ys=c.podio.filter(y=>y.pos===k);if(!ys.length)return '';
+      return `<span><i>${k}º</i><b>${ys.map(y=>esc(cur[y.x.pid]||nameOf(liga,y.x.pid))).join(', ')}</b><em class="${cls(ys[0].v)}">${num(ys[0].v)}</em></span>`}).join('');
+    return `<div class="card dest">
+      <div class="dtop"><span class="dcr">${ic('crown')}</span>
+        <div class="dbody"><div class="dh">${l.length>1?'Craques':'Craque'} ${doQ}</div>
+          ${nomes}
+          <div class="dval"><b class="${cls(c.v)}">${num(c.v)}</b>${verPat?(c.v<0?'abaixo':'acima')+' do esperado':'de aproveitamento'}</div></div></div>
+      ${pods?`<div class="dpod">${pods}</div>`:''}
+    </div>`}
 function listasRk(J,PA,minL,minR,liga){
   minR=minR||1;
   const todos=Object.keys(J).map(id=>J[id]),base=todos.filter(x=>x.nR>=minR);
@@ -3944,6 +3970,9 @@ function timeCard(liga,lv,i,per,completando,sd){
 /* Tela de pré-partida: qual é o próximo jogo, com quem, e a chance de cada lado.
    Trocar o time que entra e mexer na escalação acontece aqui, antes do apito —
    é a última parada antes de "Começar partida".                              */
+/* o lado da tela em que cada time aparece é do aparelho (D-218): quem segura
+   o celular do outro lado da quadra vira a tela sem mexer no racha        */
+const espelho=liga=>!!(S.ui.espelho&&liga&&S.ui.espelho[liga.id]);
 function viewProxima(liga,lv){
   const pair=(lv.nextPair||suggestPair(liga,lv)).slice();
   const unica=(lv.mode||liga.cfg.matchMode)==='unica';
@@ -4001,9 +4030,9 @@ function viewProxima(liga,lv){
       :unica?'':u.res==='draw'?'<span class="out">Empate: ninguém sai, jogam de novo</span>':'<span class="out">Ninguém na fila: os mesmos jogam de novo</span>'}${(u.compl||[]).length?`<br><span class="in">Entra ${nomes(u.compl)} na vaga</span>`:''}${podeTrocarFica(lv)?`<br><button class="lnk" data-a="trocaFica">${bi('arrows')}trocar: fica o ${esc(lv.teams[u.rodou[0]].name)}</button>`:''}</div>
   </div>`:''}
   <div class="card lados ${sel?'picking':''}">
-    <div class="row" style="padding:0 4px"><div class="k">Próxima partida</div>
-      <div class="sp tiny muted">${lv.matchIds.length?'':'primeira do dia'}</div></div>
-    <div class="esc2 vs3">
+    <div class="row" style="padding:0 4px"><div class="k">Próxima partida${lv.matchIds.length?'':' <span class="muted" style="letter-spacing:0;text-transform:none;font-weight:500">· primeira do dia</span>'}</div>
+      <button class="btn sm ghost sp" data-a="trocaLado" style="width:auto;padding:0 10px" aria-label="trocar os times de lado na tela">${bi('arrows')} Trocar lado</button></div>
+    <div class="esc2 vs3${espelho(liga)?' inv':''}">
       ${[0,1].map(sd=>{const ti=pair[sd],t=lv.teams[ti],res=t.ids.slice(per);
         return escCol(liga,lv,escalCom[sd],gkDe(sd),per,escalCom[sd],
           {gk:g=>g?`data-a="prePick" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
@@ -4113,7 +4142,7 @@ function viewJogo(liga,lv){
     const lista=fora.slice().sort((x,y)=>ix(x.id)-ix(y.id)).map(o=>o.id);
     const res=[0,1].map(s=>reservasDe(s));
     return `<div class="card lados ${sel?'picking':''}" style="margin-top:8px">
-    <div class="esc2" style="margin-top:0">
+    <div class="esc2${espelho(liga)?' inv':''}" style="margin-top:0">
     ${[0,1].map(s=>escCol(liga,lv,c.lineups[s],c.gks[s],lv.per,((c.startLineups||c.lineups)[s]).concat([(c.startGks||c.gks)[s]].filter(Boolean)),
       {gk:g=>g?`data-a="subPick" data-s="${s}" data-id="${g}" data-drag="1" data-drop-player="${g}"${alvoDe(g)}`
              :`data-a="subPick" data-s="${s}" data-slot="gk" data-drop-slot="gk:${s}"${alvoDe('gk:'+s)}`,
@@ -4126,7 +4155,7 @@ function viewJogo(liga,lv){
     ${sel?`<div class="tiny" style="margin:6px 2px 0">${dicaSub}</div>`:''}
     ${Math.min(c.lineups[0].length,c.lineups[1].length)<(lv.per+(comRodizio(lv)?1:0))?`<div class="tiny" style="color:var(--gold);margin-top:8px">
       ⚠️ Jogando ${c.lineups[0].length}v${c.lineups[1].length} — um dos times está incompleto. Puxe alguém de fora para fechar ${lv.per}v${lv.per}.</div>`:''}
-    ${res.some(x=>x.length)?`<div class="foragrid" style="margin-top:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
+    ${res.some(x=>x.length)?`<div class="foragrid${espelho(liga)?' inv':''}" style="margin-top:10px">${[0,1].map(s=>res[s].length?`<div class="grp">
         <div class="teamtag ${TEAMBG[s===0?c.a:c.b]}">Reservas · ${esc(t[s].name)}</div>
         ${res[s].map(chipFora).join('')}
       </div>`:'').join('')}</div>`:''}
@@ -4639,27 +4668,8 @@ ${cardPP}${papel==='G'?'':`  <div class="card">
   /* Craque e artilheiro do período em destaque (D-210): a primeira coisa da
      aba Racha no racha, no mês e no ano. Craque é quem rendeu mais acima do
      esperado — não a maior patente; empate mostra todo mundo.             */
-  const cardDest=(()=>{
-    if(tab!=='racha'||tipo==='sempre'||!ms.length)return '';
-    const c=destaquesPer(liga,per,J).craque,verPat=vePat(liga);if(!c)return '';
-    const doQ=soRacha?'do racha':tipo==='mes'?'do mês':'do ano';
-    const cls=v=>verPat?(v>0?'up':v<0?'dn':''):'';
-    const num=v=>verPat?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':v+'%';
-    /* empate no 1º: até 3 nomes, e "e mais N" (D-212) */
-    const l=c.lista,mx=l.length>3?2:l.length;
-    const nomes=l.slice(0,mx).map(x=>`<button class="dnm${l.length>1?' v':''}" data-a="pSheet" data-id="${x.pid}">${esc(nameOf(liga,x.pid).split(' ').slice(0,2).join(' '))}</button>`).join('')
-      +(l.length>mx?`<div class="tiny muted">e mais ${l.length-mx}</div>`:'');
-    /* 2º e 3º numa linha só, pequenos; empate divide a posição (D-89) */
-    const ids=Object.keys(J),cur={};nomesCurtos(liga,ids).forEach((n,i)=>cur[ids[i]]=n);
-    const pods=[2,3].map(k=>{const ys=c.podio.filter(y=>y.pos===k);if(!ys.length)return '';
-      return `<span><i>${k}º</i><b>${ys.map(y=>esc(cur[y.x.pid]||nameOf(liga,y.x.pid))).join(', ')}</b><em class="${cls(ys[0].v)}">${num(ys[0].v)}</em></span>`}).join('');
-    return `<div class="card dest">
-      <div class="dtop"><span class="dcr">${ic('crown')}</span>
-        <div class="dbody"><div class="dh">${l.length>1?'Craques':'Craque'} ${doQ}</div>
-          ${nomes}
-          <div class="dval"><b class="${cls(c.v)}">${num(c.v)}</b>${verPat?(c.v<0?'abaixo':'acima')+' do esperado':'de aproveitamento'}</div></div></div>
-      ${pods?`<div class="dpod">${pods}</div>`:''}
-    </div>`})();
+  const cardDest=tab!=='racha'||tipo==='sempre'||!ms.length?''
+    :cardCraque(liga,per,J,soRacha?'do racha':tipo==='mes'?'do mês':'do ano');
   const cardsUmRacha=(()=>{
     if(!soRacha)return '';
     if(!ms.length)return `<div class="card"><div class="k">Último racha</div><div class="tiny muted">Nenhum racha registrado ainda.</div></div>`;
@@ -5309,7 +5319,9 @@ function viewHist(liga){
         <div class="sp tiny muted">${DIA(aberto.ts)}</div></div>
       <h2 style="font-size:20px;margin:4px 0 6px">${ms.length} partida${ms.length===1?'':'s'}</h2>
       <div class="tiny muted">${aberto.gols} gol${aberto.gols===1?'':'s'}${art?' · artilheiro do racha: <b>'+art+'</b>':''}${aberto.dis?' · <span style="color:var(--gold)">⛑ '+aberto.dis+' contestada(s)</span>':''}</div>
-      ${aberto.avulso?'':`<button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" data-tab="racha" style="margin-top:10px">Destaques do racha ›</button>`}
+      ${aberto.avulso?'':`<div class="row" style="gap:6px;margin-top:10px">
+        ${liga.live&&aberto.id===liga.live.id?'':`<button class="btn sm ghost" data-a="resumoPassado" data-id="${esc(aberto.id)}" style="flex:1">Resumo do racha</button>`}
+        <button class="btn sm ghost" data-a="statsRacha" data-id="${esc(aberto.id)}" data-tab="racha" style="flex:1">Destaques do racha ›</button></div>`}
     </div>
     ${(()=>{const b=blocoChamada(liga,(liga.sessions||[]).find(s=>s.id===aberto.id));return b?`<div class="card" style="margin-bottom:10px">${b}</div>`:''})()}
     <div class="card" style="padding:0">${ms.map(m=>mrow(liga,m,false,eu)).join('')}</div>`;
@@ -5419,8 +5431,8 @@ function viewCfgBody(liga){
    V/E/D, gols e realizado × esperado; artilheiros; quem mais ganhou; quem
    subiu (verde) e quem caiu (vermelho) de nível, de onde para onde. É o
    único lugar em que o app fala de nível durante um racha (D-18/§4.4).   */
-function resumoRacha(liga,sess,ms){
-  ms=ms||(sess.matchIds||[]).map(id=>liga.matches.find(m=>m.id===id)).filter(Boolean);
+function resumoRacha(liga,sess,ms,passado){
+  ms=(ms||(sess.matchIds||[]).map(id=>liga.matches.find(m=>m.id===id)).filter(Boolean)).filter(m=>!m.voided);
   const ver=vePat(liga);
   const gols={},J={};
   let totGols=0,totMs=0;
@@ -5438,8 +5450,18 @@ function resumoRacha(liga,sess,ms){
     t.gp+=(m.score||[0,0])[s];t.gc+=(m.score||[0,0])[1-s];t[m.result==='draw'?'e':(m.result===s?'v':'d')]++;
     const c2=chanceHist(liga,m);if(c2){t.esp+=c2[s];t.jE++}}));
   T.sort((a,b)=>b.v-a.v||(b.gp-b.gc)-(a.gp-a.gc));
-  const art=Object.entries(gols).map(([pid,g])=>({pid,g})).sort((a,b)=>b.g-a.g).slice(0,3);
-  const venc=Object.entries(J).map(([pid,j])=>Object.assign({pid,n:j.v+j.e+j.d},j)).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v||a.d-b.d||b.n-a.n).slice(0,3);
+  /* empate divide a posição (D-89): dois com 2 gols são os dois 1º (D-219) */
+  const artT=Object.entries(gols).map(([pid,g])=>({pid,g})).sort((a,b)=>b.g-a.g),artP=posEmpate(artT,x=>x.g);
+  const art=artT.map((x,i)=>Object.assign({pos:artP[i]},x)).filter(x=>x.pos<=3);
+  const vencT=Object.entries(J).map(([pid,j])=>Object.assign({pid,n:j.v+j.e+j.d},j)).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v||a.d-b.d||b.n-a.n);
+  const vencP=posEmpate(vencT,x=>x.v*1e3-x.d);
+  const venc=vencT.map((x,i)=>Object.assign({pos:vencP[i]},x)).filter(x=>x.pos<=3);
+  /* uma linha por colocação: empatados dividem a linha, nome atrás de nome */
+  const porPos=l=>{const g=[];l.forEach(x=>{const u=g[g.length-1];if(u&&u.pos===x.pos)u.ids.push(x.pid);else g.push(Object.assign({ids:[x.pid]},x))});return g};
+  const artG=porPos(art),vencG=porPos(venc);
+  /* craque do racha (D-219): o mesmo card da aba Racha do Stats, em cima dos times */
+  const sid=ms.length?(ms[0].sessionId||ms[0].id):null,perR=sid?'racha:'+sid:null;
+  const dq=perR?destaquesPer(liga,perR).craque:null;
   const mudou=ver?movimentos(liga,ms):[];   // início → fim do racha (D-155)
   const subiu=mudou.filter(x=>x.para>x.de).sort((a,b)=>(b.para-b.de)-(a.para-a.de)),caiu=mudou.filter(x=>x.para<x.de).sort((a,b)=>(a.para-a.de)-(b.para-b.de));
   const pres=(sess.presentIds||[]).length;
@@ -5452,28 +5474,31 @@ function resumoRacha(liga,sess,ms){
   const nm=pid=>nameOf(liga,pid);
   RESUMO_TXT=[`*${liga.name} · racha de ${quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}*`,
     `${pl(ms.length,'partida')} · ${pl(totGols,'gol')} · ${pl(pres,'pessoa')} · ${MINS(totMs)} min`,
+    dq?`\n👑 ${dq.lista.length>1?'Craques':'Craque'} do racha: ${dq.lista.map(x=>nm(x.pid)).join(', ')} (${vePat(liga)?(dq.v>0?'+':dq.v<0?'−':'')+Math.abs(dq.v)+'% '+(dq.v<0?'abaixo':'acima')+' do esperado':dq.v+'% de aproveitamento'})`
+      +[2,3].map(k=>{const ys=dq.podio.filter(y=>y.pos===k);return ys.length?`\n${k}º ${ys.map(y=>nm(y.x.pid)).join(', ')}`:''}).join(''):'',
     T.length?'\n🏆 Times\n'+T.map((t,i)=>`${pos[i]}. ${(liga.cfg.format<=5&&(t.ids||[]).length)?nomesCurtos(liga,t.ids).join(', '):t.name} — ${t.v}V ${t.e}E ${t.d}D`).join('\n'):'',
-    art.length?'\n⚽ Artilheiros\n'+art.map((x,i)=>`${i+1}. ${nm(x.pid)} — ${pl(x.g,'gol')}`).join('\n'):'',
-    venc.length?'\n🔥 Quem mais ganhou\n'+venc.map((x,i)=>`${i+1}. ${nm(x.pid)} — ${x.v}V ${x.e}E ${x.d}D`).join('\n'):'',
+    art.length?'\n⚽ Artilheiros\n'+artG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${pl(x.g,'gol')}`).join('\n'):'',
+    venc.length?'\n🔥 Quem mais ganhou\n'+vencG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${x.v}V ${x.d}D`).join('\n'):'',
     subiu.length?'\n▲ Subiu\n'+subiu.map(x=>`${nm(x.pid)}${x.role==='G'?' (gol)':''}: ${rankLabel(liga,x.de)} → ${rankLabel(liga,x.para)}`).join('\n'):'',
     caiu.length?'\n▼ Caiu\n'+caiu.map(x=>`${nm(x.pid)}${x.role==='G'?' (gol)':''}: ${rankLabel(liga,x.de)} → ${rankLabel(liga,x.para)}`).join('\n'):''
   ].filter(Boolean).join('\n');
-  return `<h2>Racha encerrado</h2>
-    <div class="tiny muted" style="margin:2px 0 12px">${quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${fmtMin(totMs)} de bola rolando</div>
+  return `<h2>${passado?'Racha de '+quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}):'Racha encerrado'}</h2>
+    <div class="tiny muted" style="margin:2px 0 12px">${passado?'':quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})+' · '}${fmtMin(totMs)} de bola rolando</div>
     <div class="stat four">
       <div><b>${ms.length}</b><span>partidas</span></div>
       <div><b>${totGols}</b><span>gols</span></div>
       <div><b>${pres}</b><span>pessoas</span></div>
       <div><b>${MINS(totMs)}</b><span>min</span></div>
     </div>
+    ${perR?`<div style="margin-top:10px">${cardCraque(liga,perR,null,'do racha')}</div>`:''}
     ${sec('🏆 Times do racha',T.length?T.map((t,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${pos[i]}</span>
         <div class="nm">${rotulo(t)}<small>${esc(t.name)}${ver&&t.jE?` · ${Math.round((t.v+t.e/2)/Math.max(1,t.v+t.e+t.d)*100)}% real, ${Math.round(t.esp/t.jE*100)}% esperado`:''}</small></div>
         <div class="val"><span class="vedx"><b class="v">${t.v}</b>V <b>${t.e}</b>E <b class="d">${t.d}</b>D</span><small class="gols">${t.gp}·${t.gc} gols</small></div></div>`).join(''):'')}
-    ${sec('⚽ Artilheiros',art.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
-    ${sec('🔥 Quem mais ganhou',venc.map((x,i)=>`<div class="sumrow ${i===0?'top':''}"><span class="pos">${i+1}</span><div class="nm">${nome(x.pid)}<small>${x.e}E ${x.d}D</small></div><div class="val">${x.v}<small>V · ${aprDe(x.v,x.e,x.n)}%</small></div></div>`).join(''))}
+    ${sec('⚽ Artilheiros',artG.map((x,i)=>`<div class="sumrow ${x.pos===1?'top':''}"><span class="pos">${x.pos}</span><div class="nm">${x.ids.map(nome).join(', ')}</div><div class="val">${x.g}<small>gol${x.g===1?'':'s'}</small></div></div>`).join(''))}
+    ${sec('🔥 Quem mais ganhou',vencG.map((x,i)=>`<div class="sumrow ${x.pos===1?'top':''}"><span class="pos">${x.pos}</span><div class="nm">${x.ids.map(nome).join(', ')}<small>${x.ids.length>1?`${x.d} derrota${x.d===1?'':'s'} cada`:`${x.v}V ${x.e}E ${x.d}D em ${pl(x.n,'partida')}`}</small></div><div class="val">${x.v}<small>vitória${x.v===1?'':'s'}</small></div></div>`).join(''))}
     ${sec(ic('up')+' Subiu de nível',subiu.map(x=>`<div class="sumrow"><span class="arr up">▲</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
     ${sec(ic('down')+' Caiu de nível',caiu.map(x=>`<div class="sumrow"><span class="arr dn">▼</span><div class="nm">${nome(x.pid)}${x.role==='G'?' 🧤':''}</div><div class="val lv">${patBadge(liga,x.de)}<span class="to">→</span>${patBadge(liga,x.para)}</div></div>`).join(''))}
-    ${ver&&!mudou.length?'<div class="tiny muted" style="margin-top:14px">Ninguém mudou de nível hoje.</div>':''}
+    ${ver&&!mudou.length?`<div class="tiny muted" style="margin-top:14px">Ninguém mudou de nível${passado?' neste racha':' hoje'}.</div>`:''}
     ${blocoChamada(liga,sess)}
     <div class="ps-foot">
       <button class="btn ghost" data-a="resumoShare">Compartilhar</button>
@@ -5946,7 +5971,16 @@ const A={
     const m=minhaChamada(l,ch.dia,p.id);toast(p.name+(m&&m.pos?(m.papel==='G'?' · no gol':' · na linha'):' · na espera'));
     A.chamadaAlguem();                      // a folha fica aberta: é ação repetida
   },
+  trocaLado(){const l=L();if(!l)return;S.ui.espelho=Object.assign({},S.ui.espelho);S.ui.espelho[l.id]=!S.ui.espelho[l.id];saveUI();render()},
   cfgNomes(){S.ui.cfgNomes=true;render()},
+  /* o resumo de um racha que já passou, com o mesmo Compartilhar do fim (D-219) */
+  resumoPassado(el){
+    const l=L(),sid=el.dataset.id;if(!sid)return;
+    const ms=(l.matches||[]).filter(m=>!m.voided&&(m.sessionId||m.id)===sid).sort((a,b)=>a.ts-b.ts);if(!ms.length)return;
+    const sess=(l.sessions||[]).find(x=>x.id===sid)
+      ||{id:sid,ts:ms[0].ts,matchIds:ms.map(m=>m.id),presentIds:[...new Set(ms.flatMap(m=>[...((m.lineups||[])[0]||[]),...((m.lineups||[])[1]||[])]))]};
+    openSheet(resumoRacha(l,sess,ms,true));
+  },
   resumoShare(){
     if(!RESUMO_TXT)return;
     if(typeof navigator!=='undefined'&&navigator.share){navigator.share({title:'Raxa',text:RESUMO_TXT}).catch(()=>{});return}

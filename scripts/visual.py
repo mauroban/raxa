@@ -66,6 +66,8 @@ TELAS = {
     27: 'times do racha',
     28: 'craque do ano',
     29: 'aprovar pedido',
+    30: 'pre-partida espelhada',
+    31: 'racha passado',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -159,12 +161,13 @@ DRIVER = r"""
     l.cfg.chamada.gol=2;                                              /* um na espera do gol, para o print */
     render();closeSheet();
   }
-  if(step===20||step===21){        /* 12 de linha + 2 goleiros no 5v5: 3 grupos, goleiros no rodízio, um em cada gol (D-140) */
+  if(step===20||step===21||step===30){        /* 12 de linha + 2 goleiros no 5v5: 3 grupos, goleiros no rodízio, um em cada gol (D-140) */
     const l=L();l.cfg.format=5;A.cancelRacha&&l.live&&(l.live=null);A.startRacha();
     const lv=l.live,gks=l.players.filter(p=>p.gk).slice(0,2),lin=l.players.filter(p=>!p.gk).slice(0,12);
     lv.presentIds=[...lin,...gks].map(p=>p.id);lv.gkToday=gks.map(p=>p.id);
     A.toTimes();
-    if(step===21){A.startJogo();}
+    if(step===21||step===30){A.startJogo();}
+    if(step===30){S.ui.espelho={};S.ui.espelho[L().id]=true;}   /* trocar lado: a mesma pré-partida, espelhada (D-218) */
     render();closeSheet();
   }
   if(step===27){                   /* corrigir os times do racha (D-201) */
@@ -172,6 +175,10 @@ DRIVER = r"""
     if(l.live&&l.live.matchIds&&l.live.matchIds.length){A.endRacha();closeSheet();}
     const sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length);
     if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
+  }
+  if(step===31){                   /* um racha que já passou, na aba Jogos: Resumo | Destaques (D-219) */
+    const l=L();if(l.live&&l.live.matchIds&&l.live.matchIds.length){A.endRacha();closeSheet();}
+    const sess=(l.sessions||[])[l.sessions.length-1];if(sess){S.ui.tab='hist';S.ui.histRacha=sess.id;render();}
   }
   if(step===29){                   /* aprovar pedido: quem é + cargo numa folha só (D-217) */
     const l=L(),eu=l.players[1];eu.role='admin';eu.owner='Mauro';S.me.name='Mauro';S.ui.tab='ranking';render();

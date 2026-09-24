@@ -97,7 +97,7 @@ Barra: **Voltar · Começar racha**.
 goleiro, linha · aviso de gol sem autor (quando há) · fila: *entram no próximo* / *depois* ·
 Chegou · Foi embora · Refazer times · gols do jogo (com ✕). Barra: **↩ · Fim · resultado**.
 
-**Próxima partida** — placar registrado + *Voltar a partida* · resumo de quem sai e entra · os dois
+**Próxima partida** — placar registrado + *Voltar a partida* · resumo de quem sai e entra · *Próxima partida* com **⇄ Trocar lado** à direita (espelha as colunas, do aparelho, D-218) · os dois
 lados (chance, "fica", ▲ quem entra) · reserva de goleiro · fila · Chegou · Foi embora · Refazer ·
 partidas de hoje + *Desfazer a última*. Barra: **Encerrar racha · Começar partida**.
 
@@ -114,7 +114,7 @@ racha, sem time · *+ alguém do cadastro* · Fechar. Toque no nome: *Era de que
 time, Rodízio de goleiros, Não era de time nenhum · Voltar.
 
 **Jogos** — contestadas (quando há) · Todas / Só as minhas · lista de rachas (60 px cada); dentro
-do racha: cabeçalho, *Destaques do racha ›*, bloco Chamada (quando há), partidas.
+do racha: cabeçalho, *Resumo do racha* | *Destaques do racha ›* (o resumo, com Compartilhar, só depois que o racha acabou — D-219), bloco Chamada (quando há), partidas.
 
 **Revisar partida** (folha, admin) — placar · linha de contexto · os dois times lado a lado · Linha do
 tempo (aberta; gol é botão) · Trechos · Efeito no nível · *Corrigir gols, escalação e trocas* ·

@@ -71,7 +71,7 @@ step('toda acao tem classificacao de papel',()=>{
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','sessTimes','sessPick','sessAdd','sessSet','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
-    'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk','cfgNomes','resumoShare','pStats']);
+    'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk','cfgNomes','resumoShare','pStats','trocaLado','resumoPassado']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
   if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));
@@ -445,6 +445,18 @@ step('o fim nao deixa aviso que some: o cartao fixo no topo tem o placar e o "Vo
   if(!/data-a="voltarPartida"/.test(h)||!/registrado/.test(h))throw new Error('o cartao do placar registrado com o voltar nao apareceu');
   A.startMatch();
   if(/data-a="voltarPartida"/.test(viewJogo(L(),L().live)))throw new Error('com a proxima partida rodando, a anterior nao tem mais volta');
+  A.goal({dataset:{s:'0'}});A.endMatch();
+});
+step('trocar lado espelha a tela, do aparelho, sem mexer no racha (D-218)',()=>{
+  const l=L(),lv=l.live,antes=JSON.stringify([lv.nextPair,lv.teams,lv.fila,lv.gkPool,lv.nextGks]);
+  let h=viewProxima(l,lv);
+  if(!/data-a="trocaLado"/.test(h))throw new Error('pre-partida sem "Trocar lado"');
+  if(/esc2 vs3 inv/.test(h))throw new Error('comeca espelhado');
+  A.trocaLado();h=viewProxima(l,lv);
+  if(!/esc2 vs3 inv/.test(h))throw new Error('trocar lado nao espelhou');
+  if(JSON.stringify([lv.nextPair,lv.teams,lv.fila,lv.gkPool,lv.nextGks])!==antes)throw new Error('trocar lado mexeu no estado do racha');
+  A.startMatch();if(!/class="esc2 inv"/.test(viewJogo(l,l.live)))throw new Error('a partida ao vivo nao seguiu o lado da tela');
+  A.trocaLado();if(/esc2 inv/.test(viewJogo(l,l.live)))throw new Error('trocar de novo nao voltou');
   A.goal({dataset:{s:'0'}});A.endMatch();
 });
 step('marcado por engano sai sem contar presenca; quem ja jogou sempre conta',()=>{
@@ -1178,6 +1190,17 @@ step('resumo do fim: Compartilhar leva o mesmo resumo em texto (D-215)',()=>{
   if(!/Racha encerrado/.test(h)||!/data-a="resumoShare"/.test(h))throw new Error('resumo sem Compartilhar');
   if(!RESUMO_TXT.includes(L().name)||!/partida/.test(RESUMO_TXT)||!/Times/.test(RESUMO_TXT))throw new Error('texto do resumo incompleto: '+RESUMO_TXT);
   if(/<|undefined|NaN/.test(RESUMO_TXT))throw new Error('texto do resumo com lixo: '+RESUMO_TXT);
+});
+step('resumo de um racha que ja passou: pela aba Jogos, com Compartilhar e o craque (D-219)',()=>{
+  const l=L(),sess=l.sessions[l.sessions.length-1],txt0=RESUMO_TXT;closeSheet();
+  S.ui.tab='hist';S.ui.histRacha=sess.id;render();
+  if(!els['#app'].innerHTML.includes('data-a="resumoPassado"'))throw new Error('racha passado sem "Resumo do racha"');
+  RESUMO_TXT='';A.resumoPassado({dataset:{id:sess.id}});const h=$('#sheet').innerHTML;
+  if(!/Racha de /.test(h)||/Racha encerrado/.test(h))throw new Error('titulo do resumo passado devia ser a data');
+  if(!/data-a="resumoShare"/.test(h))throw new Error('resumo passado sem Compartilhar');
+  if(!/class="card dest"/.test(h)||!/Craque/.test(RESUMO_TXT))throw new Error('resumo sem o craque do racha');
+  if(RESUMO_TXT.split('\n').slice(1).join()!==txt0.split('\n').slice(1).join())throw new Error('o texto do resumo passado difere do resumo do fim');
+  closeSheet();S.ui.histRacha=null;S.ui.tab='racha';render();
 });
 step('sessao guarda presenca desde o comeco e os times como montados',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1];

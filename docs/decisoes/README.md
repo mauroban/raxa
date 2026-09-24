@@ -167,6 +167,8 @@ Um arquivo por tema; dentro de cada um, as decisões em ordem de número (que é
 - [D-215](interface.md#d-215) · Revisão de UX: Stats sem NaN, toast no topo com folha aberta, "Ver números" na ficha, Compartilhar no resumo do fim, ficha grava no toque, opiniões que não valem no fim, nomes dos níveis recolhidos
 - [D-216](contas-e-permissoes.md#d-216) · Lançador é o cargo padrão de cadastro novo
 - [D-217](contas-e-permissoes.md#d-217) · Aprovar pedido já escolhendo o perfil e o cargo, num toque
+- [D-218](interface.md#d-218) · "Trocar lado" espelha a tela da pré-partida e da partida, do aparelho; o racha não muda
+- [D-219](partida-e-historico.md#d-219) · Resumo do racha com o craque e empates numa linha; resumo e Compartilhar de qualquer racha passado (aba Jogos)
 - [D-204](interface.md#d-204) · Lista de ligas: o topo de 56 px volta (D-137 zerou `--toph` e esmagava a marca) e o selo ao vivo ganha linha própria
 - [D-205](interface.md#d-205) · Lista de ligas: cada cartão mostra a sua patente (ou ⏳ calibrando) naquela liga, respeitando quem vê os níveis
 - [D-192](stats-e-destaques.md#d-192) · Com um período só, a linha ‹ 2026 › fica, com as setas apagadas

@@ -587,3 +587,22 @@ recolher o card inteiro da Confirmação (o admin mexe nele toda semana).
 `scripts/smoke.py` (ficha grava no toque e "Ver números"; resumo compartilhável; Stats sem NaN) ·
 [Interface](../produto/interface.md) · [Fluxo do racha §4](../produto/fluxo-do-racha.md) ·
 [Contas §7](../produto/contas-e-permissoes.md).
+
+<a id="d-218"></a>
+### D-218 · "Trocar lado": a tela espelha a quadra
+**Quando:** 2026-09-24.
+**O quê:** o cabeçalho da pré-partida ("Próxima partida") ganha o botão **⇄ Trocar lado**. Ele
+inverte a ordem das duas colunas na tela, na pré-partida e na partida ao vivo, até ser tocado de
+novo. É só espelho: lado 0/1, quem fica (D-71), goleiros, fila, trechos e placar não mudam. A
+escolha é **do aparelho**, por liga (`S.ui.espelho`), porque depende de onde está quem segura o
+celular; ela não sobe para o servidor e dois celulares podem estar virados cada um para um lado.
+**Por quê:** "deixar os times do lado certo pode ajudar a marcar quem está jogando onde". Com o
+time da esquerda da tela jogando no gol da direita, cada gol e cada troca pedem uma tradução
+de cabeça.
+**Descartado:** trocar os lados de verdade no estado do racha (`nextPair` ao contrário) — mexe no
+goleiro que fica, no "fica" do vencedor e na regra de lado (D-71), e trocaria a tela do outro
+celular também; botão na partida ao vivo (o lado se acerta antes do apito; a escolha vale para a
+partida inteira).
+**Onde:** `espelho`, `trocaLado`, CSS `.esc2.inv`/`.foragrid.inv`, `viewProxima`, `viewJogo` em
+`index.html` · `scripts/smoke.py` (passo "D-218") · `scripts/visual.py` (tela 30) ·
+[Fluxo do racha §3](../produto/fluxo-do-racha.md) · [Interface §4](../produto/interface.md).

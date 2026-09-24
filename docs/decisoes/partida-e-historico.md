@@ -523,3 +523,28 @@ por uma troca, tira a luva da largada — como mudança do rascunho, para o Salv
 **Onde:** `gksIni`, `largadaDaPartida`, `candidatos`, `escSwap`, `normalizaLargada` em `index.html` ·
 `scripts/smoke.py` (partida curta com troca de goleiro; goleiro gravado fora da escalação) ·
 [Contestação e correção](../produto/contestacao-e-correcao.md).
+
+<a id="d-219"></a>
+### D-219 · Resumo do racha melhor, e de qualquer racha que já passou
+**Quando:** 2026-09-24.
+**O quê:**
+- o resumo ganha o **card do craque do racha** logo abaixo dos números: o mesmo desenho e a mesma
+  conta da aba Racha do Stats (`cardCraque`, D-210/D-213). O texto compartilhado começa por ele;
+- **empate divide a posição** (D-89) e os empatados dividem **uma linha**: "1 · Maike, Mauro · 2
+  gols" em vez de seis linhas de artilheiros com 1 gol;
+- "Quem mais ganhou" diz "4V 0E 2D em 6 partidas" com o número de vitórias à direita (antes: "0E
+  2D" solto, com "4 V · 67%");
+- partida anulada não entra no resumo;
+- **racha que já passou:** na aba Jogos, dentro do racha, **Resumo do racha | Destaques do racha
+  ›**. O resumo abre com a data no título ("Racha de sáb., 26/09") e o mesmo Compartilhar |
+  Fechar. Racha ainda rolando não tem Resumo (só no fim).
+**Por quê:** "o resumo do racha pode ser melhor também, e seria interessante poder compartilhar o
+resumo de um racha que já passou". O craque é o destaque do app e não estava no resumo; os
+empates enchiam a folha; e quem fechou a folha do fim não tinha mais como mandar o resumo para o
+grupo.
+**Descartado:** placar de todas as partidas no texto (doze linhas de placar escondem o que
+importa; ficam na aba Jogos); resumo do racha que ainda está rolando (os níveis só mudam no fim,
+D-18).
+**Onde:** `resumoRacha`, `cardCraque`, `resumoPassado`, `viewHist` em `index.html` ·
+`scripts/smoke.py` (passo "D-219") · `scripts/visual.py` (telas 14 e 31) ·
+[Fluxo do racha §4](../produto/fluxo-do-racha.md) · [Stats](../produto/stats.md).
