@@ -265,3 +265,37 @@ Entrar não funciona".
 link de convite); decidir pela existência do usuário no servidor (não dá para saber antes de digitar).
 **Onde:** `authAberto`, `renderAuth` e `A.authMode` em `index.html` · passo "convidado sem conta abre
 em criar, mas consegue ir para entrar" em `scripts/smoke.py`.
+
+<a id="d-216"></a>
+### D-216 · Lançador é o cargo padrão de cadastro novo
+**Quando:** 2026-09-24.
+**O quê:** todo jogador cadastrado daqui em diante nasce **Lançador** (presença, "+ Novo
+jogador", "criar meu jogador", "+ Novo" na aprovação). Jogador — só olha, opinião não vale —
+vira a exceção que o admin escolhe. Perfis que já existem ficam com o cargo que têm. Conta sem
+perfil vinculado continua só olhando até dizer quem é.
+**Por quê:** pedido direto ("deixe lançador como cargo padrão"). No racha quem estiver com o
+celular lança; ter que promover cada um antes era atrito sem ganho.
+**Descartado:** promover todos os Jogadores existentes (não dá para separar quem ficou Jogador por
+padrão de quem o admin rebaixou de propósito, D-121); tratar conta sem perfil como Lançador
+(lançaria sem ninguém saber quem é).
+**Onde:** `mkPlayer` em `index.html` · [Contas §5](../produto/contas-e-permissoes.md).
+
+<a id="d-217"></a>
+### D-217 · Aprovar pedido já dizendo quem é e com que cargo
+**Quando:** 2026-09-24.
+**O quê:** a folha do pedido de entrada (Jogadores → Pendências) mostra **Quem é** — "Ele
+escolhe", "+ Novo: @conta" e os perfis sem dono, com os de nome parecido com a conta primeiro — e
+**Cargo** (Admin · Moderador · Lançador · Jogador, com Lançador marcado). O botão diz o resultado:
+"Aprovar · Juliano Rocha". Um toque aprova, vincula e dá o cargo. "Ele escolhe" é o caminho de
+antes: a pessoa se acha no *Quem é você nesta liga?* (D-166). A mesma folha serve para conta já
+aprovada sem jogador (botão "Vincular · …"). O primeiro vínculo de uma liga sem admin continua
+virando admin (D-22), a não ser que quem aprova siga admin de qualquer jeito (dono, ou com perfil
+admin) — aí vale o cargo escolhido.
+**Por quê:** "ao aceitar alguém, o admin poderia facilmente já definir se tem jogador vinculado e
+qual o cargo". Antes eram três passos em três folhas: aprovar, voltar para vincular, abrir a ficha
+para o cargo.
+**Descartado:** guardar um cargo "pendente" para quem escolhe sozinho (precisaria de campo novo no
+banco; o perfil que ele criar já nasce Lançador, D-216).
+**Onde:** `accSheet`, `accVincula`, `accApprove`, `accLink` em `index.html` · `scripts/sync.py`
+(passo "o admin vê o pedido e aprova") · `scripts/visual.py` (tela 29) ·
+[Contas §3](../produto/contas-e-permissoes.md).

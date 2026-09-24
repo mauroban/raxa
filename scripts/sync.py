@@ -319,7 +319,15 @@ await step('o admin ve o pedido e aprova',async()=>{
   A.tab({dataset:{v:'ranking'}});
   await loadAccounts(ligaId);
   ok('o card Pendencias mostra o pedido',/pediu para entrar/.test(els['#app'].innerHTML));
+  /* a folha do pedido: escolhe o perfil e o cargo, e aprova num toque so (D-217) */
+  const livre=L().players.find(p=>!p.owner&&!p.arq);
+  A.accSheet({dataset:{u:luisId}});
+  ok('folha do pedido abre com Lancador marcado e "Ele escolhe"',/Ele escolhe/.test(els['#sheet'].innerHTML)&&AP&&AP.role==='lancador'&&AP.pid===null);
+  A.accSheet({dataset:{u:luisId,pid:livre.id}});A.accSheet({dataset:{u:luisId,r:'moderador'}});
+  ok('o botao diz quem vai ser',els['#sheet'].innerHTML.includes('Aprovar · '+livre.name));
   await A.accApprove({dataset:{u:luisId}});
+  ok('aprovado ja vinculado ao perfil escolhido',P(L(),livre.id).owner==='luis');
+  ok('e com o cargo escolhido',P(L(),livre.id).role==='moderador',P(L(),livre.id).role);
   ok('luis virou membro no servidor',DB.members.some(m=>m.league_id===ligaId&&m.user_id===luisId));
   ok('o pedido sumiu',!DB.requests.length);
   await A.logout();

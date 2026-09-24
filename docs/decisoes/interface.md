@@ -550,3 +550,40 @@ com histerese é o rótulo público, D-57/D-80); ler a função pelo tempo jogad
 precisa das estatísticas do período; o cadastro basta para um cartão).
 **Onde:** `meuNivelHome` e `renderHome` em `index.html` · `scripts/smoke.py` (passo "D-205") ·
 [Patentes](../produto/patentes.md) · [Interface §1](../produto/interface.md).
+
+<a id="d-215"></a>
+### D-215 · Revisão de UX das telas: ficha grava no toque, "Ver números", resumo para o grupo, toast no topo com folha aberta
+**Quando:** 2026-09-24.
+**O quê:** uma passada por todas as telas (prints do `visual.py`) e o que saiu dela:
+- **Stats sem "NaN":** na primeira vez na aba (sem período guardado) `statsPeriodo` devolvia a
+  string `'ano'` e a linha ‹ › escrevia "NaN". Agora vale o ano atual.
+- **Toast com folha aberta desce do topo:** embaixo ele tapava os nomes da folha GOL! (o autor)
+  justo na hora de tocar neles. Regra de CSS `.sheet.on~.toast`.
+- **"Ver números de X ›" na ficha:** tocar num nome (escada, ranking, craque) abre a ficha, e a
+  ficha não levava aos números da pessoa — a aba Stats só se alcançava por "Trocar". O botão abre
+  Stats → Jogador já nela.
+- **Compartilhar no resumo do fim:** o resumo "é o que vai para o grupo", mas só tinha Fechar.
+  Agora Compartilhar | Fechar; o texto (liga, data, números, times, artilheiros, quem mais ganhou,
+  quem subiu/caiu) sai da mesma conta da folha (`RESUMO_TXT`) e vai pelo compartilhar do celular
+  (ou copiado).
+- **A ficha grava no toque:** "Costuma ir ao gol", permissão e conta valem na hora; nome e
+  descrição ao sair do campo. O par Cancelar/Salvar no meio da folha saiu. Só pergunta antes o
+  que tira poder sem volta: deixar de ser admin você mesmo, desvincular a conta de outra pessoa.
+  Se a checagem recusa (nome repetido, liga sem admin), a folha volta ao que está gravado.
+- **"Minhas opiniões" de quem ainda não vale (Jogador)** sai do topo da aba Jogadores e vai para
+  o fim, depois da escada: era um pedido de 18 ações sem efeito no lugar mais nobre da aba.
+- **Ajustes · Níveis:** os cinco nomes das patentes ficam recolhidos numa linha
+  ("Ferro · Bronze · … ›", toca e abre). Mudam uma vez na vida e empurravam a Confirmação de
+  presença para fora da primeira dobra.
+- Menores: a lista de ligas sem nome de conta não escreve mais "Conectado como —"; o time que
+  fica com o goleiro diz "fica com o 🧤" em vez de "fica · 🧤 fica".
+**Por quê:** "revise cada página e cada fluxo de navegação — existem ganhos claros de UX?". São
+os que tinham defeito visível ou caminho faltando; nenhum muda regra de produto.
+**Descartado:** folha de ficha em duas (ver × editar) — o toque que grava resolve sem folha nova;
+esconder "Minhas opiniões" de vez para Jogador (ele pode opinar antes de virar Lançador, D-121);
+recolher o card inteiro da Confirmação (o admin mexe nele toda semana).
+**Onde:** `statsPeriodo`, CSS `.toast`, `pSheet`/`pdSave`/`pStats`, `resumoRacha`/`resumoShare`,
+`viewRanking` (ordem do `opCard`), `viewCfg` (`cfgNomes`), `renderHome` em `index.html` ·
+`scripts/smoke.py` (ficha grava no toque e "Ver números"; resumo compartilhável; Stats sem NaN) ·
+[Interface](../produto/interface.md) · [Fluxo do racha §4](../produto/fluxo-do-racha.md) ·
+[Contas §7](../produto/contas-e-permissoes.md).

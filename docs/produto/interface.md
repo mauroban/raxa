@@ -38,6 +38,7 @@ badge cabem ao lado dos números (D-204).
   ficam ações secundárias e formulários (ficha do jogador, novo jogador, autor do gol, vagas, quem sou).
   Fecha tocando fora, na alça ou em Cancelar.
 - **Toast**: 1 linha, 84 px acima da navegação, some sozinho. É o único "feedback" escrito do app.
+  Com uma folha aberta ele aparece **no topo**, para não tapar os nomes da folha (D-215).
 
 ## 2. Tamanhos que valem em toda tela
 
@@ -73,7 +74,7 @@ Descontando navegação (60) e barra de ação (74), sobram **~645 px** de conte
 | Próxima partida | placar registrado + os dois lados + fila (entram / depois) + Chegou · Foi embora · Refazer |
 | Jogadores | opinião pendente + Linha/Gol + **17 linhas** de escada (44 px cada) |
 | Stats · Jogador | filtro fixo (2–3 linhas) + cabeçalho da pessoa + anel + 4 tiles + posições; a linha do tempo do nível (4 marcos) e o partida a partida rolam |
-| Ajustes | liga com o código + Níveis (quem vê, 5 nomes) + o topo da Chamada até a dobra; cada ajuste é **uma linha de 44–58 px** (rótulo à esquerda, controle à direita); Partida, Contestação, Aparência, Dados e Registro rolam |
+| Ajustes | liga com o código + Níveis (quem vê, nomes numa linha) + a Chamada inteira até a dobra; cada ajuste é **uma linha de 44–58 px** (rótulo à esquerda, controle à direita); Partida, Contestação, Aparência, Dados e Registro rolam |
 
 Quando a tela é de 500 px de largura as colunas não aumentam de número; só o nome cabe inteiro.
 
@@ -100,10 +101,10 @@ Chegou · Foi embora · Refazer times · gols do jogo (com ✕). Barra: **↩ ·
 lados (chance, "fica", ▲ quem entra) · reserva de goleiro · fila · Chegou · Foi embora · Refazer ·
 partidas de hoje + *Desfazer a última*. Barra: **Encerrar racha · Começar partida**.
 
-**Jogadores** — *Minhas opiniões* (uma linha, quando há pendência) · Linha / Gol · escada por
+**Jogadores** — *Minhas opiniões* (uma linha, quando há pendência; para quem é Jogador, cuja opinião ainda não vale, vai para o fim da aba, D-215) · Linha / Gol · escada por
 patente (cabeçalho com o nome do nível e a contagem), cada linha: badge da divisão, nome, e à direita
 só "⏳ 3/15" enquanto calibra (e o Elo cru para o admin) · *Sem nível ainda* · Pendências (admin).
-Toque na linha abre a ficha em folha, onde mora a campanha V/E/D.
+Toque na linha abre a ficha em folha, onde mora a campanha V/E/D e o *Ver números de X ›*, que leva à aba Stats já na pessoa. A ficha **não tem Salvar**: cada controle grava no toque (D-215).
 
 **Stats** — filtro fixo: Jogador / Racha · Último / Mês / Ano / Sempre · ‹ período › + Linha / Gol · painel.
 Na aba Racha (Último, Mês, Ano), o painel abre com os números gerais (tiles) e logo abaixo o card do **Craque** (selo redondo de 46 px com a coroa à esquerda; título dourado, nome em 30 px — 22 px no empate —, o número em 21 px e, abaixo de um fio, 2º e 3º em chips de 13 px; D-213), depois o racha a racha / mês a mês, Níveis e os rankings.
@@ -134,8 +135,8 @@ vermelho "Em cima de outra partida" · Durou (−1 min · −10s · mm:ss · +10
 nota pequena embaixo, quando precisa) à esquerda e o controle à direita — interruptor para sim/não,
 campo curto de 74 px na fonte de placar para número, campo de hora, segmentado de largura inteira
 para escolha entre 2 ou 3 (numa linha própria). Ordem: liga (nome, números, *Trocar de liga*, e o
-código de convite com *Enviar link* / *Novo* no mesmo card) · Níveis (quem vê; os cinco nomes com a
-cor de cada um) · Confirmação de presença (interruptor no título; dias, hora, vagas na linha / no gol,
+código de convite com *Enviar link* / *Novo* no mesmo card) · Níveis (quem vê; os cinco nomes numa
+linha recolhida, "Ferro · Bronze · … ›", que abre os campos com a cor de cada um, D-215) · Confirmação de presença (interruptor no título; dias, hora, vagas na linha / no gol,
 a lista abre N dias antes / às) · Partida (formato no título; gols, minutos, trecho mínimo; vencedor
 fica, autor do gol, evitar repetir) · Contestação (quantas; só sinaliza / suspende) · Aparência ·
 arquivados · Dados (Exportar / Importar / Apagar ou Sair) · Tamanho da liga · Registro (admin).
@@ -174,8 +175,13 @@ partida, níveis, confirmação), Aparência e *Sair da liga*.
 2. **Partida ao vivo: a fila "depois" poderia ser uma linha só** ("depois: Juliano, Mauro, Igor, +2")
    em vez de chips. Ganha 2 linhas para o placar e os gols, que são o que se olha a cada 30 s.
 3. **Ajustes ganhou altura:** com dois dias de chamada, Partida e Contestação saem da primeira
-   dobra. Os cards de Chamada e Partida poderiam ser recolhíveis (título + resumo em uma linha,
-   abre ao tocar), como o admin só mexe neles uma vez.
+   dobra. O card de Partida poderia ser recolhível (título + resumo em uma linha, abre ao tocar),
+   como o admin só mexe nele uma vez. (Os nomes dos níveis já recolheram, D-215.)
+
+Feitas em 2026-09-24 (D-215): Stats sem "NaN" na primeira abertura; toast no topo com folha
+aberta; *Ver números* na ficha; *Compartilhar* no resumo do fim; ficha sem Salvar; *Minhas opiniões*
+de quem é Jogador no fim da aba; nomes dos níveis recolhidos nos Ajustes. E (D-217) aprovar pedido
+já com o perfil e o cargo.
 
 Feitas em 2026-09-14 (D-174): o contador "12 de 14 confirmados" na presença, "Sem racha marcado" na
 aba Racha vazia e a folha só de leitura ao tocar num nome da chamada como jogador comum. E (D-175) a

@@ -65,6 +65,7 @@ TELAS = {
     26: 'quando foi',
     27: 'times do racha',
     28: 'craque do ano',
+    29: 'aprovar pedido',
     0: 'home',
 }
 # Larguras testadas: celular estreito (onde as 5 abas apertam) e celular grande.
@@ -171,6 +172,13 @@ DRIVER = r"""
     if(l.live&&l.live.matchIds&&l.live.matchIds.length){A.endRacha();closeSheet();}
     const sess=[...(l.sessions||[])].reverse().find(x=>Array.isArray(x.teams)&&x.teams.length);
     if(sess){S.ui.tab='stats';render();A.sessTimes({dataset:{sid:sess.id}});}
+  }
+  if(step===29){                   /* aprovar pedido: quem é + cargo numa folha só (D-217) */
+    const l=L(),eu=l.players[1];eu.role='admin';eu.owner='Mauro';S.me.name='Mauro';S.ui.tab='ranking';render();
+    ACC[l.id]={at:Date.now(),lista:[{user_id:'u-bruno',username:'juliano',pending:true,joined_at:new Date().toISOString()}]};
+    A.accSheet({dataset:{u:'u-bruno'}});
+    const alvo=l.players.find(p=>!p.owner&&/Juliano/.test(p.name))||l.players.find(p=>!p.owner);
+    A.accSheet({dataset:{u:'u-bruno',pid:alvo.id}});
   }
   if(step===28){                   /* craque do ano no topo da aba Racha (D-210, D-212) */
     const l=L(),ult=l.matches[l.matches.length-1];l.cfg.rankVisibility='todos';

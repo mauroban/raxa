@@ -71,7 +71,7 @@ step('toda acao tem classificacao de papel',()=>{
     'statsPer','statsTab','statsRacha','statsMes','statsAno','irEscada','rachaTime','sessTimes','sessPick','sessAdd','sessSet','rkSheet','rkInv','histMine','histRacha','statsWho','setStatsWho','duelo',
     'toggleDispute','setTheme','export','import','authMode','doLogin','doSignup','logout','demo','joinLiga','doJoin','ppPage',
     'cancelPend','delLiga','leaveLiga','copyCode','doImport','accSheet','accLink','accUnlink','accCreate','accApprove','accReject','accRemove',
-    'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk']);
+    'vou','naoVou','confirmo','chamadaChip','chamadaTroca','chamadaTirar','chamadaShare','euSou','euSouOk','euNovo','euNovoOk','cfgNomes','resumoShare','pStats']);
   const todas=Object.keys(A);
   const soltas=todas.filter(k=>!ACOES_LANCAR.has(k)&&!ACOES_ADMIN.has(k)&&!LIVRES.has(k));
   if(soltas.length)throw new Error('acao sem classificacao de papel (poe em ACOES_LANCAR/ADMIN ou em LIVRES aqui): '+soltas.join(', '));
@@ -1173,6 +1173,12 @@ step('patentes so para o admin',()=>{
 step('evitar repetir dupla pode ser desligado',()=>{S.ui.tab='cfg';A.toggleCfg({dataset:{k:'avoidRepeat'}});A.toggleCfg({dataset:{k:'avoidRepeat'}})});
 step('voltar para o racha',()=>{S.ui.tab='racha';render()});
 step('encerrar racha',()=>A.endRacha());
+step('resumo do fim: Compartilhar leva o mesmo resumo em texto (D-215)',()=>{
+  const h=$('#sheet').innerHTML;
+  if(!/Racha encerrado/.test(h)||!/data-a="resumoShare"/.test(h))throw new Error('resumo sem Compartilhar');
+  if(!RESUMO_TXT.includes(L().name)||!/partida/.test(RESUMO_TXT)||!/Times/.test(RESUMO_TXT))throw new Error('texto do resumo incompleto: '+RESUMO_TXT);
+  if(/<|undefined|NaN/.test(RESUMO_TXT))throw new Error('texto do resumo com lixo: '+RESUMO_TXT);
+});
 step('sessao guarda presenca desde o comeco e os times como montados',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1];
   if(!sess)throw new Error('sessao nao gravada');
@@ -2023,13 +2029,23 @@ step('arquivar guarda tudo: some do elenco, historico e opinioes ficam, reativar
   A.delPlayer({dataset:{id:novo.id}});if(P(l,novo.id))throw new Error('sem historico devia apagar');
   alvo.L.op=[];rebuildAll(l);closeSheet();
 });
-step('ficha: nome e descricao no cabecalho (quem lanca); gol, permissao e arquivar so admin; Salvar antes do bloco Admin; "Sou eu" so sem perfil',()=>{
+step('ficha: nome e descricao no cabecalho (quem lanca); gol, permissao e arquivar so admin; grava no toque, sem Salvar (D-215); "Sou eu" so sem perfil',()=>{
   const l=L(),eu=euId(l),me=P(l,eu);me.role='admin';
   const p=l.players.find(x=>x.id!==eu);
   A.pSheet({dataset:{id:p.id}});let h=$('#sheet').innerHTML;
   const at=s=>{const i=h.indexOf(s);if(i<0)throw new Error('faltou na ficha: '+s);return i};
-  if(!(at('aria-label="nome do jogador"')<at('class="lv2"')&&at('class="lv2"')<at('class="stat four"')&&at('class="stat four"')<at('data-a="pdGk"')&&at('data-a="pdGk"')<at('id="pdsalvar"')&&at('id="pdsalvar"')<at('>Admin</div>')&&at('>Admin</div>')<at('data-a="arquivar"')))throw new Error('ordem da ficha errada');
+  if(!(at('aria-label="nome do jogador"')<at('class="lv2"')&&at('class="lv2"')<at('class="stat four"')&&at('class="stat four"')<at('data-a="pdGk"')&&at('data-a="pStats"')<at('data-a="pdGk"')&&at('data-a="pdGk"')<at('>Admin</div>')&&at('>Admin</div>')<at('data-a="arquivar"')))throw new Error('ordem da ficha errada');
   if(h.includes('>Cadastro<'))throw new Error('sem bloco "Cadastro": o nome se edita no proprio nome');
+  if(h.includes('data-a="pdSave"'))throw new Error('ficha grava no toque: sem botao Salvar (D-215)');
+  /* o interruptor e a permissao valem no toque, e a folha fica aberta */
+  {const g0=!!p.gk;A.pdGk();if(!!P(l,p.id).gk===g0)throw new Error('costuma ir ao gol nao gravou no toque');
+   if(!$('#sheet').innerHTML.includes('data-a="pdGk"'))throw new Error('a ficha fechou depois do toque');A.pdGk();
+   const r0=p.role||'jogador';A.pdRole({dataset:{r:'moderador'}});if(P(l,p.id).role!=='moderador')throw new Error('permissao nao gravou no toque');
+   A.pdRole({dataset:{r:r0}});if((P(l,p.id).role||'jogador')!==r0)throw new Error('permissao nao voltou');
+   A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML}
+  /* da ficha para os numeros da pessoa na aba Stats (D-215) */
+  A.pStats({dataset:{id:p.id}});if(S.ui.tab!=='stats'||S.ui.statsWho!==p.id||S.ui.statsTab!=='jogador')throw new Error('Ver numeros nao abriu o Stats da pessoa');
+  S.ui.tab='ranking';A.pSheet({dataset:{id:p.id}});h=$('#sheet').innerHTML;
   if(!h.includes('Permissão'))throw new Error('admin ve a permissao');
   if(h.includes('>Sou eu<'))throw new Error('quem ja tem perfil vinculado nao ve "Sou eu"');
   /* lancador: edita nome e descricao, e so isso */
@@ -2359,6 +2375,10 @@ step('stats: filtro fixo no topo e titulos sem o periodo (D-185)',()=>{
   if(/Rankings em \d{4}|O racha em \d{4}|Você · em|Jogador · em|Posição nos rankings <span/.test(h))throw new Error('titulo repetindo o periodo');
   S.ui.statsTab='racha';S.ui.statsPer='sempre';render();h=els['#app'].innerHTML;
   if(/Rankings|O racha<|Níveis</.test(h))throw new Error('titulo repetindo "desde sempre"');
+  /* primeira vez na aba (sem periodo guardado): ano atual, nunca "NaN" (D-215) */
+  delete S.ui.statsPer;S.ui.statsTab='jogador';render();h=els['#app'].innerHTML;
+  if(/NaN/.test(h))throw new Error('Stats sem periodo guardado mostra NaN');
+  if(!h.includes('<span>'+new Date().getFullYear()+'</span>'))throw new Error('Stats sem periodo guardado devia abrir no ano atual');
   S.ui.tab='racha';render();
 });
 step('confirmado por outro: o proprio assume com "Confirmo" sem perder a vez (D-178); nada de endereco (D-183)',()=>{

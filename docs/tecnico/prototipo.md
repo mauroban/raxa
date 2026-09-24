@@ -47,7 +47,7 @@
 - **Painel de números**: duelos e parcerias por pessoa (com histórico encontro a encontro), destaques (carrasco, freguês, melhor dupla), quebra ano a ano e rankings do racha no período
 - Histórico agrupado por racha, com os rachas do dono do perfil marcados e filtro "só as minhas"
 - Contas por usuário e senha; assumir perfil (**Sou eu**) e papéis por conta — as ações de conta do admin valem no servidor (D-62)
-- Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências
+- Entrar numa liga por **código com aprovação do admin**; membros, contas e pedidos em Jogadores → Pendências (aprovar já escolhe o perfil e o cargo, D-217; cadastro novo nasce Lançador, D-216)
 - **Sequências** (maior série de vitórias, atual e recorde) nos rankings
 - **Leão de fim do racha** (D-208): gols por hora de linha no fim (partidas em que quem começa já tem, em média, 50+ min de jogo no racha) menos no resto do racha — nos gerais, no racha aberto e na faixa de posições da ficha
 - Editar nome, "costuma ir ao gol", conta e permissão pela ficha do jogador (rascunho + Salvar); **opiniões sobre o nível** de quem lança, um toque por pessoa, na ficha ou na tela "Minhas opiniões" (D-95)
