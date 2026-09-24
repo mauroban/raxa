@@ -1190,6 +1190,7 @@ step('resumo do fim: Compartilhar leva o mesmo resumo em texto (D-215)',()=>{
   if(!/Racha encerrado/.test(h)||!/data-a="resumoShare"/.test(h))throw new Error('resumo sem Compartilhar');
   if(!RESUMO_TXT.includes(L().name)||!/partida/.test(RESUMO_TXT)||!/Times/.test(RESUMO_TXT))throw new Error('texto do resumo incompleto: '+RESUMO_TXT);
   if(/<|undefined|NaN/.test(RESUMO_TXT))throw new Error('texto do resumo com lixo: '+RESUMO_TXT);
+  if(/Subiu|Caiu|→/.test(RESUMO_TXT))throw new Error('quem subiu/caiu nao vai para o texto compartilhado (D-220)');
 });
 step('resumo de um racha que ja passou: pela aba Jogos, com Compartilhar e o craque (D-219)',()=>{
   const l=L(),sess=l.sessions[l.sessions.length-1],txt0=RESUMO_TXT;closeSheet();

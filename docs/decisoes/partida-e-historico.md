@@ -548,3 +548,15 @@ D-18).
 **Onde:** `resumoRacha`, `cardCraque`, `resumoPassado`, `viewHist` em `index.html` ·
 `scripts/smoke.py` (passo "D-219") · `scripts/visual.py` (telas 14 e 31) ·
 [Fluxo do racha §4](../produto/fluxo-do-racha.md) · [Stats](../produto/stats.md).
+
+<a id="d-220"></a>
+### D-220 · Quem subiu e caiu fica fora do resumo compartilhado
+**Quando:** 2026-09-24.
+**O quê:** o texto do Compartilhar do resumo (D-215/D-219) deixa de listar quem subiu e quem caiu
+de nível. Na folha do resumo as duas seções continuam como estão.
+**Por quê:** pedido direto ("subiu e caiu estão bons no resumo, mas não precisam ir pro
+compartilhamento"). No app, o nível é de quem abre; no grupo, "Fulano caiu para Bronze" vira
+exposição, e é justamente o que "cair não pode ser humilhação" (princípio 11) quer evitar.
+**Descartado:** mandar só quem subiu (metade da história puxa a pergunta sobre a outra metade).
+**Onde:** `resumoRacha` (`RESUMO_TXT`) em `index.html` · `scripts/smoke.py` (passo "resumo do
+fim") · [Fluxo do racha §4](../produto/fluxo-do-racha.md).

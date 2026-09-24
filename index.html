@@ -5470,7 +5470,8 @@ function resumoRacha(liga,sess,ms,passado){
   const pos=posEmpate(T,t=>t.v*1e6+(t.gp-t.gc));
   const quando=new Date(sess.ts||Date.now());
   const sec=(titulo,html)=>html?`<div class="sec"><div class="k2">${titulo}</div>${html}</div>`:'';
-  /* o mesmo resumo em texto, para o grupo do WhatsApp (D-215) */
+  /* o mesmo resumo em texto, para o grupo do WhatsApp (D-215); quem subiu e
+     caiu de nível fica só na folha — nível não vai para o grupo (D-220)   */
   const nm=pid=>nameOf(liga,pid);
   RESUMO_TXT=[`*${liga.name} · racha de ${quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}*`,
     `${pl(ms.length,'partida')} · ${pl(totGols,'gol')} · ${pl(pres,'pessoa')} · ${MINS(totMs)} min`,
@@ -5479,8 +5480,6 @@ function resumoRacha(liga,sess,ms,passado){
     T.length?'\n🏆 Times\n'+T.map((t,i)=>`${pos[i]}. ${(liga.cfg.format<=5&&(t.ids||[]).length)?nomesCurtos(liga,t.ids).join(', '):t.name} — ${t.v}V ${t.e}E ${t.d}D`).join('\n'):'',
     art.length?'\n⚽ Artilheiros\n'+artG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${pl(x.g,'gol')}`).join('\n'):'',
     venc.length?'\n🔥 Quem mais ganhou\n'+vencG.map((x,i)=>`${x.pos}. ${x.ids.map(nm).join(', ')} — ${x.v}V ${x.d}D`).join('\n'):'',
-    subiu.length?'\n▲ Subiu\n'+subiu.map(x=>`${nm(x.pid)}${x.role==='G'?' (gol)':''}: ${rankLabel(liga,x.de)} → ${rankLabel(liga,x.para)}`).join('\n'):'',
-    caiu.length?'\n▼ Caiu\n'+caiu.map(x=>`${nm(x.pid)}${x.role==='G'?' (gol)':''}: ${rankLabel(liga,x.de)} → ${rankLabel(liga,x.para)}`).join('\n'):''
   ].filter(Boolean).join('\n');
   return `<h2>${passado?'Racha de '+quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}):'Racha encerrado'}</h2>
     <div class="tiny muted" style="margin:2px 0 12px">${passado?'':quando.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})+' · '}${fmtMin(totMs)} de bola rolando</div>
